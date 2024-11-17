@@ -1,7 +1,7 @@
-#include <iostream>
+#include "pch.hpp"
 
 int main()
 {
-	std::cout << "Hello, World!" << std::endl;
+	LOG_TRACE("This is a trace message");
 	return 0;
 }
