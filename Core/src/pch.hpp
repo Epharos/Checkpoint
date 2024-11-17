@@ -21,4 +21,6 @@
 #include <thread>
 #include <mutex>
 
+#include <vulkan/vulkan.hpp>
+
 #include "Util/Logger.hpp"
