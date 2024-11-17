@@ -49,7 +49,19 @@ namespace Util
 
 		Logger()
 		{
-			logFile.open("log.txt", std::ios::app | std::ios::out);
+			if (std::filesystem::create_directory("Logs"))
+			{
+				std::cout << "Created initial log directory" << std::endl;
+			}
+
+			std::stringstream ss;
+			ss << "Logs\\" << std::put_time(GetTimestamp(), "%Y-%m-%d%H-%M-%S") << ".log";
+			logFile.open(ss.str(), std::ios::app | std::ios::out);
+
+			if (!logFile.is_open())
+			{
+				std::cerr << "Failed to open log file" << std::endl;
+			}
 		}
 
 		~Logger()
@@ -102,8 +114,8 @@ namespace Util
 			std::stringstream ss;
 			auto timestamp = GetTimestamp();
 
+			ss << std::put_time(timestamp, "%Y/%m/%d %H:%M:%S") << " ";
 			ss << "[" << GetLogLevelString(_level) << "] ";
-			ss << "[" << timestamp->tm_hour << ":" << timestamp->tm_min << ":" << timestamp->tm_sec << "] ";
 			ss << "[" << GetFileName(_file) << "] ";
 			ss << _message << std::endl;
 
