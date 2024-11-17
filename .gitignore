@@ -31,6 +31,10 @@
 *.out
 *.app
 
+# Debug files
 .vs
 .git
 x64
+
+# Dependencies
+Dependencies/VulkanSDK
