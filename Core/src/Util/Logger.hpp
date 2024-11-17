@@ -34,6 +34,8 @@ namespace Util
 
 		void Log(LogLevel _level, const std::string& _message, const std::string& _file)
 		{
+			std::lock_guard<std::mutex> lock(logMutex);
+
 			if (logFile.is_open())
 			{
 				logFile << FormatLog(_level, _message, _file);
@@ -46,6 +48,7 @@ namespace Util
 
 	private:
 		std::ofstream logFile;
+		std::mutex logMutex;
 
 		Logger()
 		{
@@ -116,7 +119,7 @@ namespace Util
 
 			ss << std::put_time(timestamp, "%Y/%m/%d %H:%M:%S") << " ";
 			ss << "[" << GetLogLevelString(_level) << "] ";
-			ss << "[" << GetFileName(_file) << "] ";
+			ss << "[" << GetFileName(_file) << "/" << std::this_thread::get_id() << "] ";
 			ss << _message << std::endl;
 
 			return ss.str();

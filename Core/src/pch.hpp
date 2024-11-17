@@ -19,5 +19,6 @@
 #include <unordered_set>
 
 #include <thread>
+#include <mutex>
 
 #include "Util/Logger.hpp"
