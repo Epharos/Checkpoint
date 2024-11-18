@@ -40,4 +40,6 @@ x64
 Dependencies/VulkanSDK
 
 # Logs
+
 Core/Logs
+Example/Logs

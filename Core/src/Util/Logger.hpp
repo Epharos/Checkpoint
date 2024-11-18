@@ -2,14 +2,14 @@
 
 #define CONSOLE_LOG
 
-#define LOG_TRACE(message) Util::Logger::GetInstance().Log(Util::LogLevel::TRACE, message, __FILE__)
-#define LOG_DEBUG(message) Util::Logger::GetInstance().Log(Util::LogLevel::DEBUG, message, __FILE__)
-#define LOG_INFO(message) Util::Logger::GetInstance().Log(Util::LogLevel::INFO, message, __FILE__)
-#define LOG_WARNING(message) Util::Logger::GetInstance().Log(Util::LogLevel::WARNING, message, __FILE__)
-#define LOG_ERROR(message) Util::Logger::GetInstance().Log(Util::LogLevel::ERROR, message, __FILE__)
-#define LOG_FATAL(message) Util::Logger::GetInstance().Log(Util::LogLevel::FATAL, message, __FILE__)
+#define LOG_TRACE(message) Util::Logger::GetInstance().Log(Util::LogLevel::TRACE, message, __FILE__, std::this_thread::get_id())
+#define LOG_DEBUG(message) Util::Logger::GetInstance().Log(Util::LogLevel::DEBUG, message, __FILE__, std::this_thread::get_id())
+#define LOG_INFO(message) Util::Logger::GetInstance().Log(Util::LogLevel::INFO, message, __FILE__, std::this_thread::get_id())
+#define LOG_WARNING(message) Util::Logger::GetInstance().Log(Util::LogLevel::WARNING, message, __FILE__, std::this_thread::get_id())
+#define LOG_ERROR(message) Util::Logger::GetInstance().Log(Util::LogLevel::ERROR, message, __FILE__, std::this_thread::get_id())
+#define LOG_FATAL(message) Util::Logger::GetInstance().Log(Util::LogLevel::FATAL, message, __FILE__, std::this_thread::get_id())
 
-#include "pch.hpp"
+#include "../pch.hpp"
 
 namespace Util
 {
@@ -32,17 +32,17 @@ namespace Util
 			return instance;
 		}
 
-		void Log(LogLevel _level, const std::string& _message, const std::string& _file)
+		void Log(LogLevel _level, const std::string& _message, const std::string& _file, const std::thread::id& _threadID)
 		{
 			std::lock_guard<std::mutex> lock(logMutex);
 
 			if (logFile.is_open())
 			{
-				logFile << FormatLog(_level, _message, _file);
+				logFile << FormatLog(_level, _message, _file, _threadID);
 			}
 
 #ifdef CONSOLE_LOG
-			std::cout << FormatLog(_level, _message, _file);
+			std::cout << FormatLog(_level, _message, _file, _threadID);
 #endif
 		}
 
@@ -112,14 +112,14 @@ namespace Util
 			return _file.substr(lastSlash + 1, lastDot - lastSlash - 1);
 		}
 
-		std::string FormatLog(LogLevel _level, const std::string& _message, const std::string& _file)
+		std::string FormatLog(LogLevel _level, const std::string& _message, const std::string& _file, const std::thread::id& _threadID)
 		{
 			std::stringstream ss;
 			auto timestamp = GetTimestamp();
 
 			ss << std::put_time(timestamp, "%Y/%m/%d %H:%M:%S") << " ";
 			ss << "[" << GetLogLevelString(_level) << "] ";
-			ss << "[" << GetFileName(_file) << "/" << std::this_thread::get_id() << "] ";
+			ss << "[" << GetFileName(_file) << "/" << _threadID << "] ";
 			ss << _message << std::endl;
 
 			return ss.str();
