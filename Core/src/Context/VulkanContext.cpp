@@ -1,9 +1,9 @@
 #include "pch.hpp"
 #include "VulkanContext.hpp"
 
-#include "Devices.hpp"
-
 #define ENGINE_VERSION VK_MAKE_API_VERSION(0, 1, 0, 0)
+
+VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT _messageSeverity, VkDebugUtilsMessageTypeFlagsEXT _messageType, const VkDebugUtilsMessengerCallbackDataEXT* _callbackData, void* _userData);
 
 void Context::VulkanContext::Initialize(VulkanContextInfo& _contextInfo)
 {
@@ -15,7 +15,7 @@ void Context::VulkanContext::Initialize(VulkanContextInfo& _contextInfo)
 
 	LOG_TRACE("Vulkan version: " + VersionToString(vulkanVersion));
 
-	CreateWindow();
+	platform = _contextInfo.platform;
 
 	uint32 glfwExtensionCount = 0;
 	const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
@@ -23,24 +23,32 @@ void Context::VulkanContext::Initialize(VulkanContextInfo& _contextInfo)
 	for (uint32 i = 0; i < glfwExtensionCount; i++)
 		_contextInfo.extensions.instanceExtensions.push_back(glfwExtensions[i]);
 
-	_contextInfo.extensions.instanceExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
-
-#if _DEBUG
+	#ifdef USE_DEBUG_LAYER
 	_contextInfo.extensions.instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	_contextInfo.extensions.instanceLayers.push_back("VK_LAYER_KHRONOS_validation");
-#endif
+	#endif
 
 	CreateInstance(vulkanVersion, _contextInfo.appName, _contextInfo.appVersion, _contextInfo.extensions);
+	CreateDebugMessenger();
 	PickPhysicalDevice();
 	CreateSurface();
 	CreateLogicalDevice();
+	CreateCommandPool();
 }
 
 void Context::VulkanContext::Shutdown()
 {
 	LOG_TRACE("Shutting down Vulkan context");
+
+	device.destroyCommandPool(commandPool);
+
 	device.destroy();
 	instance.destroySurfaceKHR(surface);
+
+	#ifdef USE_DEBUG_LAYER
+	instance.destroyDebugUtilsMessengerEXT(debugMessenger, nullptr, dynamicLoader);
+	#endif
+
 	instance.destroy();
 }
 
@@ -87,11 +95,11 @@ void Context::VulkanContext::PickPhysicalDevice()
 
 void Context::VulkanContext::CreateLogicalDevice()
 {
-	QueueFamilyIndices indices = FindQueueFamilies(physicalDevice, surface);
+	queueFamilyIndices = FindQueueFamilies(physicalDevice, surface);
 
-	std::vector<uint32> uniqueQueueFamilies = { indices.graphicsFamily.value() };
-	if (indices.graphicsFamily.value() != indices.presentFamily.value())
-		uniqueQueueFamilies.push_back(indices.presentFamily.value());
+	std::vector<uint32> uniqueQueueFamilies = { queueFamilyIndices.graphicsFamily.value() };
+	if (queueFamilyIndices.graphicsFamily.value() != queueFamilyIndices.presentFamily.value())
+		uniqueQueueFamilies.push_back(queueFamilyIndices.presentFamily.value());
 
 	std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
 	float queuePriority = 1.0f;
@@ -105,9 +113,9 @@ void Context::VulkanContext::CreateLogicalDevice()
 	std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 	std::vector<const char*> deviceLayers = {};
 
-#if _DEBUG
+	#if _DEBUG
 	deviceLayers.push_back("VK_LAYER_KHRONOS_validation");
-#endif
+	#endif
 
 	vk::PhysicalDeviceFeatures deviceFeatures; // Empty for now, but add samplerAnisotropy, tesselationShader, etc.
 
@@ -120,24 +128,10 @@ void Context::VulkanContext::CreateLogicalDevice()
 	device = physicalDevice.createDevice(deviceInfo);
 }
 
-void Context::VulkanContext::CreateWindow()
-{
-	if (!glfwInit())
-	{
-		LOG_FATAL("Failed to initialize GLFW");
-		return;
-	}
-
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-	window = glfwCreateWindow(800, 600, "Checkpoint", nullptr, nullptr);
-}
-
 void Context::VulkanContext::CreateSurface()
 {
 	VkSurfaceKHR surfaceHandle;
-	VkResult vr = glfwCreateWindowSurface(instance, window, nullptr, &surfaceHandle);
+	VkResult vr = glfwCreateWindowSurface(instance, platform->GetWindow(), nullptr, &surfaceHandle);
 
 	if (vr != VK_SUCCESS)
 	{
@@ -147,6 +141,31 @@ void Context::VulkanContext::CreateSurface()
 
 	LOG_DEBUG("Created window surface");
 	surface = surfaceHandle;
+}
+
+void Context::VulkanContext::CreateDebugMessenger()
+{
+	dynamicLoader = vk::DispatchLoaderDynamic(instance, vkGetInstanceProcAddr);
+
+	#ifdef USE_DEBUG_LAYER
+	vk::DebugUtilsMessengerCreateInfoEXT debugCreateInfo(
+		vk::DebugUtilsMessengerCreateFlagsEXT(),
+		vk::DebugUtilsMessageSeverityFlagBitsEXT::eError |
+		vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
+		vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo,
+		vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+		vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
+		vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+		DebugLayerCallback, nullptr);
+
+	debugMessenger = instance.createDebugUtilsMessengerEXT(debugCreateInfo, nullptr, dynamicLoader);
+	#endif
+}
+
+void Context::VulkanContext::CreateCommandPool()
+{
+	vk::CommandPoolCreateInfo poolInfo({}, queueFamilyIndices.graphicsFamily.value());
+	commandPool = device.createCommandPool(poolInfo);
 }
 
 void Context::VulkanContext::ValidateExtensions(const VulkanExtensions& _extensions) const
@@ -200,4 +219,42 @@ void Context::VulkanContext::ValidateExtensions(const VulkanExtensions& _extensi
 	}
 
 	LOG_INFO("Validated " + std::to_string(validatedCount) + "/" + std::to_string(_extensions.instanceLayers.size()) + " layers");
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT _messageSeverity, VkDebugUtilsMessageTypeFlagsEXT _messageType, const VkDebugUtilsMessengerCallbackDataEXT* _callbackData, void* _userData)
+{
+	std::string message = "[VL ";
+	switch (_messageType)
+	{
+	case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
+		message += "GEN";
+		break;
+	case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT:
+		message += "VAL";
+		break;
+	case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
+		message += "PER";
+		break;
+	}
+
+	message += "] ";
+	message += _callbackData->pMessage;
+
+	switch (_messageSeverity)
+	{
+	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+		LOG_ERROR(message);
+		break;
+	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+		LOG_WARNING(message);
+		break;
+	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+		LOG_INFO(message);
+		break;
+	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+		LOG_TRACE(message);
+		break;
+	}
+
+	return VK_FALSE;
 }

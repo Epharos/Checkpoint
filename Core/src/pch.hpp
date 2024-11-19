@@ -1,5 +1,9 @@
 #pragma once
 
+#if _DEBUG
+#define USE_DEBUG_LAYER
+#endif
+
 #include <iostream>
 #include <string>
 #include <memory>

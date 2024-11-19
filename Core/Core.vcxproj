@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Context\Devices.cpp" />
+    <ClCompile Include="src\Context\Platform.cpp" />
     <ClCompile Include="src\Context\VulkanContext.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -151,6 +152,7 @@
   <ItemGroup>
     <ClInclude Include="Include\Core.hpp" />
     <ClInclude Include="src\Context\Devices.hpp" />
+    <ClInclude Include="src\Context\Platform.hpp" />
     <ClInclude Include="src\Context\VulkanContext.hpp" />
     <ClInclude Include="src\pch.hpp" />
     <ClInclude Include="src\Util\Logger.hpp" />
