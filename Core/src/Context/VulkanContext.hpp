@@ -35,6 +35,17 @@ namespace Context
 		void Initialize(VulkanContextInfo& _contextInfo);
 		void Shutdown();
 
+#pragma region Getters
+		inline constexpr vk::Instance GetInstance() const { return instance; }
+		inline constexpr vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
+		inline constexpr vk::Device GetDevice() const { return device; }
+		inline constexpr vk::SurfaceKHR GetSurface() const { return surface; }
+		inline constexpr Platform* GetPlatform() const { return platform; }
+		inline constexpr vk::CommandPool GetCommandPool() const { return commandPool; }
+		inline constexpr QueueFamilyIndices GetQueueFamilyIndices() const { return queueFamilyIndices; }
+		inline constexpr vk::DispatchLoaderDynamic GetDynamicLoader() const { return dynamicLoader; }
+#pragma endregion
+
 	private:
 #pragma region Variables
 		Platform* platform;
@@ -68,17 +79,6 @@ namespace Context
 		void ValidateExtensions(const VulkanExtensions& _extensions) const;
 
 		std::string VersionToString(const uint32& _version) const;
-#pragma endregion
-
-#pragma region Getters
-		inline constexpr vk::Instance GetInstance() const { return instance; }
-		inline constexpr vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
-		inline constexpr vk::Device GetDevice() const { return device; }
-		inline constexpr vk::SurfaceKHR GetSurface() const { return surface; }
-		inline constexpr Platform* GetPlatform() const { return platform; }
-		inline constexpr vk::CommandPool GetCommandPool() const { return commandPool; }
-		inline constexpr QueueFamilyIndices GetQueueFamilyIndices() const { return queueFamilyIndices; }
-		inline constexpr vk::DispatchLoaderDynamic GetDynamicLoader() const { return dynamicLoader; }
 #pragma endregion
 	};
 }
