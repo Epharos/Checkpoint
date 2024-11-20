@@ -148,6 +148,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="src\Render\RenderTarget.cpp" />
     <ClCompile Include="src\Render\Swapchain.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -155,7 +156,9 @@
     <ClInclude Include="src\Context\Devices.hpp" />
     <ClInclude Include="src\Context\Platform.hpp" />
     <ClInclude Include="src\Context\VulkanContext.hpp" />
+    <ClInclude Include="src\Helpers\MemoryHelper.hpp" />
     <ClInclude Include="src\pch.hpp" />
+    <ClInclude Include="src\Render\Frame.hpp" />
     <ClInclude Include="src\Render\RenderTarget.hpp" />
     <ClInclude Include="src\Render\Swapchain.hpp" />
     <ClInclude Include="src\Util\Logger.hpp" />
