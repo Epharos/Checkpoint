@@ -10,7 +10,7 @@ namespace Render
 	class Swapchain
 	{
 	private:
-		Context::VulkanContext* context;
+		const Context::VulkanContext* context;
 
 		vk::SurfaceCapabilitiesKHR surfaceCapabilities;
 		std::vector<vk::SurfaceFormatKHR> surfaceFormats;
@@ -36,7 +36,7 @@ namespace Render
 
 
 	public:
-		Swapchain(Context::VulkanContext* _context);
+		Swapchain(const Context::VulkanContext*& _context);
 		~Swapchain();
 
 		void Create();

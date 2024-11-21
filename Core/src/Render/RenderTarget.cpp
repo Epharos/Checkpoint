@@ -2,7 +2,7 @@
 
 #include "pch.hpp"
 
-#include "../Helpers/MemoryHelper.hpp"
+
 
 namespace Render
 {
@@ -15,7 +15,7 @@ namespace Render
 	{
 		for (auto& attachment : attachments)
 		{
-			attachment.Destroy(context->GetDevice());
+			attachment->Destroy(context->GetDevice());
 		}
 
 		context->GetDevice().destroyFramebuffer(framebuffer);
@@ -42,7 +42,7 @@ namespace Render
 
 	void RenderTarget::AddAttachment(const vk::Image& _image, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags)
 	{
-		vk::MemoryRequirements memRequirements = context->GetDevice().getImageMemoryRequirements(image);
+		vk::MemoryRequirements memRequirements = context->GetDevice().getImageMemoryRequirements(_image);
 
 		vk::MemoryAllocateInfo allocInfo;
 		allocInfo.allocationSize = memRequirements.size;
@@ -50,7 +50,7 @@ namespace Render
 
 		vk::DeviceMemory imageMemory = context->GetDevice().allocateMemory(allocInfo);
 
-		context->GetDevice().bindImageMemory(image, imageMemory, 0);
+		context->GetDevice().bindImageMemory(_image, imageMemory, 0);
 
 		vk::ImageViewCreateInfo viewInfo;
 		viewInfo.image = _image;
@@ -64,7 +64,12 @@ namespace Render
 
 		vk::ImageView imageView = context->GetDevice().createImageView(viewInfo);
 
-		attachments.push_back({ _image, imageView, imageMemory });
+		attachments.emplace_back(_image, imageView, imageMemory);
+	}
+
+	void RenderTarget::AddAttachment(RenderTargetAttachment*& _attachment)
+	{
+		this->attachments.push_back(_attachment);
 	}
 
 	void RenderTarget::Build(const vk::RenderPass& _renderPass)
@@ -73,7 +78,7 @@ namespace Render
 
 		for (const auto& attachment : attachments)
 		{
-			attachmentViews.push_back(attachment.imageView);
+			attachmentViews.push_back(attachment->imageView);
 		}
 
 		vk::FramebufferCreateInfo framebufferInfo;

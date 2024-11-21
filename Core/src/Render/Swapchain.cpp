@@ -2,6 +2,8 @@
 
 #include "pch.hpp"
 
+#include "Frame.hpp"
+
 void Render::Swapchain::CreateData()
 {
 	QuerySupport();
@@ -53,8 +55,10 @@ void Render::Swapchain::CreateData()
 
 	for (auto image : images)
 	{
-		//frames.push_back(new Frame(context, image, format, extent));
-		//TODO : Fill frames
+		auto frame = frames.emplace_back(context);
+		auto rt = new RenderTarget(*context, extent);
+		rt->AddAttachment(image, format, vk::ImageUsageFlagBits::eColorAttachment, vk::ImageAspectFlagBits::eColor);
+		rt->AddAttachment()
 	}
 }
 
@@ -108,7 +112,7 @@ vk::Extent2D Render::Swapchain::SelectExtent(const vk::SurfaceCapabilitiesKHR& _
 	return actualExtent;
 }
 
-Render::Swapchain::Swapchain(Context::VulkanContext* _context)
+Render::Swapchain::Swapchain(const Context::VulkanContext*& _context)
 {
 	context = _context;
 	Create();

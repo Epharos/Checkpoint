@@ -34,3 +34,5 @@
 #include "Util/Logger.hpp"
 
 #include "GLFW/glfw3.h"
+
+#include "Render/RenderTarget.hpp"
