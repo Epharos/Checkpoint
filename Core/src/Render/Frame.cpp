@@ -1,10 +1,10 @@
-#include "Frame.hpp"
-
 #include "pch.hpp"
+
+#include "Frame.hpp"
 
 namespace Render
 {
-	Frame::Frame(const Context::VulkanContext*& _context) : context(_context)
+	Frame::Frame(Context::VulkanContext*& _context) : context(_context)
 	{
 		vk::SemaphoreCreateInfo semaphoreInfo;
 
@@ -29,6 +29,13 @@ namespace Render
 		context->GetDevice().destroySemaphore(imageAvailableSemaphore);
 		context->GetDevice().destroySemaphore(renderFinishedSemaphore);
 		context->GetDevice().destroyFence(inFlightFence);
+
+		context->GetDevice().freeCommandBuffers(context->GetCommandPool(), commandBuffer);
+
+		for (auto& renderTarget : renderTargets)
+		{
+			delete renderTarget;
+		}
 	}
 
 	void Frame::AddRenderTarget(RenderTarget* _renderTarget)

@@ -32,7 +32,6 @@
 #pragma warning(pop)
 
 #include "Util/Logger.hpp"
+#include "Helpers/Helpers.hpp"
 
 #include "GLFW/glfw3.h"
-
-#include "Render/RenderTarget.hpp"

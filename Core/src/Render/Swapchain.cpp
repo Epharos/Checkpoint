@@ -1,19 +1,12 @@
-#include "Swapchain.hpp"
-
 #include "pch.hpp"
 
+#include "Swapchain.hpp"
+
 #include "Frame.hpp"
+#include "Helpers/Helpers.hpp"
 
 void Render::Swapchain::CreateData()
 {
-	QuerySupport();
-
-	auto surfaceFormat = SelectSurfaceFormat(surfaceFormats);
-	auto presentMode = SelectPresentMode(presentModes);
-
-	auto windowExtent = context->GetPlatform()->GetExtent();
-	extent = SelectExtent(surfaceCapabilities, windowExtent.width, windowExtent.height);
-
 	uint32_t imageCount = std::min(surfaceCapabilities.minImageCount + 1, surfaceCapabilities.maxImageCount);
 
 	vk::SwapchainCreateInfoKHR createInfo;
@@ -48,17 +41,24 @@ void Render::Swapchain::CreateData()
 
 	swapchain = context->GetDevice().createSwapchainKHR(createInfo);
 
-	format = surfaceFormat.format;
-
 	std::vector<vk::Image> images = context->GetDevice().getSwapchainImagesKHR(swapchain);
 	frames.reserve(images.size());
 
+	auto depthRTA = std::make_shared<RenderTargetAttachment>(context, extent, 
+			Helper::Format::FindDepthFormat(context->GetPhysicalDevice()), vk::ImageUsageFlagBits::eDepthStencilAttachment, vk::ImageAspectFlagBits::eDepth);
+
 	for (auto image : images)
 	{
-		auto frame = frames.emplace_back(context);
-		auto rt = new RenderTarget(*context, extent);
-		rt->AddAttachment(image, format, vk::ImageUsageFlagBits::eColorAttachment, vk::ImageAspectFlagBits::eColor);
-		rt->AddAttachment()
+		Frame* frame = new Frame(context);
+		RenderTarget* rt = new RenderTarget(*context, extent);
+		frame->AddRenderTarget(rt);
+		auto colorRTA = std::make_shared<RenderTargetAttachment>(context, image, surfaceFormat.format, vk::ImageAspectFlagBits::eColor);
+		colorRTA->isSwapchain = true;
+		rt->AddAttachment(depthRTA);
+		rt->AddAttachment(colorRTA);
+		rt->Build(mainRenderPass);
+		
+		frames.push_back(frame);
 	}
 }
 
@@ -112,10 +112,10 @@ vk::Extent2D Render::Swapchain::SelectExtent(const vk::SurfaceCapabilitiesKHR& _
 	return actualExtent;
 }
 
-Render::Swapchain::Swapchain(const Context::VulkanContext*& _context)
+Render::Swapchain::Swapchain(Context::VulkanContext* _context)
 {
 	context = _context;
-	Create();
+	Setup();
 }
 
 Render::Swapchain::~Swapchain()
@@ -123,8 +123,22 @@ Render::Swapchain::~Swapchain()
 	Cleanup();
 }
 
-void Render::Swapchain::Create()
+void Render::Swapchain::Setup()
 {
+	QuerySupport();
+
+	auto newSurfaceFormat = SelectSurfaceFormat(surfaceFormats);
+	auto newPresentMode = SelectPresentMode(presentModes);
+	auto windowExtent = context->GetPlatform()->GetExtent();
+
+	extent = SelectExtent(surfaceCapabilities, windowExtent.width, windowExtent.height);
+	surfaceFormat = newSurfaceFormat;
+	presentMode = newPresentMode;
+}
+
+void Render::Swapchain::Create(vk::RenderPass _mainRenderPass)
+{
+	if(!mainRenderPass) mainRenderPass = _mainRenderPass;
 	CreateData();
 	maxFramesInFlight = static_cast<uint32>(frames.size());
 }
@@ -142,7 +156,8 @@ void Render::Swapchain::Recreate()
 	context->GetDevice().waitIdle();
 
 	Cleanup();
-	Create();
+	Setup();
+	Create(mainRenderPass);
 }
 
 void Render::Swapchain::Cleanup()

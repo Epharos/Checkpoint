@@ -17,10 +17,10 @@ namespace Render
 		vk::Semaphore renderFinishedSemaphore;
 		vk::Fence inFlightFence;
 
-		const Context::VulkanContext* context;
+		Context::VulkanContext* context;
 
 	public:
-		Frame(const Context::VulkanContext*& _context);
+		Frame(Context::VulkanContext*& _context);
 		~Frame();
 
 		void AddRenderTarget(RenderTarget* _renderTarget);

@@ -3,87 +3,73 @@
 #include "../pch.hpp"
 
 #include "../Context/VulkanContext.hpp"
-#include "../Helpers/MemoryHelper.hpp"
+#include "../Helpers/Helpers.hpp"
 
 namespace Render
 {
-	struct RenderTargetAttachment
+	class RenderTargetAttachment
 	{
+	protected:
 		vk::Image image;
 		vk::ImageView imageView;
 		vk::DeviceMemory imageMemory;
 
-		void Destroy(const vk::Device& device)
-		{
-			device.destroyImageView(imageView);
-			device.destroyImage(image);
-			device.freeMemory(imageMemory);
-		}
+		Context::VulkanContext* context;
 
-		void Build(const Context::VulkanContext*& _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags)
-		{
-			vk::ImageCreateInfo imageInfo;
-			imageInfo.imageType = vk::ImageType::e2D;
-			imageInfo.extent = vk::Extent3D(_extent.width, _extent.height, 1);
-			imageInfo.mipLevels = 1;
-			imageInfo.arrayLayers = 1;
-			imageInfo.format = _format;
-			imageInfo.tiling = vk::ImageTiling::eOptimal;
-			imageInfo.initialLayout = vk::ImageLayout::eUndefined;
-			imageInfo.usage = _usage;
-			imageInfo.samples = vk::SampleCountFlagBits::e1;
-			imageInfo.sharingMode = vk::SharingMode::eExclusive;
+		virtual void Destroy(const vk::Device& device);
+		void Build(Context::VulkanContext*& _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags);
+		void Build(Context::VulkanContext*& _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags);
 
-			image = _context->GetDevice().createImage(imageInfo);
+	public:
+		bool isSwapchain = false; //Temporary fix
 
-			vk::MemoryRequirements memRequirements = _context->GetDevice().getImageMemoryRequirements(image);
+		RenderTargetAttachment(Context::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags);
+		RenderTargetAttachment(Context::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags);
+		~RenderTargetAttachment();
 
-			vk::MemoryAllocateInfo allocInfo;
-			allocInfo.allocationSize = memRequirements.size;
-			allocInfo.memoryTypeIndex = Helper::FindMemoryType(_context->GetPhysicalDevice(), memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-
-			imageMemory = _context->GetDevice().allocateMemory(allocInfo);
-
-			_context->GetDevice().bindImageMemory(image, imageMemory, 0);
-
-			vk::ImageViewCreateInfo viewInfo;
-			viewInfo.image = image;
-			viewInfo.viewType = vk::ImageViewType::e2D;
-			viewInfo.format = _format;
-			viewInfo.subresourceRange.aspectMask = _aspectFlags;
-			viewInfo.subresourceRange.baseMipLevel = 0;
-			viewInfo.subresourceRange.levelCount = 1;
-			viewInfo.subresourceRange.baseArrayLayer = 0;
-			viewInfo.subresourceRange.layerCount = 1;
-
-			imageView = _context->GetDevice().createImageView(viewInfo);
-		}
+		inline constexpr const vk::Image& GetImage() const { return image; }
+		inline constexpr const vk::ImageView& GetImageView() const { return imageView; }
+		inline constexpr const vk::DeviceMemory& GetImageMemory() const { return imageMemory; }
 	};
+
+	/*class RenderTargetAttachmentSwapchain : public RenderTargetAttachment
+	{
+	protected:
+		virtual void Destroy(const vk::Device& device) override;
+
+	public:
+		RenderTargetAttachmentSwapchain(Context::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags);
+		RenderTargetAttachmentSwapchain(Context::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags);
+		~RenderTargetAttachmentSwapchain();
+	};*/
 
 	class RenderTarget
 	{
 	private:
-		std::vector<RenderTargetAttachment*> attachments;
+		std::vector<std::shared_ptr<RenderTargetAttachment>> attachments;
 
 		vk::Framebuffer framebuffer;
 		vk::RenderPass renderPass;
 
 		vk::Extent2D extent;
 
-		const Context::VulkanContext* context;
+		Context::VulkanContext* context;
 
 	public:
-		RenderTarget(const Context::VulkanContext& _context, const vk::Extent2D& _extent);
+		RenderTarget(Context::VulkanContext& _context, const vk::Extent2D& _extent);
 		~RenderTarget();
 
 		void AddAttachment(const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags);
 		void AddAttachment(const vk::Image& _image, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags);
-		void AddAttachment(RenderTargetAttachment*& _attachment);
+		void AddAttachment(std::shared_ptr<RenderTargetAttachment>& _attachment);
 
 		void Build(const vk::RenderPass& _renderPass);
 
-		inline constexpr const std::vector<RenderTargetAttachment*>& GetAttachments() const { return attachments; }
-		inline constexpr const RenderTargetAttachment* GetAttachment(const uint32_t& index) const { return attachments[index]; }
+		void Cleanup();
+
+		inline constexpr const vk::RenderPass& GetRenderPass() const { return renderPass; }
+		inline constexpr const std::vector<std::shared_ptr<RenderTargetAttachment>>& GetAttachments() const { return attachments; }
+		inline constexpr const std::shared_ptr<RenderTargetAttachment>& GetAttachment(const uint32_t& index) const { return attachments[index]; }
 		inline constexpr const vk::Framebuffer& GetFramebuffer() const { return framebuffer; }
 		inline constexpr const vk::Extent2D& GetExtent() const { return extent; }
 	};

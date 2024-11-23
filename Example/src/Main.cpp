@@ -1,4 +1,5 @@
 #include <Core.hpp>
+#include "BasicRenderer.hpp"
 
 int main()
 {
@@ -24,11 +25,16 @@ int main()
 	platform.Initialize(contextInfo);
 	vulkanContext.Initialize(contextInfo);
 
+	BasicRenderer renderer;
+	renderer.Build(&vulkanContext);
+
 	while (!platform.ShouldClose())
 	{
 		platform.PollEvents();
+		renderer.Render();
 	}
 
+	renderer.Cleanup();
 	vulkanContext.Shutdown();
 	platform.CleanUp();
 }
