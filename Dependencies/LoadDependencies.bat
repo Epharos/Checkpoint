@@ -1,4 +1,4 @@
-REM Vulkan SDK download
+REM VULKAN SDK DOWNLOAD
 echo "Downloading Vulkan SDK. You will have to install it manually."
 curl -O https://sdk.lunarg.com/sdk/download/1.3.296.0/windows/VulkanSDK-1.3.296.0-Installer.exe
 cls
@@ -14,6 +14,16 @@ mkdir ..\..\glfw\libs
 move glfw3.lib ..\..\glfw\libs
 cd ..\..
 rmdir glfw-3.4.bin.WIN64
+cls
+
+REM SLANG
+echo "Slang compiler"
+curl -OL https://github.com/shader-slang/slang/releases/download/v2024.14.5/slang-2024.14.5-windows-x86_64.zip
+mkdir slang
+cd slang
+unzip ../slang-2024.14.5-windows-x86_64.zip
+del ../slang-2024.14.5-windows-x86_64.zip
+cd ..
 cls
 
 echo "Dependencies downloaded. You can now build the project."

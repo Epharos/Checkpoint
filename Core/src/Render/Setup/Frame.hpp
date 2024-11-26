@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../pch.hpp"
+#include "../../pch.hpp"
 
 #include "RenderTarget.hpp"
 
@@ -24,5 +24,10 @@ namespace Render
 		~Frame();
 
 		void AddRenderTarget(RenderTarget* _renderTarget);
+
+		inline constexpr vk::Semaphore& GetImageAvailableSemaphore() { return imageAvailableSemaphore; }
+		inline constexpr vk::Semaphore& GetRenderFinishedSemaphore() { return renderFinishedSemaphore; }
+		inline constexpr vk::Fence& GetInFlightFence() { return inFlightFence; }
+		inline constexpr vk::CommandBuffer& GetCommandBuffer() { return commandBuffer; }
 	};
 }

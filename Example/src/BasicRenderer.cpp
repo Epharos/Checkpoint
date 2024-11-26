@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "BasicRenderer.hpp"
 
 BasicRenderer::~BasicRenderer()
@@ -5,15 +6,13 @@ BasicRenderer::~BasicRenderer()
 
 }
 
-void BasicRenderer::Render()
+void BasicRenderer::RenderFrame()
 {
 
 }
 
 void BasicRenderer::CreateMainRenderPass()
 {
-	LOG_DEBUG("Yop");
-
 	vk::AttachmentDescription depthAttachment = {};
 	depthAttachment.format = Helper::Format::FindDepthFormat(context->GetPhysicalDevice());
 	depthAttachment.samples = vk::SampleCountFlagBits::e1;

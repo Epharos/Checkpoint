@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../pch.hpp"
-#include "../Context/VulkanContext.hpp"
-#include "Swapchain.hpp"
+#include "../../pch.hpp"
+#include "../../Context/VulkanContext.hpp"
+#include "../Setup/Swapchain.hpp"
 
 namespace Render
 {
@@ -17,6 +17,8 @@ namespace Render
 		virtual void CreateMainRenderPass() = 0;
 		virtual void CreateRenderPasses();
 
+		virtual void RenderFrame() = 0;
+
 	public:
 		Renderer() = default;
 		virtual ~Renderer();
@@ -24,7 +26,8 @@ namespace Render
 		virtual void Build(Context::VulkanContext* _context);
 
 		virtual void Cleanup();
+		
 
-		virtual void Render() = 0;
+		virtual void Render();
 	};
 }

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../pch.hpp"
-#include "../Context/VulkanContext.hpp"
+#include "../../pch.hpp"
+#include "../../Context/VulkanContext.hpp"
 
 namespace Render
 {
@@ -59,5 +59,7 @@ namespace Render
 		inline constexpr std::vector<vk::SurfaceFormatKHR>& GetSurfaceFormats() { return surfaceFormats; }
 		inline constexpr std::vector<vk::PresentModeKHR>& GetPresentModes() { return presentModes; }
 		inline constexpr vk::RenderPass& GetMainRenderPass() { return mainRenderPass; }
+
+		inline constexpr void SetCurrentFrame(uint32 _currentFrame) { currentFrame = _currentFrame; }
 	};
 }

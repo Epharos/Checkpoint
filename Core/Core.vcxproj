@@ -149,10 +149,10 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="src\Render\Frame.cpp" />
-    <ClCompile Include="src\Render\Renderer.cpp" />
-    <ClCompile Include="src\Render\RenderTarget.cpp" />
-    <ClCompile Include="src\Render\Swapchain.cpp" />
+    <ClCompile Include="src\Render\Setup\Frame.cpp" />
+    <ClCompile Include="src\Render\Renderer\Renderer.cpp" />
+    <ClCompile Include="src\Render\Setup\RenderTarget.cpp" />
+    <ClCompile Include="src\Render\Setup\Swapchain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Core.hpp" />
@@ -161,10 +161,11 @@
     <ClInclude Include="src\Context\VulkanContext.hpp" />
     <ClInclude Include="src\Helpers\Helpers.hpp" />
     <ClInclude Include="src\pch.hpp" />
-    <ClInclude Include="src\Render\Frame.hpp" />
-    <ClInclude Include="src\Render\Renderer.hpp" />
-    <ClInclude Include="src\Render\RenderTarget.hpp" />
-    <ClInclude Include="src\Render\Swapchain.hpp" />
+    <ClInclude Include="src\Render\Pipeline\Material.hpp" />
+    <ClInclude Include="src\Render\Setup\Frame.hpp" />
+    <ClInclude Include="src\Render\Renderer\Renderer.hpp" />
+    <ClInclude Include="src\Render\Setup\RenderTarget.hpp" />
+    <ClInclude Include="src\Render\Setup\Swapchain.hpp" />
     <ClInclude Include="src\Util\Logger.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
