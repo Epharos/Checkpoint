@@ -38,6 +38,8 @@ x64
 
 # Dependencies
 Dependencies/VulkanSDK
+Dependencies/glfw
+Dependencies/slang
 
 # Logs
 

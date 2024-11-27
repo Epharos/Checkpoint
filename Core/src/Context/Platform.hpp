@@ -26,5 +26,7 @@ namespace Context
 
 		inline constexpr Window GetWindow() const { return window; }
 		inline constexpr vk::Extent2D GetExtent() const { return extent; }
+
+		inline constexpr float GetAspectRatio() const { return static_cast<float>(extent.width) / static_cast<float>(extent.height); }
 	};
 }

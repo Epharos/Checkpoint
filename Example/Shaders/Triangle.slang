@@ -1,3 +1,10 @@
+[[vk::binding(0)]]
+struct CameraData
+{
+	float4x4 view;
+	float4x4 projection;
+} camera;
+
 struct VSInput
 {
 	float3 position : POSITION;
@@ -14,7 +21,8 @@ struct VSOutput
 VSOutput vs_main(VSInput input)
 {
 	VSOutput output;
-	output.position = float4(input.position, 1.0f);
+	float4x4 viewProj = mul(camera.projection, camera.view);
+	output.position = mul(viewProj, float4(input.position, 1.0f));
 	output.color = input.color;
 	return output;
 }

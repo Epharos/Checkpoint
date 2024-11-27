@@ -20,6 +20,27 @@ namespace Helper
 
 			throw std::runtime_error("Failed to find suitable memory type!");
 		}
+
+		vk::Buffer CreateBuffer(const vk::Device& device, const vk::PhysicalDevice& physicalDevice, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::DeviceMemory& bufferMemory)
+		{
+			vk::BufferCreateInfo bufferCreateInfo;
+			bufferCreateInfo.size = size;
+			bufferCreateInfo.usage = usage;
+			bufferCreateInfo.sharingMode = vk::SharingMode::eExclusive;
+
+			vk::Buffer buffer = device.createBuffer(bufferCreateInfo);
+
+			vk::MemoryRequirements memoryRequirements = device.getBufferMemoryRequirements(buffer);
+
+			vk::MemoryAllocateInfo memoryAllocateInfo;
+			memoryAllocateInfo.allocationSize = memoryRequirements.size;
+			memoryAllocateInfo.memoryTypeIndex = FindMemoryType(physicalDevice, memoryRequirements.memoryTypeBits, properties);
+
+			bufferMemory = device.allocateMemory(memoryAllocateInfo);
+			device.bindBufferMemory(buffer, bufferMemory, 0);
+
+			return buffer;
+		}
 	}
 
 	namespace Format
