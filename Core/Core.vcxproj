@@ -169,6 +169,7 @@
     <ClInclude Include="src\Render\Setup\RenderTarget.hpp" />
     <ClInclude Include="src\Render\Setup\Swapchain.hpp" />
     <ClInclude Include="src\Resources\Mesh.hpp" />
+    <ClInclude Include="src\Util\Clock.hpp" />
     <ClInclude Include="src\Util\Logger.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

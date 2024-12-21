@@ -1,6 +1,44 @@
 #include "pch.hpp"
 #include "BasicRenderer.hpp"
 
+struct Transform
+{
+	glm::vec3 position = glm::vec3(0.0f);
+};
+
+struct Rigidbody
+{
+	glm::vec3 velocity = glm::vec3(0.0f);
+};
+
+class Gravity : public ECS::System
+{
+protected:
+	float gravity = 9.8f; //9.8 m/s^2
+
+public:
+	void Update(ECS::ComponentManager& _componentManager, const float& _deltaTime) override
+	{
+		_componentManager.ForEachComponent<Rigidbody>([&](Entity _entity, Rigidbody& _rigidbody)
+			{
+				_rigidbody.velocity.y -= gravity * _deltaTime;
+				if (_rigidbody.velocity.y < -10.0f)
+				{
+					_rigidbody.velocity.y = -10.0f;
+				}
+			});
+
+		_componentManager.ForEachComponent<Transform>([&](Entity _entity, Transform& _transform)
+			{
+				if (!_componentManager.HasComponent<Rigidbody>(_entity)) return;
+
+				_transform.position += _componentManager.GetComponent<Rigidbody>(_entity).velocity * _deltaTime;
+			});
+	}
+};
+
+//--------------------
+
 int main()
 {
 	LOG_TRACE("Hello World!");
@@ -21,6 +59,8 @@ int main()
 			{}
 		}
 	};
+
+	ECS::EntityComponentSystem ecs;
 
 	platform.Initialize(contextInfo);
 	vulkanContext.Initialize(contextInfo);
@@ -76,13 +116,17 @@ int main()
 
 #pragma endregion
 
+	Util::Clock dtClock;
+
 	while (!platform.ShouldClose())
 	{
 		platform.PollEvents();
 		renderer.Render();
+		ecs.Update(dtClock.Restart());
 	}
 
 	renderer.Cleanup();
 	vulkanContext.Shutdown();
 	platform.CleanUp();
 }
+

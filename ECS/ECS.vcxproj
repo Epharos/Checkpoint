@@ -20,10 +20,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\ECS.hpp" />
+    <ClInclude Include="src\ComponentManager.hpp" />
+    <ClInclude Include="src\ComponentSparseSet.hpp" />
     <ClInclude Include="src\Entity.hpp" />
+    <ClInclude Include="src\EntityComponentSystem.hpp" />
+    <ClInclude Include="src\EntityManager.hpp" />
     <ClInclude Include="src\pch.hpp" />
+    <ClInclude Include="src\SparseSet.h" />
+    <ClInclude Include="src\System.hpp" />
+    <ClInclude Include="src\SystemManager.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\EntityManager.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.hpp</PrecompiledHeaderFile>
@@ -130,6 +138,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)src</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -147,6 +156,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)src</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

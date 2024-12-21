@@ -26,7 +26,7 @@ namespace Render
 
 		inline constexpr glm::vec3& GetPosition() { return position; }
 		inline constexpr glm::quat& GetRotation() { return rotation; }
-		inline constexpr glm::vec3 GetRotationEuler() const { return glm::eulerAngles(rotation); }
+		inline glm::vec3 GetRotationEuler() const { return glm::eulerAngles(rotation); }
 
 		inline constexpr glm::mat4& GetViewMatrix() { return ubo.viewMatrix; }
 		inline constexpr glm::mat4& GetProjectionMatrix() { return ubo.projectionMatrix; }

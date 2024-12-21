@@ -1,0 +1,67 @@
+#pragma once
+
+#include "pch.hpp"
+#include "ComponentSparseSet.hpp"
+
+namespace ECS
+{
+	class ComponentManager
+	{
+	private:
+		std::unordered_map<std::type_index, std::unique_ptr<SparseSet>> componentStorage;
+
+		template<typename T>
+		ComponentSparseSet<T>& GetOrCreateComponentSparseSet()
+		{
+			std::type_index type = std::type_index(typeid(T));
+			if (componentStorage.find(type) == componentStorage.end())
+			{
+				componentStorage[type] = std::make_unique<ComponentSparseSet<T>>();
+			}
+
+			return *static_cast<ComponentSparseSet<T>*>(componentStorage[type].get());
+		}
+
+	public:
+
+		template<typename T>
+		bool AddComponent(Entity entity, T component)
+		{
+			return GetOrCreateComponentSparseSet<T>().Add(std::move(entity), std::move(component));
+		}
+
+		template<typename T>
+		bool RemoveComponent(Entity entity)
+		{
+			return GetOrCreateComponentSparseSet<T>().Remove(std::move(entity));
+		}
+
+		template<typename T>
+		T& GetComponent(Entity entity)
+		{
+			return GetOrCreateComponentSparseSet<T>().Get(std::move(entity));
+		}
+
+		template<typename T>
+		bool HasComponent(Entity entity) const
+		{
+			auto it = componentStorage.find(std::type_index(typeid(T)));
+			if (it == componentStorage.end()) return false;
+			return static_cast<ComponentSparseSet<T>*>(it->second.get())->Has(std::move(entity));
+		}
+
+		template<typename T>
+		void ForEachComponent(std::function<void(Entity, T&)> func)
+		{
+			GetOrCreateComponentSparseSet<T>().ForEach(func);
+		}
+
+		void RemoveAllComponents(Entity entity)
+		{
+			for (auto& [type, storage] : componentStorage)
+			{
+				storage->Remove(std::move(entity));
+			}
+		}
+	};
+}

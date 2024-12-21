@@ -6,3 +6,5 @@
 #include "../src/Render/Pipeline/Material.hpp"
 
 #include "../src/Resources/Mesh.hpp"
+
+#include "../src/Util/Clock.hpp"
