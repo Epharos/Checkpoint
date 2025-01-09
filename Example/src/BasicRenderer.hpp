@@ -8,7 +8,9 @@ protected:
 	void CreateMainRenderPass() override;
 	//void CreateRenderPasses() override;
 
-	void RenderFrame() override;
+	void RenderFrame(const std::vector<RenderCommand>& _commands) override;
+
+	void SetupPipelines() override;
 
 public:
 	BasicRenderer() = default;

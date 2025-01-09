@@ -8,27 +8,7 @@ void Render::Renderer::CreateRenderPasses()
 
 }
 
-void Render::Renderer::Build(Context::VulkanContext* _context)
-{
-	context = _context;
-	swapchain = new Swapchain(_context);
-	CreateMainRenderPass();
-	CreateRenderPasses();
-	swapchain->Create(mainRenderPass);
-}
-
-Render::Renderer::~Renderer()
-{
-	
-}
-
-void Render::Renderer::Cleanup()
-{
-	delete swapchain;
-	context->GetDevice().destroyRenderPass(mainRenderPass);
-}
-
-void Render::Renderer::Render()
+uint32_t Render::Renderer::PrepareFrame()
 {
 	if (context->GetDevice().waitForFences(1, &swapchain->GetCurrentFrame()->GetInFlightFence(), VK_TRUE, std::numeric_limits<uint32_t>().max()) != vk::Result::eSuccess)
 	{
@@ -41,10 +21,10 @@ void Render::Renderer::Render()
 	{
 		imageIndex = context->GetDevice().acquireNextImageKHR(swapchain->GetSwapchain(), std::numeric_limits<uint64_t>().max(), swapchain->GetCurrentFrame()->GetImageAvailableSemaphore(), nullptr).value;
 	}
-	catch(vk::OutOfDateKHRError e)
+	catch (vk::OutOfDateKHRError e)
 	{
 		swapchain->Recreate();
-		return;
+		return -1;
 	}
 
 	swapchain->GetCurrentFrame()->GetCommandBuffer().reset();
@@ -52,8 +32,11 @@ void Render::Renderer::Render()
 	vk::CommandBufferBeginInfo beginInfo = {};
 	swapchain->GetCurrentFrame()->GetCommandBuffer().begin(beginInfo);
 
-	RenderFrame();
+	return imageIndex;
+}
 
+void Render::Renderer::SubmitFrame()
+{
 	swapchain->GetCurrentFrame()->GetCommandBuffer().end();
 
 	vk::SubmitInfo submitInfo = {};
@@ -83,6 +66,13 @@ void Render::Renderer::Render()
 	{
 		throw std::runtime_error("Failed to submit command buffer");
 	}
+}
+
+void Render::Renderer::PresentFrame(uint32_t _index)
+{
+	vk::Result result;
+	vk::Queue graphicsQueue = context->GetDevice().getQueue(context->GetQueueFamilyIndices().graphicsFamily.value(), 0);
+	vk::Semaphore signalSemaphores[] = { swapchain->GetCurrentFrame()->GetRenderFinishedSemaphore() };
 
 	vk::PresentInfoKHR presentInfo = {};
 	presentInfo.waitSemaphoreCount = 1;
@@ -90,7 +80,7 @@ void Render::Renderer::Render()
 	vk::SwapchainKHR swapchains[] = { swapchain->GetSwapchain() };
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapchains;
-	presentInfo.pImageIndices = &imageIndex;
+	presentInfo.pImageIndices = &_index;
 
 	try
 	{
@@ -109,6 +99,51 @@ void Render::Renderer::Render()
 	{
 		throw std::runtime_error("Failed to present swapchain image");
 	}
+}
 
+void Render::Renderer::EndFrame()
+{
 	swapchain->SetCurrentFrame((swapchain->GetCurrentFrameIndex() + 1) % swapchain->GetFrameCount());
+}
+
+void Render::Renderer::Build(Context::VulkanContext* _context)
+{
+	context = _context;
+	swapchain = new Swapchain(_context);
+	CreateMainRenderPass();
+	CreateRenderPasses();
+	swapchain->Create(mainRenderPass);
+
+	pipelinesManager = new Pipeline::PipelinesManager(context->GetDevice());
+	layoutsManager = new Pipeline::LayoutsManager(context->GetDevice());
+	descriptorSetLayoutsManager = new Pipeline::DescriptorSetLayoutsManager(context->GetDevice());
+
+	SetupPipelines();
+}
+
+Render::Renderer::~Renderer()
+{
+	
+}
+
+void Render::Renderer::Cleanup()
+{
+	delete swapchain;
+	context->GetDevice().destroyRenderPass(mainRenderPass);
+
+	pipelinesManager->Cleanup();
+	layoutsManager->Cleanup();
+	descriptorSetLayoutsManager->Cleanup();
+}
+
+void Render::Renderer::Render(const std::vector<RenderCommand>& _commands)
+{
+	uint32 index = PrepareFrame();
+
+	RenderFrame(_commands);
+
+	SubmitFrame();
+	PresentFrame(index);
+
+	EndFrame();
 }

@@ -149,11 +149,15 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="src\Render\Pipeline\LayoutsManager.cpp" />
+    <ClCompile Include="src\Render\Pipeline\PipelinesManager.cpp" />
+    <ClCompile Include="src\Render\Pipeline\SetLayoutsManager.cpp" />
     <ClCompile Include="src\Render\Renderer\Camera.cpp" />
     <ClCompile Include="src\Render\Setup\Frame.cpp" />
     <ClCompile Include="src\Render\Renderer\Renderer.cpp" />
     <ClCompile Include="src\Render\Setup\RenderTarget.cpp" />
     <ClCompile Include="src\Render\Setup\Swapchain.cpp" />
+    <ClCompile Include="src\Resources\Mesh.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Core.hpp" />
@@ -162,8 +166,12 @@
     <ClInclude Include="src\Context\VulkanContext.hpp" />
     <ClInclude Include="src\Helpers\Helpers.hpp" />
     <ClInclude Include="src\pch.hpp" />
-    <ClInclude Include="src\Render\Pipeline\Material.hpp" />
+    <ClInclude Include="src\Render\Pipeline\SetLayoutsManager.hpp" />
+    <ClInclude Include="src\Render\Pipeline\LayoutsManager.hpp" />
+    <ClInclude Include="src\Resources\Material.hpp" />
+    <ClInclude Include="src\Render\Pipeline\PipelinesManager.hpp" />
     <ClInclude Include="src\Render\Renderer\Camera.hpp" />
+    <ClInclude Include="src\Render\Renderer\RenderCommand.hpp" />
     <ClInclude Include="src\Render\Setup\Frame.hpp" />
     <ClInclude Include="src\Render\Renderer\Renderer.hpp" />
     <ClInclude Include="src\Render\Setup\RenderTarget.hpp" />

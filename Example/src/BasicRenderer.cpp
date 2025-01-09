@@ -6,9 +6,66 @@ BasicRenderer::~BasicRenderer()
 
 }
 
-void BasicRenderer::RenderFrame()
+void BasicRenderer::RenderFrame(const std::vector<RenderCommand>& _commands)
 {
+	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f});
+	vk::ClearDepthStencilValue clearDepth = vk::ClearDepthStencilValue(1.0f, 0);
 
+	std::vector<vk::ClearValue> clearValues = { clearDepth, clearColor };
+
+	vk::RenderPassBeginInfo renderPassInfo = {};
+	renderPassInfo.renderPass = mainRenderPass;
+	renderPassInfo.framebuffer = swapchain->GetCurrentFrame()->GetMainRenderTarget()->GetFramebuffer();
+	renderPassInfo.renderArea.offset = vk::Offset2D{ 0, 0 };
+	renderPassInfo.renderArea.extent = swapchain->GetExtent();
+	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	renderPassInfo.pClearValues = clearValues.data();
+
+	vk::CommandBuffer commandBuffer = swapchain->GetCurrentFrame()->GetCommandBuffer();
+	commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+
+	// RENDER
+
+	commandBuffer.endRenderPass();
+}
+
+void BasicRenderer::SetupPipelines()
+{
+	vk::DescriptorSetLayout cameraLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Camera", 
+		{
+			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex)
+		});
+
+	vk::PushConstantRange modelDataPushConstant = vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, 0, sizeof(glm::mat4));
+
+	vk::PipelineLayout layout = layoutsManager->GetOrCreateLayout({ cameraLayout }, { modelDataPushConstant });
+
+	Pipeline::PipelineCreateData pipelineData = {};
+	pipelineData.config.name = "Basic";
+
+	pipelineData.descriptorSetLayouts = { cameraLayout };
+
+	pipelineData.createInfo = vk::GraphicsPipelineCreateInfo();
+	pipelineData.createInfo.layout = layout;
+	pipelineData.createInfo.renderPass = mainRenderPass;
+	pipelineData.createInfo.subpass = 1;
+	pipelineData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), VK_TRUE, VK_TRUE, vk::CompareOp::eLess);
+	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);
+	pipelineData.createInfo.pRasterizationState = new vk::PipelineRasterizationStateCreateInfo(vk::PipelineRasterizationStateCreateFlags(), VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
+	pipelineData.createInfo.pMultisampleState = new vk::PipelineMultisampleStateCreateInfo(vk::PipelineMultisampleStateCreateFlags(), vk::SampleCountFlagBits::e1, VK_FALSE, 1.0f, nullptr, VK_FALSE, VK_FALSE);
+	pipelineData.createInfo.pColorBlendState = new vk::PipelineColorBlendStateCreateInfo();
+	pipelineData.createInfo.pInputAssemblyState = new vk::PipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleList, VK_FALSE);
+	pipelineData.createInfo.pVertexInputState = new vk::PipelineVertexInputStateCreateInfo(vk::PipelineVertexInputStateCreateFlags(), 0, nullptr, 0, nullptr);
+
+	pipelineData.shaderFile = "Shaders/Triangle.spv";
+	pipelineData.mains = { 
+		{ vk::ShaderStageFlagBits::eVertex, "vs_main" }, 
+		{ vk::ShaderStageFlagBits::eFragment, "ps_main" } 
+	};
+
+	pipelinesManager->CreatePipeline(pipelineData);
+
+	//TODO : Introduce pipeline cache
 }
 
 void BasicRenderer::CreateMainRenderPass()
@@ -54,6 +111,8 @@ void BasicRenderer::CreateMainRenderPass()
 
 	std::vector<vk::AttachmentDescription> attachments = { depthAttachment, colorAttachment };
 	std::vector<vk::SubpassDescription> subpasses = { zPrepass, colorizeSubpass };
+
+	subpassCount = static_cast<uint32_t>(subpasses.size());
 
 	vk::SubpassDependency dependency = {};
 	dependency.srcSubpass = 0;

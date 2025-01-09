@@ -7,7 +7,6 @@
 
 typedef uint32_t uint32;
 
-
 namespace Context
 {
 	struct VulkanExtensions

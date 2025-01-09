@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../pch.hpp"
+#include "../Context/VulkanContext.hpp"
 
 namespace Resource
 {
@@ -17,14 +18,26 @@ namespace Resource
 	{
 	protected:
 		std::vector<Vertex> vertices;
-		std::vector<int> indices;
+		std::vector<uint32_t> indices;
+
+		vk::Buffer vertexBuffer;
+		vk::DeviceMemory vertexBufferMemory;
+		vk::Buffer indexBuffer;
+		vk::DeviceMemory indexBufferMemory;
+
+		const Context::VulkanContext* context;
 
 	public:
 		Mesh() = default;
-		Mesh(const std::vector<Vertex>& vertices, const std::vector<int>& indices)
-			: vertices(vertices), indices(indices) {}
+		Mesh(const Context::VulkanContext& _context, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+		~Mesh();
 
 		inline constexpr const std::vector<Vertex>& GetVertices() const { return vertices; }
-		inline constexpr const std::vector<int>& GetIndices() const { return indices; }
+		inline constexpr const std::vector<uint32_t>& GetIndices() const { return indices; }
+
+		inline constexpr vk::Buffer GetVertexBuffer() const { return vertexBuffer; }
+		inline constexpr vk::DeviceMemory GetVertexBufferMemory() const { return vertexBufferMemory; }
+		inline constexpr vk::Buffer GetIndexBuffer() const { return indexBuffer; }
+		inline constexpr vk::DeviceMemory GetIndexBufferMemory() const { return indexBufferMemory; }
 	};
 }

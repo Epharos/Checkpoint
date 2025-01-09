@@ -29,5 +29,8 @@ namespace Render
 		inline constexpr vk::Semaphore& GetRenderFinishedSemaphore() { return renderFinishedSemaphore; }
 		inline constexpr vk::Fence& GetInFlightFence() { return inFlightFence; }
 		inline constexpr vk::CommandBuffer& GetCommandBuffer() { return commandBuffer; }
+		inline constexpr RenderTarget* GetRenderTarget(uint32_t _index) { return renderTargets[_index]; }
+		inline constexpr std::vector<RenderTarget*>& GetRenderTargets() { return renderTargets; }
+		inline constexpr RenderTarget* GetMainRenderTarget() { return renderTargets[0]; }
 	};
 }

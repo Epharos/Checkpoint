@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\BasicRenderer.cpp" />
+    <ClCompile Include="src\ECS\Components\Transform.cpp" />
     <ClCompile Include="src\Main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
@@ -150,7 +151,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="src\Materials\ColoredMaterial.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -158,7 +158,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\BasicRenderer.hpp" />
-    <ClInclude Include="src\Materials\ColoredMaterial.hpp" />
+    <ClInclude Include="src\ECS\Components.hpp" />
+    <ClInclude Include="src\ECS\Components\MeshRenderer.hpp" />
+    <ClInclude Include="src\ECS\Components\Rigidbody.hpp" />
+    <ClInclude Include="src\ECS\Components\Transform.hpp" />
     <ClInclude Include="src\pch.hpp" />
   </ItemGroup>
   <ItemGroup>

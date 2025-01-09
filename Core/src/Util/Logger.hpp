@@ -9,6 +9,8 @@
 #define LOG_ERROR(message) Util::Logger::GetInstance().Log(Util::LogLevel::ERROR, message, __FILE__, std::this_thread::get_id())
 #define LOG_FATAL(message) Util::Logger::GetInstance().Log(Util::LogLevel::FATAL, message, __FILE__, std::this_thread::get_id())
 
+#define MF Util::Logger::MessageFormat
+
 #include "../pch.hpp"
 
 namespace Util
@@ -44,6 +46,20 @@ namespace Util
 #ifdef CONSOLE_LOG
 			std::cout << FormatLog(_level, _message, _file, _threadID);
 #endif
+		}
+
+		static std::string MessageFormat()
+		{
+			return "";
+		}
+
+		template<typename First, typename... Args>
+		static std::string MessageFormat(First first, Args ... args)
+		{
+			std::stringstream ss;
+			ss << first;
+			ss << MessageFormat(args...);
+			return ss.str();
 		}
 
 	private:
