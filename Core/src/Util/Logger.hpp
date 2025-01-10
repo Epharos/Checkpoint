@@ -44,7 +44,7 @@ namespace Util
 			}
 
 #ifdef CONSOLE_LOG
-			std::cout << FormatLog(_level, _message, _file, _threadID);
+			std::cout << FormatLog(_level, _message, _file, _threadID, true);
 #endif
 		}
 
@@ -89,22 +89,22 @@ namespace Util
 				logFile.close();
 		}
 
-		constexpr std::string_view GetLogLevelString(LogLevel _level)
+		constexpr std::string_view GetLogLevelString(LogLevel _level, bool _consoleLogging = false)
 		{
 			switch (_level)
 			{
 			case LogLevel::TRACE:
-				return "TRACE";
+				return _consoleLogging ? "\033[30;44mTRACE\033[0m" : "TRACE";
 			case LogLevel::DEBUG:
-				return "DEBUG";
+				return _consoleLogging ? "\033[30;45mDEBUG\033[0m" : "DEBUG";
 			case LogLevel::INFO:
-				return "INFO";
+				return _consoleLogging ? "\033[30;46mINFO\033[0m" : "INFO";
 			case LogLevel::WARNING:
-				return "WARNING";
+				return _consoleLogging ? "\033[30;42mWARNING\033[0m" : "WARNING";
 			case LogLevel::ERROR:
-				return "ERROR";
+				return _consoleLogging ? "\033[30;41mERROR\033[0m" : "ERROR";
 			case LogLevel::FATAL:
-				return "FATAL";
+				return _consoleLogging ? "\033[30;47mFATAL\033[0m" : "FATAL";
 			default:
 				return "UNKNOWN";
 			}
@@ -128,14 +128,14 @@ namespace Util
 			return _file.substr(lastSlash + 1, lastDot - lastSlash - 1);
 		}
 
-		std::string FormatLog(LogLevel _level, const std::string& _message, const std::string& _file, const std::thread::id& _threadID)
+		std::string FormatLog(LogLevel _level, const std::string& _message, const std::string& _file, const std::thread::id& _threadID, bool _consoleLogging = false)
 		{
 			std::stringstream ss;
 			auto timestamp = GetTimestamp();
 
 			ss << std::put_time(timestamp, "%Y/%m/%d %H:%M:%S") << " ";
-			ss << "[" << GetLogLevelString(_level) << "] ";
-			ss << "[" << GetFileName(_file) << "/" << _threadID << "] ";
+			ss << "[" << GetLogLevelString(_level, _consoleLogging) << "] ";
+			ss << "[" << (_consoleLogging ? "\033[36;40m" : "") << GetFileName(_file) << (_consoleLogging ? "\033[0m" : "") << "/" << (_consoleLogging ? "\033[33;40m" : "") << _threadID << (_consoleLogging ? "\033[0m" : "") <<  "] ";
 			ss << _message << std::endl;
 
 			return ss.str();

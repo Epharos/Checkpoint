@@ -26,6 +26,8 @@ namespace Render
 
 	Frame::~Frame()
 	{
+		context->GetDevice().waitIdle();
+
 		context->GetDevice().destroySemaphore(imageAvailableSemaphore);
 		context->GetDevice().destroySemaphore(renderFinishedSemaphore);
 		context->GetDevice().destroyFence(inFlightFence);

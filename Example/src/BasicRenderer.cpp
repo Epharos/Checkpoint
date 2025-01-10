@@ -43,7 +43,7 @@ void BasicRenderer::SetupPipelines()
 
 	vk::DescriptorSetLayout instancedModelLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Instanced Model",
 		{
-			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex)
+			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eVertex)
 		});
 
 	vk::PushConstantRange modelDataPushConstant = vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, 0, sizeof(glm::mat4));

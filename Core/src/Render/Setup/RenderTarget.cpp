@@ -149,26 +149,4 @@ namespace Render
 
 		imageView = _context->GetDevice().createImageView(viewInfo);
 	}
-
-	/*void RenderTargetAttachmentSwapchain::Destroy(const vk::Device& device)
-	{
-		device.destroyImageView(imageView);
-		device.freeMemory(imageMemory);
-	}
-
-	RenderTargetAttachmentSwapchain::RenderTargetAttachmentSwapchain(Context::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags) : RenderTargetAttachment(_context, _extent, _format, _usage, _aspectFlags)
-	{
-
-	}
-
-	RenderTargetAttachmentSwapchain::RenderTargetAttachmentSwapchain(Context::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags) : RenderTargetAttachment(_context, _image, _format, _aspectFlags)
-	{
-
-	}
-
-	RenderTargetAttachmentSwapchain::~RenderTargetAttachmentSwapchain()
-	{
-		Destroy(context->GetDevice());
-		LOG_TRACE("Destroyed RenderTargetAttachmentSwapchain");
-	}*/
 }

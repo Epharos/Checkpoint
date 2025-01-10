@@ -6,6 +6,11 @@ struct CameraData
 	float4x4 projection;
 };
 
+struct ModelData
+{
+    float4x4 model;
+}
+
 struct VSInput
 {
 	float3 position : POSITION;
@@ -24,11 +29,11 @@ struct VSOutput
 	float3 bitangent : BITANGENT;
 }
 
-[[vk::binding(0)]]
+[vk::binding(0)]
 ConstantBuffer<CameraData> camera;
 
-[[vk::binding(1, 0)]]
-ConstantBuffer<float4x4[]> models;
+[vk::binding(0, 1)]
+StructuredBuffer<ModelData> models;
 
 [shader("vertex")]
 VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
@@ -37,14 +42,14 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 
 	//Calculate the model-view-projection matrix and multiply it with the vertex position
 	float4x4 viewProj = mul(camera.projection, camera.view);
-	float4x4 mvp = mul(viewProj, models[instanceID]);
+	float4x4 mvp = mul(viewProj, models[instanceID].model);
 	output.position = mul(mvp, float4(input.position, 1.0f));
 
 	//The UV remains the same no matter what
 	output.uv = input.uv;
 
 	//Calculate the normal in world-space
-	float4x4 inverseModel = transpose(inverse(models[instanceID]));
+	float4x4 inverseModel = transpose(inverse(models[instanceID].model));
     output.normal = normalize(mul(inverseModel, float4(input.normal, 0.0f)).xyz);
 
     //Calculate the tangent in world-space

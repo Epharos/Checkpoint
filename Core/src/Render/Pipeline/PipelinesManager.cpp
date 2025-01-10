@@ -41,6 +41,8 @@ namespace Pipeline
 		data.pipelineLayout = _pipelineData.createInfo.layout;
 		data.descriptorSetLayouts = _pipelineData.descriptorSetLayouts;
 
+		device.destroyShaderModule(shaderModule);
+
 		pipelines[_pipelineData.config] = data;
 
 		return pipelines[_pipelineData.config];
