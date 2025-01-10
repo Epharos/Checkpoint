@@ -54,7 +54,7 @@ namespace Pipeline
 	public:
 		PipelinesManager(vk::Device device);
 
-		const PipelineData& CreatePipeline(const PipelineCreateData& _pipelineData);
+		const PipelineData& CreatePipeline(PipelineCreateData& _pipelineData);
 
 		const PipelineData& GetPipeline(const PipelineCreateData& _pipelineData) const;
 

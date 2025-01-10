@@ -26,6 +26,11 @@ void BasicRenderer::RenderFrame(const std::vector<RenderCommand>& _commands)
 
 	// RENDER
 
+	Pipeline::PipelineData boundPipeline = pipelinesManager->GetPipeline({ "Basic" });
+	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, boundPipeline.pipeline);
+
+	commandBuffer.nextSubpass(vk::SubpassContents::eInline);
+
 	commandBuffer.endRenderPass();
 }
 
@@ -36,31 +41,63 @@ void BasicRenderer::SetupPipelines()
 			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex)
 		});
 
+	vk::DescriptorSetLayout instancedModelLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Instanced Model",
+		{
+			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex)
+		});
+
 	vk::PushConstantRange modelDataPushConstant = vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, 0, sizeof(glm::mat4));
 
-	vk::PipelineLayout layout = layoutsManager->GetOrCreateLayout({ cameraLayout }, { modelDataPushConstant });
+	const std::vector<vk::DescriptorSetLayout> layouts = { cameraLayout, instancedModelLayout };
+
+	vk::PipelineLayout layout = layoutsManager->GetOrCreateLayout(layouts, {modelDataPushConstant});
 
 	Pipeline::PipelineCreateData pipelineData = {};
 	pipelineData.config.name = "Basic";
 
-	pipelineData.descriptorSetLayouts = { cameraLayout };
+	pipelineData.descriptorSetLayouts = layouts;
+
+	vk::Viewport* vp = new vk::Viewport;
+	vp->x = 0.f;
+	vp->y = 0.f;
+	vp->width = swapchain->GetExtent().width;
+	vp->height = swapchain->GetExtent().height;
+	vp->minDepth = 0.f;
+	vp->maxDepth = 1.f;
+
+	vk::Rect2D* scisor = new vk::Rect2D;
+	scisor->extent = swapchain->GetExtent();
+	scisor->offset = vk::Offset2D(0, 0);
+
+	vk::PipelineColorBlendAttachmentState* colorBlendAttachment = new vk::PipelineColorBlendAttachmentState;
+	colorBlendAttachment->colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	colorBlendAttachment->blendEnable = VK_FALSE;
+
+	vk::VertexInputBindingDescription* bindingDescription = new vk::VertexInputBindingDescription(0, sizeof(Resource::Vertex), vk::VertexInputRate::eVertex);
+
+	vk::VertexInputAttributeDescription* attributeDescriptions = new vk::VertexInputAttributeDescription[5];
+	attributeDescriptions[0] = vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, position));
+	attributeDescriptions[1] = vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, normal));
+	attributeDescriptions[2] = vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Resource::Vertex, uv));
+	attributeDescriptions[3] = vk::VertexInputAttributeDescription(3, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, tangent));
+	attributeDescriptions[4] = vk::VertexInputAttributeDescription(4, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, bitangent));
 
 	pipelineData.createInfo = vk::GraphicsPipelineCreateInfo();
 	pipelineData.createInfo.layout = layout;
 	pipelineData.createInfo.renderPass = mainRenderPass;
 	pipelineData.createInfo.subpass = 1;
 	pipelineData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), VK_TRUE, VK_TRUE, vk::CompareOp::eLess);
-	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);
+	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, vp, 1, scisor);
 	pipelineData.createInfo.pRasterizationState = new vk::PipelineRasterizationStateCreateInfo(vk::PipelineRasterizationStateCreateFlags(), VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
 	pipelineData.createInfo.pMultisampleState = new vk::PipelineMultisampleStateCreateInfo(vk::PipelineMultisampleStateCreateFlags(), vk::SampleCountFlagBits::e1, VK_FALSE, 1.0f, nullptr, VK_FALSE, VK_FALSE);
-	pipelineData.createInfo.pColorBlendState = new vk::PipelineColorBlendStateCreateInfo();
+	pipelineData.createInfo.pColorBlendState = new vk::PipelineColorBlendStateCreateInfo({}, VK_FALSE, vk::LogicOp::eCopy, 1, colorBlendAttachment, { 0.f, 0.f, 0.f, 0.f });
 	pipelineData.createInfo.pInputAssemblyState = new vk::PipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleList, VK_FALSE);
-	pipelineData.createInfo.pVertexInputState = new vk::PipelineVertexInputStateCreateInfo(vk::PipelineVertexInputStateCreateFlags(), 0, nullptr, 0, nullptr);
+	pipelineData.createInfo.pVertexInputState = new vk::PipelineVertexInputStateCreateInfo(vk::PipelineVertexInputStateCreateFlags(), 1, bindingDescription, 5, attributeDescriptions);
 
-	pipelineData.shaderFile = "Shaders/Triangle.spv";
+	pipelineData.shaderFile = "Shaders/Shader.spv";
 	pipelineData.mains = { 
-		{ vk::ShaderStageFlagBits::eVertex, "vs_main" }, 
-		{ vk::ShaderStageFlagBits::eFragment, "ps_main" } 
+		{ vk::ShaderStageFlagBits::eVertex, "vertexMain" }, 
+		{ vk::ShaderStageFlagBits::eFragment, "pixelMain" } 
 	};
 
 	pipelinesManager->CreatePipeline(pipelineData);

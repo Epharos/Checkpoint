@@ -164,7 +164,7 @@ void Context::VulkanContext::CreateDebugMessenger()
 
 void Context::VulkanContext::CreateCommandPool()
 {
-	vk::CommandPoolCreateInfo poolInfo({}, queueFamilyIndices.graphicsFamily.value());
+	vk::CommandPoolCreateInfo poolInfo(vk::CommandPoolCreateFlags() | vk::CommandPoolCreateFlagBits::eResetCommandBuffer, queueFamilyIndices.graphicsFamily.value());
 	commandPool = device.createCommandPool(poolInfo);
 }
 
