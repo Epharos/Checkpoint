@@ -34,8 +34,10 @@ namespace Resource
 
 		inline constexpr const std::vector<Vertex>& GetVertices() const { return vertices; }
 		inline constexpr const std::vector<uint32_t>& GetIndices() const { return indices; }
+		inline constexpr const uint32_t GetIndexCount() const { return indices.size(); }
 
 		inline constexpr vk::Buffer GetVertexBuffer() const { return vertexBuffer; }
+		inline constexpr vk::Buffer& GetVertexBuffer() { return vertexBuffer; }
 		inline constexpr vk::DeviceMemory GetVertexBufferMemory() const { return vertexBufferMemory; }
 		inline constexpr vk::Buffer GetIndexBuffer() const { return indexBuffer; }
 		inline constexpr vk::DeviceMemory GetIndexBufferMemory() const { return indexBufferMemory; }

@@ -13,6 +13,8 @@ protected:
 	glm::mat4 matrix = glm::mat4(1.0f);
 
 public:
+	Transform(glm::vec3 _position = glm::vec3(0.0f), glm::quat _rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3 _scale = glm::vec3(1.0f));
+
 	void Translate(const glm::vec3& _translation);
 
 	void SetPosition(const glm::vec3& _position);

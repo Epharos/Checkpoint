@@ -113,10 +113,12 @@ void Render::Renderer::Build(Context::VulkanContext* _context)
 	CreateMainRenderPass();
 	CreateRenderPasses();
 	swapchain->Create(mainRenderPass);
+	mainCamera = new Camera(context);
 
 	pipelinesManager = new Pipeline::PipelinesManager(context->GetDevice());
 	layoutsManager = new Pipeline::LayoutsManager(context->GetDevice());
 	descriptorSetLayoutsManager = new Pipeline::DescriptorSetLayoutsManager(context->GetDevice());
+	descriptorSetManager = new Pipeline::DescriptorSetManager(context->GetDevice());
 
 	SetupPipelines();
 }
@@ -134,13 +136,20 @@ void Render::Renderer::Cleanup()
 	pipelinesManager->Cleanup();
 	layoutsManager->Cleanup();
 	descriptorSetLayoutsManager->Cleanup();
+	descriptorSetManager->Cleanup();
+
+	delete mainCamera;
+	delete pipelinesManager;
+	delete layoutsManager;
+	delete descriptorSetLayoutsManager;
+	delete descriptorSetManager;
 }
 
-void Render::Renderer::Render(const std::vector<RenderCommand>& _commands)
+void Render::Renderer::Render(const std::vector<InstanceGroup>& _instanceGroups)
 {
 	uint32 index = PrepareFrame();
 
-	RenderFrame(_commands);
+	RenderFrame(_instanceGroups);
 
 	SubmitFrame();
 	PresentFrame(index);

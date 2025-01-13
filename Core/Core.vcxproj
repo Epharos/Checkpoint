@@ -149,6 +149,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="src\Render\Pipeline\DescriptorSetManager.cpp" />
     <ClCompile Include="src\Render\Pipeline\LayoutsManager.cpp" />
     <ClCompile Include="src\Render\Pipeline\PipelinesManager.cpp" />
     <ClCompile Include="src\Render\Pipeline\SetLayoutsManager.cpp" />
@@ -166,6 +167,7 @@
     <ClInclude Include="src\Context\VulkanContext.hpp" />
     <ClInclude Include="src\Helpers\Helpers.hpp" />
     <ClInclude Include="src\pch.hpp" />
+    <ClInclude Include="src\Render\Pipeline\DescriptorSetManager.hpp" />
     <ClInclude Include="src\Render\Pipeline\SetLayoutsManager.hpp" />
     <ClInclude Include="src\Render\Pipeline\LayoutsManager.hpp" />
     <ClInclude Include="src\Resources\Material.hpp" />

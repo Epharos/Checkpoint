@@ -5,14 +5,18 @@
 class BasicRenderer : public Render::Renderer
 {
 protected:
-	void CreateMainRenderPass() override;
-	//void CreateRenderPasses() override;
+	vk::Buffer instancedBuffer;
+	vk::DeviceMemory instancedBufferMemory;
 
-	void RenderFrame(const std::vector<RenderCommand>& _commands) override;
+	void CreateMainRenderPass() override;
+
+	void RenderFrame(const std::vector<Render::InstanceGroup>& _instanceGroups) override;
 
 	void SetupPipelines() override;
 
 public:
 	BasicRenderer() = default;
 	~BasicRenderer();
+
+	virtual void Cleanup() override;
 };

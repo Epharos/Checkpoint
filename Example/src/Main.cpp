@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "BasicRenderer.hpp"
+#include "ECS/Systems/RenderSystem.hpp"
 
 int main()
 {
@@ -80,10 +81,16 @@ int main()
 
 	Util::Clock dtClock;
 
+	Entity cubeEntity = ecs.CreateEntity();
+	ecs.AddComponent<Transform>(cubeEntity, Transform({ -1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }));
+	ecs.AddComponent<MeshRenderer>(cubeEntity, MeshRenderer(cube));
+
+	ecs.RegisterSystem<RenderSystem>(&renderer);
+
 	while (!platform.ShouldClose())
 	{
 		platform.PollEvents();
-		renderer.Render({});
+		//renderer.Render({});
 		ecs.Update(dtClock.Restart());
 	}
 

@@ -1,6 +1,15 @@
 #include "pch.hpp"
 #include "Transform.hpp"
 
+Transform::Transform(glm::vec3 _position, glm::quat _rotation, glm::vec3 _scale)
+{
+	position = _position;
+	rotation = _rotation;
+	scale = _scale;
+	dirty = true;
+	matrix = glm::mat4(1.0f);
+}
+
 void Transform::Translate(const glm::vec3& _translation)
 {
 	position += _translation;

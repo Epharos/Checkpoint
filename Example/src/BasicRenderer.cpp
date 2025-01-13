@@ -6,9 +6,15 @@ BasicRenderer::~BasicRenderer()
 
 }
 
-void BasicRenderer::RenderFrame(const std::vector<RenderCommand>& _commands)
+void BasicRenderer::Cleanup()
 {
-	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f});
+	Renderer::Cleanup();
+	Helper::Memory::DestroyBuffer(context->GetDevice(), instancedBuffer, instancedBufferMemory);
+}
+
+void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _instanceGroups)
+{
+	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4>{0.2f, 0.2f, 0.2f, 1.0f});
 	vk::ClearDepthStencilValue clearDepth = vk::ClearDepthStencilValue(1.0f, 0);
 
 	std::vector<vk::ClearValue> clearValues = { clearDepth, clearColor };
@@ -26,16 +32,35 @@ void BasicRenderer::RenderFrame(const std::vector<RenderCommand>& _commands)
 
 	// RENDER
 
+	commandBuffer.nextSubpass(vk::SubpassContents::eInline);
+
 	Pipeline::PipelineData boundPipeline = pipelinesManager->GetPipeline({ "Basic" });
 	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, boundPipeline.pipeline);
 
-	commandBuffer.nextSubpass(vk::SubpassContents::eInline);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, boundPipeline.pipelineLayout, 0, 1, &descriptorSetManager->GetDescriptorSet("Camera"), 0, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, boundPipeline.pipelineLayout, 1, 1, &descriptorSetManager->GetDescriptorSet("Instance Model"), 0, nullptr);
+
+	for (auto& instanceGroup : _instanceGroups)
+	{
+		Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(glm::mat4) * instanceGroup.transforms.size(), (void*)instanceGroup.transforms.data());
+
+		vk::DeviceSize offset[1] = {0};
+
+		commandBuffer.bindVertexBuffers(0, 1, &instanceGroup.mesh->GetVertexBuffer(), offset);
+		commandBuffer.bindIndexBuffer(instanceGroup.mesh->GetIndexBuffer(), 0, vk::IndexType::eUint32);
+
+		commandBuffer.drawIndexed(instanceGroup.mesh->GetIndexCount(), instanceGroup.transforms.size(), 0, 0, 0);
+	}
+
+	
 
 	commandBuffer.endRenderPass();
 }
 
 void BasicRenderer::SetupPipelines()
 {
+	instancedBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(glm::mat4) * 1000, vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, instancedBufferMemory);
+
 	vk::DescriptorSetLayout cameraLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Camera", 
 		{
 			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex)
@@ -46,11 +71,16 @@ void BasicRenderer::SetupPipelines()
 			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eVertex)
 		});
 
-	vk::PushConstantRange modelDataPushConstant = vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, 0, sizeof(glm::mat4));
+	descriptorSetManager->CreateDescriptorSets({ "Camera", "Instance Model" }, { cameraLayout, instancedModelLayout });
+
+	if (mainCamera)
+		descriptorSetManager->UpdateDescriptorSet("Camera", { mainCamera->GetUBOBuffer(), 0, sizeof(Render::CameraUBO), 0, 0, vk::DescriptorType::eUniformBuffer, 1});
+
+	descriptorSetManager->UpdateDescriptorSet("Instance Model", { instancedBuffer, 0, sizeof(glm::mat4) * 1000, 0, 0, vk::DescriptorType::eStorageBuffer, 1 });
 
 	const std::vector<vk::DescriptorSetLayout> layouts = { cameraLayout, instancedModelLayout };
 
-	vk::PipelineLayout layout = layoutsManager->GetOrCreateLayout(layouts, {modelDataPushConstant});
+	vk::PipelineLayout layout = layoutsManager->GetOrCreateLayout(layouts, {});
 
 	Pipeline::PipelineCreateData pipelineData = {};
 	pipelineData.config.name = "Basic";

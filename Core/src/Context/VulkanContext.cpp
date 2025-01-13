@@ -91,6 +91,16 @@ void Context::VulkanContext::PickPhysicalDevice()
 			break;
 		}
 	}
+
+#ifdef PRINT_VULKAN_SPECS
+
+	vk::PhysicalDeviceProperties properties = physicalDevice.getProperties();
+
+	LOG_DEBUG(MF(	"PHYSICAL DEVICE PROPERTIES\n",
+					"Min Buffer Offset Alignment (Uniform): ", properties.limits.minUniformBufferOffsetAlignment, "\n",
+					"Min Buffer Offset Alignment (Storage): ", properties.limits.minStorageBufferOffsetAlignment));
+
+#endif
 }
 
 void Context::VulkanContext::CreateLogicalDevice()
