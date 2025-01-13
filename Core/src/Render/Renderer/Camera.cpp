@@ -15,7 +15,7 @@ namespace Render
 
 		uboBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(CameraUBO), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, uboBufferMemory);
 
-		SetPerspective(glm::radians(70.f), context->GetPlatform()->GetAspectRatio(), 0.1f, 1000.f);
+		SetPerspective(70.f, context->GetPlatform()->GetAspectRatio(), 0.1f, 1000.f);
 
 		UpdateUniformBuffer();
 	}
@@ -47,8 +47,7 @@ namespace Render
 	void Camera::UpdateUniformBuffer()
 	{
 		ubo.viewMatrix = glm::lookAtRH(position, position + (rotation * VEC3_FORWARD), glm::vec3(0.0f, 1.0f, 0.0f));
-		void* data = context->GetDevice().mapMemory(uboBufferMemory, 0, sizeof(CameraUBO));
-		memcpy(data, &ubo, sizeof(CameraUBO));
-		context->GetDevice().unmapMemory(uboBufferMemory);
+
+		Helper::Memory::MapMemory(context->GetDevice(), uboBufferMemory, sizeof(CameraUBO), &ubo);
 	}
 }

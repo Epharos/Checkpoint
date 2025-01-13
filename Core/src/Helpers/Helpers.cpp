@@ -49,6 +49,13 @@ namespace Helper
 			device.unmapMemory(memory);
 		}
 
+		void MapMemory(const vk::Device& device, const vk::DeviceMemory& memory, vk::DeviceSize size, const void* data)
+		{
+			void* mappedMemory = device.mapMemory(memory, 0, size);
+			memcpy(mappedMemory, data, size);
+			device.unmapMemory(memory);
+		}
+
 		void CopyBuffer(const vk::Device& device, const vk::CommandPool& commandPool, const vk::Queue& queue, const vk::Buffer& srcBuffer, const vk::Buffer& dstBuffer, vk::DeviceSize size)
 		{
 			vk::CommandBufferAllocateInfo allocInfo;

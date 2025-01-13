@@ -11,6 +11,7 @@ Pipeline::DescriptorSetManager::DescriptorSetManager(vk::Device _device) : devic
 	poolInfo.poolSizeCount = 1;
 	poolInfo.pPoolSizes = &poolSize;
 	poolInfo.maxSets = 100;
+	poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
 
 	pool = device.createDescriptorPool(poolInfo);
 }

@@ -50,13 +50,13 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 
 	//Calculate the normal in world-space
 	float4x4 inverseModel = transpose(inverse(models[instanceID].model));
-    output.normal = normalize(mul(inverseModel, float4(input.normal, 0.0f)).xyz);
+    output.normal = normalize(mul(f3x3(inverseModel), input.normal));
 
-    //Calculate the tangent in world-space
-    output.tangent = normalize(mul(inverseModel, float4(input.tangent, 0.0f)).xyz);
+    // Calculate the tangent in world-space
+    output.tangent = normalize(mul(f3x3(inverseModel), input.tangent));
 
-    //Calculate the bitangent in world-space
-    output.bitangent = normalize(mul(inverseModel, float4(input.bitangent, 0.0f)).xyz);
+    // Calculate the bitangent in world-space
+    output.bitangent = normalize(mul(f3x3(inverseModel), input.bitangent));
 
 	return output;
 }
@@ -64,18 +64,26 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 [shader("pixel")]
 float4 pixelMain(VSOutput input) : SV_TARGET
 {
-    float3 sunDir = normalize(float3(-1.0));
+    // tmp
+    float3 color = float3(1.0, 0.0, 0.0);
+
+    float3 sunDir = normalize(float3(0.0, -1.0, -0.5));
 
 	float3x3 TBN = float3x3(input.tangent, input.bitangent, input.normal);
 
+    float3 normalValue = normalize(float3(0.5));
+    float3 normal = normalize(mul(TBN, normalValue));
+
     float3 ambiantColor = float3(0.1, 0.1, 0.2);
-    float3 normal = mul(TBN, input.normal);
-    float diffuse = max(dot(normal, sunDir), 0.0);
+    float3 diffuse = max(dot(normal, sunDir), 0.0);
 
-    //tmp
-    float3 color = float3(1.0, 0.0, 0.0);
+    float3 finalColor = color * (diffuse + ambiantColor);
 
-    return float4(color * (diffuse + ambiantColor), 1.0);
+    return float4(finalColor, 1.0);
+}
+
+float3x3 f3x3(float4x4 m) {
+	return float3x3(m[0].xyz, m[1].xyz, m[2].xyz);
 }
 
 float4x4 inverse(float4x4 m) {

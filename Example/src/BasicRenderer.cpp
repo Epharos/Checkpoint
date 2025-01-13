@@ -32,7 +32,7 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 
 	// RENDER
 
-	commandBuffer.nextSubpass(vk::SubpassContents::eInline);
+	//commandBuffer.nextSubpass(vk::SubpassContents::eInline);
 
 	Pipeline::PipelineData boundPipeline = pipelinesManager->GetPipeline({ "Basic" });
 	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, boundPipeline.pipeline);
@@ -42,11 +42,11 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 
 	for (auto& instanceGroup : _instanceGroups)
 	{
-		Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(glm::mat4) * instanceGroup.transforms.size(), (void*)instanceGroup.transforms.data());
+		Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(glm::mat4) * instanceGroup.transforms.size(), instanceGroup.transforms.data());
 
-		vk::DeviceSize offset[1] = {0};
+		vk::DeviceSize offset(0);
 
-		commandBuffer.bindVertexBuffers(0, 1, &instanceGroup.mesh->GetVertexBuffer(), offset);
+		commandBuffer.bindVertexBuffers(0, 1, &instanceGroup.mesh->GetVertexBuffer(), &offset);
 		commandBuffer.bindIndexBuffer(instanceGroup.mesh->GetIndexBuffer(), 0, vk::IndexType::eUint32);
 
 		commandBuffer.drawIndexed(instanceGroup.mesh->GetIndexCount(), instanceGroup.transforms.size(), 0, 0, 0);
@@ -115,7 +115,7 @@ void BasicRenderer::SetupPipelines()
 	pipelineData.createInfo = vk::GraphicsPipelineCreateInfo();
 	pipelineData.createInfo.layout = layout;
 	pipelineData.createInfo.renderPass = mainRenderPass;
-	pipelineData.createInfo.subpass = 1;
+	pipelineData.createInfo.subpass = 0;
 	pipelineData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), VK_TRUE, VK_TRUE, vk::CompareOp::eLess);
 	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, vp, 1, scisor);
 	pipelineData.createInfo.pRasterizationState = new vk::PipelineRasterizationStateCreateInfo(vk::PipelineRasterizationStateCreateFlags(), VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -177,7 +177,7 @@ void BasicRenderer::CreateMainRenderPass()
 	colorizeSubpass.pDepthStencilAttachment = &depthAttachmentRef;
 
 	std::vector<vk::AttachmentDescription> attachments = { depthAttachment, colorAttachment };
-	std::vector<vk::SubpassDescription> subpasses = { zPrepass, colorizeSubpass };
+	std::vector<vk::SubpassDescription> subpasses = { /*zPrepass, */colorizeSubpass};
 
 	subpassCount = static_cast<uint32_t>(subpasses.size());
 
@@ -195,7 +195,7 @@ void BasicRenderer::CreateMainRenderPass()
 	renderPassInfo.pAttachments = attachments.data();
 	renderPassInfo.subpassCount = static_cast<uint32_t>(subpasses.size());
 	renderPassInfo.pSubpasses = subpasses.data();
-	renderPassInfo.dependencyCount = 1;
+	renderPassInfo.dependencyCount = 0;
 	renderPassInfo.pDependencies = &dependency;
 
 	mainRenderPass = context->GetDevice().createRenderPass(renderPassInfo);

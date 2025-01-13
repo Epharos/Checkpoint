@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClCompile Include="src\BasicRenderer.cpp" />
     <ClCompile Include="src\ECS\Components\Transform.cpp" />
+    <ClCompile Include="src\ECS\Systems\MoveSystem.cpp" />
     <ClCompile Include="src\ECS\Systems\RenderSystem.cpp" />
     <ClCompile Include="src\Main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
@@ -163,6 +164,7 @@
     <ClInclude Include="src\ECS\Components\MeshRenderer.hpp" />
     <ClInclude Include="src\ECS\Components\Rigidbody.hpp" />
     <ClInclude Include="src\ECS\Components\Transform.hpp" />
+    <ClInclude Include="src\ECS\Systems\MoveSystem.hpp" />
     <ClInclude Include="src\ECS\Systems\RenderSystem.hpp" />
     <ClInclude Include="src\pch.hpp" />
   </ItemGroup>

@@ -17,7 +17,7 @@ namespace Context
 
 		static void FramebufferResizeCallback(Window _window, int _width, int _height);
 	public:
-		void Initialize(VulkanContextInfo _context, vk::Extent2D _extent = vk::Extent2D(720, 480));
+		void Initialize(VulkanContextInfo _context, vk::Extent2D _extent = vk::Extent2D(1920, 1080));
 		bool ShouldClose() const;
 		void PollEvents() const;
 		void CleanUp() const;

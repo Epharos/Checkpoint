@@ -20,6 +20,8 @@ std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& 
 		{
 			auto transform = _componentManager.GetComponent<Transform>(_entity);
 
+			//LOG_DEBUG(MF("Transform: ", transform.GetPosition().x, " ", transform.GetPosition().y, " ", transform.GetPosition().z));
+
 			meshTransforms[_meshRenderer.mesh].push_back(transform.GetModelMatrix());
 		});
 

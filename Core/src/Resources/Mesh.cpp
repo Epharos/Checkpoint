@@ -33,6 +33,7 @@ Resource::Mesh::Mesh(const Context::VulkanContext& _context, const std::vector<V
 
 Resource::Mesh::~Mesh()
 {
+	context->GetDevice().waitIdle();
 	Helper::Memory::DestroyBuffer(context->GetDevice(), vertexBuffer, vertexBufferMemory);
 	Helper::Memory::DestroyBuffer(context->GetDevice(), indexBuffer, indexBufferMemory);
 }
