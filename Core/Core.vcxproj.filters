@@ -122,5 +122,8 @@
     <ClInclude Include="src\Render\Pipeline\DescriptorSetManager.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="src\Resources\ResourceManager.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -3,6 +3,14 @@
 #include "ECS/Systems/RenderSystem.hpp"
 #include "ECS/Systems/MoveSystem.hpp"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+using namespace Resource;
+
+Mesh* LoadMesh(const std::string& _path);
+
 int main()
 {
 	LOG_TRACE("Hello World!");
@@ -32,39 +40,43 @@ int main()
 	BasicRenderer renderer;
 	renderer.Build(&vulkanContext);
 
+	ResourceManager resourceManager;
+	resourceManager.RegisterResourceType<Mesh>();
+
+
 #pragma region Cube Mesh TMP
 	std::vector<Resource::Vertex> cubeVertices;
 	std::vector<uint32_t> cubeIndices;
 
-	cubeVertices.push_back({ { -0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f } });
-	cubeVertices.push_back({ { 0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f } });
-	cubeVertices.push_back({ { 0.5f, 0.5f, -0.5f }, { 0.0f, 0.0f, -1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f } });
-	cubeVertices.push_back({ { -0.5f, 0.5f, -0.5f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f } });
+	cubeVertices.push_back({ { -0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 0.0f } });
+	cubeVertices.push_back({ { 0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f } });
+	cubeVertices.push_back({ { 0.5f, 0.5f, -0.5f }, { 0.0f, 0.0f, -1.0f }, { 1.0f, 1.0f } });
+	cubeVertices.push_back({ { -0.5f, 0.5f, -0.5f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 1.0f } });
 
-	cubeVertices.push_back({ { -0.5f, -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, -1.0f, 0.0f } });
-	cubeVertices.push_back({ { 0.5f, -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, -1.0f, 0.0f } });
-	cubeVertices.push_back({ { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, -1.0f, 0.0f } });
-	cubeVertices.push_back({ { -0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, -1.0f, 0.0f } });
+	cubeVertices.push_back({ { -0.5f, -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } });
+	cubeVertices.push_back({ { 0.5f, -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } });
+	cubeVertices.push_back({ { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } });
+	cubeVertices.push_back({ { -0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } });
 
-	cubeVertices.push_back({ { -0.5f, -0.5f, -0.5f }, { 0.0f, -1.0f, 0.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f } });
-	cubeVertices.push_back({ { 0.5f, -0.5f, -0.5f }, { 0.0f, -1.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f } });
-	cubeVertices.push_back({ { 0.5f, -0.5f, 0.5f }, { 0.0f, -1.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f } });
-	cubeVertices.push_back({ { -0.5f, -0.5f, 0.5f }, { 0.0f, -1.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f } });
+	cubeVertices.push_back({ { -0.5f, -0.5f, -0.5f }, { 0.0f, -1.0f, 0.0f }, { 0.0f, 0.0f } });
+	cubeVertices.push_back({ { 0.5f, -0.5f, -0.5f }, { 0.0f, -1.0f, 0.0f }, { 1.0f, 0.0f } });
+	cubeVertices.push_back({ { 0.5f, -0.5f, 0.5f }, { 0.0f, -1.0f, 0.0f }, { 1.0f, 1.0f } });
+	cubeVertices.push_back({ { -0.5f, -0.5f, 0.5f }, { 0.0f, -1.0f, 0.0f }, { 0.0f, 1.0f } });
 
-	cubeVertices.push_back({ { -0.5f, 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } });
-	cubeVertices.push_back({ { 0.5f, 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } });
-	cubeVertices.push_back({ { 0.5f, 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 1.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } });
-	cubeVertices.push_back({ { -0.5f, 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } });
+	cubeVertices.push_back({ { -0.5f, 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f } });
+	cubeVertices.push_back({ { 0.5f, 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } });
+	cubeVertices.push_back({ { 0.5f, 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 1.0f } });
+	cubeVertices.push_back({ { -0.5f, 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f } });
 
-	cubeVertices.push_back({ { -0.5f, -0.5f, -0.5f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, -1.0f, 0.0f } });
-	cubeVertices.push_back({ { -0.5f, -0.5f, 0.5f }, { -1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, -1.0f, 0.0f } });
-	cubeVertices.push_back({ { -0.5f, 0.5f, 0.5f }, { -1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, -1.0f, 0.0f } });
-	cubeVertices.push_back({ { -0.5f, 0.5f, -0.5f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, -1.0f, 0.0f } });
+	cubeVertices.push_back({ { -0.5f, -0.5f, -0.5f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } });
+	cubeVertices.push_back({ { -0.5f, -0.5f, 0.5f }, { -1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
+	cubeVertices.push_back({ { -0.5f, 0.5f, 0.5f }, { -1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } });
+	cubeVertices.push_back({ { -0.5f, 0.5f, -0.5f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f } });
 
-	cubeVertices.push_back({ { 0.5f, -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 1.0f, 0.0f } });
-	cubeVertices.push_back({ { 0.5f, -0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 1.0f, 0.0f } });
-	cubeVertices.push_back({ { 0.5f, 0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 1.0f, 0.0f } });
-	cubeVertices.push_back({ { 0.5f, 0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 1.0f, 0.0f } });
+	cubeVertices.push_back({ { 0.5f, -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } });
+	cubeVertices.push_back({ { 0.5f, -0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
+	cubeVertices.push_back({ { 0.5f, 0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } });
+	cubeVertices.push_back({ { 0.5f, 0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f } });
 
 	cubeIndices =
 	{
@@ -76,7 +88,9 @@ int main()
 		20, 21, 22, 22, 23, 20
 	};
 
-	Resource::Mesh* cube = new Resource::Mesh(vulkanContext, cubeVertices, cubeIndices);
+	Mesh* cube = new Mesh(vulkanContext, cubeVertices, cubeIndices);
+	resourceManager.Add<Mesh>("cube", cube);
+	//resourceManager.Load<Mesh>("test");
 
 #pragma endregion
 
@@ -86,7 +100,7 @@ int main()
 	{
 		Entity cubeEntity = ecs.CreateEntity();
 		ecs.AddComponent<Transform>(cubeEntity, Transform({ rand() % 100 - 50, rand() % 100 - 50, rand() % 100 - 50 }, {1.0f, 0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}));
-		ecs.AddComponent<MeshRenderer>(cubeEntity, MeshRenderer(cube));
+		ecs.AddComponent<MeshRenderer>(cubeEntity, MeshRenderer(resourceManager.Get<Resource::Mesh>("cube")));
 	}
 	
 	ecs.RegisterSystem<MoveSystem>();
@@ -95,14 +109,16 @@ int main()
 	while (!platform.ShouldClose())
 	{
 		platform.PollEvents();
-		//renderer.Render({});
 		ecs.Update(dtClock.Restart());
 	}
 
-	delete cube; //TMP
-
+	resourceManager.Cleanup();
 	renderer.Cleanup();
 	vulkanContext.Shutdown();
 	platform.CleanUp();
 }
 
+Mesh* LoadMesh(const std::string& _path)
+{
+	return nullptr;
+}

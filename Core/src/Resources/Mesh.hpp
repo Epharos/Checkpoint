@@ -29,7 +29,7 @@ namespace Resource
 
 	public:
 		Mesh() = default;
-		Mesh(const Context::VulkanContext& _context, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+		Mesh(const Context::VulkanContext& _context, std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 		~Mesh();
 
 		inline constexpr const std::vector<Vertex>& GetVertices() const { return vertices; }

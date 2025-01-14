@@ -7,5 +7,6 @@
 #include "../src/Resources/Material.hpp"
 
 #include "../src/Resources/Mesh.hpp"
+#include "../src/Resources/ResourceManager.hpp"
 
 #include "../src/Util/Clock.hpp"
