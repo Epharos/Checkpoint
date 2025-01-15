@@ -1,7 +1,6 @@
 #include "pch.hpp"
 
 #include "RenderSystem.hpp"
-
 std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& _componentManager);
 
 void RenderSystem::Update(ECS::ComponentManager& _componentManager, const float& _dt)
@@ -14,15 +13,16 @@ void RenderSystem::Update(ECS::ComponentManager& _componentManager, const float&
 std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& _componentManager)
 {
 	std::vector<Render::InstanceGroup> instanceGroups;
-	std::unordered_map<Resource::Mesh*, std::vector<glm::mat4>> meshTransforms;
+	std::unordered_map<Resource::Mesh*, std::vector<Render::TransformData>> meshTransforms;
 
 	_componentManager.ForEachComponent<MeshRenderer>([&](Entity _entity, MeshRenderer& _meshRenderer)
 		{
 			auto transform = _componentManager.GetComponent<Transform>(_entity);
 
-			//LOG_DEBUG(MF("Transform: ", transform.GetPosition().x, " ", transform.GetPosition().y, " ", transform.GetPosition().z));
+			glm::mat4 modelMatrix = transform.GetModelMatrix();
+			glm::mat4 normalMatrix = glm::mat4(transform.GetNormalMatrix());
 
-			meshTransforms[_meshRenderer.mesh].push_back(transform.GetModelMatrix());
+			meshTransforms[_meshRenderer.mesh].push_back(Render::TransformData(modelMatrix, normalMatrix));
 		});
 
 	for (auto& [mesh, transforms] : meshTransforms)

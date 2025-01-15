@@ -169,7 +169,8 @@
     <ClInclude Include="src\pch.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\Triangle.slang" />
+    <None Include="Shaders\BaseNormalLighting.slang" />
+    <None Include="Shaders\BNL.spv" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

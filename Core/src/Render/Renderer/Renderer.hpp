@@ -14,10 +14,16 @@
 
 namespace Render
 {
+	struct TransformData
+	{
+		glm::mat4 modelMatrix;
+		glm::mat4 normalMatrix;
+	};
+
 	struct InstanceGroup
 	{
 		Resource::Mesh* mesh;
-		std::vector<glm::mat4> transforms;
+		std::vector<TransformData> transforms;
 	};
 
 	class Renderer

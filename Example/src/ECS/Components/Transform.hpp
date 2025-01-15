@@ -11,6 +11,9 @@ protected:
 
 	bool dirty = true;
 	glm::mat4 matrix = glm::mat4(1.0f);
+	glm::mat3 normalMatrix = glm::mat3(1.0f);
+
+	void UpdateMatrix();
 
 public:
 	Transform(glm::vec3 _position = glm::vec3(0.0f), glm::quat _rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3 _scale = glm::vec3(1.0f));
@@ -30,4 +33,5 @@ public:
 	inline constexpr const glm::vec3 GetScale() const { return scale; }
 
 	const glm::mat4 GetModelMatrix();
+	const glm::mat3 GetNormalMatrix();
 };

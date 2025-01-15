@@ -1,6 +1,6 @@
 REM VULKAN SDK DOWNLOAD
 echo "Downloading Vulkan SDK. You will have to install it manually."
-curl -O https://sdk.lunarg.com/sdk/download/1.3.296.0/windows/VulkanSDK-1.3.296.0-Installer.exe
+curl -O https://sdk.lunarg.com/sdk/download/1.4.304.0/windows/VulkanSDK-1.4.304.0-Installer.exe
 cls
 
 REM GLFW SETUP

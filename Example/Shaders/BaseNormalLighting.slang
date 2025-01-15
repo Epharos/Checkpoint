@@ -1,4 +1,4 @@
-// slangc.exe Triangle.slang -target spirv -fvk-use-entrypoint-name -o Shader.spv
+// slangc.exe BaseNormalLighting.slang -target spirv -fvk-use-entrypoint-name -o BNL.spv
 
 struct CameraData
 {
@@ -9,6 +9,7 @@ struct CameraData
 struct ModelData
 {
     float4x4 model;
+    float4x4 normalMatrix;
 }
 
 struct VSInput
@@ -23,8 +24,8 @@ struct VSInput
 struct VSOutput
 {
 	float4 position : SV_POSITION;
-	float2 uv : TEXCOORD;
-	float3 normal : NORMAL;
+    float3 normal : NORMAL;
+    float2 uv : TEXCOORD;
 	float3 tangent : TANGENT;
 	float3 bitangent : BITANGENT;
 }
@@ -40,7 +41,7 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 {
 	VSOutput output;
 
-	//Calculate the model-view-projection matrix and multiply it with the vertex position
+	//Calculate the model-view-projection matrix and multiply it with the vertex position to get the clip-space position
 	float4x4 viewProj = mul(camera.projection, camera.view);
 	float4x4 mvp = mul(viewProj, models[instanceID].model);
 	output.position = mul(mvp, float4(input.position, 1.0f));
@@ -48,15 +49,17 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 	//The UV remains the same no matter what
 	output.uv = input.uv;
 
-	//Calculate the normal in world-space
-	float4x4 inverseModel = transpose(inverse(models[instanceID].model));
-    output.normal = normalize(mul(f3x3(inverseModel), input.normal));
+    // The normal matrix was sent as a float4x4 (because of alignment) so we need to convert it to a float3x3
+    float3x3 normalMatrix = f3x3(models[instanceID].normalMatrix);
 
-    // Calculate the tangent in world-space
-    output.tangent = normalize(mul(f3x3(inverseModel), input.tangent));
+    // Calculate the normal in clip-space
+    output.normal = normalize(mul(normalMatrix, input.normal));
 
-    // Calculate the bitangent in world-space
-    output.bitangent = normalize(mul(f3x3(inverseModel), input.bitangent));
+    // Calculate the tangent in clip-space
+    output.tangent = normalize(mul(normalMatrix, input.tangent));
+
+    // Calculate the bitangent in clip-space
+    output.bitangent = normalize(mul(normalMatrix, input.bitangent));
 
 	return output;
 }
@@ -65,20 +68,15 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 float4 pixelMain(VSOutput input) : SV_TARGET
 {
     // tmp
-    float3 color = float3(1.0, 0.0, 0.0);
+    float3 color = float3(1.0, 0.0, 0.0); // This is just a placeholder color while we don't have a texture
+    float3 sunDir = normalize(float3(0.0, -1.0, 0.0)); // This is just a placeholder direction while we don't have a light DS
 
-    float3 sunDir = normalize(float3(0.0, -1.0, -0.5));
+    float3 normalValue = normalize(input.normal + 1.0) * 0.5; // Convert the normal from [-1, 1] to [0, 1] > used for debugging
 
-	float3x3 TBN = float3x3(input.tangent, input.bitangent, input.normal);
+    float3 ambiantColor = float3(0.03, 0.03, 0.08); // This is just a placeholder color while we don't have a light DS
+    float3 diffuse = max(dot(input.normal, sunDir), 0.0); // This is just a placeholder color while we don't have a light DS
 
-    float3 normalValue = normalize(float3(0.5));
-    float3 normal = normalize(mul(TBN, normalValue));
-
-    float3 ambiantColor = float3(0.1, 0.1, 0.2);
-    float3 diffuse = max(dot(normal, sunDir), 0.0);
-
-    float3 finalColor = color * (diffuse + ambiantColor);
-
+    float3 finalColor = color * (diffuse + ambiantColor); // Compute the final color
     return float4(finalColor, 1.0);
 }
 

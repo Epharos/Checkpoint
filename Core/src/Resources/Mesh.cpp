@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include "Mesh.hpp"
 
-Resource::Mesh::Mesh(const Context::VulkanContext& _context, std::vector<Vertex>& _vertices, const std::vector<uint32_t>& _indices)
+Resource::Mesh::Mesh(const Context::VulkanContext& _context, const std::vector<Vertex>& _vertices, const std::vector<uint32_t>& _indices)
 {
 	this->vertices = _vertices;
 	this->indices = _indices;
@@ -40,10 +40,6 @@ Resource::Mesh::Mesh(const Context::VulkanContext& _context, std::vector<Vertex>
 		v0.bitangent += bitangent;
 		v1.bitangent += bitangent;
 		v2.bitangent += bitangent;
-
-		LOG_DEBUG(MF("Calculated Tangeant and Bitangeant ", 
-			tangent.x, ";", tangent.y, ";", tangent.z, " | ", 
-			bitangent.x, ";", bitangent.y, ";", bitangent.z));
 	}
 
 	vk::DeviceSize vertexBufferSize = sizeof(Vertex) * vertices.size();

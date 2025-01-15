@@ -14,7 +14,9 @@ void BasicRenderer::Cleanup()
 
 void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _instanceGroups)
 {
-	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4>{0.2f, 0.2f, 0.2f, 1.0f});
+	mainCamera->Rotate(glm::vec3(0.f, 0.0008f, 0.f));
+
+	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4>{0.1f, 0.1f, 0.1f, 1.0f});
 	vk::ClearDepthStencilValue clearDepth = vk::ClearDepthStencilValue(1.0f, 0);
 
 	std::vector<vk::ClearValue> clearValues = { clearDepth, clearColor };
@@ -42,7 +44,7 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 
 	for (auto& instanceGroup : _instanceGroups)
 	{
-		Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(glm::mat4) * instanceGroup.transforms.size(), instanceGroup.transforms.data());
+		Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(Render::TransformData) * instanceGroup.transforms.size(), instanceGroup.transforms.data());
 
 		vk::DeviceSize offset(0);
 
@@ -52,14 +54,12 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 		commandBuffer.drawIndexed(instanceGroup.mesh->GetIndexCount(), instanceGroup.transforms.size(), 0, 0, 0);
 	}
 
-	
-
 	commandBuffer.endRenderPass();
 }
 
 void BasicRenderer::SetupPipelines()
 {
-	instancedBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(glm::mat4) * 1000, vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, instancedBufferMemory);
+	instancedBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(Render::TransformData) * 1000, vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, instancedBufferMemory);
 
 	vk::DescriptorSetLayout cameraLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Camera", 
 		{
@@ -76,7 +76,7 @@ void BasicRenderer::SetupPipelines()
 	if (mainCamera)
 		descriptorSetManager->UpdateDescriptorSet("Camera", { mainCamera->GetUBOBuffer(), 0, sizeof(Render::CameraUBO), 0, 0, vk::DescriptorType::eUniformBuffer, 1});
 
-	descriptorSetManager->UpdateDescriptorSet("Instance Model", { instancedBuffer, 0, sizeof(glm::mat4) * 1000, 0, 0, vk::DescriptorType::eStorageBuffer, 1 });
+	descriptorSetManager->UpdateDescriptorSet("Instance Model", { instancedBuffer, 0, sizeof(Render::TransformData) * 1000, 0, 0, vk::DescriptorType::eStorageBuffer, 1 });
 
 	const std::vector<vk::DescriptorSetLayout> layouts = { cameraLayout, instancedModelLayout };
 
@@ -124,7 +124,7 @@ void BasicRenderer::SetupPipelines()
 	pipelineData.createInfo.pInputAssemblyState = new vk::PipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleList, VK_FALSE);
 	pipelineData.createInfo.pVertexInputState = new vk::PipelineVertexInputStateCreateInfo(vk::PipelineVertexInputStateCreateFlags(), 1, bindingDescription, 5, attributeDescriptions);
 
-	pipelineData.shaderFile = "Shaders/Shader.spv";
+	pipelineData.shaderFile = "Shaders/BNL.spv";
 	pipelineData.mains = { 
 		{ vk::ShaderStageFlagBits::eVertex, "vertexMain" }, 
 		{ vk::ShaderStageFlagBits::eFragment, "pixelMain" } 

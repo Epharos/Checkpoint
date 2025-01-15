@@ -1,6 +1,20 @@
 #include "pch.hpp"
 #include "Transform.hpp"
 
+void Transform::UpdateMatrix()
+{
+	if (!dirty) return; // Early return if the matrix is up to date
+
+	glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), position);
+	glm::mat4 rotationMatrix = glm::toMat4(rotation);
+	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), scale);
+
+	matrix = translationMatrix * rotationMatrix * scaleMatrix;
+	normalMatrix = glm::transpose(glm::inverse(glm::mat3(matrix)));
+
+	dirty = false;
+}
+
 Transform::Transform(glm::vec3 _position, glm::quat _rotation, glm::vec3 _scale)
 {
 	position = _position;
@@ -42,11 +56,12 @@ void Transform::SetScale(const glm::vec3& _scale)
 
 const glm::mat4 Transform::GetModelMatrix()
 {
-	if (dirty)
-	{
-		matrix = glm::translate(glm::mat4(1.0f), position) * glm::toMat4(rotation) * glm::scale(glm::mat4(1.0f), scale);
-		dirty = false;
-	}
-
+	UpdateMatrix();
 	return matrix;
+}
+
+const glm::mat3 Transform::GetNormalMatrix()
+{
+	UpdateMatrix();
+	return normalMatrix;
 }
