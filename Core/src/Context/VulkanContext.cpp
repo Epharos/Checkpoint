@@ -3,7 +3,7 @@
 
 #define ENGINE_VERSION VK_MAKE_API_VERSION(0, 1, 0, 0)
 
-VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT _messageSeverity, VkDebugUtilsMessageTypeFlagsEXT _messageType, const VkDebugUtilsMessengerCallbackDataEXT* _callbackData, void* _userData);
+VKAPI_ATTR vk::Bool32 VKAPI_PTR DebugLayerCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT _messageSeverity, vk::DebugUtilsMessageTypeFlagsEXT _messageType, const vk::DebugUtilsMessengerCallbackDataEXT* _callbackData, void* _userData);
 
 void Context::VulkanContext::Initialize(VulkanContextInfo& _contextInfo)
 {
@@ -170,7 +170,9 @@ void Context::VulkanContext::CreateSurface()
 
 void Context::VulkanContext::CreateDebugMessenger()
 {
-	dynamicLoader = vk::DispatchLoaderDynamic(instance, vkGetInstanceProcAddr);
+	dynamicLoader = vk::detail::DispatchLoaderDynamic(instance, vkGetInstanceProcAddr);
+
+	vk::PFN_DebugUtilsMessengerCallbackEXT callback = reinterpret_cast<vk::PFN_DebugUtilsMessengerCallbackEXT>(DebugLayerCallback);
 
 	#ifdef USE_DEBUG_LAYER
 	vk::DebugUtilsMessengerCreateInfoEXT debugCreateInfo(
@@ -246,37 +248,31 @@ void Context::VulkanContext::ValidateExtensions(const VulkanExtensions& _extensi
 	LOG_INFO("Validated " + std::to_string(validatedCount) + "/" + std::to_string(_extensions.instanceLayers.size()) + " layers");
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT _messageSeverity, VkDebugUtilsMessageTypeFlagsEXT _messageType, const VkDebugUtilsMessengerCallbackDataEXT* _callbackData, void* _userData)
+VKAPI_ATTR vk::Bool32 VKAPI_PTR DebugLayerCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT _messageSeverity, vk::DebugUtilsMessageTypeFlagsEXT _messageType, const vk::DebugUtilsMessengerCallbackDataEXT* _callbackData, void* _userData)
 {
 	std::string message = "[VL ";
-	switch (_messageType)
-	{
-	case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
+	if(_messageType & vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral)
 		message += "GENERAL";
-		break;
-	case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT:
+	else if (_messageType & vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation)
 		message += "VALIDATION";
-		break;
-	case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
+	else if (_messageType & vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance)
 		message += "PERFORMANCE";
-		break;
-	}
 
 	message += "] ";
 	message += _callbackData->pMessage;
 
 	switch (_messageSeverity)
 	{
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+	case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
 		LOG_ERROR(message);
 		break;
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+	case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
 		LOG_WARNING(message);
 		break;
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+	case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
 		LOG_INFO(message);
 		break;
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+	case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
 		LOG_TRACE(message);
 		break;
 	}

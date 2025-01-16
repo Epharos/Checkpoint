@@ -49,7 +49,7 @@ namespace Context
 		inline constexpr Platform* GetPlatform() const { return platform; }
 		inline constexpr vk::CommandPool GetCommandPool() const { return commandPool; }
 		inline constexpr QueueFamilyIndices GetQueueFamilyIndices() const { return queueFamilyIndices; }
-		inline constexpr vk::DispatchLoaderDynamic GetDynamicLoader() const { return dynamicLoader; }
+		inline constexpr vk::detail::DispatchLoaderDynamic GetDynamicLoader() const { return dynamicLoader; }
 		inline Pipeline::PipelinesManager* GetPipelinesManager() const { return pipelinesManager; }
 		inline Pipeline::LayoutsManager* GetLayoutsManager() const { return layoutsManager; }
 		inline Pipeline::DescriptorSetLayoutsManager* GetDescriptorSetLayoutsManager() const { return descriptorSetLayoutsManager; }
@@ -66,7 +66,7 @@ namespace Context
 		vk::Device device;
 		vk::SurfaceKHR surface;
 
-		vk::DispatchLoaderDynamic dynamicLoader;
+		vk::detail::DispatchLoaderDynamic dynamicLoader;
 
 		#ifdef USE_DEBUG_LAYER
 		vk::DebugUtilsMessengerEXT debugMessenger;
