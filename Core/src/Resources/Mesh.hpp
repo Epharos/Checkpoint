@@ -28,7 +28,6 @@ namespace Resource
 		const Context::VulkanContext* context;
 
 	public:
-		Mesh() = default;
 		Mesh(const Context::VulkanContext& _context, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 		~Mesh();
 

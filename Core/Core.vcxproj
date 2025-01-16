@@ -105,7 +105,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies\glfw\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies\stb_image.h;$(SolutionDir)Dependencies\glfw\include</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
@@ -125,7 +125,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies\glfw\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies\stb_image.h;$(SolutionDir)Dependencies\glfw\include</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
@@ -159,6 +159,7 @@
     <ClCompile Include="src\Render\Setup\RenderTarget.cpp" />
     <ClCompile Include="src\Render\Setup\Swapchain.cpp" />
     <ClCompile Include="src\Resources\Mesh.cpp" />
+    <ClCompile Include="src\Resources\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Core.hpp" />
@@ -180,6 +181,7 @@
     <ClInclude Include="src\Render\Setup\Swapchain.hpp" />
     <ClInclude Include="src\Resources\Mesh.hpp" />
     <ClInclude Include="src\Resources\ResourceManager.hpp" />
+    <ClInclude Include="src\Resources\Texture.hpp" />
     <ClInclude Include="src\Util\Clock.hpp" />
     <ClInclude Include="src\Util\Logger.hpp" />
   </ItemGroup>

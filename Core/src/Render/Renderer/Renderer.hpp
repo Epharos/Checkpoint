@@ -38,11 +38,6 @@ namespace Render
 
 		Camera* mainCamera;
 
-		Pipeline::PipelinesManager* pipelinesManager;
-		Pipeline::LayoutsManager* layoutsManager;
-		Pipeline::DescriptorSetLayoutsManager* descriptorSetLayoutsManager;
-		Pipeline::DescriptorSetManager* descriptorSetManager;
-
 		virtual void SetupPipelines() = 0;
 
 		virtual void CreateMainRenderPass() = 0;
@@ -63,7 +58,6 @@ namespace Render
 
 		virtual void Cleanup();
 		
-
 		virtual void Render(const std::vector<InstanceGroup>& _instanceGroups);
 
 		inline constexpr const uint32_t GetSubpassCount() const { return subpassCount; }

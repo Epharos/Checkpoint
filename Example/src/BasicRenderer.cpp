@@ -36,11 +36,11 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 
 	//commandBuffer.nextSubpass(vk::SubpassContents::eInline);
 
-	Pipeline::PipelineData boundPipeline = pipelinesManager->GetPipeline({ "Basic" });
+	Pipeline::PipelineData boundPipeline = context->GetPipelinesManager()->GetPipeline({"Basic"});
 	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, boundPipeline.pipeline);
 
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, boundPipeline.pipelineLayout, 0, 1, &descriptorSetManager->GetDescriptorSet("Camera"), 0, nullptr);
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, boundPipeline.pipelineLayout, 1, 1, &descriptorSetManager->GetDescriptorSet("Instance Model"), 0, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, boundPipeline.pipelineLayout, 0, 1, &context->GetDescriptorSetManager()->GetDescriptorSet("Camera"), 0, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, boundPipeline.pipelineLayout, 1, 1, &context->GetDescriptorSetManager()->GetDescriptorSet("Instance Model"), 0, nullptr);
 
 	for (auto& instanceGroup : _instanceGroups)
 	{
@@ -59,6 +59,11 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 
 void BasicRenderer::SetupPipelines()
 {
+	Pipeline::DescriptorSetLayoutsManager* descriptorSetLayoutsManager = context->GetDescriptorSetLayoutsManager();
+	Pipeline::DescriptorSetManager* descriptorSetManager = context->GetDescriptorSetManager();
+	Pipeline::PipelinesManager* pipelinesManager = context->GetPipelinesManager();
+	Pipeline::LayoutsManager* layoutsManager = context->GetLayoutsManager();
+
 	instancedBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(Render::TransformData) * 1000, vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, instancedBufferMemory);
 
 	vk::DescriptorSetLayout cameraLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Camera", 

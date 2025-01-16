@@ -42,19 +42,16 @@ int main()
 	resourceManager.RegisterResourceType<Mesh>();
 	resourceManager.GetResourceType<Mesh>()->SetLoader(
 		[&](const Context::VulkanContext& _context, const std::string& _path) { return Mesh::LoadMesh(_context, _path); });
+	resourceManager.RegisterResourceType<Texture>();
+	resourceManager.GetResourceType<Texture>()->SetLoader(
+		[&](const Context::VulkanContext& _context, const std::string& _path) { return Texture::LoadTexture(_context, _path); });
 
 	resourceManager.Load<Mesh>("Barstool", "Models/Barstool/barstool.gltf");
 	resourceManager.Load<Mesh>("Cube", "Models/Cube/cube.fbx");
 
+	resourceManager.Load<Texture>("Barstool Albedo", "Textures/Barstool/barstool_albedo.png");
+
 	Util::Clock dtClock;
-
-	//Entity stool = ecs.CreateEntity();
-	//ecs.AddComponent<Transform>(stool, Transform({ 10, 0, 0 }, { 1.0f, 0.0f, 0.0f, 0.0f }, glm::vec3{ .1f, .1f, .1f }));
-	//ecs.AddComponent<MeshRenderer>(stool, MeshRenderer(resourceManager.Get<Resource::Mesh>("Barstool")));
-
-	//Entity cube = ecs.CreateEntity();
-	//ecs.AddComponent<Transform>(cube, Transform({ 0, 0, 10 }, { 1.0f, 0.0f, 0.0f, 0.0f }, glm::vec3{ 1.f, 1.f, 1.f }));
-	//ecs.AddComponent<MeshRenderer>(cube, MeshRenderer(resourceManager.Get<Resource::Mesh>("Cube")));
 
 	for (int i = 0; i < 500; i++)
 	{

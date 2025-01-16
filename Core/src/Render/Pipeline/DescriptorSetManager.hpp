@@ -38,5 +38,7 @@ namespace Pipeline
 		std::vector<vk::DescriptorSet> CreateDescriptorSets(const std::vector<std::string>& _names, const std::vector<vk::DescriptorSetLayout>& _layouts);
 
 		void DestroyDescriptorSet(const std::string& _name);
+
+		inline constexpr const vk::DescriptorPool GetDescriptorPool() const { return pool; }
 	};
 }

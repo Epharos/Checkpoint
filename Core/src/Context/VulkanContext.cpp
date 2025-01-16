@@ -34,6 +34,11 @@ void Context::VulkanContext::Initialize(VulkanContextInfo& _contextInfo)
 	CreateSurface();
 	CreateLogicalDevice();
 	CreateCommandPool();
+
+	pipelinesManager = new Pipeline::PipelinesManager(GetDevice());
+	layoutsManager = new Pipeline::LayoutsManager(GetDevice());
+	descriptorSetLayoutsManager = new Pipeline::DescriptorSetLayoutsManager(GetDevice());
+	descriptorSetManager = new Pipeline::DescriptorSetManager(GetDevice());
 }
 
 void Context::VulkanContext::Shutdown()
@@ -41,6 +46,11 @@ void Context::VulkanContext::Shutdown()
 	LOG_TRACE("Shutting down Vulkan context");
 
 	device.destroyCommandPool(commandPool);
+
+	pipelinesManager->Cleanup();
+	layoutsManager->Cleanup();
+	descriptorSetLayoutsManager->Cleanup();
+	descriptorSetManager->Cleanup();
 
 	device.destroy();
 	instance.destroySurfaceKHR(surface);
@@ -50,6 +60,11 @@ void Context::VulkanContext::Shutdown()
 	#endif
 
 	instance.destroy();
+
+	delete pipelinesManager;
+	delete layoutsManager;
+	delete descriptorSetLayoutsManager;
+	delete descriptorSetManager;
 }
 
 std::string Context::VulkanContext::VersionToString(const uint32& _version) const
@@ -237,13 +252,13 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFla
 	switch (_messageType)
 	{
 	case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
-		message += "GEN";
+		message += "GENERAL";
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT:
-		message += "VAL";
+		message += "VALIDATION";
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
-		message += "PER";
+		message += "PERFORMANCE";
 		break;
 	}
 

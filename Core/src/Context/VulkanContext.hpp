@@ -7,6 +7,11 @@
 
 #include "Devices.hpp"
 
+#include "../Render/Pipeline/PipelinesManager.hpp"
+#include "../Render/Pipeline/LayoutsManager.hpp"
+#include "../Render/Pipeline/SetLayoutsManager.hpp"
+#include "../Render/Pipeline/DescriptorSetManager.hpp"
+
 typedef uint32_t uint32;
 
 namespace Context
@@ -45,6 +50,11 @@ namespace Context
 		inline constexpr vk::CommandPool GetCommandPool() const { return commandPool; }
 		inline constexpr QueueFamilyIndices GetQueueFamilyIndices() const { return queueFamilyIndices; }
 		inline constexpr vk::DispatchLoaderDynamic GetDynamicLoader() const { return dynamicLoader; }
+		inline Pipeline::PipelinesManager* GetPipelinesManager() const { return pipelinesManager; }
+		inline Pipeline::LayoutsManager* GetLayoutsManager() const { return layoutsManager; }
+		inline Pipeline::DescriptorSetLayoutsManager* GetDescriptorSetLayoutsManager() const { return descriptorSetLayoutsManager; }
+		inline Pipeline::DescriptorSetManager* GetDescriptorSetManager() const { return descriptorSetManager; }
+		inline constexpr vk::DescriptorPool GetDescriptorPool() const { return descriptorSetManager->GetDescriptorPool(); }
 #pragma endregion
 
 	private:
@@ -65,6 +75,11 @@ namespace Context
 		QueueFamilyIndices queueFamilyIndices;
 
 		vk::CommandPool commandPool;
+
+		Pipeline::PipelinesManager* pipelinesManager;
+		Pipeline::LayoutsManager* layoutsManager;
+		Pipeline::DescriptorSetLayoutsManager* descriptorSetLayoutsManager;
+		Pipeline::DescriptorSetManager* descriptorSetManager;
 #pragma endregion
 
 #pragma region Context Creation
