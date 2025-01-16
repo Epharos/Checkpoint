@@ -3,31 +3,29 @@
 #include "ECS/Systems/RenderSystem.hpp"
 #include "ECS/Systems/MoveSystem.hpp"
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
+#include <functional>
 
 using namespace Resource;
 
-Mesh* LoadMesh(const std::string& _path);
-
 int main()
 {
+	srand(time(0));
+
 	LOG_TRACE("Hello World!");
 
-	Context::VulkanContext vulkanContext;
+	Context::VulkanContext context;
 	Context::Platform platform;
 
-	Context::VulkanContextInfo contextInfo = 
+	Context::VulkanContextInfo contextInfo =
 	{
 		.appName = "App Example",
 		.appVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
 		.platform = &platform,
 		.extensions =
 		{
-			.instanceExtensions = 
+			.instanceExtensions =
 			{},
-			.instanceLayers = 
+			.instanceLayers =
 			{}
 		}
 	};
@@ -35,74 +33,44 @@ int main()
 	ECS::EntityComponentSystem ecs;
 
 	platform.Initialize(contextInfo);
-	vulkanContext.Initialize(contextInfo);
+	context.Initialize(contextInfo);
 
 	BasicRenderer renderer;
-	renderer.Build(&vulkanContext);
+	renderer.Build(&context);
 
-	ResourceManager resourceManager;
+	ResourceManager resourceManager(context);
 	resourceManager.RegisterResourceType<Mesh>();
+	resourceManager.GetResourceType<Mesh>()->SetLoader(
+		[&](const Context::VulkanContext& _context, const std::string& _path) { return Mesh::LoadMesh(_context, _path); });
 
-
-#pragma region Cube Mesh TMP
-	std::vector<Resource::Vertex> cubeVertices;
-	std::vector<uint32_t> cubeIndices;
-
-	cubeVertices.push_back({ { -0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 0.0f } });
-	cubeVertices.push_back({ { 0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f } });
-	cubeVertices.push_back({ { 0.5f, 0.5f, -0.5f }, { 0.0f, 0.0f, -1.0f }, { 1.0f, 1.0f } });
-	cubeVertices.push_back({ { -0.5f, 0.5f, -0.5f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 1.0f } });
-
-	cubeVertices.push_back({ { -0.5f, -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } });
-	cubeVertices.push_back({ { 0.5f, -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } });
-	cubeVertices.push_back({ { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } });
-	cubeVertices.push_back({ { -0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } });
-
-	cubeVertices.push_back({ { -0.5f, -0.5f, -0.5f }, { 0.0f, -1.0f, 0.0f }, { 1.0f, 1.0f } });
-	cubeVertices.push_back({ { 0.5f, -0.5f, -0.5f }, { 0.0f, -1.0f, 0.0f }, { 1.0f, 0.0f } });
-	cubeVertices.push_back({ { 0.5f, -0.5f, 0.5f }, { 0.0f, -1.0f, 0.0f }, { 0.0f, 0.0f } });
-	cubeVertices.push_back({ { -0.5f, -0.5f, 0.5f }, { 0.0f, -1.0f, 0.0f }, { 0.0f, 1.0f } });
-
-	cubeVertices.push_back({ { -0.5f, 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 1.0f } });
-	cubeVertices.push_back({ { 0.5f, 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } });
-	cubeVertices.push_back({ { 0.5f, 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f } });
-	cubeVertices.push_back({ { -0.5f, 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f } });
-
-	cubeVertices.push_back({ { -0.5f, -0.5f, -0.5f }, { -1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } });
-	cubeVertices.push_back({ { -0.5f, -0.5f, 0.5f }, { -1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
-	cubeVertices.push_back({ { -0.5f, 0.5f, 0.5f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } });
-	cubeVertices.push_back({ { -0.5f, 0.5f, -0.5f }, { -1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f } });
-
-	cubeVertices.push_back({ { 0.5f, -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } });
-	cubeVertices.push_back({ { 0.5f, -0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
-	cubeVertices.push_back({ { 0.5f, 0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } });
-	cubeVertices.push_back({ { 0.5f, 0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f } });
-
-	cubeIndices =
-	{
-		0, 1, 2, 2, 3, 0,
-		4, 6, 5, 6, 4, 7,
-		8, 10, 9, 10, 8, 11,
-		12, 13, 14, 14, 15, 12,
-		16, 18, 17, 18, 16, 19,
-		20, 21, 22, 22, 23, 20
-	};
-
-	Mesh* cube = new Mesh(vulkanContext, cubeVertices, cubeIndices);
-	resourceManager.Add<Mesh>("cube", cube);
-	//resourceManager.Load<Mesh>("test");
-
-#pragma endregion
+	resourceManager.Load<Mesh>("Barstool", "Models/Barstool/barstool.gltf");
+	resourceManager.Load<Mesh>("Cube", "Models/Cube/cube.fbx");
 
 	Util::Clock dtClock;
+
+	//Entity stool = ecs.CreateEntity();
+	//ecs.AddComponent<Transform>(stool, Transform({ 10, 0, 0 }, { 1.0f, 0.0f, 0.0f, 0.0f }, glm::vec3{ .1f, .1f, .1f }));
+	//ecs.AddComponent<MeshRenderer>(stool, MeshRenderer(resourceManager.Get<Resource::Mesh>("Barstool")));
+
+	//Entity cube = ecs.CreateEntity();
+	//ecs.AddComponent<Transform>(cube, Transform({ 0, 0, 10 }, { 1.0f, 0.0f, 0.0f, 0.0f }, glm::vec3{ 1.f, 1.f, 1.f }));
+	//ecs.AddComponent<MeshRenderer>(cube, MeshRenderer(resourceManager.Get<Resource::Mesh>("Cube")));
 
 	for (int i = 0; i < 500; i++)
 	{
 		Entity cubeEntity = ecs.CreateEntity();
-		ecs.AddComponent<Transform>(cubeEntity, Transform({ rand() % 100 - 50, rand() % 100 - 50, rand() % 100 - 50 }, {1.0f, 0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}));
-		ecs.AddComponent<MeshRenderer>(cubeEntity, MeshRenderer(resourceManager.Get<Resource::Mesh>("cube")));
+
+		bool isCube = rand() % 2 == 0;
+		//LOG_DEBUG(MF("Model: ", isCube ? "Cube" : "Barstool"));
+
+		const int m = 100;
+
+		ecs.AddComponent<Transform>(cubeEntity, Transform({ rand() % (m * 2) - m, rand() % (m * 2) / 4 - m / 4, rand() % (m * 2) - m }, { 1.0f, 0.0f, 0.0f, 0.0f }, isCube ? glm::vec3{ 1.f, 1.f, 1.f } : glm::vec3{ .1f, .1f, .1f }));
+		ecs.AddComponent<MeshRenderer>(cubeEntity, MeshRenderer(resourceManager.Get<Resource::Mesh>(isCube ? "Cube" : "Barstool")));
+
+		/*LOG_DEBUG(MF("Spawning at: ", transform.GetPosition().x, ";", transform.GetPosition().y, ";", transform.GetPosition().z));*/
 	}
-	
+
 	ecs.RegisterSystem<MoveSystem>();
 	ecs.RegisterSystem<RenderSystem>(&renderer);
 
@@ -114,11 +82,6 @@ int main()
 
 	resourceManager.Cleanup();
 	renderer.Cleanup();
-	vulkanContext.Shutdown();
+	context.Shutdown();
 	platform.CleanUp();
-}
-
-Mesh* LoadMesh(const std::string& _path)
-{
-	return nullptr;
 }

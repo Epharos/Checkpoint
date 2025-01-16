@@ -24,6 +24,7 @@ namespace Render
 	{
 		Resource::Mesh* mesh;
 		std::vector<TransformData> transforms;
+		uint32_t instanceOffset = 0;
 	};
 
 	class Renderer

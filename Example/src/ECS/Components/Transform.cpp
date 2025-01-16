@@ -21,7 +21,6 @@ Transform::Transform(glm::vec3 _position, glm::quat _rotation, glm::vec3 _scale)
 	rotation = _rotation;
 	scale = _scale;
 	dirty = true;
-	matrix = glm::mat4(1.0f);
 }
 
 void Transform::Translate(const glm::vec3& _translation)

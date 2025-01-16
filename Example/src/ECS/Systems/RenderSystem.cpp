@@ -25,9 +25,13 @@ std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& 
 			meshTransforms[_meshRenderer.mesh].push_back(Render::TransformData(modelMatrix, normalMatrix));
 		});
 
+	uint32_t instanceOffset = 0;
+
 	for (auto& [mesh, transforms] : meshTransforms)
 	{
-		instanceGroups.push_back({ mesh, transforms });
+		instanceGroups.push_back({ mesh, transforms, instanceOffset });
+
+		instanceOffset += transforms.size();
 	}
 
 	return instanceGroups;

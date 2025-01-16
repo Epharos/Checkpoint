@@ -44,14 +44,14 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 
 	for (auto& instanceGroup : _instanceGroups)
 	{
-		Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(Render::TransformData) * instanceGroup.transforms.size(), instanceGroup.transforms.data());
+		Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(Render::TransformData) * instanceGroup.transforms.size(), instanceGroup.instanceOffset * sizeof(Render::TransformData), instanceGroup.transforms.data());
 
 		vk::DeviceSize offset(0);
 
 		commandBuffer.bindVertexBuffers(0, 1, &instanceGroup.mesh->GetVertexBuffer(), &offset);
 		commandBuffer.bindIndexBuffer(instanceGroup.mesh->GetIndexBuffer(), 0, vk::IndexType::eUint32);
 
-		commandBuffer.drawIndexed(instanceGroup.mesh->GetIndexCount(), instanceGroup.transforms.size(), 0, 0, 0);
+		commandBuffer.drawIndexed(instanceGroup.mesh->GetIndexCount(), instanceGroup.transforms.size(), 0, 0, instanceGroup.instanceOffset);
 	}
 
 	commandBuffer.endRenderPass();

@@ -1,6 +1,10 @@
 #include "pch.hpp"
 #include "Mesh.hpp"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 Resource::Mesh::Mesh(const Context::VulkanContext& _context, const std::vector<Vertex>& _vertices, const std::vector<uint32_t>& _indices)
 {
 	this->vertices = _vertices;
@@ -71,4 +75,53 @@ Resource::Mesh::~Mesh()
 	context->GetDevice().waitIdle();
 	Helper::Memory::DestroyBuffer(context->GetDevice(), vertexBuffer, vertexBufferMemory);
 	Helper::Memory::DestroyBuffer(context->GetDevice(), indexBuffer, indexBufferMemory);
+}
+
+Resource::Mesh* Resource::Mesh::LoadMesh(const Context::VulkanContext& _context, const std::string& _path)
+{
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(_path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_FlipWindingOrder);
+
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+	{
+		LOG_ERROR("Failed to load model: " + std::string(importer.GetErrorString()));
+		throw std::runtime_error("Failed to load model: " + std::string(importer.GetErrorString()));
+		return nullptr;
+	}
+
+	aiMesh* mesh = scene->mMeshes[0];
+
+	std::vector<Resource::Vertex> vertices;
+	std::vector<uint32_t> indexes;
+
+	for (uint32_t i = 0; i < mesh->mNumVertices; i++)
+	{
+		Resource::Vertex vertex;
+		vertex.position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
+		vertex.normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
+
+		if (mesh->mTextureCoords[0])
+		{
+			vertex.uv = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
+		}
+		else
+		{
+			vertex.uv = { 0.0f, 0.0f };
+		}
+
+		vertices.push_back(vertex);
+	}
+
+	for (uint32_t i = 0; i < mesh->mNumFaces; i++)
+	{
+		aiFace face = mesh->mFaces[i];
+		for (uint32_t j = 0; j < face.mNumIndices; j++)
+		{
+			indexes.push_back(face.mIndices[j]);
+		}
+	}
+
+	LOG_INFO("Loaded mesh: " + _path + " with " + std::to_string(vertices.size()) + " vertices and " + std::to_string(indexes.size()) + " indexes");
+
+	return new Resource::Mesh(_context, vertices, indexes);
 }

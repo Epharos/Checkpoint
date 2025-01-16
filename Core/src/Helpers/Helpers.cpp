@@ -44,14 +44,24 @@ namespace Helper
 
 		void MapMemory(const vk::Device& device, const vk::DeviceMemory& memory, vk::DeviceSize size, void* data)
 		{
-			void* mappedMemory = device.mapMemory(memory, 0, size);
-			memcpy(mappedMemory, data, size);
-			device.unmapMemory(memory);
+			MapMemory(device, memory, size, 0, data);
 		}
 
 		void MapMemory(const vk::Device& device, const vk::DeviceMemory& memory, vk::DeviceSize size, const void* data)
 		{
-			void* mappedMemory = device.mapMemory(memory, 0, size);
+			MapMemory(device, memory, size, 0, data);
+		}
+
+		void MapMemory(const vk::Device& device, const vk::DeviceMemory& memory, vk::DeviceSize size, vk::DeviceSize offset, void* data)
+		{
+			void* mappedMemory = device.mapMemory(memory, offset, size);
+			memcpy(mappedMemory, data, size);
+			device.unmapMemory(memory);
+		}
+
+		void MapMemory(const vk::Device& device, const vk::DeviceMemory& memory, vk::DeviceSize size, vk::DeviceSize offset, const void* data)
+		{
+			void* mappedMemory = device.mapMemory(memory, offset, size);
 			memcpy(mappedMemory, data, size);
 			device.unmapMemory(memory);
 		}

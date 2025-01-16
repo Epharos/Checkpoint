@@ -17,7 +17,7 @@ namespace Resource
 	private:
 		std::unordered_map<std::string, T*> resources;
 
-		std::function<T* (const std::string&)> loadFunction = [](const std::string& _path)
+		std::function<T* (const Context::VulkanContext& _context, const std::string&)> loadFunction = [](const Context::VulkanContext& _context, const std::string& _path)
 			{ 
 				LOG_WARNING(MF("Loading was not implemented for ", typeid(T).name())); 
 				return nullptr;
@@ -59,14 +59,14 @@ namespace Resource
 			}
 		}
 
-		void SetLoadFunction(std::function<T* (const std::string&)> _loadFunction)
+		void SetLoader(std::function<T* (const Context::VulkanContext& _context, const std::string&)> _loadFunction)
 		{
 			loadFunction = _loadFunction;
 		}
 
-		T* LoadResource(const std::string& _name, const std::string& _path)
+		T* LoadResource(const Context::VulkanContext& _context, const std::string& _name, const std::string& _path)
 		{
-			T* resource = loadFunction(_path);
+			T* resource = loadFunction(_context, _path);
 			if (resource)
 			{
 				resources[_name] = resource;
@@ -80,9 +80,10 @@ namespace Resource
 	{
 	private:
 		std::unordered_map<std::type_index, ResourceTypeBase*> resourceTypes;
+		const Context::VulkanContext* context;
 
 	public:
-		ResourceManager() = default;
+		ResourceManager(const Context::VulkanContext& _context) : context(&_context) {}
 
 		void Cleanup()
 		{
@@ -167,7 +168,7 @@ namespace Resource
 				return nullptr;
 			}
 
-			return resourceType->LoadResource(_name, _path);
+			return resourceType->LoadResource(*context, _name, _path);
 		}
 	};
 }

@@ -41,5 +41,7 @@ namespace Resource
 		inline constexpr vk::DeviceMemory GetVertexBufferMemory() const { return vertexBufferMemory; }
 		inline constexpr vk::Buffer GetIndexBuffer() const { return indexBuffer; }
 		inline constexpr vk::DeviceMemory GetIndexBufferMemory() const { return indexBufferMemory; }
+
+		static Mesh* LoadMesh(const Context::VulkanContext& _context, const std::string& _path);
 	};
 }
