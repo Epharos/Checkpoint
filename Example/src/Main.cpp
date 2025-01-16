@@ -4,6 +4,7 @@
 #include "ECS/Systems/MoveSystem.hpp"
 
 #include <functional>
+#include <algorithm>
 
 using namespace Resource;
 
@@ -40,11 +41,9 @@ int main()
 
 	ResourceManager resourceManager(context);
 	resourceManager.RegisterResourceType<Mesh>();
-	resourceManager.GetResourceType<Mesh>()->SetLoader(
-		[&](const Context::VulkanContext& _context, const std::string& _path) { return Mesh::LoadMesh(_context, _path); });
+	resourceManager.GetResourceType<Mesh>()->SetLoader(std::bind(&Mesh::LoadMesh, std::placeholders::_1, std::placeholders::_2));
 	resourceManager.RegisterResourceType<Texture>();
-	resourceManager.GetResourceType<Texture>()->SetLoader(
-		[&](const Context::VulkanContext& _context, const std::string& _path) { return Texture::LoadTexture(_context, _path); });
+	resourceManager.GetResourceType<Texture>()->SetLoader(std::bind(&Texture::LoadTexture, std::placeholders::_1, std::placeholders::_2));
 
 	resourceManager.Load<Mesh>("Barstool", "Models/Barstool/barstool.gltf");
 	resourceManager.Load<Mesh>("Cube", "Models/Cube/cube.fbx");
