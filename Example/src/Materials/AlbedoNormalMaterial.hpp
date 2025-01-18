@@ -11,15 +11,20 @@ protected:
 	Resource::Texture* albedoTexture;
 	Resource::Texture* normalTexture;
 
-public:
-	AlbedoNormalMaterial(Resource::Material* _material, const Context::VulkanContext*& _context, Resource::Texture* _albedoTexture, Resource::Texture* _normalTexture);
+	float scale = 1.0f;
 
-	void PopulateDescriptorSet() override;
-	void BindMaterialInstance(vk::CommandBuffer _command) override;
+public:
+	AlbedoNormalMaterial(Resource::Material* _material, const Context::VulkanContext*& _context, Resource::Texture* _albedoTexture, Resource::Texture* _normalTexture, float _scale = 1.0f);
+	virtual ~AlbedoNormalMaterial();
+
+	virtual void PopulateDescriptorSet() override;
+	virtual void BindMaterialInstance(vk::CommandBuffer _command) override;
 
 	inline void SetAlbedoTexture(Resource::Texture* _albedoTexture) { albedoTexture = _albedoTexture; }
 	inline void SetNormalTexture(Resource::Texture* _normalTexture) { normalTexture = _normalTexture; }
+	inline void SetScale(float _scale) { scale = _scale; }
 
 	inline constexpr Resource::Texture* GetAlbedoTexture() const { return albedoTexture; }
 	inline constexpr Resource::Texture* GetNormalTexture() const { return normalTexture; }
+	inline constexpr float GetScale() const { return scale; }
 };

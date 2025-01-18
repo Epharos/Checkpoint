@@ -143,6 +143,7 @@ void Context::VulkanContext::CreateLogicalDevice()
 	#endif
 
 	vk::PhysicalDeviceFeatures deviceFeatures; // Empty for now, but add samplerAnisotropy, tesselationShader, etc.
+	deviceFeatures.samplerAnisotropy = VK_TRUE;
 
 	vk::DeviceCreateInfo deviceInfo({}, 
 		static_cast<uint32>(queueCreateInfos.size()), queueCreateInfos.data(), 

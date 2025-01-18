@@ -72,6 +72,26 @@ namespace ECS
 				});
 		}
 
+		template<typename MainComponent, typename ...Others>
+		std::vector<std::tuple<MainComponent&, Others&...>> QueryArchetype()
+		{
+			std::vector<std::tuple<MainComponent&, Others&...>> result;
+
+			auto entities = GetOrCreateComponentSparseSet<MainComponent>().GetEntities();
+
+			for (auto entity : entities)
+			{
+				if ((HasComponent<Others>(entity) && ...))
+				{
+					std::tuple<MainComponent&, Others&...> tuple(GetComponent<MainComponent>(entity), GetComponent<Others>(entity)...);
+					result.push_back(tuple);
+				}
+			}
+
+			return result;
+		}
+
+
 		void RemoveAllComponents(Entity entity)
 		{
 			for (auto& [type, storage] : componentStorage)

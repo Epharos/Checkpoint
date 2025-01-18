@@ -2,16 +2,27 @@
 
 #include "RenderSystem.hpp"
 
-std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& _componentManager);
+
+
+std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& _componentManager, QueryVector query);
 
 void RenderSystem::Update(ECS::ComponentManager& _componentManager, const float& _dt)
 {
-	auto instanceGroups = PrepareInstanceGroups(_componentManager);
+	if(query.empty())
+	{
+		for (auto [mesh, transform] : _componentManager.QueryArchetype<MeshRenderer, Transform>())
+		{
+			//std::tuple<MeshRenderer&, Transform&> tuple = std::make_tuple<MeshRenderer&, Transform&>(mesh, transform);
+			query.emplace_back(mesh, transform);
+		}
+	}
+
+	auto instanceGroups = PrepareInstanceGroups(_componentManager, query);
 
 	renderer->Render(instanceGroups);
 }
 
-std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& _componentManager)
+std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& _componentManager, QueryVector query)
 {
 	std::vector<Render::InstanceGroup> instanceGroups;
 
@@ -19,15 +30,23 @@ std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& 
 		std::vector<Render::TransformData>, 
 		Helper::Hash::TupleHash<Resource::Material*, Resource::Mesh*, Resource::MaterialInstance*>> data;
 
-	_componentManager.ForEachArchetype<MeshRenderer, Transform>([&](Entity _entity, MeshRenderer& _meshRenderer, Transform& _transform)
-		{
-			//LOG_DEBUG(MF("Entity: ", _entity.id, " Material: ", _meshRenderer.materialInstance));
+	for (auto [mesh, transform] : query)
+	{
+		glm::mat4 modelMatrix = transform.GetModelMatrix();
+		glm::mat4 normalMatrix = glm::mat4(transform.GetNormalMatrix());
 
+		data[std::make_tuple(mesh.materialInstance->GetMaterial(), mesh.mesh, mesh.materialInstance)].push_back({ modelMatrix, normalMatrix });
+	}
+
+	// Try to optimize it by storing the pair<MeshRenderer, Transform> and update it only when needed (when an entity gets the MeshRenderer or Transform component)
+
+	/*_componentManager.ForEachArchetype<MeshRenderer, Transform>([&](Entity _entity, MeshRenderer& _meshRenderer, Transform& _transform)
+		{
 			glm::mat4 modelMatrix = _transform.GetModelMatrix();
 			glm::mat4 normalMatrix = glm::mat4(_transform.GetNormalMatrix());
 
 			data[std::make_tuple(_meshRenderer.materialInstance->GetMaterial(), _meshRenderer.mesh, _meshRenderer.materialInstance)].push_back({modelMatrix, normalMatrix});
-		});
+		});*/
 
 	uint32_t instanceOffset = 0;
 

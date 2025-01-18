@@ -278,8 +278,8 @@ void Helper::Image::CreateImageView(const vk::Device& device, const vk::Image& i
 void Helper::Image::CreateSampler(const vk::Device& device, const vk::PhysicalDevice& physicalDevice, vk::Sampler& sampler)
 {
 	vk::SamplerCreateInfo samplerInfo;
-	samplerInfo.magFilter = vk::Filter::eNearest;
-	samplerInfo.minFilter = vk::Filter::eNearest;
+	samplerInfo.magFilter = vk::Filter::eLinear;
+	samplerInfo.minFilter = vk::Filter::eLinear;
 	samplerInfo.addressModeU = vk::SamplerAddressMode::eRepeat;
 	samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
 	samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
@@ -289,7 +289,7 @@ void Helper::Image::CreateSampler(const vk::Device& device, const vk::PhysicalDe
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
 	samplerInfo.compareEnable = VK_FALSE;
 	samplerInfo.compareOp = vk::CompareOp::eAlways;
-	samplerInfo.mipmapMode = vk::SamplerMipmapMode::eNearest;
+	samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
 	samplerInfo.mipLodBias = 0.0f;
 	samplerInfo.minLod = 0.0f;
 	samplerInfo.maxLod = 0.0f;

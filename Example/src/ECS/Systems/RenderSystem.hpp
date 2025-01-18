@@ -22,10 +22,13 @@ struct CompareTuple : public std::equal_to<std::tuple<Resource::Material*, Resou
 	}
 };
 
+using QueryVector = std::vector<std::tuple<MeshRenderer&, Transform&>>;
+
 class RenderSystem : public ECS::System
 {
 protected:
 	Render::Renderer* renderer;
+	QueryVector query;
 
 public:
 	RenderSystem(Render::Renderer* _renderer) : renderer(_renderer) {}

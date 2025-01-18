@@ -1,10 +1,15 @@
 #include "pch.hpp"
 #include "AlbedoNormalMaterial.hpp"
 
-AlbedoNormalMaterial::AlbedoNormalMaterial(Resource::Material* _material, const Context::VulkanContext*& _context, Resource::Texture* _albedoTexture, Resource::Texture* _normalTexture) :
-	Resource::MaterialInstance(_material, _context), albedoTexture(_albedoTexture), normalTexture(_normalTexture)
+AlbedoNormalMaterial::AlbedoNormalMaterial(Resource::Material* _material, const Context::VulkanContext*& _context, Resource::Texture* _albedoTexture, Resource::Texture* _normalTexture, float _scale) :
+	Resource::MaterialInstance(_material, _context), albedoTexture(_albedoTexture), normalTexture(_normalTexture), scale(_scale)
 {
 
+}
+
+AlbedoNormalMaterial::~AlbedoNormalMaterial()
+{
+	Helper::Memory::DestroyBuffer(context->GetDevice(), buffer, bufferMemory);
 }
 
 void AlbedoNormalMaterial::PopulateDescriptorSet()
@@ -28,6 +33,21 @@ void AlbedoNormalMaterial::PopulateDescriptorSet()
 	descriptorSetUpdate.sampler = normalTexture->GetSampler();
 
 	context->GetDescriptorSetManager()->UpdateOrphanedDescriptorSet(descriptorSet, descriptorSetUpdate);
+
+	buffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(float), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, bufferMemory);
+
+	Pipeline::DescriptorSetUpdate updater = {};
+	updater.dstBinding = 2;
+	updater.dstArrayElement = 0;
+	updater.descriptorType = vk::DescriptorType::eUniformBuffer;
+	updater.descriptorCount = 1;
+	updater.buffer = buffer;
+	updater.offset = 0;
+	updater.range = sizeof(float);
+
+	context->GetDescriptorSetManager()->UpdateOrphanedDescriptorSet(descriptorSet, updater);
+
+	Helper::Memory::MapMemory(context->GetDevice(), bufferMemory, sizeof(float), &scale);
 }
 
 void AlbedoNormalMaterial::BindMaterialInstance(vk::CommandBuffer _command)

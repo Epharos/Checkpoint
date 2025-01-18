@@ -12,6 +12,11 @@ struct ModelData
     float4x4 normalMatrix;
 }
 
+struct TextureData
+{
+    float scale;
+}
+
 struct VSInput
 {
 	float3 position : POSITION;
@@ -41,6 +46,9 @@ Sampler2D albedo;
 
 [vk::binding(1, 2)]
 Sampler2D normal;
+
+[vk::binding(2, 2)]
+ConstantBuffer<TextureData> textureData;
 
 [shader("vertex")]
 VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
@@ -74,11 +82,11 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 float4 pixelMain(VSOutput input) : SV_TARGET
 {
     // tmp
-    float3 albedo = albedo.Sample(input.uv).xyz; // We sample the albedo to get the color of the pixel
+    float3 albedo = albedo.Sample(input.uv * textureData.scale).xyz; // We sample the albedo to get the color of the pixel
     float3 sunDir = normalize(float3(0.0, -1.0, 0.0)); // This is just a placeholder direction while we don't have a light DS
 
     float3x3 TBN = float3x3(input.tangent, input.bitangent, input.normal); // Create the TBN matrix
-    float3 normalMapValue = normal.Sample(input.uv).xyz * 2.0 - 1.0; // Sample the normal map and convert it from [0, 1] to [-1, 1]
+    float3 normalMapValue = normal.Sample(input.uv * textureData.scale).xyz * 2.0 - 1.0; // Sample the normal map and convert it from [0, 1] to [-1, 1]
     float3 normalValue = normalize(mul(TBN, normalMapValue)); // Turns the normal map value into a normal in tangent space
 
     float3 ambiantColor = float3(0.03, 0.03, 0.08); // This is just a placeholder color while we don't have a light DS

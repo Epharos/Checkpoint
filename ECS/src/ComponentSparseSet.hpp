@@ -72,5 +72,10 @@ namespace ECS
 			size_t maxEntity = entities.empty() ? 0 : std::max_element(entities.begin(), entities.end(), [](const Entity& a, const Entity& b) { return a.id < b.id; })->id;
 			sparse.resize(maxEntity + 1, -1);
 		}
+
+		const std::vector<Entity> GetEntities() const
+		{
+			return entities;
+		}
 	};
 }

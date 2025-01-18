@@ -14,8 +14,6 @@ void BasicRenderer::Cleanup()
 
 void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _instanceGroups)
 {
-	mainCamera->Rotate(glm::vec3(0.f, 0.0008f, 0.f));
-
 	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4>{0.1f, 0.1f, 0.1f, 1.0f});
 	vk::ClearDepthStencilValue clearDepth = vk::ClearDepthStencilValue(1.0f, 0);
 
@@ -46,18 +44,20 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 		{
 			currentMaterial = instanceGroup.material;
 
-			if (!currentMaterial) continue;
-
 			currentMaterial->BindMaterial(commandBuffer);
 
 			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentMaterial->GetPipelineLayout(), 0, context->GetDescriptorSetManager()->GetDescriptorSet("Camera"), nullptr);
 			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentMaterial->GetPipelineLayout(), 1, context->GetDescriptorSetManager()->GetDescriptorSet("Instance Model"), nullptr);
+
+			//LOG_DEBUG(MF("Switching pipeline [", currentMaterial, "]"));
 		}
 
 		if (currentMaterialInstance != instanceGroup.materialInstance)
 		{
 			currentMaterialInstance = instanceGroup.materialInstance;
 			currentMaterialInstance->BindMaterialInstance(commandBuffer);
+
+			//LOG_DEBUG(MF("Switching material [", currentMaterialInstance, "]"));
 		}
 
 		if (currentMesh != instanceGroup.mesh)
@@ -65,6 +65,8 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 			currentMesh = instanceGroup.mesh;
 			commandBuffer.bindVertexBuffers(0, 1, &currentMesh->GetVertexBuffer(), &offset);
 			commandBuffer.bindIndexBuffer(currentMesh->GetIndexBuffer(), 0, vk::IndexType::eUint32);
+
+			//LOG_DEBUG(MF("Switching mesh [", currentMesh, "]"));
 		}
 
 		Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(Render::TransformData) * instanceGroup.transforms.size(), instanceGroup.instanceOffset * sizeof(Render::TransformData), instanceGroup.transforms.data());
@@ -77,6 +79,9 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 
 void BasicRenderer::SetupPipelines()
 {
+	mainCamera->Translate(glm::vec3(0.f, 3.f, 10.f));
+	mainCamera->Rotate(glm::quat(glm::vec3(glm::radians(30.f), .0f, .0f)));
+
 	Pipeline::DescriptorSetLayoutsManager* descriptorSetLayoutsManager = context->GetDescriptorSetLayoutsManager();
 	Pipeline::DescriptorSetManager* descriptorSetManager = context->GetDescriptorSetManager();
 	Pipeline::PipelinesManager* pipelinesManager = context->GetPipelinesManager();
@@ -138,7 +143,8 @@ void BasicRenderer::SetupPipelines()
 	vk::DescriptorSetLayout textureSetLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("AlbedoNormal",
 		{
 			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),
-			vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment)
+			vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),
+			vk::DescriptorSetLayoutBinding(2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment)
 		});
 
 	const std::vector<vk::DescriptorSetLayout> textureLayouts = { cameraLayout, instancedModelLayout, textureSetLayout };
