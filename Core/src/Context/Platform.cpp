@@ -43,6 +43,12 @@ namespace Context
 		glfwDestroyWindow(window);
 		glfwTerminate();
 	}
+
+	void Platform::SetTitle(const std::string& _title) const
+	{
+		glfwSetWindowTitle(window, _title.c_str());
+	}
+
 	vk::Extent2D Platform::GetFrameBufferExtent() const
 	{
 		int width, height;

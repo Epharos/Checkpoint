@@ -22,6 +22,8 @@ namespace Context
 		void PollEvents() const;
 		void CleanUp() const;
 
+		void SetTitle(const std::string& _title) const;
+
 		vk::Extent2D GetFrameBufferExtent() const;
 
 		inline constexpr Window GetWindow() const { return window; }

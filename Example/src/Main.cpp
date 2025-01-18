@@ -12,6 +12,7 @@
 using namespace Resource;
 
 void CreateMaterials(ResourceManager& resourceManager, Context::VulkanContext& context);
+int ComputeFramePerSecond(float dt);
 
 int main()
 {
@@ -72,14 +73,6 @@ int main()
 		resourceManager.Get<Material>("Color")->CreateMaterialInstance<ColorMaterial>(
 			glm::vec4{ 1.0f, 1.0f, 0.0f, 1.0f }));
 
-	LOG_DEBUG(MF("Barstool Material Instance adress: ", resourceManager.Get<MaterialInstance>("Barstool Material")));
-	LOG_DEBUG(MF("Blue Material Instance adress: ", resourceManager.Get<MaterialInstance>("Blue")));
-	LOG_DEBUG(MF("Yellow Material Instance adress: ", resourceManager.Get<MaterialInstance>("Yellow")));
-	
-	LOG_DEBUG(MF("Barstool Material adress: ", resourceManager.Get<MaterialInstance>("Barstool Material")->GetMaterial()));
-	LOG_DEBUG(MF("Blue Material adress: ", resourceManager.Get<MaterialInstance>("Blue")->GetMaterial()));
-	LOG_DEBUG(MF("Yellow Material adress: ", resourceManager.Get<MaterialInstance>("Yellow")->GetMaterial()));
-
 	Util::Clock dtClock;
 
 	const int m = 200;
@@ -113,8 +106,10 @@ int main()
 
 	while (!platform.ShouldClose())
 	{
+		float dt = dtClock.Restart();
 		platform.PollEvents();
-		ecs.Update(dtClock.Restart());
+		ecs.Update(dt);
+		platform.SetTitle(MF("FPS: ", ComputeFramePerSecond(dt)));
 	}
 
 	resourceManager.Cleanup();
@@ -130,4 +125,24 @@ void CreateMaterials(ResourceManager& resourceManager, Context::VulkanContext& c
 
 	resourceManager.Add<Material>("Color", colored);
 	resourceManager.Add<Material>("AlbedoNormal", textured);
+}
+
+int ComputeFramePerSecond(float dt)
+{
+	static float currentUpdate = 0.0f;
+	static float lastUpdate = 0.0f;
+	static int frames = 0;
+	static int fps = 0;
+
+	currentUpdate += dt;
+	frames++;
+
+	if (currentUpdate - lastUpdate >= 1.0f)
+	{
+		fps = frames;
+		frames = 0;
+		lastUpdate = currentUpdate;
+	}
+
+	return fps;
 }
