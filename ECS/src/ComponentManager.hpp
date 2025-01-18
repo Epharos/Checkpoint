@@ -42,6 +42,12 @@ namespace ECS
 			return GetOrCreateComponentSparseSet<T>().Get(std::move(entity));
 		}
 
+		template<typename ...T>
+		std::tuple<T&...> GetComponents(Entity entity)
+		{
+			return std::tuple<T&...>{GetComponent<T>(entity)...};
+		}
+
 		template<typename T>
 		bool HasComponent(Entity entity) const
 		{
@@ -54,6 +60,16 @@ namespace ECS
 		void ForEachComponent(std::function<void(Entity, T&)> func)
 		{
 			GetOrCreateComponentSparseSet<T>().ForEach(func);
+		}
+
+		template<typename MainComponent, typename ...Others>
+		void ForEachArchetype(std::function<void(Entity entity, MainComponent& mainComponent, Others&... others)> func)
+		{
+			ForEachComponent<MainComponent>([&](Entity entity, MainComponent& mainComponent)
+				{
+					if ((HasComponent<Others>(entity) && ...))
+						func(entity, mainComponent, GetComponent<Others>(entity)...);
+				});
 		}
 
 		void RemoveAllComponents(Entity entity)

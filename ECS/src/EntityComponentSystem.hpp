@@ -44,6 +44,12 @@ namespace ECS
 			return componentManager.GetComponent<T>(_entity);
 		}
 
+		template <typename ...T>
+		std::tuple<T ...> GetComponents(Entity _entity)
+		{
+			return componentManager.GetComponents<T...>(_entity);
+		}
+
 		template <typename T, typename... Args>
 		T& RegisterSystem(Args&& ... _args)
 		{

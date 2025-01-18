@@ -166,6 +166,7 @@
     <ClInclude Include="src\ECS\Components\MeshRenderer.hpp" />
     <ClInclude Include="src\ECS\Components\Rigidbody.hpp" />
     <ClInclude Include="src\ECS\Components\Transform.hpp" />
+    <ClInclude Include="src\ECS\Systems.hpp" />
     <ClInclude Include="src\ECS\Systems\MoveSystem.hpp" />
     <ClInclude Include="src\ECS\Systems\RenderSystem.hpp" />
     <ClInclude Include="src\Materials\AlbedoNormalMaterial.hpp" />
@@ -173,9 +174,10 @@
     <ClInclude Include="src\pch.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\CNL.spv" />
     <None Include="Shaders\ColorNormalLighting.slang" />
-    <None Include="Shaders\BNL.spv" />
     <None Include="Shaders\TexturedNormalLighting.slang" />
+    <None Include="Shaders\TNL.spv" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

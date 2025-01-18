@@ -19,14 +19,12 @@ std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& 
 		std::vector<Render::TransformData>, 
 		Helper::Hash::TupleHash<Resource::Material*, Resource::Mesh*, Resource::MaterialInstance*>> data;
 
-	_componentManager.ForEachComponent<MeshRenderer>([&](Entity _entity, MeshRenderer& _meshRenderer)
+	_componentManager.ForEachArchetype<MeshRenderer, Transform>([&](Entity _entity, MeshRenderer& _meshRenderer, Transform& _transform)
 		{
-			auto transform = _componentManager.GetComponent<Transform>(_entity);
-
 			//LOG_DEBUG(MF("Entity: ", _entity.id, " Material: ", _meshRenderer.materialInstance));
 
-			glm::mat4 modelMatrix = transform.GetModelMatrix();
-			glm::mat4 normalMatrix = glm::mat4(transform.GetNormalMatrix());
+			glm::mat4 modelMatrix = _transform.GetModelMatrix();
+			glm::mat4 normalMatrix = glm::mat4(_transform.GetNormalMatrix());
 
 			data[std::make_tuple(_meshRenderer.materialInstance->GetMaterial(), _meshRenderer.mesh, _meshRenderer.materialInstance)].push_back({modelMatrix, normalMatrix});
 		});

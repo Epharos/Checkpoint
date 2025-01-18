@@ -1,7 +1,5 @@
 #include "pch.hpp"
 #include "BasicRenderer.hpp"
-#include "ECS/Systems/RenderSystem.hpp"
-#include "ECS/Systems/MoveSystem.hpp"
 
 #include "Materials/AlbedoNormalMaterial.hpp"
 #include "Materials/ColorMaterial.hpp"

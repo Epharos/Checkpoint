@@ -71,10 +71,14 @@
     <ClInclude Include="src\Materials\AlbedoNormalMaterial.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="src\ECS\Systems.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\ColorNormalLighting.slang" />
-    <None Include="Shaders\BNL.spv" />
     <None Include="Shaders\TexturedNormalLighting.slang" />
+    <None Include="Shaders\CNL.spv" />
+    <None Include="Shaders\TNL.spv" />
   </ItemGroup>
 </Project>
