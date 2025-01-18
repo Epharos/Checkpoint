@@ -3,12 +3,15 @@
 #include "../../pch.hpp"
 #include "../../Context/VulkanContext.hpp"
 #include "../Setup/Swapchain.hpp"
-#include "RenderCommand.hpp"
 
 #include "../Pipeline/PipelinesManager.hpp"
 #include "../Pipeline/LayoutsManager.hpp"
 #include "../Pipeline/SetLayoutsManager.hpp"
 #include "../Pipeline/DescriptorSetManager.hpp"
+
+#include "../../Resources/Material.hpp"
+#include "../../Resources/MaterialInstance.hpp"
+#include "../../Resources/Mesh.hpp"
 
 #include "Camera.hpp"
 
@@ -22,6 +25,8 @@ namespace Render
 
 	struct InstanceGroup
 	{
+		Resource::Material* material;
+		Resource::MaterialInstance* materialInstance;
 		Resource::Mesh* mesh;
 		std::vector<TransformData> transforms;
 		uint32_t instanceOffset = 0;

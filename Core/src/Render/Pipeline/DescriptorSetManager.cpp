@@ -34,9 +34,52 @@ void Pipeline::DescriptorSetManager::UpdateDescriptorSet(const std::string& _nam
 	write.dstArrayElement = _write.dstArrayElement;
 	write.descriptorType = _write.descriptorType;
 	write.descriptorCount = _write.descriptorCount;
-	write.pBufferInfo = new vk::DescriptorBufferInfo(_write.buffer, _write.offset, _write.range);
+
+	switch (_write.updateType)
+	{
+	case DescriptorSetUpdateType::BUFFER:
+		write.pBufferInfo = new vk::DescriptorBufferInfo(_write.buffer, _write.offset, _write.range);
+		break;
+	case DescriptorSetUpdateType::IMAGE:
+		write.pImageInfo = new vk::DescriptorImageInfo(_write.sampler, _write.imageView, _write.imageLayout);
+		break;
+	}
 
 	device.updateDescriptorSets(1, &write, 0, nullptr);
+}
+
+void Pipeline::DescriptorSetManager::UpdateDescriptorSet(const std::string& _name, const std::vector<DescriptorSetUpdate>& _writes)
+{
+#ifdef _DEBUG
+	if (sets.find(_name) == sets.end())
+		throw std::runtime_error("Descriptor set with name " + _name + " does not exist");
+#endif
+
+	std::vector<vk::WriteDescriptorSet> writes;
+
+	for (const auto& writeIndex : _writes)
+	{
+		vk::WriteDescriptorSet write = {};
+		write.dstSet = sets[_name];
+		write.dstBinding = writeIndex.dstBinding;
+		write.dstArrayElement = writeIndex.dstArrayElement;
+		write.descriptorType = writeIndex.descriptorType;
+		write.descriptorCount = writeIndex.descriptorCount;
+
+		switch (writeIndex.updateType)
+		{
+		case DescriptorSetUpdateType::BUFFER:
+			write.pBufferInfo = new vk::DescriptorBufferInfo(writeIndex.buffer, writeIndex.offset, writeIndex.range);
+			break;
+		case DescriptorSetUpdateType::IMAGE:
+			write.pImageInfo = new vk::DescriptorImageInfo(writeIndex.sampler, writeIndex.imageView, writeIndex.imageLayout);
+			break;
+		}
+
+		writes.push_back(write);
+	}
+
+	device.updateDescriptorSets(writes.size(), writes.data(), 0, nullptr);
 }
 
 void Pipeline::DescriptorSetManager::UpdateDescriptorSets(const std::vector<std::string>& _names, const std::vector<DescriptorSetUpdate>& _writes)
@@ -60,7 +103,16 @@ void Pipeline::DescriptorSetManager::UpdateDescriptorSets(const std::vector<std:
 		write.dstArrayElement = _writes[i].dstArrayElement;
 		write.descriptorType = _writes[i].descriptorType;
 		write.descriptorCount = _writes[i].descriptorCount;
-		write.pBufferInfo = new vk::DescriptorBufferInfo(_writes[i].buffer, _writes[i].offset, _writes[i].range);
+
+		switch (_writes[i].updateType)
+		{
+		case DescriptorSetUpdateType::BUFFER:
+			write.pBufferInfo = new vk::DescriptorBufferInfo(_writes[i].buffer, _writes[i].offset, _writes[i].range);
+			break;
+		case DescriptorSetUpdateType::IMAGE:
+			write.pImageInfo = new vk::DescriptorImageInfo(_writes[i].sampler, _writes[i].imageView, _writes[i].imageLayout);
+			break;
+		}
 
 		writes.push_back(write);
 	}
@@ -75,7 +127,7 @@ vk::DescriptorSet Pipeline::DescriptorSetManager::CreateDescriptorSet(const std:
 		throw std::runtime_error("Descriptor set with name " + _name + " already exists");
 #endif
 
-	sets[_name] = device.allocateDescriptorSets(vk::DescriptorSetAllocateInfo(pool, 1, &_layout))[0];
+	sets[_name] = CreateOrphanedDescriptorSet(_layout);
 }
 
 std::vector<vk::DescriptorSet> Pipeline::DescriptorSetManager::CreateDescriptorSets(const std::vector<std::string>& _names, const std::vector<vk::DescriptorSetLayout>& _layouts)
@@ -95,6 +147,68 @@ std::vector<vk::DescriptorSet> Pipeline::DescriptorSetManager::CreateDescriptorS
 		sets[_names[i]] = results[i];
 
 	return results;
+}
+
+vk::DescriptorSet Pipeline::DescriptorSetManager::CreateOrphanedDescriptorSet(const vk::DescriptorSetLayout& _layout)
+{
+	return device.allocateDescriptorSets(vk::DescriptorSetAllocateInfo(pool, 1, &_layout))[0];
+}
+
+void Pipeline::DescriptorSetManager::UpdateOrphanedDescriptorSet(const vk::DescriptorSet& _set, const DescriptorSetUpdate& _write)
+{
+	vk::WriteDescriptorSet write = {};
+	write.dstSet = _set;
+	write.dstBinding = _write.dstBinding;
+	write.dstArrayElement = _write.dstArrayElement;
+	write.descriptorType = _write.descriptorType;
+	write.descriptorCount = _write.descriptorCount;
+
+	switch (_write.updateType)
+	{
+	case DescriptorSetUpdateType::BUFFER:
+		write.pBufferInfo = new vk::DescriptorBufferInfo(_write.buffer, _write.offset, _write.range);
+		break;
+	case DescriptorSetUpdateType::IMAGE:
+		write.pImageInfo = new vk::DescriptorImageInfo(_write.sampler, _write.imageView, _write.imageLayout);
+		break;
+	}
+
+	device.updateDescriptorSets(1, &write, 0, nullptr);
+}
+
+void Pipeline::DescriptorSetManager::UpdateOrphanedDescriptorSet(const vk::DescriptorSet& _set, const std::vector<DescriptorSetUpdate>& _writes)
+{
+	std::vector<vk::WriteDescriptorSet> writes;
+
+	for (const auto& writeIndex : _writes)
+	{
+		vk::WriteDescriptorSet write = {};
+		write.dstSet = _set;
+		write.dstBinding = writeIndex.dstBinding;
+		write.dstArrayElement = writeIndex.dstArrayElement;
+		write.descriptorType = writeIndex.descriptorType;
+		write.descriptorCount = writeIndex.descriptorCount;
+
+		switch (writeIndex.updateType)
+		{
+		case DescriptorSetUpdateType::BUFFER:
+			write.pBufferInfo = new vk::DescriptorBufferInfo(writeIndex.buffer, writeIndex.offset, writeIndex.range);
+			break;
+		case DescriptorSetUpdateType::IMAGE:
+			write.pImageInfo = new vk::DescriptorImageInfo(writeIndex.sampler, writeIndex.imageView, writeIndex.imageLayout);
+			break;
+		}
+
+		writes.push_back(write);
+	}
+
+	device.updateDescriptorSets(writes.size(), writes.data(), 0, nullptr);
+
+}
+
+void Pipeline::DescriptorSetManager::DestroyOrphanedDescriptorSet(const vk::DescriptorSet& _set)
+{
+	device.freeDescriptorSets(pool, _set);
 }
 
 void Pipeline::DescriptorSetManager::DestroyDescriptorSet(const std::string& _name)

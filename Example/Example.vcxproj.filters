@@ -33,6 +33,12 @@
     <ClCompile Include="src\ECS\Systems\MoveSystem.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="src\Materials\ColorMaterial.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Materials\AlbedoNormalMaterial.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\BasicRenderer.hpp">
@@ -59,9 +65,16 @@
     <ClInclude Include="src\ECS\Systems\MoveSystem.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="src\Materials\ColorMaterial.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Materials\AlbedoNormalMaterial.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\BaseNormalLighting.slang" />
+    <None Include="Shaders\ColorNormalLighting.slang" />
     <None Include="Shaders\BNL.spv" />
+    <None Include="Shaders\TexturedNormalLighting.slang" />
   </ItemGroup>
 </Project>

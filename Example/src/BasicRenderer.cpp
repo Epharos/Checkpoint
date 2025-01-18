@@ -34,22 +34,40 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 
 	// RENDER
 
-	//commandBuffer.nextSubpass(vk::SubpassContents::eInline);
-
-	Pipeline::PipelineData boundPipeline = context->GetPipelinesManager()->GetPipeline({"Basic"});
-	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, boundPipeline.pipeline);
-
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, boundPipeline.pipelineLayout, 0, 1, &context->GetDescriptorSetManager()->GetDescriptorSet("Camera"), 0, nullptr);
-	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, boundPipeline.pipelineLayout, 1, 1, &context->GetDescriptorSetManager()->GetDescriptorSet("Instance Model"), 0, nullptr);
+	Resource::Material* currentMaterial = nullptr;
+	Resource::MaterialInstance* currentMaterialInstance = nullptr;
+	Resource::Mesh* currentMesh = nullptr;
 
 	for (auto& instanceGroup : _instanceGroups)
 	{
-		Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(Render::TransformData) * instanceGroup.transforms.size(), instanceGroup.instanceOffset * sizeof(Render::TransformData), instanceGroup.transforms.data());
-
 		vk::DeviceSize offset(0);
 
-		commandBuffer.bindVertexBuffers(0, 1, &instanceGroup.mesh->GetVertexBuffer(), &offset);
-		commandBuffer.bindIndexBuffer(instanceGroup.mesh->GetIndexBuffer(), 0, vk::IndexType::eUint32);
+		if (currentMaterial != instanceGroup.material)
+		{
+			currentMaterial = instanceGroup.material;
+
+			if (!currentMaterial) continue;
+
+			currentMaterial->BindMaterial(commandBuffer);
+
+			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentMaterial->GetPipelineLayout(), 0, context->GetDescriptorSetManager()->GetDescriptorSet("Camera"), nullptr);
+			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentMaterial->GetPipelineLayout(), 1, context->GetDescriptorSetManager()->GetDescriptorSet("Instance Model"), nullptr);
+		}
+
+		if (currentMaterialInstance != instanceGroup.materialInstance)
+		{
+			currentMaterialInstance = instanceGroup.materialInstance;
+			currentMaterialInstance->BindMaterialInstance(commandBuffer);
+		}
+
+		if (currentMesh != instanceGroup.mesh)
+		{
+			currentMesh = instanceGroup.mesh;
+			commandBuffer.bindVertexBuffers(0, 1, &currentMesh->GetVertexBuffer(), &offset);
+			commandBuffer.bindIndexBuffer(currentMesh->GetIndexBuffer(), 0, vk::IndexType::eUint32);
+		}
+
+		Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(Render::TransformData) * instanceGroup.transforms.size(), instanceGroup.instanceOffset * sizeof(Render::TransformData), instanceGroup.transforms.data());
 
 		commandBuffer.drawIndexed(instanceGroup.mesh->GetIndexCount(), instanceGroup.transforms.size(), 0, 0, instanceGroup.instanceOffset);
 	}
@@ -64,9 +82,9 @@ void BasicRenderer::SetupPipelines()
 	Pipeline::PipelinesManager* pipelinesManager = context->GetPipelinesManager();
 	Pipeline::LayoutsManager* layoutsManager = context->GetLayoutsManager();
 
-	instancedBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(Render::TransformData) * 1000, vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, instancedBufferMemory);
+#pragma region Camera and Instance Buffer
 
-	vk::DescriptorSetLayout cameraLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Camera", 
+	vk::DescriptorSetLayout cameraLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Camera",
 		{
 			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex)
 		});
@@ -79,18 +97,61 @@ void BasicRenderer::SetupPipelines()
 	descriptorSetManager->CreateDescriptorSets({ "Camera", "Instance Model" }, { cameraLayout, instancedModelLayout });
 
 	if (mainCamera)
-		descriptorSetManager->UpdateDescriptorSet("Camera", { mainCamera->GetUBOBuffer(), 0, sizeof(Render::CameraUBO), 0, 0, vk::DescriptorType::eUniformBuffer, 1});
+	{
+		Pipeline::DescriptorSetUpdate cameraUpdate = {};
+		cameraUpdate.descriptorType = vk::DescriptorType::eUniformBuffer;
+		cameraUpdate.dstBinding = 0;
+		cameraUpdate.dstArrayElement = 0;
+		cameraUpdate.descriptorCount = 1;
+		cameraUpdate.buffer = mainCamera->GetUBOBuffer();
+		cameraUpdate.offset = 0;
+		cameraUpdate.range = sizeof(Render::CameraUBO);
 
-	descriptorSetManager->UpdateDescriptorSet("Instance Model", { instancedBuffer, 0, sizeof(Render::TransformData) * 1000, 0, 0, vk::DescriptorType::eStorageBuffer, 1 });
+		descriptorSetManager->UpdateDescriptorSet("Camera", cameraUpdate);
+	}
 
-	const std::vector<vk::DescriptorSetLayout> layouts = { cameraLayout, instancedModelLayout };
+	instancedBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(Render::TransformData) * MAX_RENDERABLE_ENTITIES, vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, instancedBufferMemory);
 
-	vk::PipelineLayout layout = layoutsManager->GetOrCreateLayout(layouts, {});
+	Pipeline::DescriptorSetUpdate descriptorUpdate = {};
+	descriptorUpdate.descriptorType = vk::DescriptorType::eStorageBuffer;
+	descriptorUpdate.dstBinding = 0;
+	descriptorUpdate.dstArrayElement = 0;
+	descriptorUpdate.descriptorCount = 1;
+	descriptorUpdate.buffer = instancedBuffer;
+	descriptorUpdate.offset = 0;
+	descriptorUpdate.range = sizeof(Render::TransformData) * MAX_RENDERABLE_ENTITIES;
+	descriptorSetManager->UpdateDescriptorSet("Instance Model", descriptorUpdate);
 
+#pragma endregion
+
+#pragma region Layouts creation
+
+	vk::DescriptorSetLayout colorSetLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Color",
+		{
+			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment)
+		});
+
+	const std::vector<vk::DescriptorSetLayout> colorLayouts = { cameraLayout, instancedModelLayout, colorSetLayout };
+
+	vk::PipelineLayout colorLayout = layoutsManager->GetOrCreateLayout(colorLayouts, {});
+
+	vk::DescriptorSetLayout textureSetLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("AlbedoNormal",
+		{
+			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),
+			vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment)
+		});
+
+	const std::vector<vk::DescriptorSetLayout> textureLayouts = { cameraLayout, instancedModelLayout, textureSetLayout };
+
+	vk::PipelineLayout textureLayout = layoutsManager->GetOrCreateLayout(textureLayouts, {});
+
+#pragma endregion
+
+#pragma region Color Pipeline
 	Pipeline::PipelineCreateData pipelineData = {};
-	pipelineData.config.name = "Basic";
+	pipelineData.config.name = "Colored";
 
-	pipelineData.descriptorSetLayouts = layouts;
+	pipelineData.descriptorSetLayouts = colorLayouts;
 
 	vk::Viewport* vp = new vk::Viewport;
 	vp->x = 0.f;
@@ -118,7 +179,7 @@ void BasicRenderer::SetupPipelines()
 	attributeDescriptions[4] = vk::VertexInputAttributeDescription(4, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, bitangent));
 
 	pipelineData.createInfo = vk::GraphicsPipelineCreateInfo();
-	pipelineData.createInfo.layout = layout;
+	pipelineData.createInfo.layout = colorLayout;
 	pipelineData.createInfo.renderPass = mainRenderPass;
 	pipelineData.createInfo.subpass = 0;
 	pipelineData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), VK_TRUE, VK_TRUE, vk::CompareOp::eLess);
@@ -129,7 +190,7 @@ void BasicRenderer::SetupPipelines()
 	pipelineData.createInfo.pInputAssemblyState = new vk::PipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleList, VK_FALSE);
 	pipelineData.createInfo.pVertexInputState = new vk::PipelineVertexInputStateCreateInfo(vk::PipelineVertexInputStateCreateFlags(), 1, bindingDescription, 5, attributeDescriptions);
 
-	pipelineData.shaderFile = "Shaders/BNL.spv";
+	pipelineData.shaderFile = "Shaders/CNL.spv";
 	pipelineData.mains = { 
 		{ vk::ShaderStageFlagBits::eVertex, "vertexMain" }, 
 		{ vk::ShaderStageFlagBits::eFragment, "pixelMain" } 
@@ -137,6 +198,59 @@ void BasicRenderer::SetupPipelines()
 
 	pipelinesManager->CreatePipeline(pipelineData);
 
+#pragma endregion
+
+#pragma region Texture Pipeline
+	pipelineData = {};
+	pipelineData.config.name = "AlbedoNormal";
+
+	pipelineData.descriptorSetLayouts = textureLayouts;
+
+	vp = new vk::Viewport;
+	vp->x = 0.f;
+	vp->y = 0.f;
+	vp->width = swapchain->GetExtent().width;
+	vp->height = swapchain->GetExtent().height;
+	vp->minDepth = 0.f;
+	vp->maxDepth = 1.f;
+
+	scisor = new vk::Rect2D;
+	scisor->extent = swapchain->GetExtent();
+	scisor->offset = vk::Offset2D(0, 0);
+
+	colorBlendAttachment = new vk::PipelineColorBlendAttachmentState;
+	colorBlendAttachment->colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	colorBlendAttachment->blendEnable = VK_FALSE;
+
+	bindingDescription = new vk::VertexInputBindingDescription(0, sizeof(Resource::Vertex), vk::VertexInputRate::eVertex);
+
+	attributeDescriptions = new vk::VertexInputAttributeDescription[5];
+	attributeDescriptions[0] = vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, position));
+	attributeDescriptions[1] = vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, normal));
+	attributeDescriptions[2] = vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Resource::Vertex, uv));
+	attributeDescriptions[3] = vk::VertexInputAttributeDescription(3, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, tangent));
+	attributeDescriptions[4] = vk::VertexInputAttributeDescription(4, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, bitangent));
+
+	pipelineData.createInfo = vk::GraphicsPipelineCreateInfo();
+	pipelineData.createInfo.layout = textureLayout;
+	pipelineData.createInfo.renderPass = mainRenderPass;
+	pipelineData.createInfo.subpass = 0;
+	pipelineData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), VK_TRUE, VK_TRUE, vk::CompareOp::eLess);
+	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, vp, 1, scisor);
+	pipelineData.createInfo.pRasterizationState = new vk::PipelineRasterizationStateCreateInfo(vk::PipelineRasterizationStateCreateFlags(), VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
+	pipelineData.createInfo.pMultisampleState = new vk::PipelineMultisampleStateCreateInfo(vk::PipelineMultisampleStateCreateFlags(), vk::SampleCountFlagBits::e1, VK_FALSE, 1.0f, nullptr, VK_FALSE, VK_FALSE);
+	pipelineData.createInfo.pColorBlendState = new vk::PipelineColorBlendStateCreateInfo({}, VK_FALSE, vk::LogicOp::eCopy, 1, colorBlendAttachment, { 0.f, 0.f, 0.f, 0.f });
+	pipelineData.createInfo.pInputAssemblyState = new vk::PipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleList, VK_FALSE);
+	pipelineData.createInfo.pVertexInputState = new vk::PipelineVertexInputStateCreateInfo(vk::PipelineVertexInputStateCreateFlags(), 1, bindingDescription, 5, attributeDescriptions);
+
+	pipelineData.shaderFile = "Shaders/TNL.spv";
+	pipelineData.mains = {
+		{ vk::ShaderStageFlagBits::eVertex, "vertexMain" },
+		{ vk::ShaderStageFlagBits::eFragment, "pixelMain" }
+	};
+
+	pipelinesManager->CreatePipeline(pipelineData);
+#pragma endregion
 	//TODO : Introduce pipeline cache
 }
 

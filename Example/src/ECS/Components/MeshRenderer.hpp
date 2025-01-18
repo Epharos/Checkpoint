@@ -5,6 +5,5 @@
 struct MeshRenderer
 {
 	Resource::Mesh* mesh = nullptr;
-	/*Render::Material* material = nullptr;
-	bool visible = true;*/
+	Resource::MaterialInstance* materialInstance = nullptr;
 };

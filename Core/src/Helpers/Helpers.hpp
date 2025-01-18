@@ -7,7 +7,7 @@ namespace Helper
 	namespace Memory
 	{
 		uint32_t FindMemoryType(const vk::PhysicalDevice& physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
-		vk::Buffer CreateBuffer(const vk::Device& device, const vk::PhysicalDevice& physicalDevice, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::DeviceMemory& bufferMemory);
+		[[nodiscard]] vk::Buffer CreateBuffer(const vk::Device& device, const vk::PhysicalDevice& physicalDevice, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::DeviceMemory& bufferMemory);
 		void MapMemory(const vk::Device& device, const vk::DeviceMemory& memory, vk::DeviceSize size, void* data);
 		void MapMemory(const vk::Device& device, const vk::DeviceMemory& memory, vk::DeviceSize size, const void* data);
 
@@ -41,5 +41,33 @@ namespace Helper
 	{
 		vk::CommandBuffer BeginSingleTimeCommands(const vk::Device& device, const vk::CommandPool& commandPool);
 		void EndSingleTimeCommands(const vk::Device& device, const vk::CommandPool& commandPool, const vk::Queue& queue, const vk::CommandBuffer& commandBuffer);
+	}
+
+	namespace Hash
+	{
+		template<typename T>
+		void CombineHashes(size_t& seed, const T& value)
+		{
+			std::hash<T> hasher;
+			seed ^= hasher(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		}
+
+		template <typename... Args>
+		struct TupleHash 
+		{
+			std::size_t operator()(const std::tuple<Args...>& tuple) const 
+			{
+				return HashTuple(tuple, std::index_sequence_for<Args...>{});
+			}
+
+		private:
+			template <typename TupleType, std::size_t... Index>
+			std::size_t HashTuple(const TupleType& tuple, std::index_sequence<Index...>) const 
+			{
+				std::size_t seed = 0;
+				(..., CombineHashes(seed, std::get<Index>(tuple)));
+				return seed;
+			}
+		};
 	}
 }

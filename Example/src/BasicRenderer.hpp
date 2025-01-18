@@ -10,6 +10,8 @@ protected:
 	vk::Buffer instancedBuffer;
 	vk::DeviceMemory instancedBufferMemory;
 
+	const uint32_t MAX_RENDERABLE_ENTITIES = 10000;
+
 	void CreateMainRenderPass() override;
 
 	void RenderFrame(const std::vector<Render::InstanceGroup>& _instanceGroups) override;
@@ -18,6 +20,7 @@ protected:
 
 public:
 	BasicRenderer() = default;
+	BasicRenderer(const uint32_t& _maxRenderableEntities) : MAX_RENDERABLE_ENTITIES(_maxRenderableEntities) {}
 	~BasicRenderer();
 
 	virtual void Cleanup() override;

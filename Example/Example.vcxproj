@@ -153,6 +153,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="src\Materials\AlbedoNormalMaterial.cpp" />
+    <ClCompile Include="src\Materials\ColorMaterial.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -166,11 +168,14 @@
     <ClInclude Include="src\ECS\Components\Transform.hpp" />
     <ClInclude Include="src\ECS\Systems\MoveSystem.hpp" />
     <ClInclude Include="src\ECS\Systems\RenderSystem.hpp" />
+    <ClInclude Include="src\Materials\AlbedoNormalMaterial.hpp" />
+    <ClInclude Include="src\Materials\ColorMaterial.hpp" />
     <ClInclude Include="src\pch.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\BaseNormalLighting.slang" />
+    <None Include="Shaders\ColorNormalLighting.slang" />
     <None Include="Shaders\BNL.spv" />
+    <None Include="Shaders\TexturedNormalLighting.slang" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

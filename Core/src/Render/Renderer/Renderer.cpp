@@ -70,7 +70,7 @@ void Render::Renderer::SubmitFrame()
 
 void Render::Renderer::PresentFrame(uint32_t _index)
 {
-	vk::Result result;
+	vk::Result result = vk::Result::eSuccess;
 	vk::Queue graphicsQueue = context->GetDevice().getQueue(context->GetQueueFamilyIndices().graphicsFamily.value(), 0);
 	vk::Semaphore signalSemaphores[] = { swapchain->GetCurrentFrame()->GetRenderFinishedSemaphore() };
 
