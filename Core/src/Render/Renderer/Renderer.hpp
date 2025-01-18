@@ -48,6 +48,8 @@ namespace Render
 		virtual void CreateMainRenderPass() = 0;
 		virtual void CreateRenderPasses();
 
+		virtual void AddRenderTargets();
+
 		virtual uint32_t PrepareFrame();
 		virtual void SubmitFrame();
 		virtual void PresentFrame(uint32_t _index);

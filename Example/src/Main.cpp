@@ -54,14 +54,14 @@ int main()
 	CreateMaterials(resourceManager, context);
 
 	resourceManager.Load<Mesh>("Barstool", "Models/Furniture/barstool.gltf");
-	resourceManager.Load<Mesh>("Comptoir", "Models/Furniture/Comptoirv2.fbx");
+	//resourceManager.Load<Mesh>("Comptoir", "Models/Furniture/Comptoirv2.fbx");
 	resourceManager.Load<Mesh>("Cube", "Models/Primitive/cube.fbx");
 
 	resourceManager.Load<Texture>("Barstool Albedo", "Textures/Barstool/barstool_albedo.png");
 	resourceManager.Load<Texture>("Barstool Normal", "Textures/Barstool/barstool_normal.png");
 
-	resourceManager.Load<Texture>("Comptoir Albedo", "Textures/Comptoir/comptoir_albedo.png");
-	resourceManager.Load<Texture>("Comptoir Normal", "Textures/Comptoir/comptoir_normal.png");
+	/*resourceManager.Load<Texture>("Comptoir Albedo", "Textures/Comptoir/comptoir_albedo.png");
+	resourceManager.Load<Texture>("Comptoir Normal", "Textures/Comptoir/comptoir_normal.png");*/
 
 	resourceManager.Load<Texture>("Wood Albedo", "Textures/Ground/wood_albedo.png");
 	resourceManager.Load<Texture>("Wood Normal", "Textures/Ground/wood_normal.png");
@@ -70,9 +70,9 @@ int main()
 		resourceManager.Get<Material>("AlbedoNormal")->CreateMaterialInstance<AlbedoNormalMaterial>(
 			resourceManager.Get<Texture>("Barstool Albedo"), resourceManager.Get<Texture>("Barstool Normal")));
 
-	resourceManager.Add<MaterialInstance>("Comptoir Material",
+	/*resourceManager.Add<MaterialInstance>("Comptoir Material",
 		resourceManager.Get<Material>("AlbedoNormal")->CreateMaterialInstance<AlbedoNormalMaterial>(
-			resourceManager.Get<Texture>("Comptoir Albedo"), resourceManager.Get<Texture>("Comptoir Normal")));
+			resourceManager.Get<Texture>("Comptoir Albedo"), resourceManager.Get<Texture>("Comptoir Normal")));*/
 
 	resourceManager.Add<MaterialInstance>("Wood Material",
 		resourceManager.Get<Material>("AlbedoNormal")->CreateMaterialInstance<AlbedoNormalMaterial>(

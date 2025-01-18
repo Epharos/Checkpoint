@@ -84,7 +84,6 @@ namespace Render
 	RenderTargetAttachment::~RenderTargetAttachment()
 	{
 		Destroy(context->GetDevice());
-		LOG_TRACE("Destroyed RenderTargetAttachment");
 	}
 
 	void RenderTargetAttachment::Destroy(const vk::Device& device)

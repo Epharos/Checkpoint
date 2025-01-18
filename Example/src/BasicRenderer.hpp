@@ -10,9 +10,12 @@ protected:
 	vk::Buffer instancedBuffer;
 	vk::DeviceMemory instancedBufferMemory;
 
+	Render::Camera* directionnalLight;
+
 	const uint32_t MAX_RENDERABLE_ENTITIES = 10000;
 
 	void CreateMainRenderPass() override;
+	void AddRenderTargets() override;
 
 	void RenderFrame(const std::vector<Render::InstanceGroup>& _instanceGroups) override;
 

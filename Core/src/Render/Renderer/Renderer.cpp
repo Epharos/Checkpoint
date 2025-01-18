@@ -8,6 +8,11 @@ void Render::Renderer::CreateRenderPasses()
 
 }
 
+void Render::Renderer::AddRenderTargets()
+{
+
+}
+
 uint32_t Render::Renderer::PrepareFrame()
 {
 	if (context->GetDevice().waitForFences(1, &swapchain->GetCurrentFrame()->GetInFlightFence(), VK_TRUE, std::numeric_limits<uint32_t>().max()) != vk::Result::eSuccess)
@@ -113,6 +118,7 @@ void Render::Renderer::Build(Context::VulkanContext* _context)
 	CreateMainRenderPass();
 	CreateRenderPasses();
 	swapchain->Create(mainRenderPass);
+	AddRenderTargets();
 	mainCamera = new Camera(context);
 
 	SetupPipelines();
