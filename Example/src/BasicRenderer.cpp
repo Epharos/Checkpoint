@@ -5,11 +5,11 @@ void LogMat4(glm::mat4 _mat);
 
 BasicRenderer::BasicRenderer(Context::VulkanContext* _context, const uint32_t& _maxRenderableEntities) :
 	Render::Renderer(_context), MAX_RENDERABLE_ENTITIES(_maxRenderableEntities), 
-	directionnalLight(new Render::Camera(context)), shadowMapRT(new Render::RenderTarget(*context, vk::Extent2D(1024, 1024)))
+	directionnalLight(new Render::Camera(context)), shadowMapRT(new Render::RenderTarget(*context, vk::Extent2D(4096, 4096)))
 {
-	directionnalLight->Translate(glm::vec3(0.f, -20.f, 50.f));
+	directionnalLight->Translate(glm::vec3(0.f, -20.f, 5.f));
 	directionnalLight->Rotate(glm::quat(glm::vec3(glm::radians(20.f), .0f, .0f)));
-	directionnalLight->SetOrthographic(-20.f, 20.f, -20.f, 20.f, 0.1f, 100.f);
+	directionnalLight->SetOrthographic(-30.f, 30.f, -30.f, 30.f, 0.1f, 30.f);
 }
 
 BasicRenderer::~BasicRenderer()
@@ -45,7 +45,7 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 	depthShadowMapRenderPassInfo.renderPass = shadowMapRenderPass;
 	depthShadowMapRenderPassInfo.framebuffer = shadowMapRT->GetFramebuffer();
 	depthShadowMapRenderPassInfo.renderArea.offset = vk::Offset2D{ 0, 0 };
-	depthShadowMapRenderPassInfo.renderArea.extent = vk::Extent2D(1024, 1024);
+	depthShadowMapRenderPassInfo.renderArea.extent = vk::Extent2D(4096, 4096);
 	depthShadowMapRenderPassInfo.clearValueCount = 1;
 	depthShadowMapRenderPassInfo.pClearValues = shadowMapClearValues.data();
 
@@ -280,13 +280,13 @@ void BasicRenderer::SetupPipelines()
 	vk::Viewport* vp = new vk::Viewport;
 	vp->x = 0.f;
 	vp->y = 0.f;
-	vp->width = 1024; //Magic number
-	vp->height = 1024; //Magic number
+	vp->width = 4096; //Magic number
+	vp->height = 4096; //Magic number
 	vp->minDepth = 0.f;
 	vp->maxDepth = 1.f;
 
 	vk::Rect2D* scisor = new vk::Rect2D;
-	scisor->extent = vk::Extent2D(1024, 1024);
+	scisor->extent = vk::Extent2D(4096, 4096);
 	scisor->offset = vk::Offset2D(0, 0);
 
 	vk::PipelineColorBlendAttachmentState* colorBlendAttachment = new vk::PipelineColorBlendAttachmentState;
@@ -523,7 +523,7 @@ void BasicRenderer::CreateRenderPasses()
 
 	shadowMapRenderPass = context->GetDevice().createRenderPass(renderPassInfo);
 
-	auto shadowMapAttachment = std::make_shared<Render::RenderTargetAttachment>(context, vk::Extent2D(1024, 1024),
+	auto shadowMapAttachment = std::make_shared<Render::RenderTargetAttachment>(context, vk::Extent2D(4096, 4096),
 		Helper::Format::FindDepthFormat(context->GetPhysicalDevice()), vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled, vk::ImageAspectFlagBits::eDepth, true);
 
 	shadowMapRT->AddAttachment(shadowMapAttachment);

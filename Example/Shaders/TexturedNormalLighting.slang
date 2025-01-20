@@ -95,7 +95,7 @@ float LinearizeDepth(float depth, float near, float far)
     return (2.0 * near * far) / (far + near - depth * (far - near));
 }
 
-float ComputeShadow(float4 lightSpacePosition)
+float3 ComputeShadow(float4 lightSpacePosition)
 {
     // Perform the perspective divide
     float3 projCoords = lightSpacePosition.xyz / lightSpacePosition.w;
@@ -110,11 +110,15 @@ float ComputeShadow(float4 lightSpacePosition)
 
     float bias = 0.08;
     float currentDepth = projCoords.z;
-    //float depthMapValue = LinearizeDepth(shadowMapTexture.Sample(shadowMapSampler, projCoords.xy).r, 0.1, 1000.0);
+    //float depthMapValue = LinearizeDepth(shadowMapTexture.Sample(shadowMapSampler, projCoords.xy).r, 0.1, 100.0);
     float depthMapValue = shadowMapTexture.Sample(shadowMapSampler, projCoords.xy).r;
+    float diff = currentDepth - depthMapValue;
     //return float3(projCoords.xy, 0);
     //return /*cos(projCoords.x * 3.14) > 0 ? currentDepth : */currentDepth;
-    return currentDepth > (depthMapValue + bias) ? 1.0 : 0.0;
+
+    return float3(diff);
+
+   // return currentDepth > (depthMapValue + bias) ? 1.0 : 0.0;
 
     //return shadowMapTexture.SampleCmp(shadowMapSampler, projCoords.xy, projCoords.z - bias);
 }
@@ -134,8 +138,8 @@ float4 pixelMain(VSOutput input) : SV_TARGET
     float3 diffuse = max(dot(normalValue, sunDir), 0.0);
 
     float3 finalColor = albedo * (ambiantColor + ComputeShadow(input.lightSpacePosition) * diffuse); // Compute the final color
-    //return float4(float3(ComputeShadow(input.lightSpacePosition)), 1.0);
-    return float4(finalColor, 1.0);
+    return float4(float3(ComputeShadow(input.lightSpacePosition)), 1.0);
+    //return float4(finalColor, 1.0);
 }
 
 float3x3 f3x3(float4x4 m) {
