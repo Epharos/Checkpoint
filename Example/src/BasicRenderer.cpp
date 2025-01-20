@@ -1,6 +1,17 @@
 #include "pch.hpp"
 #include "BasicRenderer.hpp"
 
+void LogMat4(glm::mat4 _mat);
+
+BasicRenderer::BasicRenderer(Context::VulkanContext* _context, const uint32_t& _maxRenderableEntities) :
+	Render::Renderer(_context), MAX_RENDERABLE_ENTITIES(_maxRenderableEntities), 
+	directionnalLight(new Render::Camera(context)), shadowMapRT(new Render::RenderTarget(*context, vk::Extent2D(1024, 1024)))
+{
+	directionnalLight->Translate(glm::vec3(0.f, -20.f, 50.f));
+	directionnalLight->Rotate(glm::quat(glm::vec3(glm::radians(20.f), .0f, .0f)));
+	directionnalLight->SetOrthographic(-20.f, 20.f, -20.f, 20.f, 0.1f, 100.f);
+}
+
 BasicRenderer::~BasicRenderer()
 {
 
@@ -8,15 +19,77 @@ BasicRenderer::~BasicRenderer()
 
 void BasicRenderer::Cleanup()
 {
+	delete directionnalLight;
+	context->GetDevice().destroyRenderPass(shadowMapRenderPass);
+	delete shadowMapRT;
 	Renderer::Cleanup();
 	Helper::Memory::DestroyBuffer(context->GetDevice(), instancedBuffer, instancedBufferMemory);
 }
 
 void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _instanceGroups)
 {
+	mainCamera->UpdateUniformBuffer();
+	directionnalLight->UpdateUniformBuffer();
+
 	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4>{0.1f, 0.1f, 0.1f, 1.0f});
 	vk::ClearDepthStencilValue clearDepth = vk::ClearDepthStencilValue(1.0f, 0);
 
+	Resource::Mesh* currentMesh = nullptr;
+
+	vk::CommandBuffer commandBuffer = swapchain->GetCurrentFrame()->GetCommandBuffer();
+
+#pragma region Shadow Map Render Pass
+	std::vector<vk::ClearValue> shadowMapClearValues = { clearDepth };
+
+	vk::RenderPassBeginInfo depthShadowMapRenderPassInfo = {};
+	depthShadowMapRenderPassInfo.renderPass = shadowMapRenderPass;
+	depthShadowMapRenderPassInfo.framebuffer = shadowMapRT->GetFramebuffer();
+	depthShadowMapRenderPassInfo.renderArea.offset = vk::Offset2D{ 0, 0 };
+	depthShadowMapRenderPassInfo.renderArea.extent = vk::Extent2D(1024, 1024);
+	depthShadowMapRenderPassInfo.clearValueCount = 1;
+	depthShadowMapRenderPassInfo.pClearValues = shadowMapClearValues.data();
+
+	commandBuffer.beginRenderPass(depthShadowMapRenderPassInfo, vk::SubpassContents::eInline);
+
+	Pipeline::PipelineData pipelineData = context->GetPipelinesManager()->GetPipeline({ "Depth Shadow Map" });
+	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineData.pipeline);
+
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineData.pipelineLayout, 0, context->GetDescriptorSetManager()->GetDescriptorSet("Shadow Map Camera"), nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineData.pipelineLayout, 1, context->GetDescriptorSetManager()->GetDescriptorSet("Instance Model"), nullptr);
+
+	//LogMat4(directionnalLight->GetViewProjectionMatrix());
+
+	for (auto& instanceGroup : _instanceGroups)
+	{
+		vk::DeviceSize offset(0);
+
+		if (currentMesh != instanceGroup.mesh)
+		{
+			currentMesh = instanceGroup.mesh;
+			commandBuffer.bindVertexBuffers(0, 1, &currentMesh->GetVertexBuffer(), &offset);
+			commandBuffer.bindIndexBuffer(currentMesh->GetIndexBuffer(), 0, vk::IndexType::eUint32);
+		}
+
+		Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(Render::TransformData) * instanceGroup.transforms.size(), instanceGroup.instanceOffset * sizeof(Render::TransformData), instanceGroup.transforms.data());
+
+		commandBuffer.drawIndexed(instanceGroup.mesh->GetIndexCount(), instanceGroup.transforms.size(), 0, 0, instanceGroup.instanceOffset);
+	}
+
+	commandBuffer.endRenderPass();
+#pragma endregion
+
+	vk::ImageMemoryBarrier shadowMapBarrier = {};
+	shadowMapBarrier.sType = vk::StructureType::eImageMemoryBarrier;
+	shadowMapBarrier.oldLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+	shadowMapBarrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+	shadowMapBarrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+	shadowMapBarrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+	shadowMapBarrier.image = shadowMapRT->GetAttachment(0)->GetImage();
+	shadowMapBarrier.subresourceRange = { vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1 };
+
+	commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eLateFragmentTests, vk::PipelineStageFlagBits::eFragmentShader, vk::DependencyFlagBits::eByRegion, 0, nullptr, 0, nullptr, 1, &shadowMapBarrier);
+
+#pragma region Main Render Pass
 	std::vector<vk::ClearValue> clearValues = { clearDepth, clearColor };
 
 	vk::RenderPassBeginInfo renderPassInfo = {};
@@ -26,39 +99,11 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 	renderPassInfo.renderArea.extent = swapchain->GetExtent();
 	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	renderPassInfo.pClearValues = clearValues.data();
-
-	vk::CommandBuffer commandBuffer = swapchain->GetCurrentFrame()->GetCommandBuffer();
+	
 	commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
-
-	// RENDER
 
 	Resource::Material* currentMaterial = nullptr;
 	Resource::MaterialInstance* currentMaterialInstance = nullptr;
-	Resource::Mesh* currentMesh = nullptr;
-
-	for (auto& instanceGroup : _instanceGroups)
-	{
-		vk::DeviceSize offset(0);
-
-		commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, context->GetPipelinesManager()->GetPipeline({ "Depth Shadow Map" }).pipeline);
-		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentMaterial->GetPipelineLayout(), 0, context->GetDescriptorSetManager()->GetDescriptorSet("Camera"), nullptr);
-		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentMaterial->GetPipelineLayout(), 1, context->GetDescriptorSetManager()->GetDescriptorSet("Instance Model"), nullptr);
-
-		if (currentMesh != instanceGroup.mesh)
-		{
-			currentMesh = instanceGroup.mesh;
-			commandBuffer.bindVertexBuffers(0, 1, &currentMesh->GetVertexBuffer(), &offset);
-			commandBuffer.bindIndexBuffer(currentMesh->GetIndexBuffer(), 0, vk::IndexType::eUint32);
-
-			//LOG_DEBUG(MF("Switching mesh [", currentMesh, "]"));
-		}
-
-		Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(Render::TransformData) * instanceGroup.transforms.size(), instanceGroup.instanceOffset * sizeof(Render::TransformData), instanceGroup.transforms.data());
-
-		commandBuffer.drawIndexed(instanceGroup.mesh->GetIndexCount(), instanceGroup.transforms.size(), 0, 0, instanceGroup.instanceOffset);
-	}
-
-	commandBuffer.nextSubpass(vk::SubpassContents::eInline);
 
 	for (auto& instanceGroup : _instanceGroups)
 	{
@@ -70,8 +115,10 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 
 			currentMaterial->BindMaterial(commandBuffer);
 
-			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentMaterial->GetPipelineLayout(), 0, context->GetDescriptorSetManager()->GetDescriptorSet("Camera"), nullptr);
+			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentMaterial->GetPipelineLayout(), 0, context->GetDescriptorSetManager()->GetDescriptorSet("Render Camera"), nullptr);
 			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentMaterial->GetPipelineLayout(), 1, context->GetDescriptorSetManager()->GetDescriptorSet("Instance Model"), nullptr);
+
+			//LogMat4(directionnalLight->GetViewProjectionMatrix());
 
 			//LOG_DEBUG(MF("Switching pipeline [", currentMaterial, "]"));
 		}
@@ -93,34 +140,34 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 			//LOG_DEBUG(MF("Switching mesh [", currentMesh, "]"));
 		}
 
-		Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(Render::TransformData) * instanceGroup.transforms.size(), instanceGroup.instanceOffset * sizeof(Render::TransformData), instanceGroup.transforms.data());
+		//Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(Render::TransformData) * instanceGroup.transforms.size(), instanceGroup.instanceOffset * sizeof(Render::TransformData), instanceGroup.transforms.data());
 
 		commandBuffer.drawIndexed(instanceGroup.mesh->GetIndexCount(), instanceGroup.transforms.size(), 0, 0, instanceGroup.instanceOffset);
 	}
 
 	commandBuffer.endRenderPass();
+#pragma endregion
 }
 
 void BasicRenderer::SetupPipelines()
 {
-	mainCamera->Translate(glm::vec3(0.f, 3.f, 10.f));
-	mainCamera->Rotate(glm::quat(glm::vec3(glm::radians(30.f), .0f, .0f)));
-
-	directionnalLight = new Render::Camera(context);
-	directionnalLight->Translate(glm::vec3(0.f, 20.f, 0.f));
-	directionnalLight->Rotate(glm::quat(glm::vec3(glm::radians(55.f), .0f, .0f)));
-	directionnalLight->SetOrthographic(-10.f, 10.f, -10.f, 10.f, 0.1f, 100.f);
+	mainCamera->Translate(glm::vec3(10.f, -10.f, 10.f));
+	mainCamera->Rotate(glm::quat(glm::vec3(glm::radians(50.f), glm::radians(20.0f), .0f)));
+	//mainCamera->SetOrthographic(-20.f, 20.f, -20.f, 20.f, 0.1f, 1000.f);
 
 	Pipeline::DescriptorSetLayoutsManager* descriptorSetLayoutsManager = context->GetDescriptorSetLayoutsManager();
 	Pipeline::DescriptorSetManager* descriptorSetManager = context->GetDescriptorSetManager();
 	Pipeline::PipelinesManager* pipelinesManager = context->GetPipelinesManager();
 	Pipeline::LayoutsManager* layoutsManager = context->GetLayoutsManager();
 
-#pragma region Camera and Instance Buffer
+#pragma region Cameras and Instance Buffer
 
-	vk::DescriptorSetLayout cameraLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Camera",
+	vk::DescriptorSetLayout cameraLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Render Camera",
 		{
-			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex)
+			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex), // Camera Space Matrix
+			vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex), // Light Space Matrix
+			vk::DescriptorSetLayoutBinding(2, vk::DescriptorType::eSampledImage, 1, vk::ShaderStageFlagBits::eFragment), // Shadow Mapping depth map texture
+			vk::DescriptorSetLayoutBinding(3, vk::DescriptorType::eSampler, 1, vk::ShaderStageFlagBits::eFragment) // Shadow Mapping depth map texture sampler
 		});
 
 	vk::DescriptorSetLayout instancedModelLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Instanced Model",
@@ -128,7 +175,12 @@ void BasicRenderer::SetupPipelines()
 			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eVertex)
 		});
 
-	descriptorSetManager->CreateDescriptorSets({ "Camera", "Instance Model" }, { cameraLayout, instancedModelLayout });
+	vk::DescriptorSetLayout shadowMapCameraLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Shadow Map Camera",
+		{
+			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex)
+		});
+
+	descriptorSetManager->CreateDescriptorSets({ "Render Camera", "Instance Model", "Shadow Map Camera"}, {cameraLayout, instancedModelLayout, shadowMapCameraLayout});
 
 	if (mainCamera)
 	{
@@ -141,7 +193,39 @@ void BasicRenderer::SetupPipelines()
 		cameraUpdate.offset = 0;
 		cameraUpdate.range = sizeof(Render::CameraUBO);
 
-		descriptorSetManager->UpdateDescriptorSet("Camera", cameraUpdate);
+		descriptorSetManager->UpdateDescriptorSet("Render Camera", cameraUpdate);
+	}
+
+	if (directionnalLight)
+	{
+		Pipeline::DescriptorSetUpdate shadowMapCameraUpdate = {};
+		shadowMapCameraUpdate.descriptorType = vk::DescriptorType::eUniformBuffer;
+		shadowMapCameraUpdate.dstBinding = 1;
+		shadowMapCameraUpdate.dstArrayElement = 0;
+		shadowMapCameraUpdate.descriptorCount = 1;
+		shadowMapCameraUpdate.buffer = directionnalLight->GetUBOBuffer();
+		shadowMapCameraUpdate.offset = 0;
+		shadowMapCameraUpdate.range = sizeof(Render::CameraUBO);
+
+		descriptorSetManager->UpdateDescriptorSet("Render Camera", shadowMapCameraUpdate);
+		shadowMapCameraUpdate.dstBinding = 0;
+		descriptorSetManager->UpdateDescriptorSet("Shadow Map Camera", shadowMapCameraUpdate);
+
+		Pipeline::DescriptorSetUpdate shadowMapUpdate = {};
+		shadowMapUpdate.updateType = Pipeline::DescriptorSetUpdateType::IMAGE;
+		shadowMapUpdate.descriptorType = vk::DescriptorType::eSampledImage;
+		shadowMapUpdate.dstBinding = 2;
+		shadowMapUpdate.dstArrayElement = 0;
+		shadowMapUpdate.descriptorCount = 1;
+		shadowMapUpdate.sampler = shadowMapRT->GetAttachment(0)->GetSampler();
+		shadowMapUpdate.imageView = shadowMapRT->GetAttachment(0)->GetImageView();
+		shadowMapUpdate.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+
+		descriptorSetManager->UpdateDescriptorSet("Render Camera", shadowMapUpdate);
+		shadowMapUpdate.descriptorType = vk::DescriptorType::eSampler;
+		shadowMapUpdate.dstBinding = 3;
+		descriptorSetManager->UpdateDescriptorSet("Render Camera", shadowMapUpdate);
+
 	}
 
 	instancedBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(Render::TransformData) * MAX_RENDERABLE_ENTITIES, vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, instancedBufferMemory);
@@ -180,12 +264,7 @@ void BasicRenderer::SetupPipelines()
 
 	vk::PipelineLayout textureLayout = layoutsManager->GetOrCreateLayout(textureLayouts, {});
 
-	vk::DescriptorSetLayout depthShadowMapSetLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Depth Shadow Map",
-		{
-			//vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex)
-		});
-
-	const std::vector<vk::DescriptorSetLayout> depthShadowMapLayouts = { cameraLayout, instancedModelLayout, depthShadowMapSetLayout };
+	const std::vector<vk::DescriptorSetLayout> depthShadowMapLayouts = { shadowMapCameraLayout, instancedModelLayout };
 
 	vk::PipelineLayout depthShadowMapLayout = layoutsManager->GetOrCreateLayout(depthShadowMapLayouts, {});
 
@@ -196,7 +275,7 @@ void BasicRenderer::SetupPipelines()
 	Pipeline::PipelineCreateData pipelineData = {};
 	pipelineData.config.name = "Depth Shadow Map";
 
-	pipelineData.descriptorSetLayouts = depthShadowMapLayout;
+	pipelineData.descriptorSetLayouts = depthShadowMapLayouts;
 
 	vk::Viewport* vp = new vk::Viewport;
 	vp->x = 0.f;
@@ -225,7 +304,7 @@ void BasicRenderer::SetupPipelines()
 
 	pipelineData.createInfo = vk::GraphicsPipelineCreateInfo();
 	pipelineData.createInfo.layout = depthShadowMapLayout;
-	pipelineData.createInfo.renderPass = mainRenderPass;
+	pipelineData.createInfo.renderPass = shadowMapRenderPass;
 	pipelineData.createInfo.subpass = 0;
 	pipelineData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), VK_TRUE, VK_TRUE, vk::CompareOp::eLess);
 	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, vp, 1, scisor);
@@ -235,7 +314,7 @@ void BasicRenderer::SetupPipelines()
 	pipelineData.createInfo.pInputAssemblyState = new vk::PipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleList, VK_FALSE);
 	pipelineData.createInfo.pVertexInputState = new vk::PipelineVertexInputStateCreateInfo(vk::PipelineVertexInputStateCreateFlags(), 1, bindingDescription, 5, attributeDescriptions);
 
-	pipelineData.shaderFile = "Shaders/CNL.spv";
+	pipelineData.shaderFile = "Shaders/ShadowMapping.spv";
 	pipelineData.mains = {
 		{ vk::ShaderStageFlagBits::eVertex, "vertexMain" },
 	};
@@ -245,12 +324,12 @@ void BasicRenderer::SetupPipelines()
 #pragma endregion
 
 #pragma region Color Pipeline
-	Pipeline::PipelineCreateData pipelineData = {};
+	pipelineData = {};
 	pipelineData.config.name = "Colored";
 
 	pipelineData.descriptorSetLayouts = colorLayouts;
 
-	vk::Viewport* vp = new vk::Viewport;
+	vp = new vk::Viewport;
 	vp->x = 0.f;
 	vp->y = 0.f;
 	vp->width = swapchain->GetExtent().width;
@@ -258,17 +337,17 @@ void BasicRenderer::SetupPipelines()
 	vp->minDepth = 0.f;
 	vp->maxDepth = 1.f;
 
-	vk::Rect2D* scisor = new vk::Rect2D;
+	scisor = new vk::Rect2D;
 	scisor->extent = swapchain->GetExtent();
 	scisor->offset = vk::Offset2D(0, 0);
 
-	vk::PipelineColorBlendAttachmentState* colorBlendAttachment = new vk::PipelineColorBlendAttachmentState;
+	colorBlendAttachment = new vk::PipelineColorBlendAttachmentState;
 	colorBlendAttachment->colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 	colorBlendAttachment->blendEnable = VK_FALSE;
 
-	vk::VertexInputBindingDescription* bindingDescription = new vk::VertexInputBindingDescription(0, sizeof(Resource::Vertex), vk::VertexInputRate::eVertex);
+	bindingDescription = new vk::VertexInputBindingDescription(0, sizeof(Resource::Vertex), vk::VertexInputRate::eVertex);
 
-	vk::VertexInputAttributeDescription* attributeDescriptions = new vk::VertexInputAttributeDescription[5];
+	attributeDescriptions = new vk::VertexInputAttributeDescription[5];
 	attributeDescriptions[0] = vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, position));
 	attributeDescriptions[1] = vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, normal));
 	attributeDescriptions[2] = vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Resource::Vertex, uv));
@@ -278,7 +357,7 @@ void BasicRenderer::SetupPipelines()
 	pipelineData.createInfo = vk::GraphicsPipelineCreateInfo();
 	pipelineData.createInfo.layout = colorLayout;
 	pipelineData.createInfo.renderPass = mainRenderPass;
-	pipelineData.createInfo.subpass = 1;
+	pipelineData.createInfo.subpass = 0;
 	pipelineData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), VK_TRUE, VK_TRUE, vk::CompareOp::eLess);
 	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, vp, 1, scisor);
 	pipelineData.createInfo.pRasterizationState = new vk::PipelineRasterizationStateCreateInfo(vk::PipelineRasterizationStateCreateFlags(), VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -331,7 +410,7 @@ void BasicRenderer::SetupPipelines()
 	pipelineData.createInfo = vk::GraphicsPipelineCreateInfo();
 	pipelineData.createInfo.layout = textureLayout;
 	pipelineData.createInfo.renderPass = mainRenderPass;
-	pipelineData.createInfo.subpass = 1;
+	pipelineData.createInfo.subpass = 0;
 	pipelineData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), VK_TRUE, VK_TRUE, vk::CompareOp::eLess);
 	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, vp, 1, scisor);
 	pipelineData.createInfo.pRasterizationState = new vk::PipelineRasterizationStateCreateInfo(vk::PipelineRasterizationStateCreateFlags(), VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -381,24 +460,14 @@ void BasicRenderer::CreateMainRenderPass()
 	depthAttachmentRef.attachment = 0;
 	depthAttachmentRef.layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
-	vk::SubpassDescription zPrepass = {};
-	zPrepass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
-	zPrepass.colorAttachmentCount = 0;
-	zPrepass.pDepthStencilAttachment = &depthAttachmentRef;
-
 	vk::SubpassDescription colorizeSubpass = {};
 	colorizeSubpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
 	colorizeSubpass.colorAttachmentCount = 1;
 	colorizeSubpass.pColorAttachments = &colorAttachmentRef;
 	colorizeSubpass.pDepthStencilAttachment = &depthAttachmentRef;
 
-	vk::SubpassDescription depthShadowMap = {};
-	depthShadowMap.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
-	depthShadowMap.colorAttachmentCount = 0;
-	depthShadowMap.pDepthStencilAttachment = &depthAttachmentRef;
-
 	std::vector<vk::AttachmentDescription> attachments = { depthAttachment, colorAttachment };
-	std::vector<vk::SubpassDescription> subpasses = { depthShadowMap, colorizeSubpass};
+	std::vector<vk::SubpassDescription> subpasses = { colorizeSubpass };
 
 	subpassCount = static_cast<uint32_t>(subpasses.size());
 
@@ -422,15 +491,50 @@ void BasicRenderer::CreateMainRenderPass()
 	mainRenderPass = context->GetDevice().createRenderPass(renderPassInfo);
 }
 
-void BasicRenderer::AddRenderTargets()
+void BasicRenderer::CreateRenderPasses()
 {
-	auto depthShadowMapAttachment = std::make_shared<Render::RenderTargetAttachment>(context, vk::Extent2D(1024, 1024), Helper::Format::FindDepthFormat(context->GetPhysicalDevice()), vk::ImageUsageFlagBits::eDepthStencilAttachment, vk::ImageAspectFlagBits::eDepth);
+	vk::AttachmentDescription depthAttachment = {};
+	depthAttachment.format = Helper::Format::FindDepthFormat(context->GetPhysicalDevice());
+	depthAttachment.samples = vk::SampleCountFlagBits::e1;
+	depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+	depthAttachment.storeOp = vk::AttachmentStoreOp::eStore;
+	depthAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
+	depthAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+	depthAttachment.initialLayout = vk::ImageLayout::eUndefined;
+	depthAttachment.finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
-	for (auto& frame : swapchain->GetFrames())
-	{
-		Render::RenderTarget* depthShadowMap = new Render::RenderTarget(*context, vk::Extent2D(1024, 1024));
-		depthShadowMap->AddAttachment(depthShadowMapAttachment);
-		frame->AddRenderTarget(depthShadowMap);
-		depthShadowMap->Build(mainRenderPass);
-	}
+	vk::AttachmentReference depthAttachmentRef = {};
+	depthAttachmentRef.attachment = 0;
+	depthAttachmentRef.layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+
+	vk::SubpassDescription depthSubpass = {};
+	depthSubpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
+	depthSubpass.colorAttachmentCount = 0;
+	depthSubpass.pDepthStencilAttachment = &depthAttachmentRef;
+
+	std::vector<vk::AttachmentDescription> attachments = { depthAttachment };
+	std::vector<vk::SubpassDescription> subpasses = { depthSubpass };
+
+	vk::RenderPassCreateInfo renderPassInfo = {};
+	renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+	renderPassInfo.pAttachments = attachments.data();
+	renderPassInfo.subpassCount = static_cast<uint32_t>(subpasses.size());
+	renderPassInfo.pSubpasses = subpasses.data();
+
+	shadowMapRenderPass = context->GetDevice().createRenderPass(renderPassInfo);
+
+	auto shadowMapAttachment = std::make_shared<Render::RenderTargetAttachment>(context, vk::Extent2D(1024, 1024),
+		Helper::Format::FindDepthFormat(context->GetPhysicalDevice()), vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled, vk::ImageAspectFlagBits::eDepth, true);
+
+	shadowMapRT->AddAttachment(shadowMapAttachment);
+
+	shadowMapRT->Build(shadowMapRenderPass);
+}
+
+void LogMat4(glm::mat4 _mat)
+{
+	LOG_DEBUG(MF(_mat[0][0], " ", _mat[0][1], " ", _mat[0][2], " ", _mat[0][3]));
+	LOG_DEBUG(MF(_mat[1][0], " ", _mat[1][1], " ", _mat[1][2], " ", _mat[1][3]));
+	LOG_DEBUG(MF(_mat[2][0], " ", _mat[2][1], " ", _mat[2][2], " ", _mat[2][3]));
+	LOG_DEBUG(MF(_mat[3][0], " ", _mat[3][1], " ", _mat[3][2], " ", _mat[3][3]));
 }

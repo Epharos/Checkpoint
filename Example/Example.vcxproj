@@ -176,6 +176,7 @@
   <ItemGroup>
     <None Include="Shaders\CNL.spv" />
     <None Include="Shaders\ColorNormalLighting.slang" />
+    <None Include="Shaders\ShadowMapping.slang" />
     <None Include="Shaders\TexturedNormalLighting.slang" />
     <None Include="Shaders\TNL.spv" />
   </ItemGroup>

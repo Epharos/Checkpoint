@@ -10,13 +10,14 @@ namespace Render
 		position = glm::vec3(0.0f); // Default position
 		rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f); // Default rotation
 
-		ubo.viewMatrix = glm::mat4(1.0f); // Identity matrix
-		ubo.projectionMatrix = glm::mat4(1.0f); // Identity matrix
+		viewMatrix = glm::mat4(1.0f); // Identity matrix
+		projectionMatrix = glm::mat4(1.0f); // Identity matrix
 
 		uboBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(CameraUBO), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, uboBufferMemory);
 
 		SetPerspective(70.f, context->GetPlatform()->GetAspectRatio(), 0.1f, 1000.f);
 
+		dirty = true;
 		UpdateUniformBuffer();
 	}
 
@@ -26,28 +27,62 @@ namespace Render
 		context->GetDevice().freeMemory(uboBufferMemory);
 	}
 
+	void Camera::SetPosition(const glm::vec3& _position)
+	{
+		position = _position;
+		dirty = true;
+	}
+
+	void Camera::SetRotation(const glm::quat& _rotation)
+	{
+		rotation = glm::normalize(_rotation);
+		dirty = true;
+	}
+
+	void Camera::SetRotationEuler(const glm::vec3& _rotation)
+	{
+		rotation = glm::normalize(glm::quat(_rotation));
+		dirty = true;
+	}
+
+	void Camera::SetPerspective(float _fov, float _aspectRatio, float _near, float _far)
+	{
+		projectionMatrix = glm::perspectiveRH_ZO(glm::radians(_fov), _aspectRatio, _near, _far);
+		dirty = true;
+	}
+
+	void Camera::SetOrthographic(float _left, float _right, float _bottom, float _top, float _near, float _far)
+	{
+		projectionMatrix = glm::orthoRH_ZO(_left, _right, _bottom, _top, _near, _far);
+		dirty = true;
+	}
+
 	void Camera::Translate(const glm::vec3& _translation)
 	{
 		position += _translation;
-		UpdateUniformBuffer();
+		dirty = true;
 	}
 
 	void Camera::Rotate(const glm::quat& _rotation)
 	{
 		rotation = glm::normalize(_rotation * rotation);
-		UpdateUniformBuffer();
+		dirty = true;
 	}
 
 	void Camera::Rotate(const glm::vec3& _rotation)
 	{
 		rotation = glm::normalize(glm::quat(_rotation) * rotation);
-		UpdateUniformBuffer();
+		dirty = true;
 	}
 
 	void Camera::UpdateUniformBuffer()
 	{
-		ubo.viewMatrix = glm::lookAtRH(position, position + (rotation * VEC3_FORWARD), glm::vec3(0.0f, 1.0f, 0.0f));
-
-		Helper::Memory::MapMemory(context->GetDevice(), uboBufferMemory, sizeof(CameraUBO), &ubo);
+		if (dirty)
+		{
+			viewMatrix = glm::lookAtRH(position, position + rotation * VEC3_FORWARD, glm::vec3(0.0f, 1.0f, 0.0f));
+			ubo.viewProjectionMatrix = projectionMatrix * viewMatrix;
+			Helper::Memory::MapMemory(context->GetDevice(), uboBufferMemory, sizeof(CameraUBO), &ubo);
+			dirty = false;
+		}
 	}
 }

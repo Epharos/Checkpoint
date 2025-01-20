@@ -40,8 +40,8 @@ int main()
 	platform.Initialize(contextInfo);
 	context.Initialize(contextInfo);
 
-	BasicRenderer renderer;
-	renderer.Build(&context);
+	BasicRenderer renderer(&context);
+	renderer.Build();
 
 	ResourceManager resourceManager(context);
 	resourceManager.RegisterResourceType<Mesh>();

@@ -80,5 +80,6 @@
     <None Include="Shaders\TexturedNormalLighting.slang" />
     <None Include="Shaders\CNL.spv" />
     <None Include="Shaders\TNL.spv" />
+    <None Include="Shaders\ShadowMapping.slang" />
   </ItemGroup>
 </Project>

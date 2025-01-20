@@ -69,16 +69,16 @@ namespace Render
 		context->GetDevice().destroyFramebuffer(framebuffer);
 	}
 
-	RenderTargetAttachment::RenderTargetAttachment(Context::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags)
+	RenderTargetAttachment::RenderTargetAttachment(Context::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler)
 	{
 		context = _context;
-		Build(_context, _extent, _format, _usage, _aspectFlags);
+		Build(_context, _extent, _format, _usage, _aspectFlags, _shouldCreateSampler);
 	}
 
-	RenderTargetAttachment::RenderTargetAttachment(Context::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags)
+	RenderTargetAttachment::RenderTargetAttachment(Context::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler)
 	{
 		context = _context;
-		Build(_context, _image, _format, _aspectFlags);
+		Build(_context, _image, _format, _aspectFlags, _shouldCreateSampler);
 	}
 
 	RenderTargetAttachment::~RenderTargetAttachment()
@@ -93,7 +93,7 @@ namespace Render
 		device.freeMemory(imageMemory);
 	}
 
-	void RenderTargetAttachment::Build(Context::VulkanContext*& _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags)
+	void RenderTargetAttachment::Build(Context::VulkanContext*& _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler)
 	{
 		vk::ImageCreateInfo imageInfo;
 		imageInfo.imageType = vk::ImageType::e2D;
@@ -130,9 +130,25 @@ namespace Render
 		viewInfo.subresourceRange.layerCount = 1;
 
 		imageView = _context->GetDevice().createImageView(viewInfo);
+
+		if (_shouldCreateSampler)
+		{
+			vk::SamplerCreateInfo samplerInfo;
+			samplerInfo.magFilter = vk::Filter::eLinear;
+			samplerInfo.minFilter = vk::Filter::eLinear;
+			samplerInfo.addressModeU = vk::SamplerAddressMode::eClampToEdge;
+			samplerInfo.addressModeV = vk::SamplerAddressMode::eClampToEdge;
+			samplerInfo.addressModeW = vk::SamplerAddressMode::eClampToEdge;
+			samplerInfo.compareEnable = VK_TRUE;
+			samplerInfo.compareOp = vk::CompareOp::eLessOrEqual;
+			samplerInfo.borderColor = vk::BorderColor::eFloatOpaqueWhite;
+			samplerInfo.unnormalizedCoordinates = VK_FALSE;
+
+			sampler = _context->GetDevice().createSampler(samplerInfo);
+		}
 	}
 	
-	void RenderTargetAttachment::Build(Context::VulkanContext*& _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags)
+	void RenderTargetAttachment::Build(Context::VulkanContext*& _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler)
 	{
 		image = _image;
 

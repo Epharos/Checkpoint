@@ -48,8 +48,6 @@ namespace Render
 		virtual void CreateMainRenderPass() = 0;
 		virtual void CreateRenderPasses();
 
-		virtual void AddRenderTargets();
-
 		virtual uint32_t PrepareFrame();
 		virtual void SubmitFrame();
 		virtual void PresentFrame(uint32_t _index);
@@ -58,10 +56,10 @@ namespace Render
 		virtual void RenderFrame(const std::vector<InstanceGroup>& _instanceGroups) = 0;
 
 	public:
-		Renderer() = default;
+		Renderer(Context::VulkanContext* _context) : context(_context) {}
 		virtual ~Renderer();
 
-		virtual void Build(Context::VulkanContext* _context);
+		virtual void Build();
 
 		virtual void Cleanup();
 		

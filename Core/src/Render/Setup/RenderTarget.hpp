@@ -13,23 +13,25 @@ namespace Render
 		vk::Image image;
 		vk::ImageView imageView;
 		vk::DeviceMemory imageMemory;
+		vk::Sampler sampler = VK_NULL_HANDLE;
 
 		Context::VulkanContext* context;
 
 		virtual void Destroy(const vk::Device& device);
-		void Build(Context::VulkanContext*& _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags);
-		void Build(Context::VulkanContext*& _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags);
+		void Build(Context::VulkanContext*& _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler = false);
+		void Build(Context::VulkanContext*& _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler = false);
 
 	public:
 		bool isSwapchain = false; //Temporary fix
 
-		RenderTargetAttachment(Context::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags);
-		RenderTargetAttachment(Context::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags);
+		RenderTargetAttachment(Context::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler = false);
+		RenderTargetAttachment(Context::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler = false);
 		~RenderTargetAttachment();
 
 		inline constexpr const vk::Image& GetImage() const { return image; }
 		inline constexpr const vk::ImageView& GetImageView() const { return imageView; }
 		inline constexpr const vk::DeviceMemory& GetImageMemory() const { return imageMemory; }
+		inline constexpr const vk::Sampler& GetSampler() const { return sampler; }
 	};
 
 	/*class RenderTargetAttachmentSwapchain : public RenderTargetAttachment
