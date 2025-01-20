@@ -30,7 +30,8 @@ StructuredBuffer<ModelData> models;
 float4 vertexMain(VSInput input, uint instanceID: SV_InstanceID) : SV_Position
 {
     float3 fragPos = mul(models[instanceID].model, float4(input.position, 1.0f)).xyz;
-
+    float4 clipPos = mul(camera.viewProjection, float4(fragPos, 1.0f));
+    clipPos.y = -clipPos.y;
     // Calculate the model-view-projection matrix and multiply it with the vertex position to get the clip-space position
-    return mul(camera.viewProjection, float4(fragPos, 1.0f));
+    return clipPos;
 }

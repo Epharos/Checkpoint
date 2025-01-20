@@ -45,7 +45,7 @@ ConstantBuffer<CameraData> lightData; // For now we are using CameraData struct 
 Texture2D shadowMapTexture;
 
 [vk::binding(3, 0)]
-SamplerState shadowMapSampler;
+SamplerComparisonState shadowMapSampler;
 
 [vk::binding(0, 1)]
 StructuredBuffer<ModelData> models;
@@ -86,6 +86,7 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 
     // Calculate the light space position
     output.lightSpacePosition = mul(lightData.viewProjection, float4(fragPos, 1.0f));
+    output.lightSpacePosition.y = -output.lightSpacePosition.y;
 
 	return output;
 }
@@ -95,32 +96,26 @@ float LinearizeDepth(float depth, float near, float far)
     return (2.0 * near * far) / (far + near - depth * (far - near));
 }
 
-float3 ComputeShadow(float4 lightSpacePosition)
+float ComputeShadow(float4 lightSpacePosition)
 {
     // Perform the perspective divide
-    float3 projCoords = lightSpacePosition.xyz / lightSpacePosition.w;
+    float2 projCoords = lightSpacePosition.xy / lightSpacePosition.w;
+    float currentDepth = lightSpacePosition.z / lightSpacePosition.w;
 
     // Transform the [-1, 1] range to [0, 1]
     projCoords = projCoords * 0.5 + 0.5;
+    currentDepth = currentDepth * 0.5 + 0.5;
 
-    if(projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0 || projCoords.z < 0.0 || projCoords.z > 1.0)
+    if(projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0)
 	{
 		return 1.0;
 	}
 
     float bias = 0.08;
-    float currentDepth = projCoords.z;
     //float depthMapValue = LinearizeDepth(shadowMapTexture.Sample(shadowMapSampler, projCoords.xy).r, 0.1, 100.0);
-    float depthMapValue = shadowMapTexture.Sample(shadowMapSampler, projCoords.xy).r;
-    float diff = currentDepth - depthMapValue;
-    //return float3(projCoords.xy, 0);
-    //return /*cos(projCoords.x * 3.14) > 0 ? currentDepth : */currentDepth;
+    //float diff = currentDepth - depthMapValue;
 
-    return float3(diff);
-
-   // return currentDepth > (depthMapValue + bias) ? 1.0 : 0.0;
-
-    //return shadowMapTexture.SampleCmp(shadowMapSampler, projCoords.xy, projCoords.z - bias);
+    return shadowMapTexture.SampleCmp(shadowMapSampler, projCoords.xy, currentDepth - bias);
 }
 
 [shader("pixel")]
@@ -138,8 +133,8 @@ float4 pixelMain(VSOutput input) : SV_TARGET
     float3 diffuse = max(dot(normalValue, sunDir), 0.0);
 
     float3 finalColor = albedo * (ambiantColor + ComputeShadow(input.lightSpacePosition) * diffuse); // Compute the final color
-    return float4(float3(ComputeShadow(input.lightSpacePosition)), 1.0);
-    //return float4(finalColor, 1.0);
+    //return float4(float3(ComputeShadow(input.lightSpacePosition)), 1.0);
+    return float4(finalColor, 1.0);
 }
 
 float3x3 f3x3(float4x4 m) {
