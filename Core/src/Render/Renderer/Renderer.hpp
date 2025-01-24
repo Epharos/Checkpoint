@@ -66,7 +66,7 @@ namespace Render
 		virtual void Render(const std::vector<InstanceGroup>& _instanceGroups);
 
 		inline constexpr const uint32_t GetSubpassCount() const { return subpassCount; }
-
+		inline constexpr Camera* GetMainCamera() { return mainCamera; }
 		
 	};
 }

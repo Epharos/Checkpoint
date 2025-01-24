@@ -126,7 +126,7 @@ int main()
 	ecs.AddComponent<Transform>(comptoir, Transform({ 0.0f, 10.0f, -4.0f }, { 0.9816272f, 0.0f, 0.190809f, 0.0f }, glm::vec3{ 3.f, 3.f, 3.f }));
 	ecs.AddComponent<MeshRenderer>(comptoir, MeshRenderer(resourceManager.Get<Mesh>("Comptoir"), resourceManager.Get<MaterialInstance>("Comptoir Material")));*/
 
-	//ecs.RegisterSystem<MoveSystem>();
+	ecs.RegisterSystem<Controller>(renderer.GetMainCamera(), context.GetPlatform()->GetWindow());
 	ecs.RegisterSystem<RenderSystem>(&renderer);
 
 	while (!platform.ShouldClose())

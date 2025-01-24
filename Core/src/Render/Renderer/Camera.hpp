@@ -34,6 +34,10 @@ namespace Render
 		inline constexpr vk::Buffer& GetUBOBuffer() { return uboBuffer; }
 		inline constexpr vk::DeviceMemory& GetUBOBufferMemory() { return uboBufferMemory; }
 
+		inline glm::vec3 GetForward() const { return glm::normalize(rotation * VEC3_FORWARD); }
+		inline glm::vec3 GetRight() const { return glm::normalize(rotation * VEC3_RIGHT); }
+		inline glm::vec3 GetUp() const { return glm::normalize(rotation * VEC3_UP); }
+
 		void Translate(const glm::vec3& _translation);
 		void Rotate(const glm::quat& _rotation);
 		void Rotate(const glm::vec3& _rotation);
