@@ -1,15 +1,18 @@
 #include "pch.hpp"
 #include "BasicRenderer.hpp"
 
+
+
 void LogMat4(glm::mat4 _mat);
 
 BasicRenderer::BasicRenderer(Context::VulkanContext* _context, const uint32_t& _maxRenderableEntities) :
 	Render::Renderer(_context), MAX_RENDERABLE_ENTITIES(_maxRenderableEntities), 
 	directionnalLight(new Render::Camera(context)), shadowMapRT(new Render::RenderTarget(*context, vk::Extent2D(4096, 4096)))
 {
-	directionnalLight->Translate(glm::vec3(0.f, -20.f, 5.f));
-	directionnalLight->Rotate(glm::quat(glm::vec3(glm::radians(20.f), .0f, .0f)));
-	directionnalLight->SetOrthographic(-30.f, 30.f, -30.f, 30.f, 0.1f, 30.f);
+	directionnalLight->Translate(glm::vec3(0.f, -30.f, 5.f));
+	directionnalLight->Rotate(glm::quat(glm::vec3(glm::radians(55.f), .0f, .0f)));
+	directionnalLight->SetOrthographic(-30.f, 30.f, -30.f, 30.f, 0.1f, 100.f);
+	sunLight.lightDirection = directionnalLight->GetRotation() * glm::vec4(0, 0, -1, 0);
 }
 
 BasicRenderer::~BasicRenderer()
@@ -24,12 +27,17 @@ void BasicRenderer::Cleanup()
 	delete shadowMapRT;
 	Renderer::Cleanup();
 	Helper::Memory::DestroyBuffer(context->GetDevice(), instancedBuffer, instancedBufferMemory);
+	Helper::Memory::DestroyBuffer(context->GetDevice(), sunLightBuffer, sunLightBufferMemory);
 }
 
 void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _instanceGroups)
 {
 	mainCamera->UpdateUniformBuffer();
 	directionnalLight->UpdateUniformBuffer();
+
+	sunLight.viewProjectionMatrix = directionnalLight->GetViewProjectionMatrix();
+
+	Helper::Memory::MapMemory(context->GetDevice(), sunLightBufferMemory, sizeof(SunLight), &sunLight);
 
 	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4>{0.1f, 0.1f, 0.1f, 1.0f});
 	vk::ClearDepthStencilValue clearDepth = vk::ClearDepthStencilValue(1.0f, 0);
@@ -198,14 +206,16 @@ void BasicRenderer::SetupPipelines()
 
 	if (directionnalLight)
 	{
+		sunLightBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(SunLight), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, sunLightBufferMemory);
+
 		Pipeline::DescriptorSetUpdate shadowMapCameraUpdate = {};
 		shadowMapCameraUpdate.descriptorType = vk::DescriptorType::eUniformBuffer;
 		shadowMapCameraUpdate.dstBinding = 1;
 		shadowMapCameraUpdate.dstArrayElement = 0;
 		shadowMapCameraUpdate.descriptorCount = 1;
-		shadowMapCameraUpdate.buffer = directionnalLight->GetUBOBuffer();
+		shadowMapCameraUpdate.buffer = sunLightBuffer;
 		shadowMapCameraUpdate.offset = 0;
-		shadowMapCameraUpdate.range = sizeof(Render::CameraUBO);
+		shadowMapCameraUpdate.range = sizeof(SunLight);
 
 		descriptorSetManager->UpdateDescriptorSet("Render Camera", shadowMapCameraUpdate);
 		shadowMapCameraUpdate.dstBinding = 0;

@@ -2,16 +2,27 @@
 
 #include "pch.hpp"
 
+struct SunLight
+{
+	glm::mat4 viewProjectionMatrix;
+	glm::vec4 lightDirection;
+	glm::vec4 lightColor;
+};
+
 class BasicRenderer : public Render::Renderer
 {
 protected:
 	vk::Buffer instancedBuffer;
 	vk::DeviceMemory instancedBufferMemory;
 
+	SunLight sunLight;
+	vk::Buffer sunLightBuffer;
+	vk::DeviceMemory sunLightBufferMemory;
+
 	Render::Camera* directionnalLight;
 	Render::RenderTarget* shadowMapRT;
 
-	const uint32_t MAX_RENDERABLE_ENTITIES = 10000;
+	const uint32_t MAX_RENDERABLE_ENTITIES = 1000;
 
 	vk::RenderPass shadowMapRenderPass;
 

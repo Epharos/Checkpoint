@@ -9,12 +9,19 @@ struct ModelData
 {
     float4x4 model;
     float4x4 normalMatrix;
+};
+
+struct SunLight
+{
+    float4x4 viewProjection;
+    float4 lightDirection;
+    float4 lightColor;
 }
 
 struct TextureData
 {
     float scale;
-}
+};
 
 struct VSInput
 {
@@ -22,8 +29,8 @@ struct VSInput
     float3 normal : NORMAL;
 	float2 uv : TEXCOORD;
 	float3 tangent : TANGENT;
-	float3 bitangent : BITANGENT;
-}
+    float3 bitangent : BITANGENT;
+};
 
 struct VSOutput
 {
@@ -33,13 +40,16 @@ struct VSOutput
 	float3 tangent : TANGENT;
 	float3 bitangent : BITANGENT;
     float4 lightSpacePosition : LIGHTSPACEPOSITION;
-}
+    float3 lightDirection;
+    float3 lightColor;
+    float3 viewPosition;
+};
 
 [vk::binding(0)]
 ConstantBuffer<CameraData> camera;
 
 [vk::binding(1, 0)]
-ConstantBuffer<CameraData> lightData; // For now we are using CameraData struct but we should create a LightData struct
+ConstantBuffer<SunLight> lightData;
 
 [vk::binding(2, 0)]
 Texture2D shadowMapTexture;
@@ -88,33 +98,33 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
     output.lightSpacePosition = mul(lightData.viewProjection, float4(fragPos, 1.0f));
     output.lightSpacePosition.y = -output.lightSpacePosition.y;
 
+    output.lightDirection = lightData.lightDirection.xyz;
+    output.lightColor = lightData.lightColor.xyz;
+
+    output.viewPosition = camera.viewProjection[3].xyz;
+
 	return output;
 }
 
-float LinearizeDepth(float depth, float near, float far)
-{
-    return (2.0 * near * far) / (far + near - depth * (far - near));
-}
-
-float ComputeShadow(float4 lightSpacePosition)
+float ComputeShadow(float4 lightSpacePosition, float3 lightDirection, float3 fragNormal)
 {
     // Perform the perspective divide
     float2 projCoords = lightSpacePosition.xy / lightSpacePosition.w;
     float currentDepth = lightSpacePosition.z / lightSpacePosition.w;
 
-    // Transform the [-1, 1] range to [0, 1]
+    // Transform the [-1, 1] range to [0, 1] for x and y (not z)
     projCoords = projCoords * 0.5 + 0.5;
-    currentDepth = currentDepth * 0.5 + 0.5;
 
+    // If the point is outside the light's frustum, it is lighten
     if(projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0)
 	{
 		return 1.0;
 	}
 
-    float bias = 0.08;
-    //float depthMapValue = LinearizeDepth(shadowMapTexture.Sample(shadowMapSampler, projCoords.xy).r, 0.1, 100.0);
-    //float diff = currentDepth - depthMapValue;
+    // Calculate the bias to prevent shadow acne
+    float bias = max(0.01 * (1.0 - dot(lightDirection, fragNormal)), 0.001);
 
+    // And we return a value in {0, 1} where 0 is in shadow and 1 is not
     return shadowMapTexture.SampleCmp(shadowMapSampler, projCoords.xy, currentDepth - bias);
 }
 
@@ -123,17 +133,15 @@ float4 pixelMain(VSOutput input) : SV_TARGET
 {
     // tmp
     float3 albedo = albedo.Sample(input.uv * textureData.scale).xyz; // We sample the albedo to get the color of the pixel
-    float3 sunDir = normalize(float3(0.0, 1.0, 0.0)); // This is just a placeholder direction while we don't have a light DS
 
     float3x3 TBN = float3x3(input.tangent, input.bitangent, input.normal); // Create the TBN matrix
     float3 normalMapValue = normal.Sample(input.uv * textureData.scale).xyz * 2.0 - 1.0; // Sample the normal map and convert it from [0, 1] to [-1, 1]
     float3 normalValue = normalize(mul(TBN, normalMapValue)); // Turns the normal map value into a normal in tangent space
 
-    float3 ambiantColor = float3(0.01, 0.01, 0.01); // This is just a placeholder color while we don't have a light DS
-    float3 diffuse = max(dot(normalValue, sunDir), 0.0);
+    float3 ambiantColor = 0.01 * input.lightColor; // This is just a placeholder color while we don't have a light DS
+    float3 diffuse = max(dot(normalValue, normalize(input.lightDirection)), 0.0);
 
-    float3 finalColor = albedo * (ambiantColor + ComputeShadow(input.lightSpacePosition) * diffuse); // Compute the final color
-    //return float4(float3(ComputeShadow(input.lightSpacePosition)), 1.0);
+    float3 finalColor = albedo * (ambiantColor + ComputeShadow(input.lightSpacePosition, input.lightDirection, input.normal) * diffuse); // Compute the final color
     return float4(finalColor, 1.0);
 }
 

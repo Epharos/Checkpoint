@@ -91,6 +91,7 @@ namespace Render
 		device.destroyImageView(imageView);
 		if(!isSwapchain) device.destroyImage(image);
 		device.freeMemory(imageMemory);
+		if (sampler != VK_NULL_HANDLE) device.destroySampler(sampler);
 	}
 
 	void RenderTargetAttachment::Build(Context::VulkanContext*& _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler)
