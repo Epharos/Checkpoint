@@ -56,7 +56,7 @@ namespace Render
 		virtual void RenderFrame(const std::vector<InstanceGroup>& _instanceGroups) = 0;
 
 	public:
-		Renderer(Context::VulkanContext* _context) : context(_context) {}
+		Renderer(Context::VulkanContext* _context) : context(_context), mainCamera(new Camera(context)) {}
 		virtual ~Renderer();
 
 		virtual void Build();
@@ -66,7 +66,7 @@ namespace Render
 		virtual void Render(const std::vector<InstanceGroup>& _instanceGroups);
 
 		inline constexpr const uint32_t GetSubpassCount() const { return subpassCount; }
-		inline constexpr Camera* GetMainCamera() { return mainCamera; }
+		inline virtual constexpr Camera* GetMainCamera() { return mainCamera; }
 		
 	};
 }

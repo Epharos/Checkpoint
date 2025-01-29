@@ -11,7 +11,7 @@ Resource::Mesh::Mesh(const Context::VulkanContext& _context, const std::vector<V
 	this->indices = _indices;
 	this->context = &_context;
 
-	for (size_t i = 0; i < _indices.size(); i += 3)
+	/*for (size_t i = 0; i < _indices.size(); i += 3)
 	{
 		Vertex& v0 = vertices[_indices[i + 0]];
 		Vertex& v1 = vertices[_indices[i + 1]];
@@ -44,7 +44,7 @@ Resource::Mesh::Mesh(const Context::VulkanContext& _context, const std::vector<V
 		v0.bitangent += bitangent;
 		v1.bitangent += bitangent;
 		v2.bitangent += bitangent;
-	}
+	}*/
 
 	vk::DeviceSize vertexBufferSize = sizeof(Vertex) * vertices.size();
 	vk::DeviceSize indexBufferSize = sizeof(uint32_t) * indices.size();
@@ -80,7 +80,7 @@ Resource::Mesh::~Mesh()
 Resource::Mesh* Resource::Mesh::LoadMesh(const Context::VulkanContext& _context, const std::string& _path)
 {
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(_path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_FlipWindingOrder);
+	const aiScene* scene = importer.ReadFile(_path, aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_FlipUVs);
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
@@ -97,8 +97,10 @@ Resource::Mesh* Resource::Mesh::LoadMesh(const Context::VulkanContext& _context,
 	for (uint32_t i = 0; i < mesh->mNumVertices; i++)
 	{
 		Resource::Vertex vertex;
-		vertex.position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
-		vertex.normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
+		vertex.position = { mesh->mVertices[i].x, -mesh->mVertices[i].y, -mesh->mVertices[i].z };
+		vertex.normal = { mesh->mNormals[i].x, -mesh->mNormals[i].y, -mesh->mNormals[i].z };
+		vertex.tangent = { mesh->mTangents[i].x, -mesh->mTangents[i].y, -mesh->mTangents[i].z };
+		vertex.bitangent = { mesh->mBitangents[i].x, -mesh->mBitangents[i].y, -mesh->mBitangents[i].z };
 
 		if (mesh->mTextureCoords[0])
 		{

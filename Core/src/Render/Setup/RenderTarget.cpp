@@ -135,8 +135,8 @@ namespace Render
 		if (_shouldCreateSampler)
 		{
 			vk::SamplerCreateInfo samplerInfo;
-			samplerInfo.magFilter = vk::Filter::eNearest;
-			samplerInfo.minFilter = vk::Filter::eNearest;
+			samplerInfo.magFilter = vk::Filter::eLinear;
+			samplerInfo.minFilter = vk::Filter::eLinear;
 			samplerInfo.addressModeU = vk::SamplerAddressMode::eClampToEdge;
 			samplerInfo.addressModeV = vk::SamplerAddressMode::eClampToEdge;
 			samplerInfo.addressModeW = vk::SamplerAddressMode::eClampToEdge;
@@ -144,7 +144,7 @@ namespace Render
 			samplerInfo.compareOp = vk::CompareOp::eLessOrEqual;
 			samplerInfo.borderColor = vk::BorderColor::eFloatOpaqueWhite;
 			samplerInfo.unnormalizedCoordinates = VK_FALSE;
-			samplerInfo.mipmapMode = vk::SamplerMipmapMode::eNearest;
+			samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
 
 			sampler = _context->GetDevice().createSampler(samplerInfo);
 		}

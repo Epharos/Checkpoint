@@ -9,10 +9,16 @@ BasicRenderer::BasicRenderer(Context::VulkanContext* _context, const uint32_t& _
 	Render::Renderer(_context), MAX_RENDERABLE_ENTITIES(_maxRenderableEntities), 
 	directionnalLight(new Render::Camera(context)), shadowMapRT(new Render::RenderTarget(*context, vk::Extent2D(4096, 4096)))
 {
-	directionnalLight->Translate(glm::vec3(0.f, -30.f, 5.f));
-	directionnalLight->Rotate(glm::quat(glm::vec3(glm::radians(55.f), .0f, .0f)));
-	directionnalLight->SetOrthographic(-30.f, 30.f, -30.f, 30.f, 0.1f, 100.f);
-	sunLight.lightDirection = directionnalLight->GetRotation() * glm::vec4(0, 0, -1, 0);
+	mainCamera->Translate(glm::vec3(0.f, 30.f, -10.f));
+	mainCamera->LookAt(glm::vec3(0.f, 0.f, 0.f));
+
+	directionnalLight->Translate(glm::vec3(0.f, 30.f, -10.f));
+	directionnalLight->LookAt(glm::vec3(0.f, 0.f, 0.f));
+	//directionnalLight->Rotate(glm::quat(glm::vec3(glm::radians(90.f), .0f, .0f)));
+	//directionnalLight->SetPerspective(70.f, _context->GetPlatform()->GetAspectRatio(), 0.1f, 300.f);
+	directionnalLight->SetOrthographic(-20.f, 20.f, -20.f, 20.f, 1.0f, 300.f);
+	sunLight.lightDirection = glm::vec4(directionnalLight->GetForward(), 0);
+	sunLight.lightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
 }
 
 BasicRenderer::~BasicRenderer()
@@ -34,6 +40,12 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 {
 	mainCamera->UpdateUniformBuffer();
 	directionnalLight->UpdateUniformBuffer();
+
+	auto cameraRotation = mainCamera->GetRotationEuler();
+	LOG_DEBUG(MF("Camera Rotation: [", cameraRotation.x, ", ", cameraRotation.y, ", ", cameraRotation.z, "]"));
+
+	glfwGetKey(context->GetPlatform()->GetWindow(), GLFW_KEY_UP) == GLFW_PRESS ? directionnalLight->Rotate(glm::vec3(glm::radians(-0.01f), 0, 0)) : void();
+	glfwGetKey(context->GetPlatform()->GetWindow(), GLFW_KEY_DOWN) == GLFW_PRESS ? directionnalLight->Rotate(glm::vec3(glm::radians(0.01f), 0, 0)) : void();
 
 	sunLight.viewProjectionMatrix = directionnalLight->GetViewProjectionMatrix();
 
@@ -159,10 +171,6 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 
 void BasicRenderer::SetupPipelines()
 {
-	mainCamera->Translate(glm::vec3(10.f, -10.f, 10.f));
-	mainCamera->Rotate(glm::quat(glm::vec3(glm::radians(50.f), glm::radians(20.0f), .0f)));
-	//mainCamera->SetOrthographic(-20.f, 20.f, -20.f, 20.f, 0.1f, 1000.f);
-
 	Pipeline::DescriptorSetLayoutsManager* descriptorSetLayoutsManager = context->GetDescriptorSetLayoutsManager();
 	Pipeline::DescriptorSetManager* descriptorSetManager = context->GetDescriptorSetManager();
 	Pipeline::PipelinesManager* pipelinesManager = context->GetPipelinesManager();
@@ -318,7 +326,7 @@ void BasicRenderer::SetupPipelines()
 	pipelineData.createInfo.subpass = 0;
 	pipelineData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), VK_TRUE, VK_TRUE, vk::CompareOp::eLess);
 	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, vp, 1, scisor);
-	pipelineData.createInfo.pRasterizationState = new vk::PipelineRasterizationStateCreateInfo(vk::PipelineRasterizationStateCreateFlags(), VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eFront, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
+	pipelineData.createInfo.pRasterizationState = new vk::PipelineRasterizationStateCreateInfo(vk::PipelineRasterizationStateCreateFlags(), VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, VK_TRUE, 5.0f, 0.0f, 3.5f, 1.0f);
 	pipelineData.createInfo.pMultisampleState = new vk::PipelineMultisampleStateCreateInfo(vk::PipelineMultisampleStateCreateFlags(), vk::SampleCountFlagBits::e1, VK_FALSE, 1.0f, nullptr, VK_FALSE, VK_FALSE);
 	pipelineData.createInfo.pColorBlendState = new vk::PipelineColorBlendStateCreateInfo({}, VK_FALSE, vk::LogicOp::eCopy, 1, colorBlendAttachment, { 0.f, 0.f, 0.f, 0.f });
 	pipelineData.createInfo.pInputAssemblyState = new vk::PipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleList, VK_FALSE);

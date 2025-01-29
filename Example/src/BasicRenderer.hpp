@@ -38,4 +38,6 @@ public:
 	~BasicRenderer();
 
 	virtual void Cleanup() override;
+
+	//inline virtual constexpr Render::Camera* GetMainCamera() override { return directionnalLight; }
 };

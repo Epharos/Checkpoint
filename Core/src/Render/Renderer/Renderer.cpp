@@ -112,7 +112,6 @@ void Render::Renderer::Build()
 	CreateMainRenderPass();
 	CreateRenderPasses();
 	swapchain->Create(mainRenderPass);
-	mainCamera = new Camera(context);
 
 	SetupPipelines();
 }

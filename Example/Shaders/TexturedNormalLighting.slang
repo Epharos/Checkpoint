@@ -98,7 +98,7 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
     output.lightSpacePosition = mul(lightData.viewProjection, float4(fragPos, 1.0f));
     output.lightSpacePosition.y = -output.lightSpacePosition.y;
 
-    output.lightDirection = lightData.lightDirection.xyz;
+    output.lightDirection = normalize(lightData.lightDirection.xyz);
     output.lightColor = lightData.lightColor.xyz;
 
     output.viewPosition = camera.viewProjection[3].xyz;
@@ -121,11 +121,53 @@ float ComputeShadow(float4 lightSpacePosition, float3 lightDirection, float3 fra
 		return 1.0;
 	}
 
-    // Calculate the bias to prevent shadow acne
-    float bias = max(0.01 * (1.0 - dot(lightDirection, fragNormal)), 0.001);
+    //return currentDepth;
+    //return currentDepth - bias > shadowMapTexture.Sample(shadowMapSampler, projCoords.xy).r ? 0.0 : 1.0;
 
     // And we return a value in {0, 1} where 0 is in shadow and 1 is not
-    return shadowMapTexture.SampleCmp(shadowMapSampler, projCoords.xy, currentDepth - bias);
+    //return shadowMapTexture.SampleCmp(shadowMapSampler, projCoords.xy, currentDepth) > 0.0 ? 1.0 : 0.0;
+    return PercentageCloserFiltering(projCoords.xy, currentDepth, 2);
+}
+
+float3 ComputeShadowDebug(float4 lightSpacePosition, float3 lightDirection, float3 fragNormal)
+{
+    	// Perform the perspective divide
+	float2 projCoords = lightSpacePosition.xy / lightSpacePosition.w;
+	float currentDepth = lightSpacePosition.z / lightSpacePosition.w;
+
+	// Transform the [-1, 1] range to [0, 1] for x and y (not z)
+	projCoords = projCoords * 0.5 + 0.5;
+
+	// If the point is outside the light's frustum, it is lighten
+	if(projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0)
+	{
+		return float3(1.0, 0.0, 0.0);
+	}
+
+    if(shadowMapTexture.SampleCmp(shadowMapSampler, projCoords.xy, currentDepth) > 0.0)
+	{
+		return float3(0.0, 1.0, 0.0);
+	}
+
+	return float3(0.0, 0.0, 1.0);
+
+}
+
+float PercentageCloserFiltering(float2 uv, float currentDepth, int size)
+{
+	float shadow = 0.0;
+    float texelSize = 1.0 / 4096.0;
+
+	for(int x = -size; x <= size; x++)
+	{
+		for(int y = -size; y <= size; y++)
+		{
+            float2 offset = float2(x, y) * texelSize;
+            shadow += shadowMapTexture.SampleCmp(shadowMapSampler, uv + offset, currentDepth) > 0.0 ? 1.0 : 0.0;
+		}
+	}
+
+	return shadow / ((size + 1) * (size + 1));
 }
 
 [shader("pixel")]
@@ -138,11 +180,14 @@ float4 pixelMain(VSOutput input) : SV_TARGET
     float3 normalMapValue = normal.Sample(input.uv * textureData.scale).xyz * 2.0 - 1.0; // Sample the normal map and convert it from [0, 1] to [-1, 1]
     float3 normalValue = normalize(mul(TBN, normalMapValue)); // Turns the normal map value into a normal in tangent space
 
-    float3 ambiantColor = 0.01 * input.lightColor; // This is just a placeholder color while we don't have a light DS
-    float3 diffuse = max(dot(normalValue, normalize(input.lightDirection)), 0.0);
+    float3 ambiantColor = 0.08 * input.lightColor;
+    float3 diffuse = max(dot(normalValue, -input.lightDirection), 0.0);
 
-    float3 finalColor = albedo * (ambiantColor + ComputeShadow(input.lightSpacePosition, input.lightDirection, input.normal) * diffuse); // Compute the final color
+    //float3 finalColor = albedo * saturate((ambiantColor + (ComputeShadow(input.lightSpacePosition, input.lightDirection, normalValue) * diffuse))); // Compute the final color
+    float3 finalColor = albedo * (saturate(ambiantColor + ComputeShadow(input.lightSpacePosition, input.lightDirection, normalValue)));
     return float4(finalColor, 1.0);
+    // return float4(ComputeShadowDebug(input.lightSpacePosition, input.lightDirection, normalValue), 1.0);
+    //return float4(0.0, input.normal.y, 0.0, 1.0);
 }
 
 float3x3 f3x3(float4x4 m) {

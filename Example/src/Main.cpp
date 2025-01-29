@@ -54,29 +54,29 @@ int main()
 	CreateMaterials(resourceManager, context);
 
 	resourceManager.Load<Mesh>("Barstool", "Models/Furniture/barstool.gltf");
-	//resourceManager.Load<Mesh>("Comptoir", "Models/Furniture/Comptoirv2.fbx");
 	resourceManager.Load<Mesh>("Cube", "Models/Primitive/cube.fbx");
+	resourceManager.Load<Mesh>("Debug Cube", "Models/Primitive/debugcube.obj");
 
 	resourceManager.Load<Texture>("Barstool Albedo", "Textures/Barstool/barstool_albedo.png");
 	resourceManager.Load<Texture>("Barstool Normal", "Textures/Barstool/barstool_normal.png");
 
-	/*resourceManager.Load<Texture>("Comptoir Albedo", "Textures/Comptoir/comptoir_albedo.png");
-	resourceManager.Load<Texture>("Comptoir Normal", "Textures/Comptoir/comptoir_normal.png");*/
-
 	resourceManager.Load<Texture>("Wood Albedo", "Textures/Ground/wood_albedo.png");
 	resourceManager.Load<Texture>("Wood Normal", "Textures/Ground/wood_normal.png");
+
+	resourceManager.Load<Texture>("Debug", "Textures/DebugCube/BaseMap.png");
 	
 	resourceManager.Add<MaterialInstance>("Barstool Material", 
 		resourceManager.Get<Material>("AlbedoNormal")->CreateMaterialInstance<AlbedoNormalMaterial>(
 			resourceManager.Get<Texture>("Barstool Albedo"), resourceManager.Get<Texture>("Barstool Normal")));
 
-	/*resourceManager.Add<MaterialInstance>("Comptoir Material",
-		resourceManager.Get<Material>("AlbedoNormal")->CreateMaterialInstance<AlbedoNormalMaterial>(
-			resourceManager.Get<Texture>("Comptoir Albedo"), resourceManager.Get<Texture>("Comptoir Normal")));*/
 
 	resourceManager.Add<MaterialInstance>("Wood Material",
 		resourceManager.Get<Material>("AlbedoNormal")->CreateMaterialInstance<AlbedoNormalMaterial>(
 			resourceManager.Get<Texture>("Wood Albedo"), resourceManager.Get<Texture>("Wood Normal"), 100.f));
+
+	resourceManager.Add<MaterialInstance>("Debug Material",
+		resourceManager.Get<Material>("AlbedoNormal")->CreateMaterialInstance<AlbedoNormalMaterial>(
+			resourceManager.Get<Texture>("Debug"), resourceManager.Get<Texture>("Wood Normal")));
 
 	resourceManager.Add<MaterialInstance>("Light Gray",
 		resourceManager.Get<Material>("Color")->CreateMaterialInstance<ColorMaterial>(
@@ -84,47 +84,24 @@ int main()
 
 	Util::Clock dtClock;
 
-	/*const int m = 200;
-
-	for (int i = 0; i < 200; i++)
-	{
-		Entity entity = ecs.CreateEntity();
-
-		ecs.AddComponent<Transform>(entity, Transform({ rand() % (m * 2) - m, rand() % (m * 2) / 4 - m / 4, rand() % (m * 2) - m }, { 0.0f, 0.0f, 0.0f, 1.0f }, glm::vec3{ .1f, .1f, .1f }));
-		ecs.AddComponent<MeshRenderer>(entity, MeshRenderer(resourceManager.Get<Mesh>("Barstool"), resourceManager.Get<MaterialInstance>(rand() % 2 ? "Blue" : "Yellow")));
-	}
-
-	for (int i = 0; i < 150; i++)
-	{
-		Entity entity = ecs.CreateEntity();
-
-		ecs.AddComponent<Transform>(entity, Transform({ rand() % (m * 2) - m, rand() % (m * 2) / 4 - m / 4, rand() % (m * 2) - m }, { 1.0f, 0.0f, 0.0f, 0.0f }, glm::vec3{ .9f, .9f, .9f }));
-		ecs.AddComponent<MeshRenderer>(entity, MeshRenderer(resourceManager.Get<Mesh>("Cube"), resourceManager.Get<MaterialInstance>(rand() % 2 ? "Blue" : "Yellow")));
-	}
-
-	for (int i = 0; i < 350; i++)
-	{
-		Entity entity = ecs.CreateEntity();
-
-		ecs.AddComponent<Transform>(entity, Transform({ rand() % (m * 2) - m, rand() % (m * 2) / 4 - m / 4, rand() % (m * 2) - m }, { 0.0f, 0.0f, 0.0f, 1.0f }, glm::vec3{ .2f, .2f, .2f }));
-		ecs.AddComponent<MeshRenderer>(entity, MeshRenderer(resourceManager.Get<Mesh>("Barstool"), resourceManager.Get<MaterialInstance>("Barstool Material")));
-	}*/
-
 	Entity ground = ecs.CreateEntity();
-	ecs.AddComponent<Transform>(ground, Transform({ 0.0f, 15.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, glm::vec3{ 100.0f, 0.1f, 100.0f }));
+	ecs.AddComponent<Transform>(ground, Transform({ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, glm::vec3{ 100.0f, 1.f, 100.0f }));
 	ecs.AddComponent<MeshRenderer>(ground, MeshRenderer(resourceManager.Get<Mesh>("Cube"), resourceManager.Get<MaterialInstance>("Wood Material")));
 
-	Entity barstool = ecs.CreateEntity();
-	ecs.AddComponent<Transform>(barstool, Transform({ -3.0f, 10.0f, -3.0f }, { 0.0f, 0.9659258f, 0.0f, 0.258819f }, glm::vec3{ .1f, .1f, .1f }));
+	/*Entity barstool = ecs.CreateEntity();
+	ecs.AddComponent<Transform>(barstool, Transform({ -3.0f, 10.0f, 1.0f }, { 0.0f, -0.9659258f, 0.0f, 0.258819f }, glm::vec3{ .1f, .1f, .1f }));
 	ecs.AddComponent<MeshRenderer>(barstool, MeshRenderer(resourceManager.Get<Mesh>("Barstool"), resourceManager.Get<MaterialInstance>("Barstool Material")));
 
 	barstool = ecs.CreateEntity();
-	ecs.AddComponent<Transform>(barstool, Transform({ 3.0f, 10.0f, -2.0f }, { 0.0f, 0.9659258f, 0.0f, -0.258819f }, glm::vec3{ .1f, .1f, .1f }));
-	ecs.AddComponent<MeshRenderer>(barstool, MeshRenderer(resourceManager.Get<Mesh>("Barstool"), resourceManager.Get<MaterialInstance>("Barstool Material")));
+	ecs.AddComponent<Transform>(barstool, Transform({ 3.0f, 10.0f, 0.0f }, { 0.0f, -0.9659258f, 0.0f, -0.258819f }, glm::vec3{ .1f, .1f, .1f }));
+	ecs.AddComponent<MeshRenderer>(barstool, MeshRenderer(resourceManager.Get<Mesh>("Barstool"), resourceManager.Get<MaterialInstance>("Barstool Material")));*/
 
-	/*Entity comptoir = ecs.CreateEntity();
-	ecs.AddComponent<Transform>(comptoir, Transform({ 0.0f, 10.0f, -4.0f }, { 0.9816272f, 0.0f, 0.190809f, 0.0f }, glm::vec3{ 3.f, 3.f, 3.f }));
-	ecs.AddComponent<MeshRenderer>(comptoir, MeshRenderer(resourceManager.Get<Mesh>("Comptoir"), resourceManager.Get<MaterialInstance>("Comptoir Material")));*/
+	for (int i = 0; i < 10; i++)
+	{
+		Entity debugcube = ecs.CreateEntity();
+		ecs.AddComponent<Transform>(debugcube, Transform({ rand() % 20 - 10, rand() % 20 + 2, rand() % 20 - 10}, {0.0f, 0.0f, 0.0f, 1.0f}, glm::vec3{1.f, 1.f, 1.f}));
+		ecs.AddComponent<MeshRenderer>(debugcube, MeshRenderer(resourceManager.Get<Mesh>("Debug Cube"), resourceManager.Get<MaterialInstance>("Debug Material")));
+	}
 
 	ecs.RegisterSystem<Controller>(renderer.GetMainCamera(), context.GetPlatform()->GetWindow());
 	ecs.RegisterSystem<RenderSystem>(&renderer);

@@ -19,6 +19,7 @@ namespace Render
 		void SetPosition(const glm::vec3& _position);
 		void SetRotation(const glm::quat& _rotation);
 		void SetRotationEuler(const glm::vec3& _rotation);
+		void LookAt(const glm::vec3& _target, const glm::vec3& _up = VEC3_UP);
 
 		void SetPerspective(float _fov, float _aspectRatio, float _near, float _far);
 		void SetOrthographic(float _left, float _right, float _bottom, float _top, float _near, float _far);
@@ -35,7 +36,7 @@ namespace Render
 		inline constexpr vk::DeviceMemory& GetUBOBufferMemory() { return uboBufferMemory; }
 
 		inline glm::vec3 GetForward() const { return glm::normalize(rotation * VEC3_FORWARD); }
-		inline glm::vec3 GetRight() const { return glm::normalize(rotation * VEC3_RIGHT); }
+		inline glm::vec3 GetRight() const { return glm::normalize(glm::cross(GetUp(), GetForward())); }
 		inline glm::vec3 GetUp() const { return glm::normalize(rotation * VEC3_UP); }
 
 		void Translate(const glm::vec3& _translation);

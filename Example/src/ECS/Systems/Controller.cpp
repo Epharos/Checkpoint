@@ -12,14 +12,21 @@ Controller::Controller(Render::Camera* _camera, GLFWwindow* _window, const float
 
 	this->moveSpeed = _moveSpeed;
 	this->sensitivity = _sensitivity;
+
+	auto cameraRotation = affectedCamera->GetRotationEuler();
+	pitch = cameraRotation.x;
+	yaw = cameraRotation.y;
+	roll = cameraRotation.z;
 }
 
 void Controller::Update(ECS::ComponentManager& _componentManager, const float& _dt)
 {
+	//LOG_DEBUG(MF("Player Controller Forward: [", affectedCamera->GetForward().x, ", ", affectedCamera->GetForward().y, ", ", affectedCamera->GetForward().z, "]"));
+
 	glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS ? affectedCamera->Translate(affectedCamera->GetForward() * _dt * moveSpeed) : void();
 	glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS ? affectedCamera->Translate(-affectedCamera->GetForward() * _dt * moveSpeed) : void();
-	glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS ? affectedCamera->Translate(-affectedCamera->GetRight() * _dt * moveSpeed) : void();
-	glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS ? affectedCamera->Translate(affectedCamera->GetRight() * _dt * moveSpeed) : void();
+	glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS ? affectedCamera->Translate(affectedCamera->GetRight() * _dt * moveSpeed) : void();
+	glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS ? affectedCamera->Translate(-affectedCamera->GetRight() * _dt * moveSpeed) : void();
 	glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS ? affectedCamera->Translate(VEC3_UP * _dt * moveSpeed) : void();
 	glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ? affectedCamera->Translate(-VEC3_UP * _dt * moveSpeed) : void();
 
