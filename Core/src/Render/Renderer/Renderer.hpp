@@ -41,8 +41,6 @@ namespace Render
 		vk::RenderPass mainRenderPass;
 		uint32_t subpassCount = -1;
 
-		Camera* mainCamera;
-
 		virtual void SetupPipelines() = 0;
 
 		virtual void CreateMainRenderPass() = 0;
@@ -56,7 +54,7 @@ namespace Render
 		virtual void RenderFrame(const std::vector<InstanceGroup>& _instanceGroups) = 0;
 
 	public:
-		Renderer(Context::VulkanContext* _context) : context(_context), mainCamera(new Camera(_context)) {}
+		Renderer(Context::VulkanContext* _context) : context(_context) {}
 		virtual ~Renderer();
 
 		virtual void Build();
@@ -66,7 +64,6 @@ namespace Render
 		virtual void Render(const std::vector<InstanceGroup>& _instanceGroups);
 
 		inline constexpr const uint32_t GetSubpassCount() const { return subpassCount; }
-		inline virtual constexpr Camera* GetMainCamera() { return mainCamera; }
 		inline constexpr Context::VulkanContext* GetContext() { return context; }
 		
 	};

@@ -32,7 +32,7 @@ struct Camera
 
 	bool dirty = true;
 
-	void Update(const Transform& _transform);
+	bool Update(const Transform& _transform);
 
 private:
 	void UpdateProjection();

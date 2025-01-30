@@ -5,17 +5,24 @@
 std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& _componentManager, QueryVector query);
 Entity SearchForCamera(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager);
 
-RenderSystem::RenderSystem(Render::Renderer* _renderer) : renderer(_renderer)
+BasicRenderSystem::BasicRenderSystem(BasicRenderer* _renderer) : RenderSystem(_renderer)
 {
 	renderCameraBuffer = Helper::Memory::CreateBuffer(renderer->GetContext()->GetDevice(), renderer->GetContext()->GetPhysicalDevice(), sizeof(glm::mat4), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, renderCameraBufferMemory);
 }
 
-void RenderSystem::OnRegister(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager)
+void BasicRenderSystem::OnRegister(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager)
 {
 	renderCamera = SearchForCamera(_entityManager, _componentManager);
+
+	if (renderCamera != ECS::EntityManager::NULL_ENTITY)
+	{
+		auto& camera = _componentManager.GetComponent<Camera>(renderCamera);
+
+		renderer->UpdateRenderCameraBuffer(renderCameraBuffer);
+	}
 }
 
-void RenderSystem::Update(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager, const float& _dt)
+void BasicRenderSystem::Update(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager, const float& _dt)
 {
 	if (renderCamera == ECS::EntityManager::NULL_ENTITY)
 	{
@@ -29,7 +36,10 @@ void RenderSystem::Update(ECS::EntityManager& _entityManager, ECS::ComponentMana
 	}
 
 	auto& camera = _componentManager.GetComponent<Camera>(renderCamera);
-	camera.Update(_componentManager.GetComponent<Transform>(renderCamera));
+	if (camera.Update(_componentManager.GetComponent<Transform>(renderCamera)))
+	{
+		Helper::Memory::MapMemory(renderer->GetContext()->GetDevice(), renderCameraBufferMemory, sizeof(glm::mat4), &camera.viewProjection);
+	}
 
 	if(query.empty())
 	{
@@ -42,6 +52,11 @@ void RenderSystem::Update(ECS::EntityManager& _entityManager, ECS::ComponentMana
 	auto instanceGroups = PrepareInstanceGroups(_componentManager, query);
 
 	renderer->Render(instanceGroups);
+}
+
+void BasicRenderSystem::Cleanup()
+{
+	Helper::Memory::DestroyBuffer(renderer->GetContext()->GetDevice(), renderCameraBuffer, renderCameraBufferMemory);
 }
 
 std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& _componentManager, QueryVector query)

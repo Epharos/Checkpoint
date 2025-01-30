@@ -95,5 +95,10 @@ namespace ECS
 		{
 			return entityManager.GetValidVersion(_entity);
 		}
+
+		void Cleanup()
+		{
+			systemManager.Cleanup();
+		}
 	};
 }

@@ -18,4 +18,5 @@ protected:
 public:
 	Controller(Render::Camera* _camera, GLFWwindow* _window, const float& _moveSpeed = 20.f, const float& _sensitivity = 0.5f);
 	virtual void Update(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager, const float& _dt);
+	virtual void Cleanup() override;
 };

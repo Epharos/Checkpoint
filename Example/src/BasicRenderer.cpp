@@ -9,9 +9,6 @@ BasicRenderer::BasicRenderer(Context::VulkanContext* _context, const uint32_t& _
 	Render::Renderer(_context), MAX_RENDERABLE_ENTITIES(_maxRenderableEntities), 
 	directionnalLight(new Render::Camera(context)), shadowMapRT(new Render::RenderTarget(*context, vk::Extent2D(4096, 4096)))
 {
-	mainCamera->Translate(glm::vec3(0.f, 30.f, -10.f));
-	mainCamera->LookAt(glm::vec3(0.f, 0.f, 0.f));
-
 	directionnalLight->Translate(glm::vec3(0.f, 30.f, -10.f));
 	directionnalLight->LookAt(glm::vec3(0.f, 0.f, 0.f));
 	//directionnalLight->Rotate(glm::quat(glm::vec3(glm::radians(90.f), .0f, .0f)));
@@ -38,7 +35,6 @@ void BasicRenderer::Cleanup()
 
 void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _instanceGroups)
 {
-	mainCamera->UpdateUniformBuffer();
 	directionnalLight->UpdateUniformBuffer();
 
 	glfwGetKey(context->GetPlatform()->GetWindow(), GLFW_KEY_UP) == GLFW_PRESS ? directionnalLight->Rotate(glm::vec3(glm::radians(-0.01f), 0, 0)) : void();
@@ -194,20 +190,6 @@ void BasicRenderer::SetupPipelines()
 		});
 
 	descriptorSetManager->CreateDescriptorSets({ "Render Camera", "Instance Model", "Shadow Map Camera"}, {cameraLayout, instancedModelLayout, shadowMapCameraLayout});
-
-	if (mainCamera)
-	{
-		Pipeline::DescriptorSetUpdate cameraUpdate = {};
-		cameraUpdate.descriptorType = vk::DescriptorType::eUniformBuffer;
-		cameraUpdate.dstBinding = 0;
-		cameraUpdate.dstArrayElement = 0;
-		cameraUpdate.descriptorCount = 1;
-		cameraUpdate.buffer = mainCamera->GetUBOBuffer();
-		cameraUpdate.offset = 0;
-		cameraUpdate.range = sizeof(Render::CameraUBO);
-
-		descriptorSetManager->UpdateDescriptorSet("Render Camera", cameraUpdate);
-	}
 
 	if (directionnalLight)
 	{
@@ -443,6 +425,20 @@ void BasicRenderer::SetupPipelines()
 	pipelinesManager->CreatePipeline(pipelineData);
 #pragma endregion
 	//TODO : Introduce pipeline cache
+}
+
+void BasicRenderer::UpdateRenderCameraBuffer(const vk::Buffer& _buffer)
+{
+	Pipeline::DescriptorSetUpdate cameraUpdate = {};
+	cameraUpdate.descriptorType = vk::DescriptorType::eUniformBuffer;
+	cameraUpdate.dstBinding = 0;
+	cameraUpdate.dstArrayElement = 0;
+	cameraUpdate.descriptorCount = 1;
+	cameraUpdate.buffer = _buffer;
+	cameraUpdate.offset = 0;
+	cameraUpdate.range = sizeof(glm::mat4);
+
+	context->GetDescriptorSetManager()->UpdateDescriptorSet("Render Camera", cameraUpdate);
 }
 
 void BasicRenderer::CreateMainRenderPass()

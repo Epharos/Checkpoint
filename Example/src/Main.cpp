@@ -55,7 +55,7 @@ int main()
 
 	resourceManager.Load<Mesh>("Barstool", "Models/Furniture/barstool.gltf");
 	resourceManager.Load<Mesh>("Cube", "Models/Primitive/cube.fbx");
-	resourceManager.Load<Mesh>("Debug Cube", "Models/Primitive/debugcube.obj");
+	resourceManager.Load<Mesh>("Debug Cube", "Models/Primitive/debugcube.fbx");
 
 	resourceManager.Load<Texture>("Barstool Albedo", "Textures/Barstool/barstool_albedo.png");
 	resourceManager.Load<Texture>("Barstool Normal", "Textures/Barstool/barstool_normal.png");
@@ -84,6 +84,11 @@ int main()
 
 	Util::Clock dtClock;
 
+	Entity camera = ecs.CreateEntity();
+	ecs.AddComponent<Transform>(camera, Transform({ 0, 5, -15 }));
+	ecs.AddComponent<Camera>(camera, Camera());
+	//ecs.GetComponent<Transform>(camera).LookAt({ 0, 0, 0 });
+
 	Entity ground = ecs.CreateEntity();
 	ecs.AddComponent<Transform>(ground, Transform({ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, glm::vec3{ 100.0f, 1.f, 100.0f }));
 	ecs.AddComponent<MeshRenderer>(ground, MeshRenderer(resourceManager.Get<Mesh>("Cube"), resourceManager.Get<MaterialInstance>("Wood Material")));
@@ -105,8 +110,8 @@ int main()
 		ecs.AddComponent<MeshRenderer>(debugcube, MeshRenderer(resourceManager.Get<Mesh>("Debug Cube"), resourceManager.Get<MaterialInstance>("Debug Material")));
 	}
 
-	ecs.RegisterSystem<Controller>(renderer.GetMainCamera(), context.GetPlatform()->GetWindow());
-	ecs.RegisterSystem<RenderSystem>(&renderer);
+	//ecs.RegisterSystem<Controller>(renderer.GetMainCamera(), context.GetPlatform()->GetWindow());
+	ecs.RegisterSystem<BasicRenderSystem>(&renderer);
 
 	while (!platform.ShouldClose())
 	{
@@ -118,6 +123,7 @@ int main()
 
 	resourceManager.Cleanup();
 	renderer.Cleanup();
+	ecs.Cleanup();
 	context.Shutdown();
 	platform.CleanUp();
 }

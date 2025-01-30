@@ -1,6 +1,6 @@
 #include "pch.hpp"
 
-void Camera::Update(const Transform& _transform)
+bool Camera::Update(const Transform& _transform)
 {
 	if(dirty || _transform.IsDirty())
 	{
@@ -9,7 +9,10 @@ void Camera::Update(const Transform& _transform)
 
 		viewProjection = projection * view;
 		dirty = false;
+		return true;
 	}
+
+	return false;
 }
 
 void Camera::UpdateProjection()

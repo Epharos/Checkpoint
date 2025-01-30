@@ -27,5 +27,13 @@ namespace ECS
 				system->Update(_entityManager, _componentManager, _dt);
 			}
 		}
+
+		void Cleanup()
+		{
+			for (auto& system : systems)
+			{
+				system->Cleanup();
+			}
+		}
 	};
 }

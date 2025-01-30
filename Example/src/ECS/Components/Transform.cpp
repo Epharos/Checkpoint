@@ -64,9 +64,10 @@ void Transform::LookAt(const glm::vec3& _target, const glm::vec3& _up)
 	glm::vec3 right = glm::normalize(glm::cross(fallback, forward));
 	glm::vec3 up = glm::cross(forward, right);
 
-	glm::mat3 lookAtMatrix = glm::mat3(right, up, forward);
+	glm::mat3 lookAtMatrix = glm::mat3(right, up, -forward);
 
 	rotation = glm::quat_cast(lookAtMatrix);
+
 	dirty = true;
 }
 

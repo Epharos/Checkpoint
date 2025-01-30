@@ -37,6 +37,8 @@ public:
 	BasicRenderer(Context::VulkanContext* _context, const uint32_t& _maxRenderableEntities = 10000);
 	~BasicRenderer();
 
+	void UpdateRenderCameraBuffer(const vk::Buffer& _buffer);
+
 	virtual void Cleanup() override;
 
 	//inline virtual constexpr Render::Camera* GetMainCamera() override { return directionnalLight; }

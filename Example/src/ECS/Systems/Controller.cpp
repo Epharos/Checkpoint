@@ -43,3 +43,8 @@ void Controller::Update(ECS::EntityManager& _entityManager, ECS::ComponentManage
 
 	glfwSetCursorPos(window, windowWidth / 2.f, windowHeight / 2.f);
 }
+
+void Controller::Cleanup()
+{
+
+}
