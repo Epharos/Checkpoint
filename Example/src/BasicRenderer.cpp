@@ -41,9 +41,6 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 	mainCamera->UpdateUniformBuffer();
 	directionnalLight->UpdateUniformBuffer();
 
-	auto cameraRotation = mainCamera->GetRotationEuler();
-	LOG_DEBUG(MF("Camera Rotation: [", cameraRotation.x, ", ", cameraRotation.y, ", ", cameraRotation.z, "]"));
-
 	glfwGetKey(context->GetPlatform()->GetWindow(), GLFW_KEY_UP) == GLFW_PRESS ? directionnalLight->Rotate(glm::vec3(glm::radians(-0.01f), 0, 0)) : void();
 	glfwGetKey(context->GetPlatform()->GetWindow(), GLFW_KEY_DOWN) == GLFW_PRESS ? directionnalLight->Rotate(glm::vec3(glm::radians(0.01f), 0, 0)) : void();
 

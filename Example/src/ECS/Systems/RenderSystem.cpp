@@ -2,17 +2,39 @@
 
 #include "RenderSystem.hpp"
 
-
-
 std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& _componentManager, QueryVector query);
+Entity SearchForCamera(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager);
 
-void RenderSystem::Update(ECS::ComponentManager& _componentManager, const float& _dt)
+RenderSystem::RenderSystem(Render::Renderer* _renderer) : renderer(_renderer)
 {
+	renderCameraBuffer = Helper::Memory::CreateBuffer(renderer->GetContext()->GetDevice(), renderer->GetContext()->GetPhysicalDevice(), sizeof(glm::mat4), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, renderCameraBufferMemory);
+}
+
+void RenderSystem::OnRegister(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager)
+{
+	renderCamera = SearchForCamera(_entityManager, _componentManager);
+}
+
+void RenderSystem::Update(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager, const float& _dt)
+{
+	if (renderCamera == ECS::EntityManager::NULL_ENTITY)
+	{
+		renderCamera = SearchForCamera(_entityManager, _componentManager);
+
+		if (renderCamera == ECS::EntityManager::NULL_ENTITY)
+		{
+			LOG_ERROR("No camera found in the scene");
+			return;
+		}
+	}
+
+	auto& camera = _componentManager.GetComponent<Camera>(renderCamera);
+	camera.Update(_componentManager.GetComponent<Transform>(renderCamera));
+
 	if(query.empty())
 	{
 		for (auto [mesh, transform] : _componentManager.QueryArchetype<MeshRenderer, Transform>())
 		{
-			//std::tuple<MeshRenderer&, Transform&> tuple = std::make_tuple<MeshRenderer&, Transform&>(mesh, transform);
 			query.emplace_back(mesh, transform);
 		}
 	}
@@ -38,16 +60,6 @@ std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& 
 		data[std::make_tuple(mesh.materialInstance->GetMaterial(), mesh.mesh, mesh.materialInstance)].push_back({ modelMatrix, normalMatrix });
 	}
 
-	// Try to optimize it by storing the pair<MeshRenderer, Transform> and update it only when needed (when an entity gets the MeshRenderer or Transform component)
-
-	/*_componentManager.ForEachArchetype<MeshRenderer, Transform>([&](Entity _entity, MeshRenderer& _meshRenderer, Transform& _transform)
-		{
-			glm::mat4 modelMatrix = _transform.GetModelMatrix();
-			glm::mat4 normalMatrix = glm::mat4(_transform.GetNormalMatrix());
-
-			data[std::make_tuple(_meshRenderer.materialInstance->GetMaterial(), _meshRenderer.mesh, _meshRenderer.materialInstance)].push_back({modelMatrix, normalMatrix});
-		});*/
-
 	uint32_t instanceOffset = 0;
 
 	for (auto& [tuple, tdata] : data)
@@ -55,8 +67,6 @@ std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& 
 		auto [material, mesh, materialInstance] = tuple;
 
 		instanceGroups.push_back({ material, materialInstance, mesh, tdata, instanceOffset });
-
-		//LOG_DEBUG(MF("Material: ", material, " Mesh: ", mesh, " MaterialInstance: ", materialInstance, " InstanceOffset: ", instanceOffset));
 
 		instanceOffset += tdata.size();
 	}
@@ -67,4 +77,20 @@ std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& 
 		});
 
 	return instanceGroups;
+}
+
+Entity SearchForCamera(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager)
+{
+	Entity renderCamera = ECS::EntityManager::NULL_ENTITY;
+
+	_componentManager.ForEachComponent<Camera>([&](Entity _entity, Camera& _camera)
+		{
+			if (_componentManager.HasComponent<Transform>(_entity) && _entityManager.IsValid(_entity))
+			{
+				renderCamera = _entity;
+				return;
+			}
+		});
+
+	return renderCamera;
 }

@@ -96,10 +96,12 @@ int main()
 	ecs.AddComponent<Transform>(barstool, Transform({ 3.0f, 10.0f, 0.0f }, { 0.0f, -0.9659258f, 0.0f, -0.258819f }, glm::vec3{ .1f, .1f, .1f }));
 	ecs.AddComponent<MeshRenderer>(barstool, MeshRenderer(resourceManager.Get<Mesh>("Barstool"), resourceManager.Get<MaterialInstance>("Barstool Material")));*/
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 150; i++)
 	{
 		Entity debugcube = ecs.CreateEntity();
-		ecs.AddComponent<Transform>(debugcube, Transform({ rand() % 20 - 10, rand() % 20 + 2, rand() % 20 - 10}, {0.0f, 0.0f, 0.0f, 1.0f}, glm::vec3{1.f, 1.f, 1.f}));
+		ecs.AddComponent<Transform>(debugcube, Transform({ rand() % 100 - 50, rand() % 40 + 2, rand() % 100 - 50}, 
+			glm::qua(glm::vec3(glm::radians(rand() / (float)RAND_MAX * 360.f), glm::radians(rand() / (float)RAND_MAX * 360.f), glm::radians(rand() / (float)RAND_MAX * 360.f))),
+			glm::vec3{1.f, 1.f, 1.f}));
 		ecs.AddComponent<MeshRenderer>(debugcube, MeshRenderer(resourceManager.Get<Mesh>("Debug Cube"), resourceManager.Get<MaterialInstance>("Debug Material")));
 	}
 

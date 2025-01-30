@@ -11,7 +11,10 @@ namespace ECS
 		std::deque<ID> availableIDs;
 		std::vector<Version> versions;
 
+		
+
 	public:
+		inline static Entity NULL_ENTITY = { -1, 0 };
 		EntityManager();
 		Entity CreateEntity();
 

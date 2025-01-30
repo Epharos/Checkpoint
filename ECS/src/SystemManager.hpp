@@ -20,11 +20,11 @@ namespace ECS
 			return *static_cast<T*>(systems.back().get());
 		};
 
-		void Update(ComponentManager& _componentManager, const float& _dt)
+		void Update(EntityManager& _entityManager, ComponentManager& _componentManager, const float& _dt)
 		{
 			for (auto& system : systems)
 			{
-				system->Update(_componentManager, _dt);
+				system->Update(_entityManager, _componentManager, _dt);
 			}
 		}
 	};

@@ -41,6 +41,35 @@ void Transform::Rotate(const glm::quat& _rotation)
 	dirty = true;
 }
 
+void Transform::Rotate(const glm::vec3& _rotation)
+{
+	Rotate(glm::quat(_rotation));
+}
+
+void Transform::LookAt(const glm::vec3& _target, const glm::vec3& _up)
+{
+	glm::vec3 forward = glm::normalize(_target - position);
+	glm::vec3 fallback = _up;
+
+	if (glm::abs(glm::dot(forward, _up)) > 0.9999f)
+	{
+		fallback = VEC3_RIGHT;
+
+		if (glm::abs(forward.x) > 0.9999f)
+		{
+			fallback = VEC3_FORWARD;
+		}
+	}
+
+	glm::vec3 right = glm::normalize(glm::cross(fallback, forward));
+	glm::vec3 up = glm::cross(forward, right);
+
+	glm::mat3 lookAtMatrix = glm::mat3(right, up, forward);
+
+	rotation = glm::quat_cast(lookAtMatrix);
+	dirty = true;
+}
+
 void Transform::SetRotation(const glm::quat& _rotation)
 {
 	rotation = _rotation;

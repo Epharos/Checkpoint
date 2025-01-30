@@ -53,12 +53,14 @@ namespace ECS
 		template <typename T, typename... Args>
 		T& RegisterSystem(Args&& ... _args)
 		{
-			return systemManager.RegisterSystem<T>(_args...);
+			T& system = systemManager.RegisterSystem<T>(_args...);
+			system.OnRegister(entityManager, componentManager);
+			return system;
 		}
 
 		void Update(const float& _dt)
 		{
-			systemManager.Update(componentManager, _dt);
+			systemManager.Update(entityManager, componentManager, _dt);
 		}
 
 		void DestroyEntity(Entity _entity)

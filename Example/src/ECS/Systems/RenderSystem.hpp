@@ -30,8 +30,14 @@ protected:
 	Render::Renderer* renderer;
 	QueryVector query;
 
-public:
-	RenderSystem(Render::Renderer* _renderer) : renderer(_renderer) {}
+	Entity renderCamera = ECS::EntityManager::NULL_ENTITY;
+	vk::Buffer renderCameraBuffer;
+	vk::DeviceMemory renderCameraBufferMemory;
 
-	virtual void Update(ECS::ComponentManager& _componentManager, const float& _dt);
+public:
+	RenderSystem(Render::Renderer* _renderer);
+
+	void OnRegister(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager) override;
+
+	virtual void Update(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager, const float& _dt);
 };

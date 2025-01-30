@@ -19,7 +19,7 @@ Controller::Controller(Render::Camera* _camera, GLFWwindow* _window, const float
 	roll = cameraRotation.z;
 }
 
-void Controller::Update(ECS::ComponentManager& _componentManager, const float& _dt)
+void Controller::Update(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager, const float& _dt)
 {
 	//LOG_DEBUG(MF("Player Controller Forward: [", affectedCamera->GetForward().x, ", ", affectedCamera->GetForward().y, ", ", affectedCamera->GetForward().z, "]"));
 
