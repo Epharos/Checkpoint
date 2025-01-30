@@ -72,6 +72,20 @@ namespace ECS
 				});
 		}
 
+		template<typename Component>
+		Entity FindFirstWith()
+		{
+			auto entities = GetOrCreateComponentSparseSet<Component>().GetEntities();
+			if (entities.empty()) return EntityManager::NULL_ENTITY;
+			return entities.front();
+		}
+
+		template<typename Component>
+		std::vector<Entity> FindAllWith()
+		{
+			return GetOrCreateComponentSparseSet<Component>().GetEntities();
+		}
+
 		template<typename MainComponent, typename ...Others>
 		std::vector<std::tuple<MainComponent&, Others&...>> QueryArchetype()
 		{

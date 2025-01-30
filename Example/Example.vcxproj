@@ -143,7 +143,7 @@
     <ClCompile Include="src\ECS\Components\Camera.cpp" />
     <ClCompile Include="src\ECS\Components\Transform.cpp" />
     <ClCompile Include="src\ECS\Systems\Controller.cpp" />
-    <ClCompile Include="src\ECS\Systems\RenderSystem.cpp" />
+    <ClCompile Include="src\ECS\Systems\BasicRenderSystem.cpp" />
     <ClCompile Include="src\Main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
@@ -165,10 +165,14 @@
     <ClInclude Include="src\BasicRenderer.hpp" />
     <ClInclude Include="src\ECS\Components.hpp" />
     <ClInclude Include="src\ECS\Components\Camera.hpp" />
+    <ClInclude Include="src\ECS\Components\CameraFollow.hpp" />
+    <ClInclude Include="src\ECS\Components\CharacterController.hpp" />
+    <ClInclude Include="src\ECS\Components\DirectionalLight.hpp" />
     <ClInclude Include="src\ECS\Components\MeshRenderer.hpp" />
     <ClInclude Include="src\ECS\Components\Rigidbody.hpp" />
     <ClInclude Include="src\ECS\Components\Transform.hpp" />
     <ClInclude Include="src\ECS\Systems.hpp" />
+    <ClInclude Include="src\ECS\Systems\BasicRenderSystem.hpp" />
     <ClInclude Include="src\ECS\Systems\Controller.hpp" />
     <ClInclude Include="src\ECS\Systems\RenderSystem.hpp" />
     <ClInclude Include="src\Materials\AlbedoNormalMaterial.hpp" />

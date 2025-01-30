@@ -1,9 +1,8 @@
 #include "pch.hpp"
 
-#include "RenderSystem.hpp"
+#include "BasicRenderSystem.hpp"
 
 std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& _componentManager, QueryVector query);
-Entity SearchForCamera(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager);
 
 BasicRenderSystem::BasicRenderSystem(BasicRenderer* _renderer) : RenderSystem(_renderer)
 {
@@ -12,28 +11,26 @@ BasicRenderSystem::BasicRenderSystem(BasicRenderer* _renderer) : RenderSystem(_r
 
 void BasicRenderSystem::OnRegister(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager)
 {
-	renderCamera = SearchForCamera(_entityManager, _componentManager);
+	renderCamera = _componentManager.FindFirstWith<Camera>();
 
 	if (renderCamera != ECS::EntityManager::NULL_ENTITY)
 	{
-		auto& camera = _componentManager.GetComponent<Camera>(renderCamera);
-
 		renderer->UpdateRenderCameraBuffer(renderCameraBuffer);
+	}
+
+	directionalLightEntity = _componentManager.FindFirstWith<DirectionalLight>();
+
+	if (directionalLightEntity != ECS::EntityManager::NULL_ENTITY)
+	{
+		auto& directionalLight = _componentManager.GetComponent<DirectionalLight>(directionalLightEntity);
+
+		renderer->SetDirectionalLight(directionalLight);
 	}
 }
 
 void BasicRenderSystem::Update(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager, const float& _dt)
 {
-	if (renderCamera == ECS::EntityManager::NULL_ENTITY)
-	{
-		renderCamera = SearchForCamera(_entityManager, _componentManager);
-
-		if (renderCamera == ECS::EntityManager::NULL_ENTITY)
-		{
-			LOG_ERROR("No camera found in the scene");
-			return;
-		}
-	}
+	assert(renderCamera != ECS::EntityManager::NULL_ENTITY, "Render camera cannot be null");
 
 	auto& camera = _componentManager.GetComponent<Camera>(renderCamera);
 	if (camera.Update(_componentManager.GetComponent<Transform>(renderCamera)))
@@ -63,8 +60,8 @@ std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& 
 {
 	std::vector<Render::InstanceGroup> instanceGroups;
 
-	std::unordered_map<std::tuple<Resource::Material*, Resource::Mesh*, Resource::MaterialInstance*>, 
-		std::vector<Render::TransformData>, 
+	std::unordered_map<std::tuple<Resource::Material*, Resource::Mesh*, Resource::MaterialInstance*>,
+		std::vector<Render::TransformData>,
 		Helper::Hash::TupleHash<Resource::Material*, Resource::Mesh*, Resource::MaterialInstance*>> data;
 
 	for (auto [mesh, transform] : query)
@@ -92,20 +89,4 @@ std::vector<Render::InstanceGroup> PrepareInstanceGroups(ECS::ComponentManager& 
 		});
 
 	return instanceGroups;
-}
-
-Entity SearchForCamera(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager)
-{
-	Entity renderCamera = ECS::EntityManager::NULL_ENTITY;
-
-	_componentManager.ForEachComponent<Camera>([&](Entity _entity, Camera& _camera)
-		{
-			if (_componentManager.HasComponent<Transform>(_entity) && _entityManager.IsValid(_entity))
-			{
-				renderCamera = _entity;
-				return;
-			}
-		});
-
-	return renderCamera;
 }

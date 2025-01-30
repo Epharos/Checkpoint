@@ -77,6 +77,11 @@ void Transform::SetRotation(const glm::quat& _rotation)
 	dirty = true;
 }
 
+void Transform::SetRotation(const glm::vec3& _rotation)
+{
+	SetRotation(glm::normalize(glm::quat(_rotation)));
+}
+
 void Transform::SetScale(const glm::vec3& _scale)
 {
 	scale = _scale;

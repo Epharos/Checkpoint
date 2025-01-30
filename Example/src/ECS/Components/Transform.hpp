@@ -27,6 +27,7 @@ public:
 	void LookAt(const glm::vec3& _target, const glm::vec3& _up = VEC3_UP);
 
 	void SetRotation(const glm::quat& _rotation);
+	void SetRotation(const glm::vec3& _rotation);
 
 	void SetScale(const glm::vec3& _scale);
 

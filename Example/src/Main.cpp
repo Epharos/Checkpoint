@@ -86,31 +86,29 @@ int main()
 
 	Entity camera = ecs.CreateEntity();
 	ecs.AddComponent<Transform>(camera, Transform({ 0, 5, -15 }));
-	ecs.AddComponent<Camera>(camera, Camera());
-	//ecs.GetComponent<Transform>(camera).LookAt({ 0, 0, 0 });
+	Camera cameraComponent;
+	cameraComponent.far = 1000.f;
+	ecs.AddComponent<Camera>(camera, cameraComponent);
+
+	Entity player = ecs.CreateEntity();
+	ecs.AddComponent<Transform>(player, Transform({ 0, 5, 0 }));
+	ecs.AddComponent<CharacterController>(player, CharacterController(10.f, 1.5f));
+	ecs.AddComponent<CameraFollow>(player, CameraFollow(camera));
 
 	Entity ground = ecs.CreateEntity();
 	ecs.AddComponent<Transform>(ground, Transform({ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, glm::vec3{ 100.0f, 1.f, 100.0f }));
 	ecs.AddComponent<MeshRenderer>(ground, MeshRenderer(resourceManager.Get<Mesh>("Cube"), resourceManager.Get<MaterialInstance>("Wood Material")));
 
-	/*Entity barstool = ecs.CreateEntity();
-	ecs.AddComponent<Transform>(barstool, Transform({ -3.0f, 10.0f, 1.0f }, { 0.0f, -0.9659258f, 0.0f, 0.258819f }, glm::vec3{ .1f, .1f, .1f }));
-	ecs.AddComponent<MeshRenderer>(barstool, MeshRenderer(resourceManager.Get<Mesh>("Barstool"), resourceManager.Get<MaterialInstance>("Barstool Material")));
-
-	barstool = ecs.CreateEntity();
-	ecs.AddComponent<Transform>(barstool, Transform({ 3.0f, 10.0f, 0.0f }, { 0.0f, -0.9659258f, 0.0f, -0.258819f }, glm::vec3{ .1f, .1f, .1f }));
-	ecs.AddComponent<MeshRenderer>(barstool, MeshRenderer(resourceManager.Get<Mesh>("Barstool"), resourceManager.Get<MaterialInstance>("Barstool Material")));*/
-
 	for (int i = 0; i < 150; i++)
 	{
 		Entity debugcube = ecs.CreateEntity();
-		ecs.AddComponent<Transform>(debugcube, Transform({ rand() % 100 - 50, rand() % 40 + 2, rand() % 100 - 50}, 
+		ecs.AddComponent<Transform>(debugcube, Transform({ rand() % 200 - 100, rand() % 50 + 5, rand() % 200 - 100}, 
 			glm::qua(glm::vec3(glm::radians(rand() / (float)RAND_MAX * 360.f), glm::radians(rand() / (float)RAND_MAX * 360.f), glm::radians(rand() / (float)RAND_MAX * 360.f))),
 			glm::vec3{1.f, 1.f, 1.f}));
 		ecs.AddComponent<MeshRenderer>(debugcube, MeshRenderer(resourceManager.Get<Mesh>("Debug Cube"), resourceManager.Get<MaterialInstance>("Debug Material")));
 	}
 
-	//ecs.RegisterSystem<Controller>(renderer.GetMainCamera(), context.GetPlatform()->GetWindow());
+	ecs.RegisterSystem<Controller>(context.GetPlatform()->GetWindow());
 	ecs.RegisterSystem<BasicRenderSystem>(&renderer);
 
 	while (!platform.ShouldClose())

@@ -9,6 +9,11 @@ struct SunLight
 	glm::vec4 lightColor;
 };
 
+struct ShadowMapCascade
+{
+
+};
+
 class BasicRenderer : public Render::Renderer
 {
 protected:

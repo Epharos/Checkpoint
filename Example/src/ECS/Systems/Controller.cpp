@@ -1,47 +1,47 @@
 #include "pch.hpp"
 #include "Controller.hpp"
 
-Controller::Controller(Render::Camera* _camera, GLFWwindow* _window, const float& _moveSpeed, const float& _sensitivity)
+Controller::Controller(GLFWwindow* _window)
 {
-	this->affectedCamera = _camera;
 	this->window = _window;
 
 	glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwGetWindowSize(_window, &windowWidth, &windowHeight);
 	glfwSetCursorPos(_window, windowWidth / 2.f, windowHeight / 2.f);
-
-	this->moveSpeed = _moveSpeed;
-	this->sensitivity = _sensitivity;
-
-	auto cameraRotation = affectedCamera->GetRotationEuler();
-	pitch = cameraRotation.x;
-	yaw = cameraRotation.y;
-	roll = cameraRotation.z;
 }
 
 void Controller::Update(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager, const float& _dt)
 {
-	//LOG_DEBUG(MF("Player Controller Forward: [", affectedCamera->GetForward().x, ", ", affectedCamera->GetForward().y, ", ", affectedCamera->GetForward().z, "]"));
+	_componentManager.ForEachArchetype<CharacterController, Transform>([&](Entity _entity, CharacterController& _controller, Transform& _transform)
+	{
+		glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS ? _transform.Translate(_transform.GetForward() * _dt * _controller.speed) : void();
+		glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS ? _transform.Translate(-_transform.GetForward() * _dt * _controller.speed) : void();
+		glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS ? _transform.Translate(_transform.GetRight() * _dt * _controller.speed) : void();
+		glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS ? _transform.Translate(-_transform.GetRight() * _dt * _controller.speed) : void();
+		glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS ? _transform.Translate(VEC3_UP * _dt * _controller.speed) : void();
+		glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ? _transform.Translate(-VEC3_UP * _dt * _controller.speed) : void();
 
-	glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS ? affectedCamera->Translate(affectedCamera->GetForward() * _dt * moveSpeed) : void();
-	glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS ? affectedCamera->Translate(-affectedCamera->GetForward() * _dt * moveSpeed) : void();
-	glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS ? affectedCamera->Translate(affectedCamera->GetRight() * _dt * moveSpeed) : void();
-	glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS ? affectedCamera->Translate(-affectedCamera->GetRight() * _dt * moveSpeed) : void();
-	glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS ? affectedCamera->Translate(VEC3_UP * _dt * moveSpeed) : void();
-	glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ? affectedCamera->Translate(-VEC3_UP * _dt * moveSpeed) : void();
+		double mouseX, mouseY;
+		glfwGetCursorPos(window, &mouseX, &mouseY);
 
-	double mouseX, mouseY;
-	glfwGetCursorPos(window, &mouseX, &mouseY);
+		double deltaX = mouseX - windowWidth / 2.f;
+		double deltaY = mouseY - windowHeight / 2.f;
 
-	double deltaX = mouseX - windowWidth / 2.f;
-	double deltaY = mouseY - windowHeight / 2.f;
+		_controller.pitch += deltaY * _controller.sensitivity * _dt;
+		_controller.yaw -= deltaX * _controller.sensitivity * _dt;
 
-	pitch += deltaY * sensitivity * _dt;
-	yaw += deltaX * sensitivity * _dt;
+		_transform.SetRotation(glm::vec3(_controller.pitch, _controller.yaw, _controller.roll));
 
-	affectedCamera->SetRotationEuler(glm::vec3(pitch, -yaw, roll));
+		glfwSetCursorPos(window, windowWidth / 2.f, windowHeight / 2.f);
+	});
 
-	glfwSetCursorPos(window, windowWidth / 2.f, windowHeight / 2.f);
+	_componentManager.ForEachArchetype<CameraFollow, Transform>([&](Entity _entity, CameraFollow& _camera, Transform& _transform)
+	{
+		auto& targetTransform = _componentManager.GetComponent<Transform>(_camera.cameraEntity);
+
+		targetTransform.SetPosition(_transform.GetPosition());
+		targetTransform.SetRotation(_transform.GetRotation());
+	});
 }
 
 void Controller::Cleanup()
