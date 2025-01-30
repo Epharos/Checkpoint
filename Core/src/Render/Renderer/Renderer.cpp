@@ -125,8 +125,6 @@ void Render::Renderer::Cleanup()
 {
 	delete swapchain;
 	context->GetDevice().destroyRenderPass(mainRenderPass);
-
-	delete mainCamera;
 }
 
 void Render::Renderer::Render(const std::vector<InstanceGroup>& _instanceGroups)
