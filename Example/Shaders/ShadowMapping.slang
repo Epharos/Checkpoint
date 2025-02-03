@@ -20,6 +20,12 @@ struct VSInput
     float3 bitangent : BITANGENT;
 }
 
+struct VSOutput
+{
+    float4 position : SV_Position;
+    uint layer : SV_RenderTargetArrayIndex;
+}
+
 [vk::binding(0)]
 ConstantBuffer<CameraData> camera;
 

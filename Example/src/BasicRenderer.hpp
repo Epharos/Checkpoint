@@ -7,11 +7,13 @@ struct SunLight
 	glm::mat4 viewProjectionMatrix;
 	glm::vec4 lightDirection;
 	glm::vec4 lightColor;
+	uint8_t cascadeCount;
 };
 
 struct ShadowMapCascade
 {
-
+	glm::mat4 viewProjectionMatrix;
+	uint8_t index;
 };
 
 class BasicRenderer : public Render::Renderer
@@ -21,8 +23,11 @@ protected:
 	vk::DeviceMemory instancedBufferMemory;
 
 	SunLight sunLight;
+	ShadowMapCascade* shadowMapCascades;
 	vk::Buffer sunLightBuffer;
 	vk::DeviceMemory sunLightBufferMemory;
+	vk::Buffer shadowMapCascadesBuffer;
+	vk::DeviceMemory shadowMapCascadesBufferMemory;
 
 	Render::Camera* directionnalLight;
 	Render::RenderTarget* shadowMapRT;
@@ -43,6 +48,8 @@ public:
 	~BasicRenderer();
 
 	void UpdateRenderCameraBuffer(const vk::Buffer& _buffer);
+	void SetupDirectionalLight(const vk::Extent2D _extent, const glm::vec4& _color, const glm::vec3& _direction, const uint32_t& _cascadeCount);
+	void UpdateDirectionalLight(const glm::mat4* _lightViewProj);
 
 	virtual void Cleanup() override;
 

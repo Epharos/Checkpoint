@@ -7,7 +7,7 @@ void LogMat4(glm::mat4 _mat);
 
 BasicRenderer::BasicRenderer(Context::VulkanContext* _context, const uint32_t& _maxRenderableEntities) :
 	Render::Renderer(_context), MAX_RENDERABLE_ENTITIES(_maxRenderableEntities), 
-	directionnalLight(new Render::Camera(context)), shadowMapRT(new Render::RenderTarget(*context, vk::Extent2D(4096, 4096)))
+	directionnalLight(new Render::Camera(context)), shadowMapRT(nullptr)
 {
 	directionnalLight->Translate(glm::vec3(0.f, 30.f, -10.f));
 	directionnalLight->LookAt(glm::vec3(0.f, 0.f, 0.f));
@@ -441,6 +441,43 @@ void BasicRenderer::UpdateRenderCameraBuffer(const vk::Buffer& _buffer)
 	context->GetDescriptorSetManager()->UpdateDescriptorSet("Render Camera", cameraUpdate);
 }
 
+void BasicRenderer::SetupDirectionalLight(const vk::Extent2D _extent, const glm::vec4& _color, const glm::vec3& _direction, const uint32_t& _cascadeCount)
+{
+	shadowMapRT = new Render::RenderTarget(*context, _extent);
+
+	auto shadowMapAttachment = std::make_shared<Render::RenderTargetAttachment>(context, _extent,
+		Helper::Format::FindDepthFormat(context->GetPhysicalDevice()), vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled, vk::ImageAspectFlagBits::eDepth, true, _cascadeCount);
+
+	shadowMapRT->AddAttachment(shadowMapAttachment);
+
+	shadowMapRT->Build(shadowMapRenderPass, _cascadeCount);
+
+	sunLight.lightColor = _color;
+	sunLight.lightDirection = glm::vec4(_direction, 0.f);
+	sunLight.cascadeCount = _cascadeCount;
+
+	shadowMapCascades = new ShadowMapCascade[_cascadeCount];
+
+	for (int i = 0; i < _cascadeCount; i++)
+	{
+		shadowMapCascades[i].viewProjectionMatrix = glm::mat4(1.f);
+		shadowMapCascades[i].index = i;
+	}
+
+	shadowMapCascadesBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(ShadowMapCascade) * _cascadeCount, vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, shadowMapCascadesBufferMemory);
+	Helper::Memory::MapMemory(context->GetDevice(), shadowMapCascadesBufferMemory, sizeof(ShadowMapCascade) * _cascadeCount, 0, shadowMapCascades);
+}
+
+void BasicRenderer::UpdateDirectionalLight(const glm::mat4* _lightViewProj)
+{
+	for (int i = 0; i < sunLight.cascadeCount; i++)
+	{
+		shadowMapCascades[i].viewProjectionMatrix = _lightViewProj[i];
+	}
+
+	Helper::Memory::MapMemory(context->GetDevice(), shadowMapCascadesBufferMemory, sizeof(ShadowMapCascade) * sunLight.cascadeCount, 0, shadowMapCascades);
+}
+
 void BasicRenderer::CreateMainRenderPass()
 {
 	vk::AttachmentDescription depthAttachment = {};
@@ -534,12 +571,7 @@ void BasicRenderer::CreateRenderPasses()
 
 	shadowMapRenderPass = context->GetDevice().createRenderPass(renderPassInfo);
 
-	auto shadowMapAttachment = std::make_shared<Render::RenderTargetAttachment>(context, vk::Extent2D(4096, 4096),
-		Helper::Format::FindDepthFormat(context->GetPhysicalDevice()), vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled, vk::ImageAspectFlagBits::eDepth, true);
-
-	shadowMapRT->AddAttachment(shadowMapAttachment);
-
-	shadowMapRT->Build(shadowMapRenderPass);
+	
 }
 
 void LogMat4(glm::mat4 _mat)

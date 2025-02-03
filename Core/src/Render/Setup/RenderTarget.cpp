@@ -14,13 +14,13 @@ namespace Render
 		Cleanup();
 	}
 
-	void RenderTarget::AddAttachment(const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags)
+	void RenderTarget::AddAttachment(const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const uint32_t _layerCount)
 	{
 		vk::ImageCreateInfo imageInfo;
 		imageInfo.imageType = vk::ImageType::e2D;
 		imageInfo.extent = vk::Extent3D(extent.width, extent.height, 1);
 		imageInfo.mipLevels = 1;
-		imageInfo.arrayLayers = 1;
+		imageInfo.arrayLayers = _layerCount;
 		imageInfo.format = _format;
 		imageInfo.tiling = vk::ImageTiling::eOptimal;
 		imageInfo.initialLayout = vk::ImageLayout::eUndefined;
@@ -43,7 +43,7 @@ namespace Render
 		this->attachments.push_back(_attachment);
 	}
 
-	void RenderTarget::Build(const vk::RenderPass& _renderPass)
+	void RenderTarget::Build(const vk::RenderPass& _renderPass, const uint32_t& _layerCount)
 	{
 		std::vector<vk::ImageView> attachmentViews;
 
@@ -58,7 +58,7 @@ namespace Render
 		framebufferInfo.pAttachments = attachmentViews.data();
 		framebufferInfo.width = extent.width;
 		framebufferInfo.height = extent.height;
-		framebufferInfo.layers = 1;
+		framebufferInfo.layers = _layerCount;
 
 		framebuffer = context->GetDevice().createFramebuffer(framebufferInfo);
 		renderPass = _renderPass;
@@ -69,13 +69,13 @@ namespace Render
 		context->GetDevice().destroyFramebuffer(framebuffer);
 	}
 
-	RenderTargetAttachment::RenderTargetAttachment(Context::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler)
+	RenderTargetAttachment::RenderTargetAttachment(Context::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler, const uint32_t& _layerCount = 1)
 	{
 		context = _context;
 		Build(_context, _extent, _format, _usage, _aspectFlags, _shouldCreateSampler);
 	}
 
-	RenderTargetAttachment::RenderTargetAttachment(Context::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler)
+	RenderTargetAttachment::RenderTargetAttachment(Context::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler, const uint32_t& _layerCount = 1)
 	{
 		context = _context;
 		Build(_context, _image, _format, _aspectFlags, _shouldCreateSampler);
@@ -94,13 +94,13 @@ namespace Render
 		if (sampler != VK_NULL_HANDLE) device.destroySampler(sampler);
 	}
 
-	void RenderTargetAttachment::Build(Context::VulkanContext*& _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler)
+	void RenderTargetAttachment::Build(Context::VulkanContext*& _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler, const uint32_t& _layerCount)
 	{
 		vk::ImageCreateInfo imageInfo;
 		imageInfo.imageType = vk::ImageType::e2D;
 		imageInfo.extent = vk::Extent3D(_extent.width, _extent.height, 1);
 		imageInfo.mipLevels = 1;
-		imageInfo.arrayLayers = 1;
+		imageInfo.arrayLayers = _layerCount;
 		imageInfo.format = _format;
 		imageInfo.tiling = vk::ImageTiling::eOptimal;
 		imageInfo.initialLayout = vk::ImageLayout::eUndefined;
@@ -128,7 +128,7 @@ namespace Render
 		viewInfo.subresourceRange.baseMipLevel = 0;
 		viewInfo.subresourceRange.levelCount = 1;
 		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = 1;
+		viewInfo.subresourceRange.layerCount = _layerCount;
 
 		imageView = _context->GetDevice().createImageView(viewInfo);
 
@@ -150,7 +150,7 @@ namespace Render
 		}
 	}
 	
-	void RenderTargetAttachment::Build(Context::VulkanContext*& _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler)
+	void RenderTargetAttachment::Build(Context::VulkanContext*& _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler, const uint32_t& _layerCount)
 	{
 		image = _image;
 
@@ -162,7 +162,7 @@ namespace Render
 		viewInfo.subresourceRange.baseMipLevel = 0;
 		viewInfo.subresourceRange.levelCount = 1;
 		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = 1;
+		viewInfo.subresourceRange.layerCount = _layerCount;
 
 		imageView = _context->GetDevice().createImageView(viewInfo);
 	}

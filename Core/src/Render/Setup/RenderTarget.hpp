@@ -18,14 +18,14 @@ namespace Render
 		Context::VulkanContext* context;
 
 		virtual void Destroy(const vk::Device& device);
-		void Build(Context::VulkanContext*& _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler = false);
-		void Build(Context::VulkanContext*& _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler = false);
+		void Build(Context::VulkanContext*& _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler = false, const uint32_t& _layerCount = 1);
+		void Build(Context::VulkanContext*& _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler = false, const uint32_t& _layerCount = 1);
 
 	public:
-		bool isSwapchain = false; //Temporary fix
+		bool isSwapchain = false;
 
-		RenderTargetAttachment(Context::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler = false);
-		RenderTargetAttachment(Context::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, bool _shouldCreateSampler = false);
+		RenderTargetAttachment(Context::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler = false, const uint32_t& _layerCount = 1);
+		RenderTargetAttachment(Context::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler = false, const uint32_t& _layerCount = 1);
 		~RenderTargetAttachment();
 
 		inline constexpr const vk::Image& GetImage() const { return image; }
@@ -33,17 +33,6 @@ namespace Render
 		inline constexpr const vk::DeviceMemory& GetImageMemory() const { return imageMemory; }
 		inline constexpr const vk::Sampler& GetSampler() const { return sampler; }
 	};
-
-	/*class RenderTargetAttachmentSwapchain : public RenderTargetAttachment
-	{
-	protected:
-		virtual void Destroy(const vk::Device& device) override;
-
-	public:
-		RenderTargetAttachmentSwapchain(Context::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags);
-		RenderTargetAttachmentSwapchain(Context::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags);
-		~RenderTargetAttachmentSwapchain();
-	};*/
 
 	class RenderTarget
 	{
@@ -61,11 +50,11 @@ namespace Render
 		RenderTarget(Context::VulkanContext& _context, const vk::Extent2D& _extent);
 		~RenderTarget();
 
-		void AddAttachment(const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags);
+		void AddAttachment(const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const uint32_t _layerCount = 1);
 		void AddAttachment(const vk::Image& _image, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags);
 		void AddAttachment(std::shared_ptr<RenderTargetAttachment>& _attachment);
 
-		void Build(const vk::RenderPass& _renderPass);
+		void Build(const vk::RenderPass& _renderPass, const uint32_t& _layerCount = 1);
 
 		void Cleanup();
 
