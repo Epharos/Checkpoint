@@ -142,14 +142,19 @@ void Context::VulkanContext::CreateLogicalDevice()
 	deviceLayers.push_back("VK_LAYER_KHRONOS_validation");
 	#endif
 
-	vk::PhysicalDeviceFeatures deviceFeatures; // Empty for now, but add samplerAnisotropy, tesselationShader, etc.
-	deviceFeatures.samplerAnisotropy = VK_TRUE;
+	vk::PhysicalDeviceVulkan12Features v12features;
+	v12features.shaderOutputLayer = VK_TRUE;
+
+	vk::PhysicalDeviceFeatures2 features2;
+	features2.features.samplerAnisotropy = VK_TRUE;
+	features2.features.tessellationShader = VK_TRUE;
+	features2.pNext = &v12features;
 
 	vk::DeviceCreateInfo deviceInfo({}, 
 		static_cast<uint32>(queueCreateInfos.size()), queueCreateInfos.data(), 
 		static_cast<uint32>(deviceLayers.size()), deviceLayers.data(),
 		static_cast<uint32>(deviceExtensions.size()), deviceExtensions.data(),
-		&deviceFeatures);
+		nullptr, &features2);
 
 	device = physicalDevice.createDevice(deviceInfo);
 }

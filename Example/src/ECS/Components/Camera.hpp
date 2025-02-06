@@ -8,13 +8,19 @@ enum class CameraType
 	Orthographic
 };
 
+struct CameraUBO
+{
+	glm::mat4 view;
+	glm::mat4 projection;
+	glm::mat4 viewProjection;
+	glm::vec2 nearFar;
+};
+
 struct Camera
 {
 	CameraType type = CameraType::Perspective;
 
-	glm::mat4 view = glm::mat4(1.0f);
-	glm::mat4 projection = glm::mat4(1.0f);
-	glm::mat4 viewProjection = glm::mat4(1.0f);
+	CameraUBO cameraUBO;
 
 	// ORTHOGRAPHIC DATA
 	float left = -1.0f;

@@ -2,18 +2,19 @@
 
 #include "pch.hpp"
 
+#define MAX_CASCADE_COUNT 8
+
 struct SunLight
 {
-	glm::mat4 viewProjectionMatrix;
 	glm::vec4 lightDirection;
 	glm::vec4 lightColor;
-	uint8_t cascadeCount;
+	uint32_t cascadeCount;
 };
 
-struct ShadowMapCascade
+struct alignas(16) ShadowMapCascades
 {
-	glm::mat4 viewProjectionMatrix;
-	uint8_t index;
+	glm::mat4 viewProjectionMatrix[MAX_CASCADE_COUNT];
+	alignas(16) float splitDepth[MAX_CASCADE_COUNT];
 };
 
 class BasicRenderer : public Render::Renderer
@@ -23,13 +24,12 @@ protected:
 	vk::DeviceMemory instancedBufferMemory;
 
 	SunLight sunLight;
-	ShadowMapCascade* shadowMapCascades;
+	ShadowMapCascades shadowMapCascades;
 	vk::Buffer sunLightBuffer;
 	vk::DeviceMemory sunLightBufferMemory;
 	vk::Buffer shadowMapCascadesBuffer;
 	vk::DeviceMemory shadowMapCascadesBufferMemory;
 
-	Render::Camera* directionnalLight;
 	Render::RenderTarget* shadowMapRT;
 
 	const uint32_t MAX_RENDERABLE_ENTITIES = 1000;
@@ -44,11 +44,11 @@ protected:
 	void SetupPipelines() override;
 
 public:
-	BasicRenderer(Context::VulkanContext* _context, const uint32_t& _maxRenderableEntities = 10000);
+	BasicRenderer(Context::VulkanContext* _context, const uint32_t& _maxRenderableEntities = 1000);
 	~BasicRenderer();
 
 	void UpdateRenderCameraBuffer(const vk::Buffer& _buffer);
-	void SetupDirectionalLight(const vk::Extent2D _extent, const glm::vec4& _color, const glm::vec3& _direction, const uint32_t& _cascadeCount);
+	void SetupDirectionalLight(const vk::Extent2D _extent, const glm::vec4& _color, const glm::vec3& _direction, const uint32_t& _cascadeCount, const float* _splits);
 	void UpdateDirectionalLight(const glm::mat4* _lightViewProj);
 
 	virtual void Cleanup() override;

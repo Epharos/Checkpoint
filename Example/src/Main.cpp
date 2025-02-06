@@ -87,8 +87,17 @@ int main()
 	Entity camera = ecs.CreateEntity();
 	ecs.AddComponent<Transform>(camera, Transform({ 0, 5, -15 }));
 	Camera cameraComponent;
-	cameraComponent.far = 1000.f;
+	cameraComponent.far = 200.f;
 	ecs.AddComponent<Camera>(camera, cameraComponent);
+
+	Entity light = ecs.CreateEntity();
+	DirectionalLight lightComponent;
+	lightComponent.color = { 1.0f, 1.0f, 1.0f };
+	lightComponent.intensity = 1.0f;
+	lightComponent.direction = glm::normalize(glm::vec3{ 1.0f, -1.0f, 0.0f });
+	lightComponent.cascadeCount = 4;
+	lightComponent.shadowMapSize = 4096;
+	ecs.AddComponent<DirectionalLight>(light, lightComponent);
 
 	Entity player = ecs.CreateEntity();
 	ecs.AddComponent<Transform>(player, Transform({ 0, 5, 0 }));
@@ -96,7 +105,7 @@ int main()
 	ecs.AddComponent<CameraFollow>(player, CameraFollow(camera));
 
 	Entity ground = ecs.CreateEntity();
-	ecs.AddComponent<Transform>(ground, Transform({ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, glm::vec3{ 100.0f, 1.f, 100.0f }));
+	ecs.AddComponent<Transform>(ground, Transform({ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, glm::vec3{ 350.0f, 1.f, 350.0f }));
 	ecs.AddComponent<MeshRenderer>(ground, MeshRenderer(resourceManager.Get<Mesh>("Cube"), resourceManager.Get<MaterialInstance>("Wood Material")));
 
 	for (int i = 0; i < 150; i++)

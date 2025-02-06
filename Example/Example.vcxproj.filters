@@ -100,5 +100,6 @@
     <None Include="Shaders\TNL.spv" />
     <None Include="Shaders\ShadowMapping.slang" />
     <None Include="Shaders\ShadowMapping.spv" />
+    <None Include="Shaders\Constants.slang" />
   </ItemGroup>
 </Project>

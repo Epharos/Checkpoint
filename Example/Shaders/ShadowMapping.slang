@@ -1,9 +1,17 @@
 // slangc.exe ShadowMapping.slang -target spirv -fvk-use-entrypoint-name -o ShadowMapping.spv
 
+#include "Constants.slang"
+
 struct CameraData
 {
-    float4x4 viewProjection;
+    float4x4 viewProjection[MAX_CASCADES];
+    float cascadeSplits[MAX_CASCADES];
 };
+
+struct CascadeData
+{
+    uint cascadeIndex;
+}
 
 struct ModelData
 {
@@ -27,17 +35,25 @@ struct VSOutput
 }
 
 [vk::binding(0)]
-ConstantBuffer<CameraData> camera;
+ConstantBuffer<CameraData> cascade;
 
 [vk::binding(0, 1)]
 StructuredBuffer<ModelData> models;
 
+[vk::push_constant]
+CascadeData cascadeData;
+
 [shader("vertex")]
-float4 vertexMain(VSInput input, uint instanceID: SV_InstanceID) : SV_Position
+VSOutput vertexMain(VSInput input, uint instanceID: SV_InstanceID, out uint layer : SV_RenderTargetArrayIndex) : SV_Position
 {
+    VSOutput output;
+
     float3 fragPos = mul(models[instanceID].model, float4(input.position, 1.0f)).xyz;
-    float4 clipPos = mul(camera.viewProjection, float4(fragPos, 1.0f));
+    float4 clipPos = mul(cascade.viewProjection[cascadeData.cascadeIndex], float4(fragPos, 1.0f));
     clipPos.y = -clipPos.y;
-    // Calculate the model-view-projection matrix and multiply it with the vertex position to get the clip-space position
-    return clipPos;
+
+    output.position = clipPos;
+    layer = cascadeData.cascadeIndex;
+
+    return output;
 }

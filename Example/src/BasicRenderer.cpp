@@ -6,16 +6,9 @@
 void LogMat4(glm::mat4 _mat);
 
 BasicRenderer::BasicRenderer(Context::VulkanContext* _context, const uint32_t& _maxRenderableEntities) :
-	Render::Renderer(_context), MAX_RENDERABLE_ENTITIES(_maxRenderableEntities), 
-	directionnalLight(new Render::Camera(context)), shadowMapRT(nullptr)
+	Render::Renderer(_context), MAX_RENDERABLE_ENTITIES(_maxRenderableEntities), shadowMapRT(nullptr)
 {
-	directionnalLight->Translate(glm::vec3(0.f, 30.f, -10.f));
-	directionnalLight->LookAt(glm::vec3(0.f, 0.f, 0.f));
-	//directionnalLight->Rotate(glm::quat(glm::vec3(glm::radians(90.f), .0f, .0f)));
-	//directionnalLight->SetPerspective(70.f, _context->GetPlatform()->GetAspectRatio(), 0.1f, 300.f);
-	directionnalLight->SetOrthographic(-20.f, 20.f, -20.f, 20.f, 1.0f, 300.f);
-	sunLight.lightDirection = glm::vec4(directionnalLight->GetForward(), 0);
-	sunLight.lightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
+
 }
 
 BasicRenderer::~BasicRenderer()
@@ -25,23 +18,16 @@ BasicRenderer::~BasicRenderer()
 
 void BasicRenderer::Cleanup()
 {
-	delete directionnalLight;
 	context->GetDevice().destroyRenderPass(shadowMapRenderPass);
 	delete shadowMapRT;
 	Renderer::Cleanup();
 	Helper::Memory::DestroyBuffer(context->GetDevice(), instancedBuffer, instancedBufferMemory);
 	Helper::Memory::DestroyBuffer(context->GetDevice(), sunLightBuffer, sunLightBufferMemory);
+	Helper::Memory::DestroyBuffer(context->GetDevice(), shadowMapCascadesBuffer, shadowMapCascadesBufferMemory);
 }
 
 void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _instanceGroups)
 {
-	directionnalLight->UpdateUniformBuffer();
-
-	glfwGetKey(context->GetPlatform()->GetWindow(), GLFW_KEY_UP) == GLFW_PRESS ? directionnalLight->Rotate(glm::vec3(glm::radians(-0.01f), 0, 0)) : void();
-	glfwGetKey(context->GetPlatform()->GetWindow(), GLFW_KEY_DOWN) == GLFW_PRESS ? directionnalLight->Rotate(glm::vec3(glm::radians(0.01f), 0, 0)) : void();
-
-	sunLight.viewProjectionMatrix = directionnalLight->GetViewProjectionMatrix();
-
 	Helper::Memory::MapMemory(context->GetDevice(), sunLightBufferMemory, sizeof(SunLight), &sunLight);
 
 	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4>{0.1f, 0.1f, 0.1f, 1.0f});
@@ -70,22 +56,25 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineData.pipelineLayout, 0, context->GetDescriptorSetManager()->GetDescriptorSet("Shadow Map Camera"), nullptr);
 	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineData.pipelineLayout, 1, context->GetDescriptorSetManager()->GetDescriptorSet("Instance Model"), nullptr);
 
-	//LogMat4(directionnalLight->GetViewProjectionMatrix());
-
-	for (auto& instanceGroup : _instanceGroups)
+	for (int i = 0; i < sunLight.cascadeCount; i++)
 	{
-		vk::DeviceSize offset(0);
+		commandBuffer.pushConstants(pipelineData.pipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(uint32_t), &i);
 
-		if (currentMesh != instanceGroup.mesh)
+		for (auto& instanceGroup : _instanceGroups)
 		{
-			currentMesh = instanceGroup.mesh;
-			commandBuffer.bindVertexBuffers(0, 1, &currentMesh->GetVertexBuffer(), &offset);
-			commandBuffer.bindIndexBuffer(currentMesh->GetIndexBuffer(), 0, vk::IndexType::eUint32);
+			vk::DeviceSize offset(0);
+
+			if (currentMesh != instanceGroup.mesh)
+			{
+				currentMesh = instanceGroup.mesh;
+				commandBuffer.bindVertexBuffers(0, 1, &currentMesh->GetVertexBuffer(), &offset);
+				commandBuffer.bindIndexBuffer(currentMesh->GetIndexBuffer(), 0, vk::IndexType::eUint32);
+			}
+
+			Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(Render::TransformData) * instanceGroup.transforms.size(), instanceGroup.instanceOffset * sizeof(Render::TransformData), instanceGroup.transforms.data());
+
+			commandBuffer.drawIndexed(instanceGroup.mesh->GetIndexCount(), instanceGroup.transforms.size(), 0, 0, instanceGroup.instanceOffset);
 		}
-
-		Helper::Memory::MapMemory(context->GetDevice(), instancedBufferMemory, sizeof(Render::TransformData) * instanceGroup.transforms.size(), instanceGroup.instanceOffset * sizeof(Render::TransformData), instanceGroup.transforms.data());
-
-		commandBuffer.drawIndexed(instanceGroup.mesh->GetIndexCount(), instanceGroup.transforms.size(), 0, 0, instanceGroup.instanceOffset);
 	}
 
 	commandBuffer.endRenderPass();
@@ -98,7 +87,7 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 	shadowMapBarrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
 	shadowMapBarrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
 	shadowMapBarrier.image = shadowMapRT->GetAttachment(0)->GetImage();
-	shadowMapBarrier.subresourceRange = { vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1 };
+	shadowMapBarrier.subresourceRange = { vk::ImageAspectFlagBits::eDepth, 0, 1, 0, sunLight.cascadeCount };
 
 	commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eLateFragmentTests, vk::PipelineStageFlagBits::eFragmentShader, vk::DependencyFlagBits::eByRegion, 0, nullptr, 0, nullptr, 1, &shadowMapBarrier);
 
@@ -174,9 +163,10 @@ void BasicRenderer::SetupPipelines()
 	vk::DescriptorSetLayout cameraLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Render Camera",
 		{
 			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex), // Camera Space Matrix
-			vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex), // Light Space Matrix
-			vk::DescriptorSetLayoutBinding(2, vk::DescriptorType::eSampledImage, 1, vk::ShaderStageFlagBits::eFragment), // Shadow Mapping depth map texture
-			vk::DescriptorSetLayoutBinding(3, vk::DescriptorType::eSampler, 1, vk::ShaderStageFlagBits::eFragment) // Shadow Mapping depth map texture sampler
+			vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment), // Sunlight data
+			vk::DescriptorSetLayoutBinding(2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex), // Light Space Matrices
+			vk::DescriptorSetLayoutBinding(3, vk::DescriptorType::eSampledImage, 1, vk::ShaderStageFlagBits::eFragment), // Shadow Mapping depth map texture
+			vk::DescriptorSetLayoutBinding(4, vk::DescriptorType::eSampler, 1, vk::ShaderStageFlagBits::eFragment) // Shadow Mapping depth map texture sampler
 		});
 
 	vk::DescriptorSetLayout instancedModelLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Instanced Model",
@@ -186,44 +176,23 @@ void BasicRenderer::SetupPipelines()
 
 	vk::DescriptorSetLayout shadowMapCameraLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Shadow Map Camera",
 		{
-			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex)
+			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex),
 		});
 
-	descriptorSetManager->CreateDescriptorSets({ "Render Camera", "Instance Model", "Shadow Map Camera"}, {cameraLayout, instancedModelLayout, shadowMapCameraLayout});
+	descriptorSetManager->CreateDescriptorSets({ "Render Camera", "Instance Model", "Shadow Map Camera" }, { cameraLayout, instancedModelLayout, shadowMapCameraLayout });
 
-	if (directionnalLight)
-	{
-		sunLightBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(SunLight), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, sunLightBufferMemory);
+	sunLightBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(SunLight), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, sunLightBufferMemory);
 
-		Pipeline::DescriptorSetUpdate shadowMapCameraUpdate = {};
-		shadowMapCameraUpdate.descriptorType = vk::DescriptorType::eUniformBuffer;
-		shadowMapCameraUpdate.dstBinding = 1;
-		shadowMapCameraUpdate.dstArrayElement = 0;
-		shadowMapCameraUpdate.descriptorCount = 1;
-		shadowMapCameraUpdate.buffer = sunLightBuffer;
-		shadowMapCameraUpdate.offset = 0;
-		shadowMapCameraUpdate.range = sizeof(SunLight);
+	Pipeline::DescriptorSetUpdate shadowMapCameraUpdate = {};
+	shadowMapCameraUpdate.descriptorType = vk::DescriptorType::eUniformBuffer;
+	shadowMapCameraUpdate.dstBinding = 1;
+	shadowMapCameraUpdate.dstArrayElement = 0;
+	shadowMapCameraUpdate.descriptorCount = 1;
+	shadowMapCameraUpdate.buffer = sunLightBuffer;
+	shadowMapCameraUpdate.offset = 0;
+	shadowMapCameraUpdate.range = sizeof(SunLight);
 
-		descriptorSetManager->UpdateDescriptorSet("Render Camera", shadowMapCameraUpdate);
-		shadowMapCameraUpdate.dstBinding = 0;
-		descriptorSetManager->UpdateDescriptorSet("Shadow Map Camera", shadowMapCameraUpdate);
-
-		Pipeline::DescriptorSetUpdate shadowMapUpdate = {};
-		shadowMapUpdate.updateType = Pipeline::DescriptorSetUpdateType::IMAGE;
-		shadowMapUpdate.descriptorType = vk::DescriptorType::eSampledImage;
-		shadowMapUpdate.dstBinding = 2;
-		shadowMapUpdate.dstArrayElement = 0;
-		shadowMapUpdate.descriptorCount = 1;
-		shadowMapUpdate.sampler = shadowMapRT->GetAttachment(0)->GetSampler();
-		shadowMapUpdate.imageView = shadowMapRT->GetAttachment(0)->GetImageView();
-		shadowMapUpdate.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-
-		descriptorSetManager->UpdateDescriptorSet("Render Camera", shadowMapUpdate);
-		shadowMapUpdate.descriptorType = vk::DescriptorType::eSampler;
-		shadowMapUpdate.dstBinding = 3;
-		descriptorSetManager->UpdateDescriptorSet("Render Camera", shadowMapUpdate);
-
-	}
+	descriptorSetManager->UpdateDescriptorSet("Render Camera", shadowMapCameraUpdate); // Setting Sunlight data (direction, color, cascade count)
 
 	instancedBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(Render::TransformData) * MAX_RENDERABLE_ENTITIES, vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, instancedBufferMemory);
 
@@ -263,7 +232,9 @@ void BasicRenderer::SetupPipelines()
 
 	const std::vector<vk::DescriptorSetLayout> depthShadowMapLayouts = { shadowMapCameraLayout, instancedModelLayout };
 
-	vk::PipelineLayout depthShadowMapLayout = layoutsManager->GetOrCreateLayout(depthShadowMapLayouts, {});
+	vk::PushConstantRange pushConstantRange = vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, 0, sizeof(uint32_t));
+
+	vk::PipelineLayout depthShadowMapLayout = layoutsManager->GetOrCreateLayout(depthShadowMapLayouts, { pushConstantRange });
 
 #pragma endregion
 
@@ -436,46 +407,82 @@ void BasicRenderer::UpdateRenderCameraBuffer(const vk::Buffer& _buffer)
 	cameraUpdate.descriptorCount = 1;
 	cameraUpdate.buffer = _buffer;
 	cameraUpdate.offset = 0;
-	cameraUpdate.range = sizeof(glm::mat4);
+	cameraUpdate.range = sizeof(CameraUBO);
 
 	context->GetDescriptorSetManager()->UpdateDescriptorSet("Render Camera", cameraUpdate);
 }
 
-void BasicRenderer::SetupDirectionalLight(const vk::Extent2D _extent, const glm::vec4& _color, const glm::vec3& _direction, const uint32_t& _cascadeCount)
+void BasicRenderer::SetupDirectionalLight(const vk::Extent2D _extent, const glm::vec4& _color, const glm::vec3& _direction, const uint32_t& _cascadeCount, const float* _splits)
 {
 	shadowMapRT = new Render::RenderTarget(*context, _extent);
 
+	uint32_t actualCascadeCount = _cascadeCount;
+
+	if (_cascadeCount > MAX_CASCADE_COUNT)
+	{
+		LOG_WARNING(MF("Cascade count is too high, setting it to ", MAX_CASCADE_COUNT));
+		actualCascadeCount = MAX_CASCADE_COUNT;
+	}
+
 	auto shadowMapAttachment = std::make_shared<Render::RenderTargetAttachment>(context, _extent,
-		Helper::Format::FindDepthFormat(context->GetPhysicalDevice()), vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled, vk::ImageAspectFlagBits::eDepth, true, _cascadeCount);
+		Helper::Format::FindDepthFormat(context->GetPhysicalDevice()), vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled, vk::ImageAspectFlagBits::eDepth, true, actualCascadeCount);
 
 	shadowMapRT->AddAttachment(shadowMapAttachment);
 
-	shadowMapRT->Build(shadowMapRenderPass, _cascadeCount);
+	shadowMapRT->Build(shadowMapRenderPass, actualCascadeCount);
 
 	sunLight.lightColor = _color;
 	sunLight.lightDirection = glm::vec4(_direction, 0.f);
-	sunLight.cascadeCount = _cascadeCount;
+	sunLight.cascadeCount = actualCascadeCount;
 
-	shadowMapCascades = new ShadowMapCascade[_cascadeCount];
-
-	for (int i = 0; i < _cascadeCount; i++)
+	for (int i = 0; i < actualCascadeCount; i++)
 	{
-		shadowMapCascades[i].viewProjectionMatrix = glm::mat4(1.f);
-		shadowMapCascades[i].index = i;
+		shadowMapCascades.viewProjectionMatrix[i] = glm::mat4(1.f);
+		shadowMapCascades.splitDepth[i] = _splits[i];
+		LOG_DEBUG("Split depth : " + std::to_string(shadowMapCascades.splitDepth[i]));
 	}
 
-	shadowMapCascadesBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(ShadowMapCascade) * _cascadeCount, vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, shadowMapCascadesBufferMemory);
-	Helper::Memory::MapMemory(context->GetDevice(), shadowMapCascadesBufferMemory, sizeof(ShadowMapCascade) * _cascadeCount, 0, shadowMapCascades);
+	shadowMapCascadesBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(ShadowMapCascades), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, shadowMapCascadesBufferMemory);
+	Helper::Memory::MapMemory(context->GetDevice(), shadowMapCascadesBufferMemory, sizeof(ShadowMapCascades), 0, &shadowMapCascades);
+
+	Pipeline::DescriptorSetUpdate shadowMapVPMatricesUpdate = {};
+	shadowMapVPMatricesUpdate.descriptorType = vk::DescriptorType::eUniformBuffer;
+	shadowMapVPMatricesUpdate.dstBinding = 0;
+	shadowMapVPMatricesUpdate.dstArrayElement = 0;
+	shadowMapVPMatricesUpdate.descriptorCount = 1;
+	shadowMapVPMatricesUpdate.buffer = shadowMapCascadesBuffer;
+	shadowMapVPMatricesUpdate.offset = 0;
+	shadowMapVPMatricesUpdate.range = sizeof(ShadowMapCascades);
+
+	context->GetDescriptorSetManager()->UpdateDescriptorSet("Shadow Map Camera", shadowMapVPMatricesUpdate);
+
+	shadowMapVPMatricesUpdate.dstBinding = 2;
+	context->GetDescriptorSetManager()->UpdateDescriptorSet("Render Camera", shadowMapVPMatricesUpdate);
+
+	Pipeline::DescriptorSetUpdate shadowMapUpdate = {};
+	shadowMapUpdate.updateType = Pipeline::DescriptorSetUpdateType::IMAGE;
+	shadowMapUpdate.descriptorType = vk::DescriptorType::eSampledImage;
+	shadowMapUpdate.dstBinding = 3;
+	shadowMapUpdate.dstArrayElement = 0;
+	shadowMapUpdate.descriptorCount = 1;
+	shadowMapUpdate.sampler = shadowMapRT->GetAttachment(0)->GetSampler();
+	shadowMapUpdate.imageView = shadowMapRT->GetAttachment(0)->GetImageView();
+	shadowMapUpdate.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+
+	context->GetDescriptorSetManager()->UpdateDescriptorSet("Render Camera", shadowMapUpdate); // Setting Shadow Map texture array
+	shadowMapUpdate.descriptorType = vk::DescriptorType::eSampler;
+	shadowMapUpdate.dstBinding = 4;
+	context->GetDescriptorSetManager()->UpdateDescriptorSet("Render Camera", shadowMapUpdate); // Setting Shadow Map texture sampler
 }
 
 void BasicRenderer::UpdateDirectionalLight(const glm::mat4* _lightViewProj)
 {
 	for (int i = 0; i < sunLight.cascadeCount; i++)
 	{
-		shadowMapCascades[i].viewProjectionMatrix = _lightViewProj[i];
+		shadowMapCascades.viewProjectionMatrix[i] = _lightViewProj[i];
 	}
 
-	Helper::Memory::MapMemory(context->GetDevice(), shadowMapCascadesBufferMemory, sizeof(ShadowMapCascade) * sunLight.cascadeCount, 0, shadowMapCascades);
+	Helper::Memory::MapMemory(context->GetDevice(), shadowMapCascadesBufferMemory, sizeof(ShadowMapCascades), 0, &shadowMapCascades);
 }
 
 void BasicRenderer::CreateMainRenderPass()

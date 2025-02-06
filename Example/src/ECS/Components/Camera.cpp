@@ -7,7 +7,7 @@ bool Camera::Update(const Transform& _transform)
 		if (dirty) UpdateProjection();
 		if (_transform.IsDirty()) UpdateView(_transform);
 
-		viewProjection = projection * view;
+		cameraUBO.viewProjection = cameraUBO.projection * cameraUBO.view;
 		dirty = false;
 		return true;
 	}
@@ -20,17 +20,19 @@ void Camera::UpdateProjection()
 	switch (type)
 	{
 	case CameraType::Perspective:
-		projection = glm::perspectiveRH_ZO(glm::radians(fov), aspectRatio, near, far);
-		projection[1][1] *= -1; // Flip the y-axis
+		cameraUBO.projection = glm::perspectiveRH_ZO(glm::radians(fov), aspectRatio, near, far);
+		cameraUBO.projection[1][1] *= -1; // Flip the y-axis
 		break;
 	case CameraType::Orthographic:
-		projection = glm::orthoRH_ZO(left, right, bottom, top, near, far);
-		projection[1][1] *= -1; // Flip the y-axis
+		cameraUBO.projection = glm::orthoRH_ZO(left, right, bottom, top, near, far);
+		cameraUBO.projection[1][1] *= -1; // Flip the y-axis
 		break;
 	}
+
+	cameraUBO.nearFar = glm::vec2(near, far);
 }
 
 void Camera::UpdateView(const Transform& _transform)
 {
-	view = glm::lookAtRH(_transform.GetPosition(), _transform.GetPosition() + _transform.GetForward(), VEC3_UP);
+	cameraUBO.view = glm::lookAtRH(_transform.GetPosition(), _transform.GetPosition() + _transform.GetForward(), VEC3_UP);
 }

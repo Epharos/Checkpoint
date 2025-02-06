@@ -1,8 +1,13 @@
 // slangc.exe TexturedNormalLighting.slang -target spirv -fvk-use-entrypoint-name -o TNL.spv
 
+#include "Constants.slang"
+
 struct CameraData
 {
-	float4x4 viewProjection;
+    float4x4 view;
+    float4x4 projection;
+    float4x4 viewProjection;
+	float2 nearFar;
 };
 
 struct ModelData
@@ -13,9 +18,15 @@ struct ModelData
 
 struct SunLight
 {
-    float4x4 viewProjection;
     float4 lightDirection;
     float4 lightColor;
+    uint cascadeCount;
+}
+
+struct Cascades
+{
+    float4x4 viewProjection[MAX_CASCADES];
+    float4 cascadeSplits[MAX_CASCADES / 4];
 }
 
 struct TextureData
@@ -39,9 +50,18 @@ struct VSOutput
     float2 uv : TEXCOORD;
 	float3 tangent : TANGENT;
 	float3 bitangent : BITANGENT;
-    float4 lightSpacePosition : LIGHTSPACEPOSITION;
+
+    float3 worldPosition : TEXCOORD1;
+    float3 eyeSpacePosition : TEXCOORD2;
+
+    float2 nearFar;
+
+    float4 lightSpacePosition[MAX_CASCADES];
+    float cascadeSplits[MAX_CASCADES];
+
     float3 lightDirection;
-    float3 lightColor;
+    float4 lightColor;
+
     float3 viewPosition;
 };
 
@@ -52,9 +72,12 @@ ConstantBuffer<CameraData> camera;
 ConstantBuffer<SunLight> lightData;
 
 [vk::binding(2, 0)]
-Texture2D shadowMapTexture;
+ConstantBuffer<Cascades> cascadeData;
 
 [vk::binding(3, 0)]
+Texture2DArray shadowMapTextures;
+
+[vk::binding(4, 0)]
 SamplerComparisonState shadowMapSampler;
 
 [vk::binding(0, 1)]
@@ -69,15 +92,38 @@ Sampler2D normal;
 [vk::binding(2, 2)]
 ConstantBuffer<TextureData> textureData;
 
+float GetVectorComponentFromIndex(float4 vector, uint index)
+{
+	switch(index)
+	{
+		case 0:
+			return vector.x;
+		case 1:
+			return vector.y;
+		case 2:
+			return vector.z;
+		case 3:
+			return vector.w;
+		default:
+			return 0.0;
+	}
+}
+
 [shader("vertex")]
 VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 {
 	VSOutput output;
 
-    float3 fragPos = mul(models[instanceID].model, float4(input.position, 1.0f)).xyz;
+    float4 worldPos = mul(models[instanceID].model, float4(input.position, 1.0f));
 
-	//Calculate the model-view-projection matrix and multiply it with the vertex position to get the clip-space position
-	output.position = mul(camera.viewProjection, float4(fragPos, 1.0));
+    output.worldPosition = worldPos.xyz;
+
+    float4 eyeSpace = mul(camera.view, worldPos);
+    output.eyeSpacePosition = eyeSpace.xyz;
+    output.eyeSpacePosition.z = -output.eyeSpacePosition.z;
+
+    // Calculate the model-view-projection matrix and multiply it with the vertex position to get the clip-space position
+    output.position = mul(camera.viewProjection, worldPos);
 
 	//The UV remains the same no matter what
 	output.uv = input.uv;
@@ -94,23 +140,39 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
     // Calculate the bitangent in clip-space
     output.bitangent = normalize(mul(normalMatrix, input.bitangent));
 
-    // Calculate the light space position
-    output.lightSpacePosition = mul(lightData.viewProjection, float4(fragPos, 1.0f));
-    output.lightSpacePosition.y = -output.lightSpacePosition.y;
+    // Calculate the light spaces position
+    for (uint i = 0; i < lightData.cascadeCount; i++)
+    {
+        output.lightSpacePosition[i] = mul(cascadeData.viewProjection[i], worldPos);
+        output.lightSpacePosition[i].y = -output.lightSpacePosition[i].y;
+        output.cascadeSplits[i] = GetVectorComponentFromIndex(cascadeData.cascadeSplits[i / 4], i % 4);
+	}
 
     output.lightDirection = normalize(lightData.lightDirection.xyz);
-    output.lightColor = lightData.lightColor.xyz;
+    output.lightColor = lightData.lightColor;
 
     output.viewPosition = camera.viewProjection[3].xyz;
+
+    output.nearFar = camera.nearFar;
 
 	return output;
 }
 
-float ComputeShadow(float4 lightSpacePosition, float3 lightDirection, float3 fragNormal)
+float ComputeShadow(float4 lightSpacePosition[MAX_CASCADES], float splits[MAX_CASCADES], float fragDepth, float3 lightDirection, float3 fragNormal)
 {
-    // Perform the perspective divide
-    float2 projCoords = lightSpacePosition.xy / lightSpacePosition.w;
-    float currentDepth = lightSpacePosition.z / lightSpacePosition.w;
+    uint cascadeIndex = 0;
+
+    for (uint i = 0; i < lightData.cascadeCount; i++)
+    {
+        if (fragDepth < splits[i])
+		{
+			cascadeIndex = i;
+			break;
+		}
+	}
+
+    float2 projCoords = lightSpacePosition[cascadeIndex].xy / lightSpacePosition[cascadeIndex].w;
+    float currentDepth = lightSpacePosition[cascadeIndex].z / lightSpacePosition[cascadeIndex].w;
 
     // Transform the [-1, 1] range to [0, 1] for x and y (not z)
     projCoords = projCoords * 0.5 + 0.5;
@@ -121,41 +183,12 @@ float ComputeShadow(float4 lightSpacePosition, float3 lightDirection, float3 fra
 		return 1.0;
 	}
 
-    //return currentDepth;
-    //return currentDepth - bias > shadowMapTexture.Sample(shadowMapSampler, projCoords.xy).r ? 0.0 : 1.0;
-
-    // And we return a value in {0, 1} where 0 is in shadow and 1 is not
-    //return shadowMapTexture.SampleCmp(shadowMapSampler, projCoords.xy, currentDepth) > 0.0 ? 1.0 : 0.0;
-    return PercentageCloserFiltering(projCoords.xy, currentDepth, 2);
+    return PercentageCloserFiltering(float3(projCoords.xy, float(cascadeIndex)), currentDepth, 2);
 }
 
-float3 ComputeShadowDebug(float4 lightSpacePosition, float3 lightDirection, float3 fragNormal)
+float PercentageCloserFiltering(float3 uvl, float currentDepth, int size)
 {
-    	// Perform the perspective divide
-	float2 projCoords = lightSpacePosition.xy / lightSpacePosition.w;
-	float currentDepth = lightSpacePosition.z / lightSpacePosition.w;
-
-	// Transform the [-1, 1] range to [0, 1] for x and y (not z)
-	projCoords = projCoords * 0.5 + 0.5;
-
-	// If the point is outside the light's frustum, it is lighten
-	if(projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0)
-	{
-		return float3(1.0, 0.0, 0.0);
-	}
-
-    if(shadowMapTexture.SampleCmp(shadowMapSampler, projCoords.xy, currentDepth) > 0.0)
-	{
-		return float3(0.0, 1.0, 0.0);
-	}
-
-	return float3(0.0, 0.0, 1.0);
-
-}
-
-float PercentageCloserFiltering(float2 uv, float currentDepth, int size)
-{
-	float shadow = 0.0;
+    float shadow = 0.0;
     float texelSize = 1.0 / 4096.0;
 
 	for(int x = -size; x <= size; x++)
@@ -163,12 +196,78 @@ float PercentageCloserFiltering(float2 uv, float currentDepth, int size)
 		for(int y = -size; y <= size; y++)
 		{
             float2 offset = float2(x, y) * texelSize;
-            shadow += shadowMapTexture.SampleCmp(shadowMapSampler, uv + offset, currentDepth) > 0.0 ? 1.0 : 0.0;
+            float3 samplePos = float3(uvl.xy + offset, uvl.z);
+            shadow += shadowMapTextures.SampleCmp(shadowMapSampler, samplePos, currentDepth) > 0.0 ? 1.0 : 0.0;
 		}
 	}
 
 	return shadow / ((size + 1) * (size + 1));
 }
+
+float3 DebugCascade(float splits[MAX_CASCADES], float fragDepth)
+{
+    uint cascadeIndex = 0;
+
+    for (uint i = 0; i < lightData.cascadeCount; i++)
+    {
+        if (fragDepth < splits[i])
+		{
+			cascadeIndex = i;
+			break;
+        }
+    }
+
+    switch(cascadeIndex)
+    {
+        case 0:
+    		return float3(1.0, 0.2, 0.2);
+        case 1:
+            return float3(0.2, 1.0, 0.2);
+        case 2:
+            return float3(0.2, 0.0, 1.2);
+        case 3:
+            return float3(1.0, 1.0, 0.2);
+        case 4:
+            return float3(1.0, 0.2, 1.0);
+        case 5:
+            return float3(0.2, 1.0, 1.0);
+        case 6:
+            return float3(1.0, 1.0, 1.0);
+        case 7:
+            return float3(0.5, 0.5, 0.5);
+        default:
+            return float3(0.0, 0.0, 0.0);
+    }
+}
+
+float3 GetColorFromDistance(float3 pos, float factor = 10)
+{
+    if (pos.z < 0.0)
+    {
+        return float3(0.0, 0.0, 0.0);
+    }
+    else if (pos.z < 0.1 * factor)
+    {
+        return float3(1.0, 0.0, 0.0);
+    }
+    else if (pos.z < 0.3 * factor)
+    {
+        return float3(0.0, 1.0, 0.0);
+    }
+    else if (pos.z < 0.6 * factor)
+    {
+        return float3(0.0, 0.0, 1.0);
+    }
+    else if (pos.z < 0.9 * factor)
+    {
+        return float3(1.0, 1.0, 0.0);
+    }
+    else
+    {
+        return float3(1.0, 0.0, 1.0);
+    }
+}
+
 
 [shader("pixel")]
 float4 pixelMain(VSOutput input) : SV_TARGET
@@ -180,14 +279,14 @@ float4 pixelMain(VSOutput input) : SV_TARGET
     float3 normalMapValue = normal.Sample(input.uv * textureData.scale).xyz * 2.0 - 1.0; // Sample the normal map and convert it from [0, 1] to [-1, 1]
     float3 normalValue = normalize(mul(TBN, normalMapValue)); // Turns the normal map value into a normal in tangent space
 
-    float3 ambiantColor = 0.08 * input.lightColor;
+    float3 ambiantColor = 0.08 * input.lightColor.rgb;
     float3 diffuse = max(dot(normalValue, -input.lightDirection), 0.0);
 
-    //float3 finalColor = albedo * saturate((ambiantColor + (ComputeShadow(input.lightSpacePosition, input.lightDirection, normalValue) * diffuse))); // Compute the final color
-    float3 finalColor = albedo * (saturate(ambiantColor + ComputeShadow(input.lightSpacePosition, input.lightDirection, normalValue)));
+    float depth = (input.eyeSpacePosition.z - input.nearFar.x) / (input.nearFar.y - input.nearFar.x);
+    float3 finalColor = albedo * (saturate(ambiantColor + ComputeShadow(input.lightSpacePosition, input.cascadeSplits, depth, input.lightDirection, normalValue)));
+
+    //return float4(input.cascadeSplits[1], input.cascadeSplits[2], input.cascadeSplits[3], 1.0);
     return float4(finalColor, 1.0);
-    // return float4(ComputeShadowDebug(input.lightSpacePosition, input.lightDirection, normalValue), 1.0);
-    //return float4(0.0, input.normal.y, 0.0, 1.0);
 }
 
 float3x3 f3x3(float4x4 m) {

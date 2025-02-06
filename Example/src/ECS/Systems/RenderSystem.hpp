@@ -27,7 +27,7 @@ public:
 			return;
 		}
 
-		renderCameraBuffer = Helper::Memory::CreateBuffer(castedRenderer->GetContext()->GetDevice(), castedRenderer->GetContext()->GetPhysicalDevice(), sizeof(glm::mat4), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, renderCameraBufferMemory);
+		renderCameraBuffer = Helper::Memory::CreateBuffer(castedRenderer->GetContext()->GetDevice(), castedRenderer->GetContext()->GetPhysicalDevice(), sizeof(CameraUBO), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, renderCameraBufferMemory);
 	}
 	virtual void OnRegister(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager) = 0;
 
