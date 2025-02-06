@@ -58,7 +58,7 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 
 	for (int i = 0; i < sunLight.cascadeCount; i++)
 	{
-		commandBuffer.pushConstants(pipelineData.pipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(uint32_t), &i);
+		commandBuffer.pushConstants(pipelineData.pipelineLayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eGeometry, 0, sizeof(uint32_t), &i);
 
 		for (auto& instanceGroup : _instanceGroups)
 		{
@@ -232,7 +232,7 @@ void BasicRenderer::SetupPipelines()
 
 	const std::vector<vk::DescriptorSetLayout> depthShadowMapLayouts = { shadowMapCameraLayout, instancedModelLayout };
 
-	vk::PushConstantRange pushConstantRange = vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, 0, sizeof(uint32_t));
+	vk::PushConstantRange pushConstantRange = vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eGeometry, 0, sizeof(uint32_t));
 
 	vk::PipelineLayout depthShadowMapLayout = layoutsManager->GetOrCreateLayout(depthShadowMapLayouts, { pushConstantRange });
 
@@ -285,6 +285,7 @@ void BasicRenderer::SetupPipelines()
 	pipelineData.shaderFile = "Shaders/ShadowMapping.spv";
 	pipelineData.mains = {
 		{ vk::ShaderStageFlagBits::eVertex, "vertexMain" },
+		{ vk::ShaderStageFlagBits::eGeometry, "geometryMain"},
 	};
 
 	pipelinesManager->CreatePipeline(pipelineData);

@@ -10,7 +10,7 @@ struct CameraData
 
 struct CascadeData
 {
-    uint cascadeIndex;
+    int cascadeIndex;
 }
 
 struct ModelData
@@ -28,10 +28,15 @@ struct VSInput
     float3 bitangent : BITANGENT;
 }
 
-struct VSOutput
+struct GSOutput
 {
     float4 position : SV_Position;
     uint layer : SV_RenderTargetArrayIndex;
+}
+
+struct VSOutput
+{
+    float4 position : POSITION;
 }
 
 [vk::binding(0)]
@@ -44,7 +49,7 @@ StructuredBuffer<ModelData> models;
 CascadeData cascadeData;
 
 [shader("vertex")]
-VSOutput vertexMain(VSInput input, uint instanceID: SV_InstanceID, out uint layer : SV_RenderTargetArrayIndex) : SV_Position
+VSOutput vertexMain(VSInput input, uint instanceID: SV_InstanceID) : SV_Position
 {
     VSOutput output;
 
@@ -53,7 +58,21 @@ VSOutput vertexMain(VSInput input, uint instanceID: SV_InstanceID, out uint laye
     clipPos.y = -clipPos.y;
 
     output.position = clipPos;
-    layer = cascadeData.cascadeIndex;
 
     return output;
+}
+
+[shader("geometry")]
+[maxvertexcount(3)]
+void geometryMain(triangle VSOutput input[3], inout TriangleStream<GSOutput> stream)
+{
+	GSOutput output;
+
+	for (int i = 0; i < 3; i++)
+	{
+		output.position = input[i].position;
+		output.layer = cascadeData.cascadeIndex;
+
+		stream.Append(output);
+	}
 }

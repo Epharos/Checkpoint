@@ -148,6 +148,7 @@ void Context::VulkanContext::CreateLogicalDevice()
 	vk::PhysicalDeviceFeatures2 features2;
 	features2.features.samplerAnisotropy = VK_TRUE;
 	features2.features.tessellationShader = VK_TRUE;
+	features2.features.geometryShader = VK_TRUE;
 	features2.pNext = &v12features;
 
 	vk::DeviceCreateInfo deviceInfo({}, 
