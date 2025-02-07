@@ -66,9 +66,10 @@ VSOutput vertexMain(VSInput input, uint instanceID: SV_InstanceID) : SV_Position
 [maxvertexcount(3)]
 void geometryMain(triangle VSOutput input[3], inout TriangleStream<GSOutput> stream)
 {
+	GSOutput output;
+
 	for (int i = 0; i < 3; i++)
-    {
-        GSOutput output;
+	{
 		output.position = input[i].position;
 		output.layer = cascadeData.cascadeIndex;
 

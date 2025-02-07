@@ -60,7 +60,8 @@ int main()
 	resourceManager.Load<Texture>("Barstool Albedo", "Textures/Barstool/barstool_albedo.png");
 	resourceManager.Load<Texture>("Barstool Normal", "Textures/Barstool/barstool_normal.png");
 
-	resourceManager.Load<Texture>("Wood Albedo", "Textures/Ground/wood_albedo.png");
+	//resourceManager.Load<Texture>("Wood Albedo", "Textures/Ground/wood_albedo.png");
+	resourceManager.Load<Texture>("Wood Albedo", "Textures/Ground/blbl.png");
 	resourceManager.Load<Texture>("Wood Normal", "Textures/Ground/wood_normal.png");
 
 	resourceManager.Load<Texture>("Debug", "Textures/DebugCube/BaseMap.png");

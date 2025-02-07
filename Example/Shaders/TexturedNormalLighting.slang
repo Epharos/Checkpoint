@@ -158,7 +158,7 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 	return output;
 }
 
-float ComputeShadow(float4 lightSpacePosition[MAX_CASCADES], float splits[MAX_CASCADES], float fragDepth, float3 lightDirection, float3 fragNormal)
+float3 ComputeShadow(float4 lightSpacePosition[MAX_CASCADES], float splits[MAX_CASCADES], float fragDepth, float3 lightDirection, float3 fragNormal)
 {
     uint cascadeIndex = 0;
 
@@ -182,6 +182,28 @@ float ComputeShadow(float4 lightSpacePosition[MAX_CASCADES], float splits[MAX_CA
 	{
 		return 1.0;
 	}
+
+    /*switch (cascadeIndex)
+    {
+    case 0:
+        return float3(1.0, 0.2, 0.2);
+    case 1:
+        return float3(0.2, 1.0, 0.2);
+    case 2:
+        return float3(0.2, 0.0, 1.2);
+    case 3:
+        return float3(1.0, 1.0, 0.2);
+    case 4:
+        return float3(1.0, 0.2, 1.0);
+    case 5:
+        return float3(0.2, 1.0, 1.0);
+    case 6:
+        return float3(1.0, 1.0, 1.0);
+    case 7:
+        return float3(0.5, 0.5, 0.5);
+    default:
+        return float3(0.0, 0.0, 0.0);
+    }*/
 
     return PercentageCloserFiltering(float3(projCoords.xy, float(cascadeIndex)), currentDepth, 2);
 }
@@ -285,7 +307,7 @@ float4 pixelMain(VSOutput input) : SV_TARGET
     float depth = (input.eyeSpacePosition.z - input.nearFar.x) / (input.nearFar.y - input.nearFar.x);
     float3 finalColor = albedo * (saturate(ambiantColor + ComputeShadow(input.lightSpacePosition, input.cascadeSplits, depth, input.lightDirection, normalValue)));
 
-    //return float4(input.cascadeSplits[1], input.cascadeSplits[2], input.cascadeSplits[3], 1.0);
+    //return float4(albedo * ComputeShadow(input.lightSpacePosition, input.cascadeSplits, depth, input.lightDirection, normalValue), 1.0);
     return float4(finalColor, 1.0);
 }
 

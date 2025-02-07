@@ -2,6 +2,8 @@
 
 #include "BasicRenderSystem.hpp"
 
+void LogCard(const std::vector<std::string>& _lines);
+
 BasicRenderSystem::BasicRenderSystem(BasicRenderer* _renderer) : RenderSystem(_renderer)
 {
 	//renderCameraBuffer = Helper::Memory::CreateBuffer(renderer->GetContext()->GetDevice(), renderer->GetContext()->GetPhysicalDevice(), sizeof(CameraUBO), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, renderCameraBufferMemory);
@@ -139,7 +141,7 @@ glm::vec3* BasicRenderSystem::GetFrustumCorners(const glm::mat4& _viewProjection
 	{
 		corners[i] = frustumCorners[i] / frustumCorners[i].w;
 
-		//LOG_DEBUG(MF("Corner #", i, ": ", corners[i].x, ", ", corners[i].y, ", ", corners[i].z));
+		LOG_DEBUG(MF("Corner #", i, ": ", corners[i].x, ", ", corners[i].y, ", ", corners[i].z));
 	}
 
 	return corners;
@@ -228,7 +230,31 @@ glm::mat4* BasicRenderSystem::GetCascadeProjections(const glm::mat4 _cameraProj,
 		lastSplit = currentSplit;
 
 		lightViewProjections[i] = lightProj * lightView;
+
+		LogCard({
+			MF("Cascade #", i),
+			MF(),
+			MF("Light position: ", lightPos.x, ", ", lightPos.y, ", ", lightPos.z),
+			MF("Light direction: ", _lightDir.x, ", ", _lightDir.y, ", ", _lightDir.z),
+			MF("Actual light direction: ", (center - lightPos).x, ", ", (center - lightPos).y, ", ", (center - lightPos).z),
+			MF(),
+			MF("Frustum center: ", center.x, ", ", center.y, ", ", center.z),
+			MF("Frustum radius: ", radius)
+		});
+
 	}
 
 	return lightViewProjections;
+}
+
+void LogCard(const std::vector<std::string>& _lines)
+{
+	LOG_DEBUG("|----------------------------------------");
+
+	for (const auto& line : _lines)
+	{
+		LOG_DEBUG(MF("| ", line));
+	}
+
+	LOG_DEBUG("|----------------------------------------");
 }
