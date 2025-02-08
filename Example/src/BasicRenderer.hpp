@@ -31,6 +31,7 @@ protected:
 	vk::DeviceMemory shadowMapCascadesBufferMemory;
 
 	Render::RenderTarget* shadowMapRT;
+	uint32_t shadowMapSize;
 
 	const uint32_t MAX_RENDERABLE_ENTITIES = 1000;
 

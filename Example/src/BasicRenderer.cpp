@@ -1,10 +1,6 @@
 #include "pch.hpp"
 #include "BasicRenderer.hpp"
 
-
-
-void LogMat4(glm::mat4 _mat);
-
 BasicRenderer::BasicRenderer(Context::VulkanContext* _context, const uint32_t& _maxRenderableEntities) :
 	Render::Renderer(_context), MAX_RENDERABLE_ENTITIES(_maxRenderableEntities), shadowMapRT(nullptr)
 {
@@ -44,7 +40,7 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 	depthShadowMapRenderPassInfo.renderPass = shadowMapRenderPass;
 	depthShadowMapRenderPassInfo.framebuffer = shadowMapRT->GetFramebuffer();
 	depthShadowMapRenderPassInfo.renderArea.offset = vk::Offset2D{ 0, 0 };
-	depthShadowMapRenderPassInfo.renderArea.extent = vk::Extent2D(4096, 4096);
+	depthShadowMapRenderPassInfo.renderArea.extent = shadowMapRT->GetExtent();
 	depthShadowMapRenderPassInfo.clearValueCount = 1;
 	depthShadowMapRenderPassInfo.pClearValues = shadowMapClearValues.data();
 
@@ -174,12 +170,7 @@ void BasicRenderer::SetupPipelines()
 			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eVertex)
 		});
 
-	vk::DescriptorSetLayout shadowMapCameraLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Shadow Map Camera",
-		{
-			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex),
-		});
-
-	descriptorSetManager->CreateDescriptorSets({ "Render Camera", "Instance Model", "Shadow Map Camera" }, { cameraLayout, instancedModelLayout, shadowMapCameraLayout });
+	descriptorSetManager->CreateDescriptorSets({ "Render Camera", "Instance Model" }, { cameraLayout, instancedModelLayout });
 
 	sunLightBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(SunLight), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, sunLightBufferMemory);
 
@@ -230,31 +221,24 @@ void BasicRenderer::SetupPipelines()
 
 	vk::PipelineLayout textureLayout = layoutsManager->GetOrCreateLayout(textureLayouts, {});
 
-	const std::vector<vk::DescriptorSetLayout> depthShadowMapLayouts = { shadowMapCameraLayout, instancedModelLayout };
-
-	vk::PushConstantRange pushConstantRange = vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eGeometry, 0, sizeof(uint32_t));
-
-	vk::PipelineLayout depthShadowMapLayout = layoutsManager->GetOrCreateLayout(depthShadowMapLayouts, { pushConstantRange });
-
 #pragma endregion
 
-#pragma region DepthShadowMap Pipeline
-
+#pragma region Color Pipeline
 	Pipeline::PipelineCreateData pipelineData = {};
-	pipelineData.config.name = "Depth Shadow Map";
+	pipelineData.config.name = "Colored";
 
-	pipelineData.descriptorSetLayouts = depthShadowMapLayouts;
+	pipelineData.descriptorSetLayouts = colorLayouts;
 
 	vk::Viewport* vp = new vk::Viewport;
 	vp->x = 0.f;
 	vp->y = 0.f;
-	vp->width = 4096; //Magic number
-	vp->height = 4096; //Magic number
+	vp->width = swapchain->GetExtent().width;
+	vp->height = swapchain->GetExtent().height;
 	vp->minDepth = 0.f;
 	vp->maxDepth = 1.f;
 
 	vk::Rect2D* scisor = new vk::Rect2D;
-	scisor->extent = vk::Extent2D(4096, 4096);
+	scisor->extent = swapchain->GetExtent();
 	scisor->offset = vk::Offset2D(0, 0);
 
 	vk::PipelineColorBlendAttachmentState* colorBlendAttachment = new vk::PipelineColorBlendAttachmentState;
@@ -264,59 +248,6 @@ void BasicRenderer::SetupPipelines()
 	vk::VertexInputBindingDescription* bindingDescription = new vk::VertexInputBindingDescription(0, sizeof(Resource::Vertex), vk::VertexInputRate::eVertex);
 
 	vk::VertexInputAttributeDescription* attributeDescriptions = new vk::VertexInputAttributeDescription[5];
-	attributeDescriptions[0] = vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, position));
-	attributeDescriptions[1] = vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, normal));
-	attributeDescriptions[2] = vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Resource::Vertex, uv));
-	attributeDescriptions[3] = vk::VertexInputAttributeDescription(3, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, tangent));
-	attributeDescriptions[4] = vk::VertexInputAttributeDescription(4, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, bitangent));
-
-	pipelineData.createInfo = vk::GraphicsPipelineCreateInfo();
-	pipelineData.createInfo.layout = depthShadowMapLayout;
-	pipelineData.createInfo.renderPass = shadowMapRenderPass;
-	pipelineData.createInfo.subpass = 0;
-	pipelineData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), VK_TRUE, VK_TRUE, vk::CompareOp::eLess);
-	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, vp, 1, scisor);
-	pipelineData.createInfo.pRasterizationState = new vk::PipelineRasterizationStateCreateInfo(vk::PipelineRasterizationStateCreateFlags(), VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, VK_TRUE, 5.0f, 0.0f, 3.5f, 1.0f);
-	pipelineData.createInfo.pMultisampleState = new vk::PipelineMultisampleStateCreateInfo(vk::PipelineMultisampleStateCreateFlags(), vk::SampleCountFlagBits::e1, VK_FALSE, 1.0f, nullptr, VK_FALSE, VK_FALSE);
-	pipelineData.createInfo.pColorBlendState = new vk::PipelineColorBlendStateCreateInfo({}, VK_FALSE, vk::LogicOp::eCopy, 1, colorBlendAttachment, { 0.f, 0.f, 0.f, 0.f });
-	pipelineData.createInfo.pInputAssemblyState = new vk::PipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleList, VK_FALSE);
-	pipelineData.createInfo.pVertexInputState = new vk::PipelineVertexInputStateCreateInfo(vk::PipelineVertexInputStateCreateFlags(), 1, bindingDescription, 5, attributeDescriptions);
-
-	pipelineData.shaderFile = "Shaders/ShadowMapping.spv";
-	pipelineData.mains = {
-		{ vk::ShaderStageFlagBits::eVertex, "vertexMain" },
-		{ vk::ShaderStageFlagBits::eGeometry, "geometryMain"},
-	};
-
-	pipelinesManager->CreatePipeline(pipelineData);
-
-#pragma endregion
-
-#pragma region Color Pipeline
-	pipelineData = {};
-	pipelineData.config.name = "Colored";
-
-	pipelineData.descriptorSetLayouts = colorLayouts;
-
-	vp = new vk::Viewport;
-	vp->x = 0.f;
-	vp->y = 0.f;
-	vp->width = swapchain->GetExtent().width;
-	vp->height = swapchain->GetExtent().height;
-	vp->minDepth = 0.f;
-	vp->maxDepth = 1.f;
-
-	scisor = new vk::Rect2D;
-	scisor->extent = swapchain->GetExtent();
-	scisor->offset = vk::Offset2D(0, 0);
-
-	colorBlendAttachment = new vk::PipelineColorBlendAttachmentState;
-	colorBlendAttachment->colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
-	colorBlendAttachment->blendEnable = VK_FALSE;
-
-	bindingDescription = new vk::VertexInputBindingDescription(0, sizeof(Resource::Vertex), vk::VertexInputRate::eVertex);
-
-	attributeDescriptions = new vk::VertexInputAttributeDescription[5];
 	attributeDescriptions[0] = vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, position));
 	attributeDescriptions[1] = vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, normal));
 	attributeDescriptions[2] = vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Resource::Vertex, uv));
@@ -446,6 +377,25 @@ void BasicRenderer::SetupDirectionalLight(const vk::Extent2D _extent, const glm:
 	shadowMapCascadesBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(ShadowMapCascades), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, shadowMapCascadesBufferMemory);
 	Helper::Memory::MapMemory(context->GetDevice(), shadowMapCascadesBufferMemory, sizeof(ShadowMapCascades), 0, &shadowMapCascades);
 
+#pragma region Descriptor Sets and Layouts
+	Pipeline::DescriptorSetLayoutsManager* descriptorSetLayoutsManager = context->GetDescriptorSetLayoutsManager();
+	Pipeline::DescriptorSetManager* descriptorSetManager = context->GetDescriptorSetManager();
+	Pipeline::PipelinesManager* pipelinesManager = context->GetPipelinesManager();
+	Pipeline::LayoutsManager* layoutsManager = context->GetLayoutsManager();
+
+	vk::DescriptorSetLayout shadowMapCameraLayout = descriptorSetLayoutsManager->CreateDescriptorSetLayout("Shadow Map Camera",
+		{
+			vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex),
+		});
+
+	descriptorSetManager->CreateDescriptorSet("Shadow Map Camera", shadowMapCameraLayout);
+
+	const std::vector<vk::DescriptorSetLayout> depthShadowMapLayouts = { shadowMapCameraLayout, descriptorSetLayoutsManager->GetDescriptorSetLayout("Instanced Model") };
+
+	vk::PushConstantRange pushConstantRange = vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eGeometry, 0, sizeof(uint32_t));
+
+	vk::PipelineLayout depthShadowMapLayout = layoutsManager->GetOrCreateLayout(depthShadowMapLayouts, { pushConstantRange });
+
 	Pipeline::DescriptorSetUpdate shadowMapVPMatricesUpdate = {};
 	shadowMapVPMatricesUpdate.descriptorType = vk::DescriptorType::eUniformBuffer;
 	shadowMapVPMatricesUpdate.dstBinding = 0;
@@ -474,6 +424,59 @@ void BasicRenderer::SetupDirectionalLight(const vk::Extent2D _extent, const glm:
 	shadowMapUpdate.descriptorType = vk::DescriptorType::eSampler;
 	shadowMapUpdate.dstBinding = 4;
 	context->GetDescriptorSetManager()->UpdateDescriptorSet("Render Camera", shadowMapUpdate); // Setting Shadow Map texture sampler
+#pragma endregion
+
+#pragma region Shadow Map Pipeline
+	Pipeline::PipelineCreateData pipelineData = {};
+	pipelineData.config.name = "Depth Shadow Map";
+
+	pipelineData.descriptorSetLayouts = depthShadowMapLayouts;
+
+	vk::Viewport* vp = new vk::Viewport;
+	vp->x = 0.f;
+	vp->y = 0.f;
+	vp->width = _extent.width;
+	vp->height = _extent.height;
+	vp->minDepth = 0.f;
+	vp->maxDepth = 1.f;
+
+	vk::Rect2D* scisor = new vk::Rect2D;
+	scisor->extent = _extent;
+	scisor->offset = vk::Offset2D(0, 0);
+
+	vk::PipelineColorBlendAttachmentState* colorBlendAttachment = new vk::PipelineColorBlendAttachmentState;
+	colorBlendAttachment->colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	colorBlendAttachment->blendEnable = VK_FALSE;
+
+	vk::VertexInputBindingDescription* bindingDescription = new vk::VertexInputBindingDescription(0, sizeof(Resource::Vertex), vk::VertexInputRate::eVertex);
+
+	vk::VertexInputAttributeDescription* attributeDescriptions = new vk::VertexInputAttributeDescription[5];
+	attributeDescriptions[0] = vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, position));
+	attributeDescriptions[1] = vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, normal));
+	attributeDescriptions[2] = vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Resource::Vertex, uv));
+	attributeDescriptions[3] = vk::VertexInputAttributeDescription(3, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, tangent));
+	attributeDescriptions[4] = vk::VertexInputAttributeDescription(4, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, bitangent));
+
+	pipelineData.createInfo = vk::GraphicsPipelineCreateInfo();
+	pipelineData.createInfo.layout = depthShadowMapLayout;
+	pipelineData.createInfo.renderPass = shadowMapRenderPass;
+	pipelineData.createInfo.subpass = 0;
+	pipelineData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), VK_TRUE, VK_TRUE, vk::CompareOp::eLess);
+	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, vp, 1, scisor);
+	pipelineData.createInfo.pRasterizationState = new vk::PipelineRasterizationStateCreateInfo(vk::PipelineRasterizationStateCreateFlags(), VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, VK_TRUE, 5.0f, 0.0f, 3.5f, 1.0f);
+	pipelineData.createInfo.pMultisampleState = new vk::PipelineMultisampleStateCreateInfo(vk::PipelineMultisampleStateCreateFlags(), vk::SampleCountFlagBits::e1, VK_FALSE, 1.0f, nullptr, VK_FALSE, VK_FALSE);
+	pipelineData.createInfo.pColorBlendState = new vk::PipelineColorBlendStateCreateInfo({}, VK_FALSE, vk::LogicOp::eCopy, 1, colorBlendAttachment, { 0.f, 0.f, 0.f, 0.f });
+	pipelineData.createInfo.pInputAssemblyState = new vk::PipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleList, VK_FALSE);
+	pipelineData.createInfo.pVertexInputState = new vk::PipelineVertexInputStateCreateInfo(vk::PipelineVertexInputStateCreateFlags(), 1, bindingDescription, 5, attributeDescriptions);
+
+	pipelineData.shaderFile = "Shaders/ShadowMapping.spv";
+	pipelineData.mains = {
+		{ vk::ShaderStageFlagBits::eVertex, "vertexMain" },
+		{ vk::ShaderStageFlagBits::eGeometry, "geometryMain"},
+	};
+
+	pipelinesManager->CreatePipeline(pipelineData);
+#pragma endregion
 }
 
 void BasicRenderer::UpdateDirectionalLight(const glm::mat4* _lightViewProj)
@@ -580,12 +583,4 @@ void BasicRenderer::CreateRenderPasses()
 	shadowMapRenderPass = context->GetDevice().createRenderPass(renderPassInfo);
 
 	
-}
-
-void LogMat4(glm::mat4 _mat)
-{
-	LOG_DEBUG(MF(_mat[0][0], " ", _mat[0][1], " ", _mat[0][2], " ", _mat[0][3]));
-	LOG_DEBUG(MF(_mat[1][0], " ", _mat[1][1], " ", _mat[1][2], " ", _mat[1][3]));
-	LOG_DEBUG(MF(_mat[2][0], " ", _mat[2][1], " ", _mat[2][2], " ", _mat[2][3]));
-	LOG_DEBUG(MF(_mat[3][0], " ", _mat[3][1], " ", _mat[3][2], " ", _mat[3][3]));
 }

@@ -177,15 +177,17 @@ float ComputeShadow(float4 lightSpacePosition[MAX_CASCADES], float3 lightDirecti
 		return 1.0;
 	}
 
-    return shadowMapTextures.SampleCmp(shadowMapSampler, float3(projCoords.xy, cascadeIndex), currentDepth) > 0.0 ? 1.0 : 0.0;
+    //return shadowMapTextures.SampleCmp(shadowMapSampler, float3(projCoords.xy, cascadeIndex), currentDepth) > 0.0 ? 1.0 : 0.0;
 
-    //return PercentageCloserFiltering(float3(projCoords.xy, float(cascadeIndex)), currentDepth, 2);
+    return PercentageCloserFiltering(float3(projCoords.xy, float(cascadeIndex)), currentDepth, 2);
 }
 
 float PercentageCloserFiltering(float3 uvl, float currentDepth, int size)
 {
     float shadow = 0.0;
-    float texelSize = 1.0 / 4096.0;
+    uint width, height, elements;
+    shadowMapTextures.GetDimensions(width, height, elements);
+    float texelSize = 1.0 / float(width);
 
 	for(int x = -size; x <= size; x++)
 	{
