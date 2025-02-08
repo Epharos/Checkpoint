@@ -158,17 +158,11 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 	return output;
 }
 
-float3 ComputeShadow(float4 lightSpacePosition[MAX_CASCADES], float splits[MAX_CASCADES], float fragDepth, float3 lightDirection, float3 fragNormal)
+float ComputeShadow(float4 lightSpacePosition[MAX_CASCADES], float3 lightDirection, float3 fragNormal, uint cascadeIndex)
 {
-    uint cascadeIndex = 0;
-
-    for (uint i = 0; i < lightData.cascadeCount; i++)
+    if(cascadeIndex == -1)
     {
-        if (fragDepth < splits[i])
-		{
-			cascadeIndex = i;
-			break;
-		}
+        return 1.0;
 	}
 
     float2 projCoords = lightSpacePosition[cascadeIndex].xy / lightSpacePosition[cascadeIndex].w;
@@ -183,29 +177,9 @@ float3 ComputeShadow(float4 lightSpacePosition[MAX_CASCADES], float splits[MAX_C
 		return 1.0;
 	}
 
-    /*switch (cascadeIndex)
-    {
-    case 0:
-        return float3(1.0, 0.2, 0.2);
-    case 1:
-        return float3(0.2, 1.0, 0.2);
-    case 2:
-        return float3(0.2, 0.0, 1.2);
-    case 3:
-        return float3(1.0, 1.0, 0.2);
-    case 4:
-        return float3(1.0, 0.2, 1.0);
-    case 5:
-        return float3(0.2, 1.0, 1.0);
-    case 6:
-        return float3(1.0, 1.0, 1.0);
-    case 7:
-        return float3(0.5, 0.5, 0.5);
-    default:
-        return float3(0.0, 0.0, 0.0);
-    }*/
+    return shadowMapTextures.SampleCmp(shadowMapSampler, float3(projCoords.xy, cascadeIndex), currentDepth) > 0.0 ? 1.0 : 0.0;
 
-    return PercentageCloserFiltering(float3(projCoords.xy, float(cascadeIndex)), currentDepth, 2);
+    //return PercentageCloserFiltering(float3(projCoords.xy, float(cascadeIndex)), currentDepth, 2);
 }
 
 float PercentageCloserFiltering(float3 uvl, float currentDepth, int size)
@@ -226,68 +200,31 @@ float PercentageCloserFiltering(float3 uvl, float currentDepth, int size)
 	return shadow / ((size + 1) * (size + 1));
 }
 
-float3 DebugCascade(float splits[MAX_CASCADES], float fragDepth)
+float3 DebugCascade(uint cascadeIndex)
 {
-    uint cascadeIndex = 0;
+    if(cascadeIndex == -1)
+    {
+		return float3(0.0, 0.0, 0.0);
+	}
 
-    for (uint i = 0; i < lightData.cascadeCount; i++)
-    {
-        if (fragDepth < splits[i])
-		{
-			cascadeIndex = i;
-			break;
-        }
-    }
-
-    switch(cascadeIndex)
-    {
-        case 0:
-    		return float3(1.0, 0.2, 0.2);
-        case 1:
-            return float3(0.2, 1.0, 0.2);
-        case 2:
-            return float3(0.2, 0.0, 1.2);
-        case 3:
-            return float3(1.0, 1.0, 0.2);
-        case 4:
-            return float3(1.0, 0.2, 1.0);
-        case 5:
-            return float3(0.2, 1.0, 1.0);
-        case 6:
-            return float3(1.0, 1.0, 1.0);
-        case 7:
-            return float3(0.5, 0.5, 0.5);
-        default:
-            return float3(0.0, 0.0, 0.0);
-    }
-}
-
-float3 GetColorFromDistance(float3 pos, float factor = 10)
-{
-    if (pos.z < 0.0)
-    {
-        return float3(0.0, 0.0, 0.0);
-    }
-    else if (pos.z < 0.1 * factor)
-    {
+    if(cascadeIndex == 0)
         return float3(1.0, 0.0, 0.0);
-    }
-    else if (pos.z < 0.3 * factor)
-    {
+    else if(cascadeIndex == 1)
         return float3(0.0, 1.0, 0.0);
-    }
-    else if (pos.z < 0.6 * factor)
-    {
-        return float3(0.0, 0.0, 1.0);
-    }
-    else if (pos.z < 0.9 * factor)
-    {
-        return float3(1.0, 1.0, 0.0);
-    }
-    else
-    {
-        return float3(1.0, 0.0, 1.0);
-    }
+	else if(cascadeIndex == 2)
+		return float3(0.0, 0.0, 1.0);
+	else if(cascadeIndex == 3)
+		return float3(1.0, 1.0, 0.0);
+	else if(cascadeIndex == 4)
+		return float3(1.0, 0.0, 1.0);
+	else if(cascadeIndex == 5)
+		return float3(0.0, 1.0, 1.0);
+	else if(cascadeIndex == 6)
+		return float3(1.0, 1.0, 1.0);
+	else if(cascadeIndex == 7)
+		return float3(0.5, 0.5, 0.5);
+
+	return float3(0.0, 0.0, 0.0);
 }
 
 
@@ -305,9 +242,21 @@ float4 pixelMain(VSOutput input) : SV_TARGET
     float3 diffuse = max(dot(normalValue, -input.lightDirection), 0.0);
 
     float depth = (input.eyeSpacePosition.z - input.nearFar.x) / (input.nearFar.y - input.nearFar.x);
-    float3 finalColor = albedo * (saturate(ambiantColor + ComputeShadow(input.lightSpacePosition, input.cascadeSplits, depth, input.lightDirection, normalValue)));
 
-    //return float4(albedo * ComputeShadow(input.lightSpacePosition, input.cascadeSplits, depth, input.lightDirection, normalValue), 1.0);
+    uint cascadeIndex = -1;
+
+    for (uint i = 0; i < lightData.cascadeCount; i++)
+    {
+        if (input.eyeSpacePosition.z < input.cascadeSplits[i])
+        {
+            cascadeIndex = i;
+            break;
+        }
+    }
+
+    float3 finalColor = albedo * (saturate(ambiantColor + ComputeShadow(input.lightSpacePosition, input.lightDirection, normalValue, cascadeIndex)));
+
+    // return float4(albedo * ComputeShadow(input.lightSpacePosition, input.cascadeSplits, depth, input.lightDirection, normalValue), 1.0);
     return float4(finalColor, 1.0);
 }
 

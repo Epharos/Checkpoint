@@ -2,11 +2,10 @@
 
 #include "BasicRenderSystem.hpp"
 
-void LogCard(const std::vector<std::string>& _lines);
-
-BasicRenderSystem::BasicRenderSystem(BasicRenderer* _renderer) : RenderSystem(_renderer)
+BasicRenderSystem::BasicRenderSystem(BasicRenderer* _renderer) : 
+	RenderSystem(_renderer), normalizedCascadeSplits(nullptr), cascadeSplits(nullptr), frustumCorners(nullptr), lightViewProjections(nullptr)
 {
-	//renderCameraBuffer = Helper::Memory::CreateBuffer(renderer->GetContext()->GetDevice(), renderer->GetContext()->GetPhysicalDevice(), sizeof(CameraUBO), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, renderCameraBufferMemory);
+
 }
 
 void BasicRenderSystem::OnRegister(ECS::EntityManager& _entityManager, ECS::ComponentManager& _componentManager)
@@ -25,7 +24,14 @@ void BasicRenderSystem::OnRegister(ECS::EntityManager& _entityManager, ECS::Comp
 		auto& directionalLight = _componentManager.GetComponent<DirectionalLight>(directionalLightEntity);
 		auto& camera = _componentManager.GetComponent<Camera>(renderCamera);
 
-		cascadeSplits = GetCascadeSplits(camera.near, camera.far, directionalLight.cascadeCount, 0.75f);
+		normalizedCascadeSplits = GetCascadeSplits(camera.near, camera.far, directionalLight.cascadeCount, 0.75f);
+
+		cascadeSplits = new float[directionalLight.cascadeCount];
+		for (int i = 0; i < directionalLight.cascadeCount; i++)
+		{
+			cascadeSplits[i] = normalizedCascadeSplits[i] * (camera.far - camera.near) + camera.near;
+		}
+
 		frustumCorners = GetFrustumCorners(camera.cameraUBO.viewProjection);
 		lightViewProjections = new glm::mat4[directionalLight.cascadeCount];
 		lightViewProjections = GetCascadeProjections(camera.cameraUBO.projection, camera.cameraUBO.view, camera.cameraUBO.viewProjection, directionalLight.cascadeCount, camera.near, camera.far, directionalLight.direction);
@@ -114,8 +120,6 @@ float* BasicRenderSystem::GetCascadeSplits(const float& _near, const float& _far
 		float uniform = _near + range * p;
 		float d = _lambda * (log - uniform) + uniform;
 		splits[i] = (d - _near) / range;
-
-		LOG_DEBUG(MF("Split #", i, ": ", splits[i]));
 	}
 
 	return splits;
@@ -131,7 +135,7 @@ glm::vec3* BasicRenderSystem::GetFrustumCorners(const glm::mat4& _viewProjection
 	frustumCorners[0] = invViewProjection * glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
 	frustumCorners[1] = invViewProjection * glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
 	frustumCorners[2] = invViewProjection * glm::vec4(1.0f, -1.0f, 0.0f, 1.0f);
-	frustumCorners[3] = invViewProjection * glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
+	frustumCorners[3] = invViewProjection * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
 	frustumCorners[4] = invViewProjection * glm::vec4(-1.0f, 1.0f, 1.0f, 1.0f);
 	frustumCorners[5] = invViewProjection * glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	frustumCorners[6] = invViewProjection * glm::vec4(1.0f, -1.0f, 1.0f, 1.0f);
@@ -140,8 +144,6 @@ glm::vec3* BasicRenderSystem::GetFrustumCorners(const glm::mat4& _viewProjection
 	for (int i = 0; i < 8; i++)
 	{
 		corners[i] = frustumCorners[i] / frustumCorners[i].w;
-
-		LOG_DEBUG(MF("Corner #", i, ": ", corners[i].x, ", ", corners[i].y, ", ", corners[i].z));
 	}
 
 	return corners;
@@ -157,7 +159,7 @@ glm::mat4* BasicRenderSystem::GetCascadeProjections(const glm::mat4 _cameraProj,
 
 	for (int i = 0; i < _cascadeCount; i++)
 	{
-		float currentSplit = cascadeSplits[i];
+		float currentSplit = normalizedCascadeSplits[i];
 
 		glm::vec3 splitCorners[8];
 
@@ -177,8 +179,6 @@ glm::mat4* BasicRenderSystem::GetCascadeProjections(const glm::mat4 _cameraProj,
 
 		center /= 8.0f;
 
-		//LOG_DEBUG(MF("Cascade #", i, " center: ", center.x, ", ", center.y, ", ", center.z));
-
 		float radius = 0.0f;
 
 		for (const auto& corner : splitCorners)
@@ -187,74 +187,19 @@ glm::mat4* BasicRenderSystem::GetCascadeProjections(const glm::mat4 _cameraProj,
 			radius = std::max(radius, distance);
 		}
 
-		radius = std::ceil(radius * 16.0f) / 16.0f; //wtf ?
+		radius = std::ceil(radius * 16.0f) / 16.0f;
 
 		glm::vec3 maxExtents = glm::vec3(radius);
 		glm::vec3 minExtents = -maxExtents;
 
-		//LOG_DEBUG(MF("Min extents: ", minExtents.x, ", ", minExtents.y, ", ", minExtents.z));
-		//LOG_DEBUG(MF("Max extents: ", maxExtents.x, ", ", maxExtents.y, ", ", maxExtents.z));
-
 		glm::vec3 lightPos = center - _lightDir * -minExtents.z;
-
-		//LOG_DEBUG(MF("Light position: ", lightPos.x, ", ", lightPos.y, ", ", lightPos.z));
-
 		glm::mat4 lightView = glm::lookAtRH(lightPos, center, VEC3_UP);
-
-		//LOG_DEBUG(MF("Light position: ", lightPos.x, ", ", lightPos.y, ", ", lightPos.z));
-
-		/*glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
-		glm::vec3 max = glm::vec3(std::numeric_limits<float>::min());
-
-		for (const auto& corner : splitCorners)
-		{
-			glm::vec4 lightSpaceCorner = lightView * glm::vec4(corner, 1.0f);
-
-			min.x = std::min(min.x, lightSpaceCorner.x);
-			min.y = std::min(min.y, lightSpaceCorner.y);
-			min.z = std::min(min.z, lightSpaceCorner.z);
-
-			max.x = std::max(max.x, lightSpaceCorner.x);
-			max.y = std::max(max.y, lightSpaceCorner.y);
-			max.z = std::max(max.z, lightSpaceCorner.z);
-		}
-
-		min.z = (min.z < 0.0f) ? min.z * 1.1f : min.z * 0.9f;
-		max.z = (max.z < 0.0f) ? max.z * 0.9f : max.z * 1.1f;
-
-		LOG_DEBUG(MF("Cascade #", i, " min: ", min.x, ", ", min.y, ", ", min.z));
-		LOG_DEBUG(MF("Cascade #", i, " max: ", max.x, ", ", max.y, ", ", max.z));*/
-
-		glm::mat4 lightProj = glm::orthoRH(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
+		glm::mat4 lightProj = glm::orthoRH_ZO(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
 
 		lastSplit = currentSplit;
 
 		lightViewProjections[i] = lightProj * lightView;
-
-		LogCard({
-			MF("Cascade #", i),
-			MF(),
-			MF("Light position: ", lightPos.x, ", ", lightPos.y, ", ", lightPos.z),
-			MF("Light direction: ", _lightDir.x, ", ", _lightDir.y, ", ", _lightDir.z),
-			MF("Actual light direction: ", (center - lightPos).x, ", ", (center - lightPos).y, ", ", (center - lightPos).z),
-			MF(),
-			MF("Frustum center: ", center.x, ", ", center.y, ", ", center.z),
-			MF("Frustum radius: ", radius)
-		});
-
 	}
 
 	return lightViewProjections;
-}
-
-void LogCard(const std::vector<std::string>& _lines)
-{
-	LOG_DEBUG("|----------------------------------------");
-
-	for (const auto& line : _lines)
-	{
-		LOG_DEBUG(MF("| ", line));
-	}
-
-	LOG_DEBUG("|----------------------------------------");
 }

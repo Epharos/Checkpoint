@@ -10,6 +10,7 @@ protected:
 	Entity directionalLightEntity = ECS::EntityManager::NULL_ENTITY;
 	
 	float* cascadeSplits;
+	float* normalizedCascadeSplits;
 	glm::vec3* frustumCorners;
 	glm::mat4* lightViewProjections;
 

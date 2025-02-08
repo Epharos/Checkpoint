@@ -95,13 +95,14 @@ int main()
 	DirectionalLight lightComponent;
 	lightComponent.color = { 1.0f, 1.0f, 1.0f };
 	lightComponent.intensity = 1.0f;
-	lightComponent.direction = glm::normalize(glm::vec3{ 1.0f, -1.0f, 0.0f });
+	lightComponent.direction = glm::normalize(glm::vec3{ 0.01f, -1.0f, 0.0f });
 	lightComponent.cascadeCount = 4;
 	lightComponent.shadowMapSize = 4096;
 	ecs.AddComponent<DirectionalLight>(light, lightComponent);
 
 	Entity player = ecs.CreateEntity();
-	ecs.AddComponent<Transform>(player, Transform({ 0, 5, 0 }));
+	ecs.AddComponent<Transform>(player, Transform({ 0, 5, 0 }, { 1, 0, 0, 0 }, { .1f, .1f, .1f }));
+	ecs.AddComponent<MeshRenderer>(player, MeshRenderer(resourceManager.Get<Mesh>("Barstool"), resourceManager.Get<MaterialInstance>("Barstool Material")));
 	ecs.AddComponent<CharacterController>(player, CharacterController(10.f, 1.5f));
 	ecs.AddComponent<CameraFollow>(player, CameraFollow(camera));
 

@@ -30,6 +30,8 @@ void Controller::Update(ECS::EntityManager& _entityManager, ECS::ComponentManage
 		_controller.pitch += deltaY * _controller.sensitivity * _dt;
 		_controller.yaw -= deltaX * _controller.sensitivity * _dt;
 
+		_controller.pitch = glm::clamp(_controller.pitch, -glm::half_pi<float>() + 0.01f, glm::half_pi<float>() - 0.01f);
+
 		_transform.SetRotation(glm::vec3(_controller.pitch, _controller.yaw, _controller.roll));
 
 		glfwSetCursorPos(window, windowWidth / 2.f, windowHeight / 2.f);
