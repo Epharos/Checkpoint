@@ -16,6 +16,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Example", "Example\Example.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ECS", "ECS\ECS.vcxproj", "{631CED5D-4267-4C4C-883C-8FF5B9A65613}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Editor", "Editor\Editor.vcxproj", "{C3ECA388-7DEE-4ABF-85DD-F95E9B175713}"
+	ProjectSection(ProjectDependencies) = postProject
+		{367F1CE9-F9C2-4EF6-9F0D-6596DCB1F6F4} = {367F1CE9-F9C2-4EF6-9F0D-6596DCB1F6F4}
+		{631CED5D-4267-4C4C-883C-8FF5B9A65613} = {631CED5D-4267-4C4C-883C-8FF5B9A65613}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -48,6 +54,14 @@ Global
 		{631CED5D-4267-4C4C-883C-8FF5B9A65613}.Release|x64.Build.0 = Release|x64
 		{631CED5D-4267-4C4C-883C-8FF5B9A65613}.Release|x86.ActiveCfg = Release|Win32
 		{631CED5D-4267-4C4C-883C-8FF5B9A65613}.Release|x86.Build.0 = Release|Win32
+		{C3ECA388-7DEE-4ABF-85DD-F95E9B175713}.Debug|x64.ActiveCfg = Debug|x64
+		{C3ECA388-7DEE-4ABF-85DD-F95E9B175713}.Debug|x64.Build.0 = Debug|x64
+		{C3ECA388-7DEE-4ABF-85DD-F95E9B175713}.Debug|x86.ActiveCfg = Debug|Win32
+		{C3ECA388-7DEE-4ABF-85DD-F95E9B175713}.Debug|x86.Build.0 = Debug|Win32
+		{C3ECA388-7DEE-4ABF-85DD-F95E9B175713}.Release|x64.ActiveCfg = Release|x64
+		{C3ECA388-7DEE-4ABF-85DD-F95E9B175713}.Release|x64.Build.0 = Release|x64
+		{C3ECA388-7DEE-4ABF-85DD-F95E9B175713}.Release|x86.ActiveCfg = Release|Win32
+		{C3ECA388-7DEE-4ABF-85DD-F95E9B175713}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
