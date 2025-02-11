@@ -7,6 +7,10 @@
 #include <QtWidgets/qfiledialog.h>
 #include <QtWidgets/qboxlayout.h>
 
+#include <QtCore/qjsondocument.h>
+#include <QtCore/qjsonobject.h>
+#include <QtCore/qjsonarray.h>
+
 struct ProjectData
 {
     QString name;
@@ -39,26 +43,38 @@ public:
     NewProjectDialog(QWidget* parent = nullptr) : QDialog(parent) 
     {
         setWindowTitle("Create New Project");
+        setFixedWidth(400);
 
         QVBoxLayout* layout = new QVBoxLayout(this);
 
-        QLabel* projectNameLabel = new QLabel("Project Name:", this);
+        QLabel* newProjectTitleLabel = new QLabel("New project", this);
+        newProjectTitleLabel->setStyleSheet("font-size:24px; font-weight:bold;");
+
         projectNameEdit = new QLineEdit(this);
+        projectNameEdit->setPlaceholderText("Project Name ...");
 
-        QLabel* folderLabel = new QLabel("Project Folder:", this);
+		QHBoxLayout* folderSelection = new QHBoxLayout(this);
+
         folderEdit = new QLineEdit(this);
-        folderSelectButton = new QPushButton("Choose Folder", this);
+		folderEdit->setPlaceholderText("Project Folder ...");
+        folderSelectButton = new QPushButton("...", this);
+        folderSelectButton->setFixedWidth(40);
 
+		QHBoxLayout* buttonLayout = new QHBoxLayout(this);
+        buttonLayout->setAlignment(Qt::AlignRight);
         QPushButton* createButton = new QPushButton("Create", this);
+        createButton->setStyleSheet("color:#fff; background-color:#007bff; border:none; padding:4px 20px; border-radius:5px;");
         QPushButton* cancelButton = new QPushButton("Cancel", this);
+        cancelButton->setStyleSheet("color:#fff; background-color:#555; border:none; padding:4px 20px; border-radius:5px;");
 
-        layout->addWidget(projectNameLabel);
+        layout->addWidget(newProjectTitleLabel);
         layout->addWidget(projectNameEdit);
-        layout->addWidget(folderLabel);
-        layout->addWidget(folderEdit);
-        layout->addWidget(folderSelectButton);
-        layout->addWidget(createButton);
-        layout->addWidget(cancelButton);
+        folderSelection->addWidget(folderEdit);
+        folderSelection->addWidget(folderSelectButton);
+        layout->addLayout(folderSelection);
+        buttonLayout->addWidget(cancelButton);
+        buttonLayout->addWidget(createButton);
+        layout->addLayout(buttonLayout);
 
         connect(folderSelectButton, &QPushButton::clicked, this, &NewProjectDialog::SelectFolder);
         connect(createButton, &QPushButton::clicked, this, &NewProjectDialog::CreateProject);
@@ -91,7 +107,21 @@ private slots:
 
         QString projectPath = projectFolder + "/" + projectName;
 		QDir().mkdir(projectPath);
-        qDebug() << "New project created at:" << projectPath;
+
+		QDir().mkdir(projectPath + "/Resources");
+
+		QFile file(projectPath + "/" + projectName + ".data");
+		if (file.open(QIODevice::WriteOnly))
+		{
+            QJsonObject root{};
+			root["projectName"] = projectName;
+			root["creationDate"] = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm");
+			file.write(QJsonDocument(root).toJson());
+		}
+		else
+		{
+			qDebug() << "Failed to create project file.";
+		}
 
 		ProjectData projectData(projectName, projectPath, QDateTime::currentDateTime());
 

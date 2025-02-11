@@ -9,7 +9,7 @@ int main(int argc, char* args[])
 {
 	QApplication app(argc, args);
 
-	int fontID = QFontDatabase::addApplicationFont("Editor_Resources/Montserrat.ttf");
+	int fontID = QFontDatabase::addApplicationFont("Editor_Resources/Oswald.ttf");
 
 	if (fontID != -1)
 	{
@@ -19,7 +19,7 @@ int main(int argc, char* args[])
 		{
 			QFont font(fontFamilies.first(), 10);
 			font.setWeight(QFont::Weight::Normal);
-			font.setStyleStrategy(QFont::PreferAntialias);
+			font.setStyleStrategy(QFont::PreferQuality);
 			app.setFont(font);
 		}
 		else
