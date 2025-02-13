@@ -4,6 +4,8 @@
 #define USE_DEBUG_LAYER
 #endif
 
+#define IN_EDITOR // This is a preprocessor definition that can be used to check if the code is being compiled in the editor or in the game
+
 #define GLM_FORCE_RADIANS
 
 #include <iostream>

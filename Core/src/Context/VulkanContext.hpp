@@ -30,6 +30,11 @@ namespace Context
 		Platform* platform = nullptr;
 
 		VulkanExtensions extensions = {};
+
+#ifdef IN_EDITOR
+		vk::Instance instance = nullptr;
+		vk::SurfaceKHR surface = nullptr;
+#endif
 	};
 
 	struct QueueFamilyIndices;

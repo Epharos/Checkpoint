@@ -25,5 +25,7 @@ namespace ECS
 
 		uint8_t GetValidVersion(Entity _entity) const;
 		uint32_t GetEntityCount() const;
+
+
 	};
 }

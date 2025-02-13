@@ -28,10 +28,21 @@ void Context::VulkanContext::Initialize(VulkanContextInfo& _contextInfo)
 	_contextInfo.extensions.instanceLayers.push_back("VK_LAYER_KHRONOS_validation");
 	#endif
 
+#ifdef IN_EDITOR
+	instance = _contextInfo.instance;
+	surface = _contextInfo.surface;
+#endif
+
+#ifndef IN_EDITOR
 	CreateInstance(vulkanVersion, _contextInfo.appName, _contextInfo.appVersion, _contextInfo.extensions);
+#endif
 	CreateDebugMessenger();
 	PickPhysicalDevice();
+
+#ifndef IN_EDITOR
 	CreateSurface();
+#endif
+
 	CreateLogicalDevice();
 	CreateCommandPool();
 

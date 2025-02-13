@@ -14,13 +14,22 @@
 #include <QtGui/qvulkanwindow.h>
 #include <QtGui/qvulkaninstance.h>
 
+#include <Core.hpp>
+
+#include "Renderers/MinimalistRenderer.hpp"
+
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
 protected:
+	Context::VulkanContext vulkanContext;
+	Render::Renderer* activeRenderer = nullptr;
+	Core::Scene* currentScene = nullptr;
 
 	QTreeView* fileExplorer = nullptr;
 	QFileSystemModel* fileSystemModel = nullptr;
+
+	QTreeWidget* sceneHierarchy = nullptr;
 
 	void SetupMenuBar()
 	{
@@ -38,6 +47,8 @@ protected:
 
 		QAction* undoAction = fileMenu->addAction("Undo");
 		QAction* redoAction = fileMenu->addAction("Redo");
+
+		QAction* createNewSceneAction = projectMenu->addAction("Create new scene");
 
 		QAction* openSceneHierarchyAction = windowMenu->addAction("Scene hierarchy");
 		QAction* openInspectorAction = windowMenu->addAction("Inspector");
@@ -68,6 +79,11 @@ protected:
 			// Redo
 			});
 
+		connect(createNewSceneAction, &QAction::triggered, [=] {
+			// TODO : Save current scene
+			currentScene = new Core::Scene(activeRenderer);
+			});
+
 		connect(openSceneHierarchyAction, &QAction::triggered, [=] {
 			CreateSceneHierarchyDockWidget();
 			});
@@ -86,27 +102,24 @@ protected:
 
 		setMenuBar(menuBar);
 	}
+
 	void CreateSceneHierarchyDockWidget()
 	{
 		QDockWidget* dock = new QDockWidget("Scene hierarchy", this);
-		QTreeWidget* sceneHierarchy = new QTreeWidget(dock);
+		if(!sceneHierarchy) sceneHierarchy = new QTreeWidget(dock);
 
-		sceneHierarchy->setHeaderLabel("Scene entities");
+		sceneHierarchy->setHeaderLabel("CURRENT SCENE NAME");
 		dock->setWidget(sceneHierarchy);
 		dock->setFloating(true);
 		addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, dock);
 
-		QTreeWidgetItem* item = new QTreeWidgetItem(sceneHierarchy);
-		item->setText(0, "Root");
-		item->setFlags(item->flags() | Qt::ItemIsEditable);
-
-		QTreeWidgetItem* child = new QTreeWidgetItem(item);
-		child->setText(0, "Child");
-		child->setFlags(child->flags() | Qt::ItemIsEditable);
-
-		sceneHierarchy->addTopLevelItem(item);
-		sceneHierarchy->addTopLevelItem(child);
+		for (const auto& entity : currentScene->GetECS().)
+		{
+			QTreeWidgetItem* item = new QTreeWidgetItem(sceneHierarchy);
+			item->setText(0, entity->GetName().c_str());
+		}
 	}
+
 	void CreateFileExplorerDockWidget()
 	{
 		QDockWidget* dock = new QDockWidget("File explorer", this);
@@ -115,18 +128,39 @@ protected:
 public:
 	MainWindow(QWidget* parent = nullptr)
 	{
+		Context::VulkanContextInfo contextInfo =
+		{
+			.appName = "App Example",
+			.appVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
+			.extensions =
+			{
+				.instanceExtensions =
+				{},
+				.instanceLayers =
+				{}
+			}
+		};
+
+
 		QVulkanInstance* instance = new QVulkanInstance;
 		instance->create();
 
 		QVulkanWindow* window = new QVulkanWindow;
+		window->setSurfaceType(QSurface::SurfaceType::VulkanSurface);
 		window->setVulkanInstance(instance);
+
+		contextInfo.instance = instance->vkInstance();
+		contextInfo.surface = QVulkanInstance::surfaceForWindow(window);
+
+		vulkanContext.Initialize(contextInfo);
+
+		activeRenderer = new MinimalistRenderer(&vulkanContext);
 
 		QWidget* container = QWidget::createWindowContainer(window);
 		setCentralWidget(container);
 
 		SetupMenuBar();
 
-		setWindowTitle("Checkpoint Editor");
 		resize(1280, 720);
 	}
 };

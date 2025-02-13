@@ -35,13 +35,13 @@ int main()
 		}
 	};
 
-	ECS::EntityComponentSystem ecs;
-
 	platform.Initialize(contextInfo);
 	context.Initialize(contextInfo);
 
 	BasicRenderer renderer(&context);
 	renderer.Build();
+
+	Core::Scene scene(&renderer);
 
 	ResourceManager resourceManager(context);
 	resourceManager.RegisterResourceType<Mesh>();
@@ -85,53 +85,52 @@ int main()
 
 	Util::Clock dtClock;
 
-	Entity camera = ecs.CreateEntity();
-	ecs.AddComponent<Transform>(camera, Transform({ 0, 5, -15 }));
+	Entity camera = scene.GetECS().CreateEntity();
+	scene.GetECS().AddComponent<Transform>(camera, Transform({ 0, 5, -15 }));
 	Camera cameraComponent;
 	cameraComponent.far = 200.f;
-	ecs.AddComponent<Camera>(camera, cameraComponent);
+	scene.GetECS().AddComponent<Camera>(camera, cameraComponent);
 
-	Entity light = ecs.CreateEntity();
+	Entity light = scene.GetECS().CreateEntity();
 	DirectionalLight lightComponent;
 	lightComponent.color = { 1.0f, 1.0f, 1.0f };
 	lightComponent.intensity = 1.0f;
 	lightComponent.direction = glm::normalize(glm::vec3{ 1.0f, -1.0f, 0.0f });
 	lightComponent.cascadeCount = 4;
 	lightComponent.shadowMapSize = 4096;
-	ecs.AddComponent<DirectionalLight>(light, lightComponent);
+	scene.GetECS().AddComponent<DirectionalLight>(light, lightComponent);
 
-	Entity player = ecs.CreateEntity();
-	ecs.AddComponent<Transform>(player, Transform({ 0, 5, 0 }, { 1, 0, 0, 0 }, { .1f, .1f, .1f }));
-	ecs.AddComponent<CharacterController>(player, CharacterController(10.f, 1.5f));
-	ecs.AddComponent<CameraFollow>(player, CameraFollow(camera));
+	Entity player = scene.GetECS().CreateEntity();
+	scene.GetECS().AddComponent<Transform>(player, Transform({ 0, 5, 0 }, { 1, 0, 0, 0 }, { .1f, .1f, .1f }));
+	scene.GetECS().AddComponent<CharacterController>(player, CharacterController(10.f, 1.5f));
+	scene.GetECS().AddComponent<CameraFollow>(player, CameraFollow(camera));
 
-	Entity ground = ecs.CreateEntity();
-	ecs.AddComponent<Transform>(ground, Transform({ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, glm::vec3{ 350.0f, 1.f, 350.0f }));
-	ecs.AddComponent<MeshRenderer>(ground, MeshRenderer(resourceManager.Get<Mesh>("Cube"), resourceManager.Get<MaterialInstance>("Wood Material")));
+	Entity ground = scene.GetECS().CreateEntity();
+	scene.GetECS().AddComponent<Transform>(ground, Transform({ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f }, glm::vec3{ 350.0f, 1.f, 350.0f }));
+	scene.GetECS().AddComponent<MeshRenderer>(ground, MeshRenderer(resourceManager.Get<Mesh>("Cube"), resourceManager.Get<MaterialInstance>("Wood Material")));
 
 	for (int i = 0; i < 150; i++)
 	{
-		Entity debugcube = ecs.CreateEntity();
-		ecs.AddComponent<Transform>(debugcube, Transform({ rand() % 200 - 100, rand() % 50 + 5, rand() % 200 - 100}, 
+		Entity debugcube = scene.GetECS().CreateEntity();
+		scene.GetECS().AddComponent<Transform>(debugcube, Transform({ rand() % 200 - 100, rand() % 50 + 5, rand() % 200 - 100 },
 			glm::qua(glm::vec3(glm::radians(rand() / (float)RAND_MAX * 360.f), glm::radians(rand() / (float)RAND_MAX * 360.f), glm::radians(rand() / (float)RAND_MAX * 360.f))),
-			glm::vec3{1.f, 1.f, 1.f}));
-		ecs.AddComponent<MeshRenderer>(debugcube, MeshRenderer(resourceManager.Get<Mesh>("Debug Cube"), resourceManager.Get<MaterialInstance>("Debug Material")));
+			glm::vec3{ 1.f, 1.f, 1.f }));
+		scene.GetECS().AddComponent<MeshRenderer>(debugcube, MeshRenderer(resourceManager.Get<Mesh>("Debug Cube"), resourceManager.Get<MaterialInstance>("Debug Material")));
 	}
 
-	ecs.RegisterSystem<Controller>(context.GetPlatform()->GetWindow());
-	ecs.RegisterSystem<BasicRenderSystem>(&renderer);
+	scene.GetECS().RegisterSystem<Controller>(context.GetPlatform()->GetWindow());
+	scene.GetECS().RegisterSystem<BasicRenderSystem>(&renderer);
 
 	while (!platform.ShouldClose())
 	{
 		float dt = dtClock.Restart();
 		platform.PollEvents();
-		ecs.Update(dt);
+		scene.Update(dt);
 		platform.SetTitle(MF("FPS: ", ComputeFramePerSecond(dt)));
 	}
 
 	resourceManager.Cleanup();
-	renderer.Cleanup();
-	ecs.Cleanup();
+	scene.Cleanup();
 	context.Shutdown();
 	platform.CleanUp();
 }

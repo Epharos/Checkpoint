@@ -142,6 +142,7 @@
     <ClCompile Include="src\Context\Devices.cpp" />
     <ClCompile Include="src\Context\Platform.cpp" />
     <ClCompile Include="src\Context\VulkanContext.cpp" />
+    <ClCompile Include="src\Core\Scene.cpp" />
     <ClCompile Include="src\Helpers\Helpers.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -168,6 +169,7 @@
     <ClInclude Include="src\Context\Devices.hpp" />
     <ClInclude Include="src\Context\Platform.hpp" />
     <ClInclude Include="src\Context\VulkanContext.hpp" />
+    <ClInclude Include="src\Core\Scene.hpp" />
     <ClInclude Include="src\Helpers\Helpers.hpp" />
     <ClInclude Include="src\pch.hpp" />
     <ClInclude Include="src\Render\Pipeline\DescriptorSetManager.hpp" />

@@ -100,5 +100,7 @@ namespace ECS
 		{
 			systemManager.Cleanup();
 		}
+
+
 	};
 }

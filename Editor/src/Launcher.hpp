@@ -105,6 +105,7 @@ private slots:
 		{
 			ProjectData data = widget->GetData();
 			MainWindow* mainWindow = new MainWindow();
+			mainWindow->setWindowTitle("Checkpoint - " + data.name);
 			mainWindow->show();
 		}
 
