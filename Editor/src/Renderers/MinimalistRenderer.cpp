@@ -55,7 +55,7 @@ void MinimalistRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _
 
 	vk::RenderPassBeginInfo depthShadowMapRenderPassInfo = {};
 	depthShadowMapRenderPassInfo.renderPass = mainRenderPass;
-	depthShadowMapRenderPassInfo.framebuffer = swapchain->GetCurrentFrame()->GetRenderTarget()->GetFramebuffer();
+	depthShadowMapRenderPassInfo.framebuffer = swapchain->GetCurrentFrame()->GetRenderTarget(0)->GetFramebuffer();
 	depthShadowMapRenderPassInfo.renderArea.offset = vk::Offset2D{ 0, 0 };
 	depthShadowMapRenderPassInfo.renderArea.extent = swapchain->GetExtent();
 	depthShadowMapRenderPassInfo.clearValueCount = 1;

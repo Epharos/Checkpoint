@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'NewProjectDialog.hpp'
 **
-** Created by: The Qt Meta Object Compiler version 68 (Qt 6.8.0)
+** Created by: The Qt Meta Object Compiler version 68 (Qt 6.8.1)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
@@ -18,7 +18,7 @@
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'NewProjectDialog.hpp' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 68
-#error "This file was generated using the moc from 6.8.0. It"
+#error "This file was generated using the moc from 6.8.1. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
@@ -31,10 +31,12 @@ QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 QT_WARNING_DISABLE_GCC("-Wuseless-cast")
 namespace {
+struct qt_meta_tag_ZN16NewProjectDialogE_t {};
+} // unnamed namespace
+
 
 #ifdef QT_MOC_HAS_STRINGDATA
-struct qt_meta_stringdata_CLASSNewProjectDialogENDCLASS_t {};
-constexpr auto qt_meta_stringdata_CLASSNewProjectDialogENDCLASS = QtMocHelpers::stringData(
+static constexpr auto qt_meta_stringdata_ZN16NewProjectDialogE = QtMocHelpers::stringData(
     "NewProjectDialog",
     "ProjectCreated",
     "",
@@ -46,9 +48,8 @@ constexpr auto qt_meta_stringdata_CLASSNewProjectDialogENDCLASS = QtMocHelpers::
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
 #endif // !QT_MOC_HAS_STRINGDATA
-} // unnamed namespace
 
-Q_CONSTINIT static const uint qt_meta_data_CLASSNewProjectDialogENDCLASS[] = {
+Q_CONSTINIT static const uint qt_meta_data_ZN16NewProjectDialogE[] = {
 
  // content:
       12,       // revision
@@ -80,11 +81,11 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSNewProjectDialogENDCLASS[] = {
 
 Q_CONSTINIT const QMetaObject NewProjectDialog::staticMetaObject = { {
     QMetaObject::SuperData::link<QDialog::staticMetaObject>(),
-    qt_meta_stringdata_CLASSNewProjectDialogENDCLASS.offsetsAndSizes,
-    qt_meta_data_CLASSNewProjectDialogENDCLASS,
+    qt_meta_stringdata_ZN16NewProjectDialogE.offsetsAndSizes,
+    qt_meta_data_ZN16NewProjectDialogE,
     qt_static_metacall,
     nullptr,
-    qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASSNewProjectDialogENDCLASS_t,
+    qt_incomplete_metaTypeArray<qt_meta_tag_ZN16NewProjectDialogE_t,
         // Q_OBJECT / Q_GADGET
         QtPrivate::TypeAndForceComplete<NewProjectDialog, std::true_type>,
         // method 'ProjectCreated'
@@ -100,20 +101,20 @@ Q_CONSTINIT const QMetaObject NewProjectDialog::staticMetaObject = { {
 
 void NewProjectDialog::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
 {
+    auto *_t = static_cast<NewProjectDialog *>(_o);
     if (_c == QMetaObject::InvokeMetaMethod) {
-        auto *_t = static_cast<NewProjectDialog *>(_o);
-        (void)_t;
         switch (_id) {
         case 0: _t->ProjectCreated((*reinterpret_cast< std::add_pointer_t<ProjectData>>(_a[1]))); break;
         case 1: _t->SelectFolder(); break;
         case 2: _t->CreateProject(); break;
         default: ;
         }
-    } else if (_c == QMetaObject::IndexOfMethod) {
+    }
+    if (_c == QMetaObject::IndexOfMethod) {
         int *result = reinterpret_cast<int *>(_a[0]);
         {
-            using _t = void (NewProjectDialog::*)(const ProjectData & );
-            if (_t _q_method = &NewProjectDialog::ProjectCreated; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+            using _q_method_type = void (NewProjectDialog::*)(const ProjectData & );
+            if (_q_method_type _q_method = &NewProjectDialog::ProjectCreated; *reinterpret_cast<_q_method_type *>(_a[1]) == _q_method) {
                 *result = 0;
                 return;
             }
@@ -129,7 +130,7 @@ const QMetaObject *NewProjectDialog::metaObject() const
 void *NewProjectDialog::qt_metacast(const char *_clname)
 {
     if (!_clname) return nullptr;
-    if (!strcmp(_clname, qt_meta_stringdata_CLASSNewProjectDialogENDCLASS.stringdata0))
+    if (!strcmp(_clname, qt_meta_stringdata_ZN16NewProjectDialogE.stringdata0))
         return static_cast<void*>(this);
     return QDialog::qt_metacast(_clname);
 }
@@ -143,7 +144,8 @@ int NewProjectDialog::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
         if (_id < 3)
             qt_static_metacall(this, _c, _id, _a);
         _id -= 3;
-    } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
+    }
+    if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
         if (_id < 3)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
         _id -= 3;

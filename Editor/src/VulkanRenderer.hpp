@@ -9,34 +9,58 @@
 class VulkanRenderer : public QVulkanWindowRenderer 
 {
 public:
-	VulkanRenderer(QVulkanWindow* _window, Context::VulkanContext* _context, Core::Scene* _scene) : vulkanWindow(_window), vulkanContext(_context), currentScene(_scene)
+	VulkanRenderer(QVulkanWindow* _window, Core::Scene* _scene) : vulkanWindow(_window), currentScene(_scene)
     {
-        qDebug() << "VulkanRenderer initialized.";
+        //qDebug() << "VulkanRenderer initialized.";
     }
 
     void initResources() override 
     {
-        qDebug() << "Initializing Vulkan resources...";
-		MinimalistRenderer* renderer = new MinimalistRenderer(vulkanContext);
-		renderer->Build();
-
-        // TODO: NEED TO INITIALIZE THE SCENE
+        //qDebug() << "Initializing Vulkan resources...";
     }
 
     void releaseResources() override 
     {
-        qDebug() << "Releasing Vulkan resources...";
-		currentScene->Cleanup();
+        //qDebug() << "Releasing Vulkan resources...";
+        if(currentScene) currentScene->Cleanup();
     }
 
     void startNextFrame() override 
     {
-        qDebug() << "Rendering frame...";
+        //qDebug() << "Rendering frame...";
+        if (currentScene) currentScene->GetRenderer()->Render({});
+        vulkanWindow->frameReady();
         vulkanWindow->requestUpdate();
     }
+
+	void SetScene(Core::Scene* _scene) { currentScene = _scene; }
 
 private:
 	Core::Scene* currentScene;
     QVulkanWindow* vulkanWindow;
-	Context::VulkanContext* vulkanContext;
+};
+
+class VulkanWindow : public QVulkanWindow
+{
+    Q_OBJECT
+protected:
+    Core::Scene* currentScene;
+    VulkanRenderer* windowRenderer;
+
+public:
+    VulkanWindow(Core::Scene* _scene) : QVulkanWindow(), currentScene(_scene)
+    {
+
+    }
+
+    QVulkanWindowRenderer* createRenderer() override
+    {
+        return (windowRenderer = new VulkanRenderer(this, currentScene));
+    }
+
+	void SetScene(Core::Scene* _scene) 
+    {
+        currentScene = _scene;
+		windowRenderer->SetScene(currentScene);
+    }
 };

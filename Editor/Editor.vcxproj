@@ -147,6 +147,7 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
     <ClCompile Include="src\MOC_Launcher.cpp" />
     <ClCompile Include="src\MOC_MainWindow.cpp" />
     <ClCompile Include="src\MOC_NewProjectDialog.cpp" />
+    <ClCompile Include="src\MOC_VulkanRenderer.cpp" />
     <ClCompile Include="src\Renderers\MinimalistRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>

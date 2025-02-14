@@ -17,6 +17,7 @@
 #include <Core.hpp>
 
 #include "Renderers/MinimalistRenderer.hpp"
+#include "VulkanRenderer.hpp"
 
 class MainWindow : public QMainWindow
 {
@@ -25,6 +26,8 @@ protected:
 	Context::VulkanContext vulkanContext;
 	Render::Renderer* activeRenderer = nullptr;
 	Core::Scene* currentScene = nullptr;
+
+	VulkanWindow* window = nullptr;
 
 	QTreeView* fileExplorer = nullptr;
 	QFileSystemModel* fileSystemModel = nullptr;
@@ -82,6 +85,7 @@ protected:
 		connect(createNewSceneAction, &QAction::triggered, [=] {
 			// TODO : Save current scene
 			currentScene = new Core::Scene(activeRenderer);
+			window->SetScene(currentScene);
 			});
 
 		connect(openSceneHierarchyAction, &QAction::triggered, [=] {
@@ -113,11 +117,11 @@ protected:
 		dock->setFloating(true);
 		addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, dock);
 
-		for (const auto& entity : currentScene->GetECS().)
+		/*for (const auto& entity : currentScene->GetECS().)
 		{
 			QTreeWidgetItem* item = new QTreeWidgetItem(sceneHierarchy);
 			item->setText(0, entity->GetName().c_str());
-		}
+		}*/
 	}
 
 	void CreateFileExplorerDockWidget()
@@ -141,13 +145,16 @@ public:
 			}
 		};
 
+		CreateSceneHierarchyDockWidget();
+
 
 		QVulkanInstance* instance = new QVulkanInstance;
 		instance->create();
 
-		QVulkanWindow* window = new QVulkanWindow;
+		window = new VulkanWindow(currentScene);
 		window->setSurfaceType(QSurface::SurfaceType::VulkanSurface);
 		window->setVulkanInstance(instance);
+		window->create();
 
 		contextInfo.instance = instance->vkInstance();
 		contextInfo.surface = QVulkanInstance::surfaceForWindow(window);
@@ -155,9 +162,13 @@ public:
 		vulkanContext.Initialize(contextInfo);
 
 		activeRenderer = new MinimalistRenderer(&vulkanContext);
+		activeRenderer->Build();
+		currentScene = new Core::Scene(activeRenderer);
 
 		QWidget* container = QWidget::createWindowContainer(window);
 		setCentralWidget(container);
+
+		//window->SetScene(currentScene);
 
 		SetupMenuBar();
 

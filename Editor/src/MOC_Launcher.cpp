@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'Launcher.hpp'
 **
-** Created by: The Qt Meta Object Compiler version 68 (Qt 6.8.0)
+** Created by: The Qt Meta Object Compiler version 68 (Qt 6.8.1)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
@@ -19,7 +19,7 @@
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'Launcher.hpp' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 68
-#error "This file was generated using the moc from 6.8.0. It"
+#error "This file was generated using the moc from 6.8.1. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
@@ -32,18 +32,19 @@ QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 QT_WARNING_DISABLE_GCC("-Wuseless-cast")
 namespace {
+struct qt_meta_tag_ZN21ProjectListItemWidgetE_t {};
+} // unnamed namespace
+
 
 #ifdef QT_MOC_HAS_STRINGDATA
-struct qt_meta_stringdata_CLASSProjectListItemWidgetENDCLASS_t {};
-constexpr auto qt_meta_stringdata_CLASSProjectListItemWidgetENDCLASS = QtMocHelpers::stringData(
+static constexpr auto qt_meta_stringdata_ZN21ProjectListItemWidgetE = QtMocHelpers::stringData(
     "ProjectListItemWidget"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
 #endif // !QT_MOC_HAS_STRINGDATA
-} // unnamed namespace
 
-Q_CONSTINIT static const uint qt_meta_data_CLASSProjectListItemWidgetENDCLASS[] = {
+Q_CONSTINIT static const uint qt_meta_data_ZN21ProjectListItemWidgetE[] = {
 
  // content:
       12,       // revision
@@ -61,11 +62,11 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSProjectListItemWidgetENDCLASS[] 
 
 Q_CONSTINIT const QMetaObject ProjectListItemWidget::staticMetaObject = { {
     QMetaObject::SuperData::link<QWidget::staticMetaObject>(),
-    qt_meta_stringdata_CLASSProjectListItemWidgetENDCLASS.offsetsAndSizes,
-    qt_meta_data_CLASSProjectListItemWidgetENDCLASS,
+    qt_meta_stringdata_ZN21ProjectListItemWidgetE.offsetsAndSizes,
+    qt_meta_data_ZN21ProjectListItemWidgetE,
     qt_static_metacall,
     nullptr,
-    qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASSProjectListItemWidgetENDCLASS_t,
+    qt_incomplete_metaTypeArray<qt_meta_tag_ZN21ProjectListItemWidgetE_t,
         // Q_OBJECT / Q_GADGET
         QtPrivate::TypeAndForceComplete<ProjectListItemWidget, std::true_type>
     >,
@@ -74,9 +75,10 @@ Q_CONSTINIT const QMetaObject ProjectListItemWidget::staticMetaObject = { {
 
 void ProjectListItemWidget::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
 {
-    (void)_o;
-    (void)_id;
+    auto *_t = static_cast<ProjectListItemWidget *>(_o);
+    (void)_t;
     (void)_c;
+    (void)_id;
     (void)_a;
 }
 
@@ -88,7 +90,7 @@ const QMetaObject *ProjectListItemWidget::metaObject() const
 void *ProjectListItemWidget::qt_metacast(const char *_clname)
 {
     if (!_clname) return nullptr;
-    if (!strcmp(_clname, qt_meta_stringdata_CLASSProjectListItemWidgetENDCLASS.stringdata0))
+    if (!strcmp(_clname, qt_meta_stringdata_ZN21ProjectListItemWidgetE.stringdata0))
         return static_cast<void*>(this);
     return QWidget::qt_metacast(_clname);
 }
@@ -99,10 +101,12 @@ int ProjectListItemWidget::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     return _id;
 }
 namespace {
+struct qt_meta_tag_ZN8LauncherE_t {};
+} // unnamed namespace
+
 
 #ifdef QT_MOC_HAS_STRINGDATA
-struct qt_meta_stringdata_CLASSLauncherENDCLASS_t {};
-constexpr auto qt_meta_stringdata_CLASSLauncherENDCLASS = QtMocHelpers::stringData(
+static constexpr auto qt_meta_stringdata_ZN8LauncherE = QtMocHelpers::stringData(
     "Launcher",
     "OpenProject",
     "",
@@ -120,9 +124,8 @@ constexpr auto qt_meta_stringdata_CLASSLauncherENDCLASS = QtMocHelpers::stringDa
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
 #endif // !QT_MOC_HAS_STRINGDATA
-} // unnamed namespace
 
-Q_CONSTINIT static const uint qt_meta_data_CLASSLauncherENDCLASS[] = {
+Q_CONSTINIT static const uint qt_meta_data_ZN8LauncherE[] = {
 
  // content:
       12,       // revision
@@ -154,11 +157,11 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSLauncherENDCLASS[] = {
 
 Q_CONSTINIT const QMetaObject Launcher::staticMetaObject = { {
     QMetaObject::SuperData::link<QWidget::staticMetaObject>(),
-    qt_meta_stringdata_CLASSLauncherENDCLASS.offsetsAndSizes,
-    qt_meta_data_CLASSLauncherENDCLASS,
+    qt_meta_stringdata_ZN8LauncherE.offsetsAndSizes,
+    qt_meta_data_ZN8LauncherE,
     qt_static_metacall,
     nullptr,
-    qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASSLauncherENDCLASS_t,
+    qt_incomplete_metaTypeArray<qt_meta_tag_ZN8LauncherE_t,
         // Q_OBJECT / Q_GADGET
         QtPrivate::TypeAndForceComplete<Launcher, std::true_type>,
         // method 'OpenProject'
@@ -180,9 +183,8 @@ Q_CONSTINIT const QMetaObject Launcher::staticMetaObject = { {
 
 void Launcher::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
 {
+    auto *_t = static_cast<Launcher *>(_o);
     if (_c == QMetaObject::InvokeMetaMethod) {
-        auto *_t = static_cast<Launcher *>(_o);
-        (void)_t;
         switch (_id) {
         case 0: _t->OpenProject((*reinterpret_cast< std::add_pointer_t<QListWidgetItem*>>(_a[1]))); break;
         case 1: _t->CreateNewProject(); break;
@@ -203,7 +205,7 @@ const QMetaObject *Launcher::metaObject() const
 void *Launcher::qt_metacast(const char *_clname)
 {
     if (!_clname) return nullptr;
-    if (!strcmp(_clname, qt_meta_stringdata_CLASSLauncherENDCLASS.stringdata0))
+    if (!strcmp(_clname, qt_meta_stringdata_ZN8LauncherE.stringdata0))
         return static_cast<void*>(this);
     return QWidget::qt_metacast(_clname);
 }
@@ -217,7 +219,8 @@ int Launcher::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
         if (_id < 5)
             qt_static_metacall(this, _c, _id, _a);
         _id -= 5;
-    } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
+    }
+    if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
         if (_id < 5)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
         _id -= 5;
