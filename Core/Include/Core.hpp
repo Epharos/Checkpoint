@@ -1,7 +1,8 @@
 #pragma once
 
 #include "../src/Context/VulkanContext.hpp"
-#include "../src/Context/Platform.hpp"
+#include "../src/Context/Platforms/PlatformGLFW.hpp"
+#include "../src/Context/Platforms/PlatformQt.hpp"
 
 #include "../src/Core/Scene.hpp"
 

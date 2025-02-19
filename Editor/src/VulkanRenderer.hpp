@@ -1,66 +1,47 @@
 #pragma once
 
 #include <QtGui/qvulkanwindow.h>
+#include <QtCore/qtimer.h>
 
 #include <Core.hpp>
 
 #include "Renderers/MinimalistRenderer.hpp"
 
-class VulkanRenderer : public QVulkanWindowRenderer 
-{
-public:
-	VulkanRenderer(QVulkanWindow* _window, Core::Scene* _scene) : vulkanWindow(_window), currentScene(_scene)
-    {
-        //qDebug() << "VulkanRenderer initialized.";
-    }
-
-    void initResources() override 
-    {
-        //qDebug() << "Initializing Vulkan resources...";
-    }
-
-    void releaseResources() override 
-    {
-        //qDebug() << "Releasing Vulkan resources...";
-        if(currentScene) currentScene->Cleanup();
-    }
-
-    void startNextFrame() override 
-    {
-        //qDebug() << "Rendering frame...";
-        if (currentScene) currentScene->GetRenderer()->Render({});
-        vulkanWindow->frameReady();
-        vulkanWindow->requestUpdate();
-    }
-
-	void SetScene(Core::Scene* _scene) { currentScene = _scene; }
-
-private:
-	Core::Scene* currentScene;
-    QVulkanWindow* vulkanWindow;
-};
-
-class VulkanWindow : public QVulkanWindow
+class VulkanWindow : public QWindow
 {
     Q_OBJECT
 protected:
     Core::Scene* currentScene;
-    VulkanRenderer* windowRenderer;
+
+	QTimer renderTimer;
 
 public:
-    VulkanWindow(Core::Scene* _scene) : QVulkanWindow(), currentScene(_scene)
+    VulkanWindow(Core::Scene* _scene) : QWindow(), currentScene(_scene)
     {
+		setSurfaceType(QSurface::VulkanSurface);
 
+		renderTimer.setInterval(16);
+		connect(&renderTimer, &QTimer::timeout, this, &VulkanWindow::UpdateRender);
+		renderTimer.start();
     }
 
-    QVulkanWindowRenderer* createRenderer() override
+    void exposeEvent(QExposeEvent* _event) override
     {
-        return (windowRenderer = new VulkanRenderer(this, currentScene));
+        Q_UNUSED(_event);
     }
+
+	void UpdateRender()
+	{
+        if (currentScene && currentScene->GetRenderer())
+        {
+            currentScene->GetRenderer()->Render({});
+        }
+
+		renderTimer.start();
+	}
 
 	void SetScene(Core::Scene* _scene) 
     {
         currentScene = _scene;
-		windowRenderer->SetScene(currentScene);
     }
 };

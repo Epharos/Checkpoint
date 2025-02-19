@@ -45,5 +45,6 @@ Dependencies/slang
 
 Core/Logs
 Example/Logs
+Editor/Logs
 
 recent_projects.json

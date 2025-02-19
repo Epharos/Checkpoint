@@ -2,6 +2,16 @@
 
 void MinimalistRenderer::CreateMainRenderPass()
 {
+	vk::AttachmentDescription depthAttachment = {};
+	depthAttachment.format = Helper::Format::FindDepthFormat(context->GetPhysicalDevice());
+	depthAttachment.samples = vk::SampleCountFlagBits::e1;
+	depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+	depthAttachment.storeOp = vk::AttachmentStoreOp::eStore;
+	depthAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
+	depthAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+	depthAttachment.initialLayout = vk::ImageLayout::eUndefined;
+	depthAttachment.finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+
 	vk::AttachmentDescription colorAttachment = {};
 	colorAttachment.format = swapchain->GetFormat();
 	colorAttachment.samples = vk::SampleCountFlagBits::e1;
@@ -13,15 +23,20 @@ void MinimalistRenderer::CreateMainRenderPass()
 	colorAttachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
 
 	vk::AttachmentReference colorAttachmentRef = {};
-	colorAttachmentRef.attachment = 0;
+	colorAttachmentRef.attachment = 1;
 	colorAttachmentRef.layout = vk::ImageLayout::eColorAttachmentOptimal;
+
+	vk::AttachmentReference depthAttachmentRef = {};
+	depthAttachmentRef.attachment = 0;
+	depthAttachmentRef.layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
 	vk::SubpassDescription colorizeSubpass = {};
 	colorizeSubpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
 	colorizeSubpass.colorAttachmentCount = 1;
 	colorizeSubpass.pColorAttachments = &colorAttachmentRef;
+	colorizeSubpass.pDepthStencilAttachment = &depthAttachmentRef;
 
-	std::vector<vk::AttachmentDescription> attachments = { colorAttachment };
+	std::vector<vk::AttachmentDescription> attachments = { depthAttachment, colorAttachment };
 	std::vector<vk::SubpassDescription> subpasses = { colorizeSubpass };
 
 	subpassCount = static_cast<uint32_t>(subpasses.size());
@@ -48,14 +63,16 @@ void MinimalistRenderer::CreateMainRenderPass()
 
 void MinimalistRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _instanceGroups)
 {
-	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4> { 1.0f, 0.1f, 0.1f, 1.0f });
+	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4> { 1.0f, 0.0f, 0.0f, 1.0f });
+	vk::ClearDepthStencilValue clearDepth = vk::ClearDepthStencilValue(1.0f, 0);
+
 	vk::CommandBuffer commandBuffer = swapchain->GetCurrentFrame()->GetCommandBuffer();
 
-	std::vector<vk::ClearValue> shadowMapClearValues = { clearColor };
+	std::vector<vk::ClearValue> shadowMapClearValues = { clearDepth, clearColor };
 
 	vk::RenderPassBeginInfo depthShadowMapRenderPassInfo = {};
 	depthShadowMapRenderPassInfo.renderPass = mainRenderPass;
-	depthShadowMapRenderPassInfo.framebuffer = swapchain->GetCurrentFrame()->GetRenderTarget(0)->GetFramebuffer();
+	depthShadowMapRenderPassInfo.framebuffer = swapchain->GetCurrentFrame()->GetMainRenderTarget()->GetFramebuffer();
 	depthShadowMapRenderPassInfo.renderArea.offset = vk::Offset2D{ 0, 0 };
 	depthShadowMapRenderPassInfo.renderArea.extent = swapchain->GetExtent();
 	depthShadowMapRenderPassInfo.clearValueCount = 1;
@@ -63,17 +80,91 @@ void MinimalistRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _
 
 	commandBuffer.beginRenderPass(depthShadowMapRenderPassInfo, vk::SubpassContents::eInline);
 
+	Pipeline::PipelineCreateData config = {};
+	config.config.name = "Colored";
+
+	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, context->GetPipelinesManager()->GetPipeline(config).pipeline);
+
+	vk::Buffer vertexBuffer = quadMesh->GetVertexBuffer();
+	vk::DeviceSize offsets[] = { 0 };
+	commandBuffer.bindVertexBuffers(0, 1, &vertexBuffer, offsets);
+	commandBuffer.bindIndexBuffer(quadMesh->GetIndexBuffer(), 0, vk::IndexType::eUint32);
+
+	commandBuffer.drawIndexed(6, 1, 0, 0, 0);
+
 	commandBuffer.endRenderPass();
 }
 
 void MinimalistRenderer::SetupPipelines()
 {
+	Pipeline::DescriptorSetLayoutsManager* descriptorSetLayoutsManager = context->GetDescriptorSetLayoutsManager();
+	Pipeline::DescriptorSetManager* descriptorSetManager = context->GetDescriptorSetManager();
+	Pipeline::PipelinesManager* pipelinesManager = context->GetPipelinesManager();
+	Pipeline::LayoutsManager* layoutsManager = context->GetLayoutsManager();
 
+	vk::PipelineLayout colorLayout = layoutsManager->GetOrCreateLayout({}, {});
+
+	Pipeline::PipelineCreateData pipelineData = {};
+	pipelineData.config.name = "Colored";
+
+	vk::Viewport* vp = new vk::Viewport;
+	vp->x = 0.f;
+	vp->y = 0.f;
+	vp->width = swapchain->GetExtent().width;
+	vp->height = swapchain->GetExtent().height;
+	vp->minDepth = 0.f;
+	vp->maxDepth = 1.f;
+
+	vk::Rect2D* scisor = new vk::Rect2D;
+	scisor->extent = swapchain->GetExtent();
+	scisor->offset = vk::Offset2D(0, 0);
+
+	vk::PipelineColorBlendAttachmentState* colorBlendAttachment = new vk::PipelineColorBlendAttachmentState;
+	colorBlendAttachment->colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	colorBlendAttachment->blendEnable = VK_FALSE;
+
+	vk::VertexInputBindingDescription* bindingDescription = new vk::VertexInputBindingDescription(0, sizeof(Resource::Vertex), vk::VertexInputRate::eVertex);
+
+	vk::VertexInputAttributeDescription* attributeDescriptions = new vk::VertexInputAttributeDescription[5];
+	attributeDescriptions[0] = vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, position));
+	attributeDescriptions[1] = vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, normal));
+	attributeDescriptions[2] = vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Resource::Vertex, uv));
+	attributeDescriptions[3] = vk::VertexInputAttributeDescription(3, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, tangent));
+	attributeDescriptions[4] = vk::VertexInputAttributeDescription(4, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, bitangent));
+
+	pipelineData.createInfo = vk::GraphicsPipelineCreateInfo();
+	pipelineData.createInfo.layout = colorLayout;
+	pipelineData.createInfo.renderPass = mainRenderPass;
+	pipelineData.createInfo.subpass = 0;
+	pipelineData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), VK_TRUE, VK_TRUE, vk::CompareOp::eLess);
+	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, vp, 1, scisor);
+	pipelineData.createInfo.pRasterizationState = new vk::PipelineRasterizationStateCreateInfo(vk::PipelineRasterizationStateCreateFlags(), VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
+	pipelineData.createInfo.pMultisampleState = new vk::PipelineMultisampleStateCreateInfo(vk::PipelineMultisampleStateCreateFlags(), vk::SampleCountFlagBits::e1, VK_FALSE, 1.0f, nullptr, VK_FALSE, VK_FALSE);
+	pipelineData.createInfo.pColorBlendState = new vk::PipelineColorBlendStateCreateInfo({}, VK_FALSE, vk::LogicOp::eCopy, 1, colorBlendAttachment, { 0.f, 0.f, 0.f, 0.f });
+	pipelineData.createInfo.pInputAssemblyState = new vk::PipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleList, VK_FALSE);
+	pipelineData.createInfo.pVertexInputState = new vk::PipelineVertexInputStateCreateInfo(vk::PipelineVertexInputStateCreateFlags(), 1, bindingDescription, 5, attributeDescriptions);
+
+	pipelineData.shaderFile = "DEBUG/HALF_QUAD.spv";
+	pipelineData.mains = {
+		{ vk::ShaderStageFlagBits::eVertex, "vertexMain" },
+		{ vk::ShaderStageFlagBits::eFragment, "pixelMain" }
+	};
+
+	pipelinesManager->CreatePipeline(pipelineData);
 }
 
 MinimalistRenderer::MinimalistRenderer(Context::VulkanContext* _context) : Render::Renderer(_context)
 {
-	
+	Resource::Vertex quadVertices[] = {
+		{ { 0.5f, 0.5f, 0.0f } },
+		{ { -0.5f, 0.5f, 0.0f } },
+		{ { -0.5f, -0.5f, 0.0f } },
+		{ { 0.5f, -0.5f, 0.0f } }
+	};
+
+	uint32_t quadIndices[] = { 0, 1, 2, 2, 3, 0 };
+
+	quadMesh = new Resource::Mesh(*context, std::vector<Resource::Vertex>(quadVertices, quadVertices + 4), std::vector<uint32_t>(quadIndices, quadIndices + 6));
 }
 
 void MinimalistRenderer::Cleanup()

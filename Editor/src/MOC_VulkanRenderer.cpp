@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'VulkanRenderer.hpp'
 **
-** Created by: The Qt Meta Object Compiler version 68 (Qt 6.8.1)
+** Created by: The Qt Meta Object Compiler version 68 (Qt 6.8.0)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
@@ -18,7 +18,7 @@
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'VulkanRenderer.hpp' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 68
-#error "This file was generated using the moc from 6.8.1. It"
+#error "This file was generated using the moc from 6.8.0. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
@@ -31,19 +31,18 @@ QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 QT_WARNING_DISABLE_GCC("-Wuseless-cast")
 namespace {
-struct qt_meta_tag_ZN12VulkanWindowE_t {};
-} // unnamed namespace
-
 
 #ifdef QT_MOC_HAS_STRINGDATA
-static constexpr auto qt_meta_stringdata_ZN12VulkanWindowE = QtMocHelpers::stringData(
+struct qt_meta_stringdata_CLASSVulkanWindowENDCLASS_t {};
+constexpr auto qt_meta_stringdata_CLASSVulkanWindowENDCLASS = QtMocHelpers::stringData(
     "VulkanWindow"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
 #endif // !QT_MOC_HAS_STRINGDATA
+} // unnamed namespace
 
-Q_CONSTINIT static const uint qt_meta_data_ZN12VulkanWindowE[] = {
+Q_CONSTINIT static const uint qt_meta_data_CLASSVulkanWindowENDCLASS[] = {
 
  // content:
       12,       // revision
@@ -60,12 +59,12 @@ Q_CONSTINIT static const uint qt_meta_data_ZN12VulkanWindowE[] = {
 };
 
 Q_CONSTINIT const QMetaObject VulkanWindow::staticMetaObject = { {
-    QMetaObject::SuperData::link<QVulkanWindow::staticMetaObject>(),
-    qt_meta_stringdata_ZN12VulkanWindowE.offsetsAndSizes,
-    qt_meta_data_ZN12VulkanWindowE,
+    QMetaObject::SuperData::link<QWindow::staticMetaObject>(),
+    qt_meta_stringdata_CLASSVulkanWindowENDCLASS.offsetsAndSizes,
+    qt_meta_data_CLASSVulkanWindowENDCLASS,
     qt_static_metacall,
     nullptr,
-    qt_incomplete_metaTypeArray<qt_meta_tag_ZN12VulkanWindowE_t,
+    qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASSVulkanWindowENDCLASS_t,
         // Q_OBJECT / Q_GADGET
         QtPrivate::TypeAndForceComplete<VulkanWindow, std::true_type>
     >,
@@ -74,10 +73,9 @@ Q_CONSTINIT const QMetaObject VulkanWindow::staticMetaObject = { {
 
 void VulkanWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
 {
-    auto *_t = static_cast<VulkanWindow *>(_o);
-    (void)_t;
-    (void)_c;
+    (void)_o;
     (void)_id;
+    (void)_c;
     (void)_a;
 }
 
@@ -89,14 +87,14 @@ const QMetaObject *VulkanWindow::metaObject() const
 void *VulkanWindow::qt_metacast(const char *_clname)
 {
     if (!_clname) return nullptr;
-    if (!strcmp(_clname, qt_meta_stringdata_ZN12VulkanWindowE.stringdata0))
+    if (!strcmp(_clname, qt_meta_stringdata_CLASSVulkanWindowENDCLASS.stringdata0))
         return static_cast<void*>(this);
-    return QVulkanWindow::qt_metacast(_clname);
+    return QWindow::qt_metacast(_clname);
 }
 
 int VulkanWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
-    _id = QVulkanWindow::qt_metacall(_c, _id, _a);
+    _id = QWindow::qt_metacall(_c, _id, _a);
     return _id;
 }
 QT_WARNING_POP

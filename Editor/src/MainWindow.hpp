@@ -13,6 +13,7 @@
 #include <QtWidgets/qfilesystemmodel.h>
 #include <QtGui/qvulkanwindow.h>
 #include <QtGui/qvulkaninstance.h>
+#include <QtCore/qtimer.h>
 
 #include <Core.hpp>
 
@@ -28,6 +29,7 @@ protected:
 	Core::Scene* currentScene = nullptr;
 
 	VulkanWindow* window = nullptr;
+	QVulkanInstance* instance = nullptr;
 
 	QTreeView* fileExplorer = nullptr;
 	QFileSystemModel* fileSystemModel = nullptr;
@@ -132,6 +134,26 @@ protected:
 public:
 	MainWindow(QWidget* parent = nullptr)
 	{
+		SetupMenuBar();
+
+		CreateSceneHierarchyDockWidget();
+
+		instance = new QVulkanInstance;
+		instance->create();
+
+		window = new VulkanWindow(currentScene);
+		window->setVulkanInstance(instance);
+
+		QWidget* container = QWidget::createWindowContainer(window);
+		setCentralWidget(container);
+
+		resize(1280, 720);
+
+		QTimer::singleShot(0, this, &MainWindow::InitializeVulkanRenderer);
+	}
+
+	void InitializeVulkanRenderer()
+	{
 		Context::VulkanContextInfo contextInfo =
 		{
 			.appName = "App Example",
@@ -145,33 +167,16 @@ public:
 			}
 		};
 
-		CreateSceneHierarchyDockWidget();
-
-
-		QVulkanInstance* instance = new QVulkanInstance;
-		instance->create();
-
-		window = new VulkanWindow(currentScene);
-		window->setSurfaceType(QSurface::SurfaceType::VulkanSurface);
-		window->setVulkanInstance(instance);
-		window->create();
-
 		contextInfo.instance = instance->vkInstance();
 		contextInfo.surface = QVulkanInstance::surfaceForWindow(window);
+		Context::PlatformQt* platform = new Context::PlatformQt;
+		platform->Initialize(window);
+		contextInfo.platform = platform;
 
 		vulkanContext.Initialize(contextInfo);
 
 		activeRenderer = new MinimalistRenderer(&vulkanContext);
 		activeRenderer->Build();
 		currentScene = new Core::Scene(activeRenderer);
-
-		QWidget* container = QWidget::createWindowContainer(window);
-		setCentralWidget(container);
-
-		//window->SetScene(currentScene);
-
-		SetupMenuBar();
-
-		resize(1280, 720);
 	}
 };

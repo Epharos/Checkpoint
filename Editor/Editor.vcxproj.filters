@@ -54,4 +54,7 @@
   <ItemGroup>
     <Font Include="Editor_Resources\Montserrat.ttf" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="DEBUG\HALF_QUAD.slang" />
+  </ItemGroup>
 </Project>

@@ -19,7 +19,7 @@ int main()
 	LOG_TRACE("Hello World!");
 
 	Context::VulkanContext context;
-	Context::Platform platform;
+	Context::PlatformGLFW platform;
 
 	Context::VulkanContextInfo contextInfo =
 	{
@@ -118,7 +118,7 @@ int main()
 		scene.GetECS().AddComponent<MeshRenderer>(debugcube, MeshRenderer(resourceManager.Get<Mesh>("Debug Cube"), resourceManager.Get<MaterialInstance>("Debug Material")));
 	}
 
-	scene.GetECS().RegisterSystem<Controller>(context.GetPlatform()->GetWindow());
+	scene.GetECS().RegisterSystem<Controller>((GLFWwindow*)context.GetPlatform()->GetNativeWindowHandle());
 	scene.GetECS().RegisterSystem<BasicRenderSystem>(&renderer);
 
 	while (!platform.ShouldClose())

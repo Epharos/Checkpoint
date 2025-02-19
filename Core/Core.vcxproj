@@ -102,12 +102,13 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;QT_WIDGETS_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;$(VULKAN_SDK)\Include;$(SolutionDir)ECS\Include;$(SolutionDir)Dependencies\stb_image.h;$(SolutionDir)Dependencies\glfw\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(VULKAN_SDK)\Include;$(SolutionDir)ECS\Include;$(SolutionDir)Dependencies\stb_image.h;$(SolutionDir)Dependencies\glfw\include;C:\Qt68\6.8.0\msvc2022_64\include</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -140,7 +141,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Context\Devices.cpp" />
-    <ClCompile Include="src\Context\Platform.cpp" />
+    <ClCompile Include="src\Context\Platforms\PlatformGLFW.cpp" />
+    <ClCompile Include="src\Context\Platforms\PlatformQt.cpp" />
     <ClCompile Include="src\Context\VulkanContext.cpp" />
     <ClCompile Include="src\Core\Scene.cpp" />
     <ClCompile Include="src\Helpers\Helpers.cpp" />
@@ -167,7 +169,9 @@
   <ItemGroup>
     <ClInclude Include="Include\Core.hpp" />
     <ClInclude Include="src\Context\Devices.hpp" />
-    <ClInclude Include="src\Context\Platform.hpp" />
+    <ClInclude Include="src\Context\Platforms\PlatformGLFW.hpp" />
+    <ClInclude Include="src\Context\Platforms\Platform.hpp" />
+    <ClInclude Include="src\Context\Platforms\PlatformQt.hpp" />
     <ClInclude Include="src\Context\VulkanContext.hpp" />
     <ClInclude Include="src\Core\Scene.hpp" />
     <ClInclude Include="src\Helpers\Helpers.hpp" />

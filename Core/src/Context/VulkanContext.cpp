@@ -173,17 +173,20 @@ void Context::VulkanContext::CreateLogicalDevice()
 
 void Context::VulkanContext::CreateSurface()
 {
-	VkSurfaceKHR surfaceHandle;
-	VkResult vr = glfwCreateWindowSurface(instance, platform->GetWindow(), nullptr, &surfaceHandle);
-
-	if (vr != VK_SUCCESS)
+	if (platform->GetType() == PlatformType::GLFW)
 	{
-		LOG_FATAL("Failed to create window surface " + vr);
-		return;
-	}
+		VkSurfaceKHR surfaceHandle;
+		VkResult vr = glfwCreateWindowSurface(instance, (GLFWwindow*)platform->GetNativeWindowHandle(), nullptr, &surfaceHandle);
 
-	LOG_DEBUG("Created window surface");
-	surface = surfaceHandle;
+		if (vr != VK_SUCCESS)
+		{
+			LOG_FATAL("Failed to create window surface " + vr);
+			return;
+		}
+
+		LOG_DEBUG("Created window surface");
+		surface = surfaceHandle;
+	}
 }
 
 void Context::VulkanContext::CreateDebugMessenger()

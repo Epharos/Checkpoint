@@ -5,6 +5,8 @@
 #include "Frame.hpp"
 #include "Helpers/Helpers.hpp"
 
+#include <QtCore/qapplicationstatic.h>
+
 void Render::Swapchain::CreateData()
 {
 	uint32_t imageCount = std::min(surfaceCapabilities.minImageCount + 1, surfaceCapabilities.maxImageCount);
@@ -40,6 +42,8 @@ void Render::Swapchain::CreateData()
 	createInfo.oldSwapchain = nullptr;
 
 	swapchain = context->GetDevice().createSwapchainKHR(createInfo);
+
+	frames.clear();
 
 	std::vector<vk::Image> images = context->GetDevice().getSwapchainImagesKHR(swapchain);
 	frames.reserve(images.size());
@@ -150,7 +154,17 @@ void Render::Swapchain::Recreate()
 	while (windowExtent.width == 0 || windowExtent.height == 0)
 	{
 		extent = windowExtent;
-		glfwWaitEvents(); //GLFW Magic
+		switch (context->GetPlatform()->GetType())
+		{
+		case Context::PlatformType::GLFW:
+			glfwWaitEvents();
+			break;
+		case Context::PlatformType::QT:
+			QCoreApplication::processEvents();
+			break;
+		default:
+			break;
+		}
 	}
 
 	context->GetDevice().waitIdle();

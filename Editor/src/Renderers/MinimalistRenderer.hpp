@@ -5,6 +5,8 @@
 class MinimalistRenderer : public Render::Renderer
 {
 protected:
+	Resource::Mesh* quadMesh = nullptr;
+
 	void CreateMainRenderPass() override;
 
 	void RenderFrame(const std::vector<Render::InstanceGroup>& _instanceGroups) override;

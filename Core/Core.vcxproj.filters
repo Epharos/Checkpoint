@@ -24,7 +24,7 @@
     <ClCompile Include="src\Context\Devices.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Context\Platform.cpp">
+    <ClCompile Include="src\Context\Platforms\PlatformGLFW.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\Render\Setup\Swapchain.cpp">
@@ -72,6 +72,9 @@
     <ClCompile Include="src\Core\Scene.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="src\Context\Platforms\PlatformQt.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Util\Logger.hpp">
@@ -89,7 +92,7 @@
     <ClInclude Include="src\Context\Devices.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Context\Platform.hpp">
+    <ClInclude Include="src\Context\Platforms\Platform.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Render\Setup\Swapchain.hpp">
@@ -141,6 +144,12 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Core\Scene.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Context\Platforms\PlatformGLFW.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Context\Platforms\PlatformQt.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>
