@@ -70,15 +70,21 @@ void MinimalistRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _
 
 	std::vector<vk::ClearValue> shadowMapClearValues = { clearDepth, clearColor };
 
+	vk::Viewport vp = vk::Viewport(0, 0, swapchain->GetExtent().width, swapchain->GetExtent().height, 0, 1);
+	vk::Rect2D scissor = vk::Rect2D(vk::Offset2D(0, 0), swapchain->GetExtent());
+
 	vk::RenderPassBeginInfo depthShadowMapRenderPassInfo = {};
 	depthShadowMapRenderPassInfo.renderPass = mainRenderPass;
 	depthShadowMapRenderPassInfo.framebuffer = swapchain->GetCurrentFrame()->GetMainRenderTarget()->GetFramebuffer();
 	depthShadowMapRenderPassInfo.renderArea.offset = vk::Offset2D{ 0, 0 };
 	depthShadowMapRenderPassInfo.renderArea.extent = swapchain->GetExtent();
-	depthShadowMapRenderPassInfo.clearValueCount = 1;
+	depthShadowMapRenderPassInfo.clearValueCount = 2;
 	depthShadowMapRenderPassInfo.pClearValues = shadowMapClearValues.data();
 
 	commandBuffer.beginRenderPass(depthShadowMapRenderPassInfo, vk::SubpassContents::eInline);
+
+	commandBuffer.setViewport(0, vp);
+	commandBuffer.setScissor(0, scissor);
 
 	Pipeline::PipelineCreateData config = {};
 	config.config.name = "Colored";
@@ -107,17 +113,7 @@ void MinimalistRenderer::SetupPipelines()
 	Pipeline::PipelineCreateData pipelineData = {};
 	pipelineData.config.name = "Colored";
 
-	vk::Viewport* vp = new vk::Viewport;
-	vp->x = 0.f;
-	vp->y = 0.f;
-	vp->width = swapchain->GetExtent().width;
-	vp->height = swapchain->GetExtent().height;
-	vp->minDepth = 0.f;
-	vp->maxDepth = 1.f;
-
-	vk::Rect2D* scisor = new vk::Rect2D;
-	scisor->extent = swapchain->GetExtent();
-	scisor->offset = vk::Offset2D(0, 0);
+	std::vector<vk::DynamicState> dynamicStates = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 
 	vk::PipelineColorBlendAttachmentState* colorBlendAttachment = new vk::PipelineColorBlendAttachmentState;
 	colorBlendAttachment->colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
@@ -136,8 +132,9 @@ void MinimalistRenderer::SetupPipelines()
 	pipelineData.createInfo.layout = colorLayout;
 	pipelineData.createInfo.renderPass = mainRenderPass;
 	pipelineData.createInfo.subpass = 0;
+	pipelineData.createInfo.pDynamicState = new vk::PipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), static_cast<uint32_t>(dynamicStates.size()), dynamicStates.data());
 	pipelineData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), VK_TRUE, VK_TRUE, vk::CompareOp::eLess);
-	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, vp, 1, scisor);
+	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);
 	pipelineData.createInfo.pRasterizationState = new vk::PipelineRasterizationStateCreateInfo(vk::PipelineRasterizationStateCreateFlags(), VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
 	pipelineData.createInfo.pMultisampleState = new vk::PipelineMultisampleStateCreateInfo(vk::PipelineMultisampleStateCreateFlags(), vk::SampleCountFlagBits::e1, VK_FALSE, 1.0f, nullptr, VK_FALSE, VK_FALSE);
 	pipelineData.createInfo.pColorBlendState = new vk::PipelineColorBlendStateCreateInfo({}, VK_FALSE, vk::LogicOp::eCopy, 1, colorBlendAttachment, { 0.f, 0.f, 0.f, 0.f });
@@ -162,7 +159,7 @@ MinimalistRenderer::MinimalistRenderer(Context::VulkanContext* _context) : Rende
 		{ { 0.5f, -0.5f, 0.0f } }
 	};
 
-	uint32_t quadIndices[] = { 0, 1, 2, 2, 3, 0 };
+	uint32_t quadIndices[] = { 0, 2, 1, 2, 0, 3 };
 
 	quadMesh = new Resource::Mesh(*context, std::vector<Resource::Vertex>(quadVertices, quadVertices + 4), std::vector<uint32_t>(quadIndices, quadIndices + 6));
 }

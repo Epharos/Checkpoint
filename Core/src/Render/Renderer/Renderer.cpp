@@ -15,6 +15,13 @@ uint32_t Render::Renderer::PrepareFrame()
 		throw std::runtime_error("Failed to wait for fence");
 	}
 
+	vk::Result result = context->GetDevice().resetFences(1, &swapchain->GetCurrentFrame()->GetInFlightFence());
+
+	if (result != vk::Result::eSuccess)
+	{
+		throw std::runtime_error("Failed to reset fence");
+	}
+
 	uint32 imageIndex;
 
 	try
@@ -51,16 +58,9 @@ void Render::Renderer::SubmitFrame()
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	vk::Result result = context->GetDevice().resetFences(1, &swapchain->GetCurrentFrame()->GetInFlightFence());
-
-	if (result != vk::Result::eSuccess)
-	{
-		throw std::runtime_error("Failed to reset fence");
-	}
-
 	vk::Queue graphicsQueue = context->GetDevice().getQueue(context->GetQueueFamilyIndices().graphicsFamily.value(), 0);
 
-	result = graphicsQueue.submit(1, &submitInfo, swapchain->GetCurrentFrame()->GetInFlightFence());
+	vk::Result result = graphicsQueue.submit(1, &submitInfo, swapchain->GetCurrentFrame()->GetInFlightFence());
 
 	if (result != vk::Result::eSuccess)
 	{
