@@ -105,7 +105,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;QT_WIDGETS_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;$(VULKAN_SDK)\Include;$(SolutionDir)ECS\Include;$(SolutionDir)Dependencies\stb_image.h;$(SolutionDir)Dependencies\glfw\include;C:\Qt68\6.8.0\msvc2022_64\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(VULKAN_SDK)\Include;$(SolutionDir)Pre-Proc;$(SolutionDir)ECS\Include;$(SolutionDir)Dependencies\stb_image.h;$(SolutionDir)Dependencies\glfw\include;C:\Qt68\6.8.0\msvc2022_64\include</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
       <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
@@ -168,6 +168,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Core.hpp" />
+    <ClInclude Include="src\Components\DirtyPattern.hpp" />
+    <ClInclude Include="src\Components\Transform.hpp" />
     <ClInclude Include="src\Context\Devices.hpp" />
     <ClInclude Include="src\Context\Platforms\PlatformGLFW.hpp" />
     <ClInclude Include="src\Context\Platforms\Platform.hpp" />

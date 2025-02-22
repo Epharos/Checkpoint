@@ -1,9 +1,6 @@
 #pragma once
 
-#include <QtGui/qvulkanwindow.h>
-#include <QtCore/qtimer.h>
-
-#include <Core.hpp>
+#include "pch.hpp"
 
 #include "Renderers/MinimalistRenderer.hpp"
 

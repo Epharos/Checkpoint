@@ -1,21 +1,8 @@
 #pragma once
 
-#include <QtWidgets/qmainwindow.h>
-#include <QtWidgets/qmenu.h>
-#include <QtWidgets/qmenubar.h>
-#include <QtWidgets/qdockwidget.h>
-#include <QtWidgets/qtreewidget.h>
-#include <QtWidgets/qboxlayout.h>
-#include <QtWidgets/qapplication.h>
-#include <QtWidgets/qwidget.h>
-#include <QtWidgets/qtreeview.h>
-#include <QtWidgets/qfiledialog.h>
-#include <QtWidgets/qfilesystemmodel.h>
-#include <QtGui/qvulkanwindow.h>
-#include <QtGui/qvulkaninstance.h>
-#include <QtCore/qtimer.h>
+#include "pch.hpp"
 
-#include <Core.hpp>
+#include "Widgets/TreeEntityItem.hpp"
 
 #include "Renderers/MinimalistRenderer.hpp"
 #include "VulkanRenderer.hpp"
@@ -35,6 +22,8 @@ protected:
 	QFileSystemModel* fileSystemModel = nullptr;
 
 	QTreeWidget* sceneHierarchy = nullptr;
+
+	ProjectData projectData;
 
 	void SetupMenuBar()
 	{
@@ -103,7 +92,7 @@ protected:
 			});
 
 		connect(openFileExplorerAction, &QAction::triggered, [=] {
-			// Open file explorer
+			CreateFileExplorerDockWidget();
 			});
 
 		setMenuBar(menuBar);
@@ -112,31 +101,89 @@ protected:
 	void CreateSceneHierarchyDockWidget()
 	{
 		QDockWidget* dock = new QDockWidget("Scene hierarchy", this);
-		if(!sceneHierarchy) sceneHierarchy = new QTreeWidget(dock);
+		if (!sceneHierarchy)
+		{
+			QMenu* contextMenu = new QMenu(sceneHierarchy);
+			QAction* createEntityAction = new QAction("Create entity", sceneHierarchy);
+			contextMenu->addAction(createEntityAction);
 
-		sceneHierarchy->setHeaderLabel("CURRENT SCENE NAME");
+			QMenu* itemContextMenu = new QMenu(sceneHierarchy);
+			QAction* deleteEntityAction = new QAction("Delete entity", sceneHierarchy);
+			itemContextMenu->addAction(deleteEntityAction);
+			itemContextMenu->addSeparator();
+			itemContextMenu->addAction(createEntityAction);
+
+			connect(createEntityAction, &QAction::triggered, [=] {
+					TreeEntityItem* item = new TreeEntityItem(currentScene->GetECS().CreateEntity(), sceneHierarchy);
+					item->setFlags(item->flags() | Qt::ItemIsEditable);
+					item->setSelected(true);
+					sceneHierarchy->editItem(item);
+				});
+
+			connect(deleteEntityAction, &QAction::triggered, [=] {
+					QList<QTreeWidgetItem*> items = sceneHierarchy->selectedItems();
+
+					for (QTreeWidgetItem* item : items)
+					{
+						TreeEntityItem* entityItem = dynamic_cast<TreeEntityItem*>(item);
+
+						if (entityItem)
+						{
+							currentScene->GetECS().DestroyEntity(entityItem->GetEntity());
+							delete entityItem;
+						}
+					}
+				});
+
+			sceneHierarchy = new QTreeWidget(dock);
+			sceneHierarchy->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+			sceneHierarchy->setSelectionMode(QAbstractItemView::ExtendedSelection);
+
+			connect(sceneHierarchy, &QTreeWidget::customContextMenuRequested, [=] (QPoint pos) {
+					QTreeWidgetItem* item = sceneHierarchy->itemAt(pos);
+
+					if(item && item->isSelected()) itemContextMenu->popup(sceneHierarchy->viewport()->mapToGlobal(pos));
+					else contextMenu->popup(sceneHierarchy->viewport()->mapToGlobal(pos));
+				});
+
+			connect(sceneHierarchy, &QTreeWidget::itemChanged, [=](QTreeWidgetItem* item, int column) {
+				TreeEntityItem* entityItem = dynamic_cast<TreeEntityItem*>(item);
+
+				if (entityItem)
+				{
+					entityItem->GetEntity().SetDisplayName(item->text(0).toStdString());
+				}
+				});
+		}
+
+		sceneHierarchy->setHeaderLabel(currentScene ? QString::fromStdString(currentScene->GetName()) : "No scene selected");
 		dock->setWidget(sceneHierarchy);
 		dock->setFloating(true);
 		addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, dock);
-
-		/*for (const auto& entity : currentScene->GetECS().)
-		{
-			QTreeWidgetItem* item = new QTreeWidgetItem(sceneHierarchy);
-			item->setText(0, entity->GetName().c_str());
-		}*/
 	}
 
 	void CreateFileExplorerDockWidget()
 	{
+		QFileSystemModel* fileSystemModel = new QFileSystemModel;
+		fileSystemModel->setRootPath(projectData.path + "/Resources");
+
+		QTreeView* fileExplorer = new QTreeView;
+		fileExplorer->setModel(fileSystemModel);
+		fileExplorer->setRootIndex(fileSystemModel->index(projectData.path + "/Resources"));
+
 		QDockWidget* dock = new QDockWidget("File explorer", this);
-		
+		dock->setWidget(fileExplorer);
+		dock->setFloating(true);
+		addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, dock);
 	}
+
+
 public:
-	MainWindow(QWidget* parent = nullptr)
+	MainWindow(const ProjectData& _projectData, QWidget* parent = nullptr)
 	{
 		SetupMenuBar();
 
-		CreateSceneHierarchyDockWidget();
+		projectData = ProjectData(_projectData);
 
 		instance = new QVulkanInstance;
 		instance->create();
@@ -177,6 +224,5 @@ public:
 
 		activeRenderer = new MinimalistRenderer(&vulkanContext);
 		activeRenderer->Build();
-		currentScene = new Core::Scene(activeRenderer);
 	}
 };

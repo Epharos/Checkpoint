@@ -44,6 +44,12 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 	depthShadowMapRenderPassInfo.clearValueCount = 1;
 	depthShadowMapRenderPassInfo.pClearValues = shadowMapClearValues.data();
 
+	vk::Viewport vp = vk::Viewport(0, 0, shadowMapRT->GetExtent().width, shadowMapRT->GetExtent().height, 0, 1);
+	vk::Rect2D scissor = vk::Rect2D(vk::Offset2D(0, 0), shadowMapRT->GetExtent());
+
+	commandBuffer.setViewport(0, vp);
+	commandBuffer.setScissor(0, scissor);
+
 	commandBuffer.beginRenderPass(depthShadowMapRenderPassInfo, vk::SubpassContents::eInline);
 
 	Pipeline::PipelineData pipelineData = context->GetPipelinesManager()->GetPipeline({ "Depth Shadow Map" });
@@ -97,6 +103,12 @@ void BasicRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _insta
 	renderPassInfo.renderArea.extent = swapchain->GetExtent();
 	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	renderPassInfo.pClearValues = clearValues.data();
+
+	vp = vk::Viewport(0, 0, swapchain->GetExtent().width, swapchain->GetExtent().height, 0, 1);
+	scissor = vk::Rect2D(vk::Offset2D(0, 0), swapchain->GetExtent());
+
+	commandBuffer.setViewport(0, vp);
+	commandBuffer.setScissor(0, scissor);
 	
 	commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
@@ -229,17 +241,7 @@ void BasicRenderer::SetupPipelines()
 
 	pipelineData.descriptorSetLayouts = colorLayouts;
 
-	vk::Viewport* vp = new vk::Viewport;
-	vp->x = 0.f;
-	vp->y = 0.f;
-	vp->width = swapchain->GetExtent().width;
-	vp->height = swapchain->GetExtent().height;
-	vp->minDepth = 0.f;
-	vp->maxDepth = 1.f;
-
-	vk::Rect2D* scisor = new vk::Rect2D;
-	scisor->extent = swapchain->GetExtent();
-	scisor->offset = vk::Offset2D(0, 0);
+	std::vector<vk::DynamicState> dynamicStates = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 
 	vk::PipelineColorBlendAttachmentState* colorBlendAttachment = new vk::PipelineColorBlendAttachmentState;
 	colorBlendAttachment->colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
@@ -258,8 +260,9 @@ void BasicRenderer::SetupPipelines()
 	pipelineData.createInfo.layout = colorLayout;
 	pipelineData.createInfo.renderPass = mainRenderPass;
 	pipelineData.createInfo.subpass = 0;
+	pipelineData.createInfo.pDynamicState = new vk::PipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), static_cast<uint32_t>(dynamicStates.size()), dynamicStates.data());
 	pipelineData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), VK_TRUE, VK_TRUE, vk::CompareOp::eLess);
-	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, vp, 1, scisor);
+	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);
 	pipelineData.createInfo.pRasterizationState = new vk::PipelineRasterizationStateCreateInfo(vk::PipelineRasterizationStateCreateFlags(), VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
 	pipelineData.createInfo.pMultisampleState = new vk::PipelineMultisampleStateCreateInfo(vk::PipelineMultisampleStateCreateFlags(), vk::SampleCountFlagBits::e1, VK_FALSE, 1.0f, nullptr, VK_FALSE, VK_FALSE);
 	pipelineData.createInfo.pColorBlendState = new vk::PipelineColorBlendStateCreateInfo({}, VK_FALSE, vk::LogicOp::eCopy, 1, colorBlendAttachment, { 0.f, 0.f, 0.f, 0.f });
@@ -282,18 +285,6 @@ void BasicRenderer::SetupPipelines()
 
 	pipelineData.descriptorSetLayouts = textureLayouts;
 
-	vp = new vk::Viewport;
-	vp->x = 0.f;
-	vp->y = 0.f;
-	vp->width = swapchain->GetExtent().width;
-	vp->height = swapchain->GetExtent().height;
-	vp->minDepth = 0.f;
-	vp->maxDepth = 1.f;
-
-	scisor = new vk::Rect2D;
-	scisor->extent = swapchain->GetExtent();
-	scisor->offset = vk::Offset2D(0, 0);
-
 	colorBlendAttachment = new vk::PipelineColorBlendAttachmentState;
 	colorBlendAttachment->colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 	colorBlendAttachment->blendEnable = VK_FALSE;
@@ -311,8 +302,9 @@ void BasicRenderer::SetupPipelines()
 	pipelineData.createInfo.layout = textureLayout;
 	pipelineData.createInfo.renderPass = mainRenderPass;
 	pipelineData.createInfo.subpass = 0;
+	pipelineData.createInfo.pDynamicState = new vk::PipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), static_cast<uint32_t>(dynamicStates.size()), dynamicStates.data());
 	pipelineData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), VK_TRUE, VK_TRUE, vk::CompareOp::eLess);
-	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, vp, 1, scisor);
+	pipelineData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);
 	pipelineData.createInfo.pRasterizationState = new vk::PipelineRasterizationStateCreateInfo(vk::PipelineRasterizationStateCreateFlags(), VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
 	pipelineData.createInfo.pMultisampleState = new vk::PipelineMultisampleStateCreateInfo(vk::PipelineMultisampleStateCreateFlags(), vk::SampleCountFlagBits::e1, VK_FALSE, 1.0f, nullptr, VK_FALSE, VK_FALSE);
 	pipelineData.createInfo.pColorBlendState = new vk::PipelineColorBlendStateCreateInfo({}, VK_FALSE, vk::LogicOp::eCopy, 1, colorBlendAttachment, { 0.f, 0.f, 0.f, 0.f });

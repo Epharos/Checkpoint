@@ -10,6 +10,10 @@ namespace Core
 	protected:
 		ECS::EntityComponentSystem ecs;
 		Render::Renderer* renderer;
+
+#ifdef IN_EDITOR
+		std::string sceneName;
+#endif
 	public:
 		Scene(Render::Renderer* _renderer);
 		~Scene();
@@ -18,7 +22,12 @@ namespace Core
 
 		void Update(float dt);
 
-		ECS::EntityComponentSystem& GetECS() { return ecs; }
-		Render::Renderer* GetRenderer() { return renderer; }
+		inline constexpr ECS::EntityComponentSystem& GetECS() { return ecs; }
+		inline constexpr Render::Renderer* GetRenderer() { return renderer; }
+
+#ifdef IN_EDITOR
+		inline void SetName(const std::string& name) { sceneName = name; }
+		inline constexpr const std::string GetName() const { return sceneName; }
+#endif
 	};
 }

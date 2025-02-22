@@ -1,7 +1,6 @@
-#include <iostream>
+#include "pch.hpp"
+
 #include <QtGui/qfontdatabase.h>
-#include <QtWidgets/qapplication.h>
-#include <QtWidgets/qwidget.h>
 #include "MainWindow.hpp"
 #include "Launcher.hpp"
 
@@ -26,7 +25,7 @@ int main(int argc, char* args[])
 
 	app.setStyleSheet(LoadStyleSheet("Editor_Resources/Stylesheet.qss"));
 
-	int fontID = QFontDatabase::addApplicationFont("Editor_Resources/Oswald.ttf");
+	int fontID = QFontDatabase::addApplicationFont("Editor_Resources/Metropolis.otf");
 
 	if (fontID != -1)
 	{

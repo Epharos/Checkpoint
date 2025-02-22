@@ -1,6 +1,10 @@
 #pragma once
 
+#include <PreProcessor.hpp>
+#include "Entity.hpp"
+
 #include <iostream>
+#include <string>
 
 #include <bitset>
 #include <functional>
@@ -14,7 +18,11 @@
 #include <unordered_map>
 #include <typeindex>
 
-#include "Entity.hpp"
+#ifdef IN_EDITOR
+#include <QtWidgets/qwidget.h>
+#include <QtWidgets/qboxlayout.h>
+#include <QtWidgets/qlabel.h>
+#endif
 
 const uint32_t MAX_COMPONENTS = 32;
 const uint32_t MAX_ENTITIES = 10000;

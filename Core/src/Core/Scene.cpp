@@ -14,7 +14,6 @@ Core::Scene::~Scene()
 void Core::Scene::Cleanup()
 {
 	ecs.Cleanup();
-	renderer->Cleanup();
 }
 
 void Core::Scene::Update(float dt)

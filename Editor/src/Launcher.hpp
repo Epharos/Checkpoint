@@ -1,14 +1,6 @@
 #pragma once
 
-#include <QtWidgets/qmainwindow.h>
-#include <QtWidgets/qboxlayout.h>
-#include <QtWidgets/qlistwidget.h>
-#include <QtWidgets/qpushbutton.h>
-#include <QtWidgets/qwidget.h>
-#include <QtWidgets/qapplication.h>
-#include <QtWidgets/qlineedit.h>
-#include <QtWidgets/qdialog.h>
-#include <QtCore/qfile.h>
+#include "pch.hpp"
 
 #include "NewProjectDialog.hpp"
 #include "MainWindow.hpp"
@@ -101,10 +93,11 @@ private slots:
     void OpenProject(QListWidgetItem* item) 
     {
 		ProjectListItemWidget* widget = dynamic_cast<ProjectListItemWidget*>(listWidget->itemWidget(item));
+
 		if (widget)
 		{
 			ProjectData data = widget->GetData();
-			MainWindow* mainWindow = new MainWindow();
+			MainWindow* mainWindow = new MainWindow(data);
 			mainWindow->setWindowTitle("Checkpoint - " + data.name);
 			mainWindow->show();
 		}

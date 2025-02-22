@@ -105,7 +105,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);QT_WIDGETS_LIB</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;$(SolutionDir)ECS\Include;$(SolutionDir)Core\Include;$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies\glfw\include;C:\Qt68\6.8.0\msvc2022_64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(SolutionDir)Pre-Proc;$(SolutionDir)ECS\Include;$(SolutionDir)Core\Include;$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies\glfw\include;C:\Qt68\6.8.0\msvc2022_64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -143,19 +143,44 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Main.cpp" />
-    <ClCompile Include="src\MOC_Launcher.cpp" />
-    <ClCompile Include="src\MOC_MainWindow.cpp" />
-    <ClCompile Include="src\MOC_NewProjectDialog.cpp" />
-    <ClCompile Include="src\MOC_VulkanRenderer.cpp" />
-    <ClCompile Include="src\Renderers\MinimalistRenderer.cpp" />
+    <ClCompile Include="src\Main.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="src\MOC_Launcher.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="src\MOC_MainWindow.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="src\MOC_NewProjectDialog.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="src\MOC_VulkanRenderer.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="src\pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="src\Renderers\MinimalistRenderer.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Launcher.hpp" />
     <ClInclude Include="src\MainWindow.hpp" />
     <ClInclude Include="src\NewProjectDialog.hpp" />
+    <ClInclude Include="src\pch.hpp" />
     <ClInclude Include="src\Renderers\MinimalistRenderer.hpp" />
     <ClInclude Include="src\VulkanRenderer.hpp" />
+    <ClInclude Include="src\Widgets\Inspector.hpp" />
+    <ClInclude Include="src\Widgets\TreeEntityItem.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="Editor_Resources\Montserrat.ttf" />

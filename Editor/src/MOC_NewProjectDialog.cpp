@@ -5,7 +5,7 @@
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
-
+#include "pch.hpp"
 #include "NewProjectDialog.hpp"
 #include <QtCore/qmetatype.h>
 

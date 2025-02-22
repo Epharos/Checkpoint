@@ -48,6 +48,21 @@ namespace ECS
 			return std::tuple<T&...>{GetComponent<T>(entity)...};
 		}
 
+		std::list<void*> GetAllComponentsOf(Entity entity)
+		{
+			std::list<void*> components;
+
+			for (auto& [type, storage] : componentStorage)
+			{
+				if (storage->Has(entity))
+				{
+					components.push_back(&storage->);
+				}
+			}
+
+			return components;
+		}
+
 		template<typename T>
 		bool HasComponent(Entity entity) const
 		{

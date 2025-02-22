@@ -1,39 +1,6 @@
 #pragma once
 
-#include <QtWidgets/qdialog.h>
-#include <QtWidgets/qlabel.h>
-#include <QtWidgets/qlineedit.h>
-#include <QtWidgets/qpushbutton.h>
-#include <QtWidgets/qfiledialog.h>
-#include <QtWidgets/qboxlayout.h>
-
-#include <QtCore/qjsondocument.h>
-#include <QtCore/qjsonobject.h>
-#include <QtCore/qjsonarray.h>
-
-struct ProjectData
-{
-    QString name;
-    QString path;
-    QDateTime lastOpened;
-
-    bool operator==(const ProjectData& other) const
-    {
-        return name == other.name && path == other.path;
-    }
-
-    bool operator!=(const ProjectData& other) const
-    {
-        return !(*this == other);
-    }
-
-    bool operator<(const ProjectData& other) const
-    {
-        return lastOpened > other.lastOpened;
-    }
-
-    ProjectData(QString name, QString path, QDateTime lastOpened) : name(name), path(path), lastOpened(lastOpened) {}
-};
+#include "pch.hpp"
 
 class NewProjectDialog : public QDialog 
 {

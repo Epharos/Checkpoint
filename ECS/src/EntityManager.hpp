@@ -14,7 +14,7 @@ namespace ECS
 		
 
 	public:
-		inline static Entity NULL_ENTITY = { -1, 0 };
+		inline static Entity NULL_ENTITY = { static_cast<ID>(-1), 0};
 		EntityManager();
 		Entity CreateEntity();
 
