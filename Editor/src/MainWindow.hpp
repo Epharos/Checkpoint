@@ -3,6 +3,7 @@
 #include "pch.hpp"
 
 #include "Widgets/TreeEntityItem.hpp"
+#include "Widgets/Inspector.hpp"
 
 #include "Renderers/MinimalistRenderer.hpp"
 #include "VulkanRenderer.hpp"
@@ -84,7 +85,7 @@ protected:
 			});
 
 		connect(openInspectorAction, &QAction::triggered, [=] {
-			// Open inspector
+			CreateInspectorDockWidget();
 			});
 
 		connect(openConsoleAction, &QAction::triggered, [=] {
@@ -175,6 +176,33 @@ protected:
 		dock->setWidget(fileExplorer);
 		dock->setFloating(true);
 		addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, dock);
+	}
+
+	void CreateInspectorDockWidget()
+	{
+		QDockWidget* dock = new QDockWidget("Inspector", this);
+		Inspector* inspector = new Inspector(currentScene, dock);
+		dock->setWidget(inspector);
+		dock->setFloating(true);
+		addDockWidget(Qt::DockWidgetArea::RightDockWidgetArea, dock);
+
+		connect(sceneHierarchy, &QTreeWidget::itemSelectionChanged, [=] {
+			QList<QTreeWidgetItem*> items = sceneHierarchy->selectedItems();
+
+			if (items.size() == 1)
+			{
+				TreeEntityItem* entityItem = dynamic_cast<TreeEntityItem*>(items[0]);
+
+				if (entityItem)
+				{
+					inspector->ShowEntity(&entityItem->GetEntity());
+				}
+			}
+			else
+			{
+				inspector->ShowFile("");
+			}
+			});
 	}
 
 

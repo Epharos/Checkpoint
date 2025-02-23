@@ -79,7 +79,7 @@ void Pipeline::DescriptorSetManager::UpdateDescriptorSet(const std::string& _nam
 		writes.push_back(write);
 	}
 
-	device.updateDescriptorSets(writes.size(), writes.data(), 0, nullptr);
+	device.updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 }
 
 void Pipeline::DescriptorSetManager::UpdateDescriptorSets(const std::vector<std::string>& _names, const std::vector<DescriptorSetUpdate>& _writes)
@@ -117,7 +117,7 @@ void Pipeline::DescriptorSetManager::UpdateDescriptorSets(const std::vector<std:
 		writes.push_back(write);
 	}
 
-	device.updateDescriptorSets(writes.size(), writes.data(), 0, nullptr);
+	device.updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 }
 
 vk::DescriptorSet Pipeline::DescriptorSetManager::CreateDescriptorSet(const std::string& _name, const vk::DescriptorSetLayout& _layout)
@@ -128,6 +128,7 @@ vk::DescriptorSet Pipeline::DescriptorSetManager::CreateDescriptorSet(const std:
 #endif
 
 	sets[_name] = CreateOrphanedDescriptorSet(_layout);
+	return sets[_name];
 }
 
 std::vector<vk::DescriptorSet> Pipeline::DescriptorSetManager::CreateDescriptorSets(const std::vector<std::string>& _names, const std::vector<vk::DescriptorSetLayout>& _layouts)
@@ -141,7 +142,7 @@ std::vector<vk::DescriptorSet> Pipeline::DescriptorSetManager::CreateDescriptorS
 			throw std::runtime_error("Descriptor set with name " + name + " already exists");
 #endif
 
-	std::vector<vk::DescriptorSet> results = device.allocateDescriptorSets(vk::DescriptorSetAllocateInfo(pool, _names.size(), _layouts.data()));
+	std::vector<vk::DescriptorSet> results = device.allocateDescriptorSets(vk::DescriptorSetAllocateInfo(pool, static_cast<uint32_t>(_names.size()), _layouts.data()));
 
 	for (size_t i = 0; i < _names.size(); i++)
 		sets[_names[i]] = results[i];
@@ -202,7 +203,7 @@ void Pipeline::DescriptorSetManager::UpdateOrphanedDescriptorSet(const vk::Descr
 		writes.push_back(write);
 	}
 
-	device.updateDescriptorSets(writes.size(), writes.data(), 0, nullptr);
+	device.updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 
 }
 

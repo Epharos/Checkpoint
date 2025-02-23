@@ -2,8 +2,8 @@
 
 #include "pch.hpp"
 
-using ID = std::uint32_t;
-using Version = std::uint8_t;
+using ID = uint32_t;
+using Version = uint8_t;
 
 struct Entity
 {

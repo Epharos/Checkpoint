@@ -90,7 +90,12 @@ namespace Helper
 			submitInfo.commandBufferCount = 1;
 			submitInfo.pCommandBuffers = &commandBuffer;
 
-			queue.submit(1, &submitInfo, nullptr);
+			if (queue.submit(1, &submitInfo, nullptr) != vk::Result::eSuccess)
+			{
+				LOG_ERROR("Failed to submit copy buffer command");
+				throw std::runtime_error("Failed to submit copy buffer command");
+			}
+
 			queue.waitIdle();
 
 			device.freeCommandBuffers(commandPool, commandBuffer);
@@ -309,12 +314,20 @@ vk::CommandBuffer Helper::CommandBuffer::BeginSingleTimeCommands(const vk::Devic
 	allocInfo.commandBufferCount = 1;
 
 	vk::CommandBuffer commandBuffer;
-	device.allocateCommandBuffers(&allocInfo, &commandBuffer);
+	if (device.allocateCommandBuffers(&allocInfo, &commandBuffer) != vk::Result::eSuccess)
+	{
+		LOG_ERROR("Failed to allocate command buffer");
+		throw std::runtime_error("Failed to allocate command buffer");
+	}
 
 	vk::CommandBufferBeginInfo beginInfo;
 	beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
 
-	commandBuffer.begin(&beginInfo);
+	if (commandBuffer.begin(&beginInfo) != vk::Result::eSuccess)
+	{
+		LOG_ERROR("Failed to begin command buffer");
+		throw std::runtime_error("Failed to begin command buffer");
+	}
 
 	return commandBuffer;
 }
@@ -327,7 +340,12 @@ void Helper::CommandBuffer::EndSingleTimeCommands(const vk::Device& device, cons
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &commandBuffer;
 
-	queue.submit(1, &submitInfo, nullptr);
+	if (queue.submit(1, &submitInfo, nullptr) != vk::Result::eSuccess)
+	{
+		LOG_ERROR("Failed to submit command buffer");
+		throw std::runtime_error("Failed to submit command buffer");
+	}
+
 	queue.waitIdle();
 
 	device.freeCommandBuffers(commandPool, 1, &commandBuffer);

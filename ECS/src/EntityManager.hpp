@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pch.hpp"
+#include "Entity.hpp"
 
 namespace ECS
 {
@@ -10,8 +11,6 @@ namespace ECS
 		ID nextID;
 		std::deque<ID> availableIDs;
 		std::vector<Version> versions;
-
-		
 
 	public:
 		inline static Entity NULL_ENTITY = { static_cast<ID>(-1), 0};

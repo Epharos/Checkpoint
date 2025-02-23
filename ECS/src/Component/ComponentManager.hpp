@@ -1,7 +1,9 @@
 #pragma once
 
-#include "pch.hpp"
+#include "../pch.hpp"
+#include "../Entity.hpp"
 #include "ComponentSparseSet.hpp"
+#include "ComponentBase.hpp"
 
 namespace ECS
 {
@@ -27,6 +29,9 @@ namespace ECS
 		template<typename T>
 		bool AddComponent(Entity entity, T component)
 		{
+			if (!std::is_base_of<IComponentBase, T>::value)
+				throw std::runtime_error("Component must inherit from IComponentBase");
+
 			return GetOrCreateComponentSparseSet<T>().Add(std::move(entity), std::move(component));
 		}
 
@@ -48,19 +53,19 @@ namespace ECS
 			return std::tuple<T&...>{GetComponent<T>(entity)...};
 		}
 
-		std::list<void*> GetAllComponentsOf(Entity entity)
+		std::vector<std::pair<std::type_index, void*>> GetAllComponentsOf(Entity entity)
 		{
-			std::list<void*> components;
+			std::vector<std::pair<std::type_index, void*>> result;
 
 			for (auto& [type, storage] : componentStorage)
 			{
 				if (storage->Has(entity))
 				{
-					components.push_back(&storage->);
+					result.push_back({ type, storage->GetRaw(entity) });
 				}
 			}
 
-			return components;
+			return result;
 		}
 
 		template<typename T>

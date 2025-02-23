@@ -20,16 +20,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\ECS.hpp" />
-    <ClInclude Include="src\ComponentBase.hpp" />
-    <ClInclude Include="src\ComponentManager.hpp" />
-    <ClInclude Include="src\ComponentRegistry.hpp" />
-    <ClInclude Include="src\ComponentSparseSet.hpp" />
-    <ClInclude Include="src\ComponentWidget.hpp" />
+    <ClInclude Include="src\Component\ComponentBase.hpp" />
+    <ClInclude Include="src\Component\ComponentManager.hpp" />
+    <ClInclude Include="src\Component\ComponentRegistry.hpp" />
+    <ClInclude Include="src\Component\ComponentSparseSet.hpp" />
+    <ClInclude Include="src\Component\ComponentWidget.hpp" />
     <ClInclude Include="src\Entity.hpp" />
     <ClInclude Include="src\EntityComponentSystem.hpp" />
     <ClInclude Include="src\EntityManager.hpp" />
     <ClInclude Include="src\pch.hpp" />
-    <ClInclude Include="src\SparseSet.h" />
+    <ClInclude Include="src\SparseSet.hpp" />
     <ClInclude Include="src\System.hpp" />
     <ClInclude Include="src\SystemManager.hpp" />
   </ItemGroup>
@@ -142,6 +142,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

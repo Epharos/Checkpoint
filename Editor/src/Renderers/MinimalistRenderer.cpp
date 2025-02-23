@@ -1,3 +1,5 @@
+#include "pch.hpp"
+
 #include "MinimalistRenderer.hpp"
 
 void MinimalistRenderer::CreateMainRenderPass()

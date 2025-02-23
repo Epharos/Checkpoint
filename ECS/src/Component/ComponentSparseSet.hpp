@@ -1,6 +1,7 @@
 #pragma once
-#include "pch.hpp"
-#include "SparseSet.h"
+#include "../pch.hpp"
+#include "../SparseSet.hpp"
+#include "../Entity.hpp"
 
 namespace ECS
 {
@@ -52,6 +53,11 @@ namespace ECS
 		T& Get(Entity _entity)
 		{
 			return components[sparse[_entity.id]];
+		}
+
+		void* GetRaw(Entity _entity) override
+		{
+			return &components[sparse[_entity.id]];
 		}
 
 		bool Has(Entity _entity) const

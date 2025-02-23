@@ -171,15 +171,26 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="src\Widgets\Fields\MOC_Quat.cpp" />
+    <ClCompile Include="src\Widgets\Fields\MOC_Vec3.cpp" />
+    <ClCompile Include="src\Widgets\MOC_Inspector.cpp" />
+    <ClCompile Include="src\Widgets\MOC_SearchList.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Components\DirtyPattern.hpp" />
+    <ClInclude Include="src\Components\MeshRenderer.hpp" />
+    <ClInclude Include="src\Components\Transform.hpp" />
     <ClInclude Include="src\Launcher.hpp" />
     <ClInclude Include="src\MainWindow.hpp" />
     <ClInclude Include="src\NewProjectDialog.hpp" />
     <ClInclude Include="src\pch.hpp" />
     <ClInclude Include="src\Renderers\MinimalistRenderer.hpp" />
     <ClInclude Include="src\VulkanRenderer.hpp" />
+    <ClInclude Include="src\Widgets\Fields\Field.hpp" />
+    <ClInclude Include="src\Widgets\Fields\Quat.hpp" />
+    <ClInclude Include="src\Widgets\Fields\Vec3.hpp" />
     <ClInclude Include="src\Widgets\Inspector.hpp" />
+    <ClInclude Include="src\Widgets\SearchList.hpp" />
     <ClInclude Include="src\Widgets\TreeEntityItem.hpp" />
   </ItemGroup>
   <ItemGroup>

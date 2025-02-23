@@ -1,6 +1,6 @@
 #pragma once
 
 #include "../src/EntityComponentSystem.hpp"
-#include "../src/ComponentBase.hpp"
-#include "../src/ComponentWidget.hpp"
-#include "../src/ComponentRegistry.hpp"
+#include "../src/Component/ComponentBase.hpp"
+#include "../src/Component/ComponentWidget.hpp"
+#include "../src/Component/ComponentRegistry.hpp"

@@ -1,12 +1,16 @@
 #pragma once
 
-#include "ComponentManager.hpp"
+#include "pch.hpp"
+
+#include "EntityManager.hpp"
+#include "Component/ComponentManager.hpp"
 
 namespace ECS
 {
 	class System
 	{
 	public:
+		virtual ~System() = default;
 		virtual void OnRegister(EntityManager& _entityManager, ComponentManager& _componentManager) {};
 		virtual void Update(EntityManager& _entityManager, ComponentManager& _componentManager, const float& _dt) = 0;
 		virtual void Cleanup() = 0;

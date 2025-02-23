@@ -1,11 +1,12 @@
 #pragma once
 
-#include "pch.hpp"
+#include "../pch.hpp"
 #include "ComponentBase.hpp"
 
 class ComponentWidgetBase : public QWidget
 {
 public:
+	ComponentWidgetBase(QWidget* _parent = nullptr) : QWidget(_parent) {}
 	virtual ~ComponentWidgetBase() = default;
 	virtual void Initialize() = 0;
 };
@@ -19,7 +20,7 @@ protected:
 	QLabel* componentName;
 
 public:
-	ComponentWidget(T& _component, const std::string& _componentName, QWidget* _parent = nullptr) : QWidget(_parent), component(_component)
+	ComponentWidget(T& _component, const std::string& _componentName, QWidget* _parent = nullptr) : ComponentWidgetBase(_parent), component(_component)
 	{
 		if (!std::is_base_of<IComponentBase, T>::value)
 		{
@@ -29,6 +30,8 @@ public:
 		layout = new QVBoxLayout(this);
 		componentName = new QLabel(QString::fromStdString(_componentName), this);
 		layout->addWidget(componentName);
+		setLayout(layout);
+		layout->setAlignment(Qt::AlignTop);
 	}
 
 	virtual void Initialize() = 0;

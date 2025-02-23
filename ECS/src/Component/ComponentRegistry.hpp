@@ -2,12 +2,15 @@
 
 #include "ComponentWidget.hpp"
 #include "ComponentBase.hpp"
-#include "EntityComponentSystem.hpp"
+#include "../EntityComponentSystem.hpp"
 
 class ComponentRegistry
 {
 public:
-	using ComponentFactoryFunction = std::function<void(const ECS::EntityComponentSystem&, Entity&)>;
+	ComponentRegistry() = default;
+	NO_COPY(ComponentRegistry)
+
+	using ComponentFactoryFunction = std::function<void(ECS::EntityComponentSystem&, Entity&)>;
 	using WidgetFactoryFunction = std::function<std::unique_ptr<ComponentWidgetBase>(ECS::EntityComponentSystem&, Entity&)>;
 
 	static ComponentRegistry& GetInstance()
@@ -21,7 +24,7 @@ public:
 	{
 		typeIndexMap[std::type_index(typeid(ComponentType))] = _registerName;
 
-		componentFactory[_registerName] = [this](const ECS::EntityComponentSystem& _ecs, Entity& _entity)
+		componentFactory[_registerName] = [](ECS::EntityComponentSystem& _ecs, Entity& _entity)
 			{
 				_ecs.AddComponent<ComponentType>(_entity);
 			};
@@ -34,7 +37,7 @@ public:
 #endif
 	}
 
-	void CreateComponent(ECS::EntityComponentSystem _ecs, Entity& _entity, const std::string& _componentName)
+	void CreateComponent(ECS::EntityComponentSystem& _ecs, Entity& _entity, const std::string& _componentName)
 	{
 		auto it = componentFactory.find(_componentName);
 
@@ -44,8 +47,18 @@ public:
 		}
 	}
 
+	void CreateComponent(ECS::EntityComponentSystem& _ecs, Entity& _entity, const std::type_index& _typeIndex)
+	{
+		auto it = componentFactory.find(typeIndexMap[_typeIndex]);
+
+		if (it != componentFactory.end())
+		{
+			it->second(_ecs, _entity);
+		}
+	}
+
 	template<typename ComponentType>
-	void CreateComponent(ECS::EntityComponentSystem _ecs, Entity& _entity)
+	void CreateComponent(ECS::EntityComponentSystem& _ecs, Entity& _entity)
 	{
 		auto it = componentFactory.find(typeIndexMap[std::type_index(typeid(ComponentType))]);
 
@@ -59,6 +72,31 @@ public:
 	std::unique_ptr<ComponentWidgetBase> CreateWidget(ECS::EntityComponentSystem& _ecs, Entity& _entity, const std::string& _registerName)
 	{
 		auto it = widgetFactory.find(_registerName);
+
+		if (it != widgetFactory.end())
+		{
+			return it->second(_ecs, _entity);
+		}
+
+		return nullptr;
+	}
+
+	std::unique_ptr<ComponentWidgetBase> CreateWidget(ECS::EntityComponentSystem& _ecs, Entity& _entity, const std::type_index& _typeIndex)
+	{
+		auto it = widgetFactory.find(typeIndexMap[_typeIndex]);
+
+		if (it != widgetFactory.end())
+		{
+			return it->second(_ecs, _entity);
+		}
+
+		return nullptr;
+	}
+
+	std::unique_ptr<ComponentWidgetBase> CreateWidget(ECS::EntityComponentSystem& _ecs, Entity& _entity, const IComponentBase& _component)
+	{
+		auto it = widgetFactory.find(typeIndexMap[std::type_index(typeid(_component))]);
+
 		if (it != widgetFactory.end())
 		{
 			return it->second(_ecs, _entity);
@@ -79,7 +117,22 @@ public:
 
 		return nullptr;
 	}
+
+	std::unordered_map<std::string, WidgetFactoryFunction>& GetWidgetFactories()
+	{
+		return widgetFactory;
+	}
 #endif
+
+	std::unordered_map<std::string, ComponentFactoryFunction>& GetComponentFactories()
+	{
+		return componentFactory;
+	}
+
+	std::unordered_map<std::type_index, std::string>& GetTypeIndexMap()
+	{
+		return typeIndexMap;
+	}
 
 private:
 #ifdef IN_EDITOR

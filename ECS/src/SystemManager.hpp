@@ -2,7 +2,6 @@
 
 #include "pch.hpp"
 #include "System.hpp"
-#include "ComponentManager.hpp"
 
 namespace ECS
 {
@@ -17,7 +16,7 @@ namespace ECS
 		{
 			auto system = std::make_unique<T>(std::forward<Args>(_args)...);
 			systems.emplace_back(std::move(system));
-			return *static_cast<T*>(systems.back().get());
+			return *static_cast<T*>(system);
 		};
 
 		void Update(EntityManager& _entityManager, ComponentManager& _componentManager, const float& _dt)

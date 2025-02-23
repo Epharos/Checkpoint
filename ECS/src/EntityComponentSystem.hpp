@@ -2,7 +2,7 @@
 
 #include "pch.hpp"
 #include "EntityManager.hpp"
-#include "ComponentManager.hpp"
+#include "Component/ComponentManager.hpp"
 #include "SystemManager.hpp"
 
 namespace ECS
@@ -50,10 +50,15 @@ namespace ECS
 			return componentManager.GetComponents<T...>(_entity);
 		}
 
+		std::vector<std::pair<std::type_index, void*>> GetAllComponentsOf(Entity _entity)
+		{
+			return componentManager.GetAllComponentsOf(_entity);
+		}
+
 		template <typename T, typename... Args>
 		T& RegisterSystem(Args&& ... _args)
 		{
-			T& system = systemManager.RegisterSystem<T>(_args...);
+			T& system = systemManager.RegisterSystem<T>(std::forward<Args>(_args)...);
 			system.OnRegister(entityManager, componentManager);
 			return system;
 		}
@@ -100,7 +105,5 @@ namespace ECS
 		{
 			systemManager.Cleanup();
 		}
-
-
 	};
 }

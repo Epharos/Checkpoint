@@ -4,6 +4,9 @@
 #include "MainWindow.hpp"
 #include "Launcher.hpp"
 
+#include "Components/Transform.hpp"
+#include "Components/MeshRenderer.hpp"
+
 QString LoadStyleSheet(const QString& path)
 {
 	QFile file(path);
@@ -22,6 +25,9 @@ QString LoadStyleSheet(const QString& path)
 int main(int argc, char* args[])
 {
 	QApplication app(argc, args);
+
+	ComponentRegistry::GetInstance().Register<Transform, TransformWidget>("Transform");
+	ComponentRegistry::GetInstance().Register<MeshRenderer, MeshRendererWidget>("Mesh Renderer");
 
 	app.setStyleSheet(LoadStyleSheet("Editor_Resources/Stylesheet.qss"));
 

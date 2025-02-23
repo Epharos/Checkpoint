@@ -168,8 +168,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Core.hpp" />
-    <ClInclude Include="src\Components\DirtyPattern.hpp" />
-    <ClInclude Include="src\Components\Transform.hpp" />
     <ClInclude Include="src\Context\Devices.hpp" />
     <ClInclude Include="src\Context\Platforms\PlatformGLFW.hpp" />
     <ClInclude Include="src\Context\Platforms\Platform.hpp" />
