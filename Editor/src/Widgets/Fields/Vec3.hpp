@@ -34,9 +34,9 @@ public:
 		QLineEdit* yEdit = new QLineEdit(QString::number(value->y), this);
 		QLineEdit* zEdit = new QLineEdit(QString::number(value->z), this);
 
-		QHBoxLayout* xLayout = new QHBoxLayout(this);
-		QHBoxLayout* yLayout = new QHBoxLayout(this);
-		QHBoxLayout* zLayout = new QHBoxLayout(this);
+		QHBoxLayout* xLayout = new QHBoxLayout();
+		QHBoxLayout* yLayout = new QHBoxLayout();
+		QHBoxLayout* zLayout = new QHBoxLayout();
 
 		xLayout->addWidget(xLabel);
 		xLayout->addWidget(xEdit);
@@ -48,8 +48,6 @@ public:
 		layout->addLayout(xLayout);
 		layout->addLayout(yLayout);
 		layout->addLayout(zLayout);
-
-		setLayout(layout);
 
 		connect(xEdit, &QLineEdit::textChanged, this, &Vec3::UpdateX);
 		connect(yEdit, &QLineEdit::textChanged, this, &Vec3::UpdateY);

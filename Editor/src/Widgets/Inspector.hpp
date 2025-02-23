@@ -26,6 +26,31 @@ public:
 		setMinimumHeight(480);
 	}
 
+	void CreateAddComponentButton(Entity* _entity)
+	{
+		QPushButton* addComponentButton = new QPushButton("Add Component", this);
+		layout->addWidget(addComponentButton);
+
+		connect(addComponentButton, &QPushButton::clicked, [=] {
+			QMenu* menu = new QMenu(addComponentButton);
+
+			SearchList* searchList = new SearchList(menu);
+			searchList->Populate(ComponentRegistry::GetInstance().GetTypeIndexMap());
+
+			QWidgetAction* widgetAction = new QWidgetAction(menu);
+			widgetAction->setDefaultWidget(searchList);
+			menu->addAction(widgetAction);
+
+			connect(searchList, &SearchList::ItemSelected, [=](std::type_index _type) {
+				ComponentRegistry::GetInstance().CreateComponent(scene->GetECS(), *_entity, _type);
+				UpdateComponents(_entity);
+				if (menu) menu->close();
+				});
+
+			menu->popup(addComponentButton->mapToGlobal(QPoint(0, addComponentButton->height())));
+			});
+	}
+
 	void UpdateComponents(Entity* _entity)
 	{
 		QLayoutItem* child;
@@ -43,6 +68,8 @@ public:
 			layout->addSpacerItem(new QSpacerItem(0, 10));
 		}
 
+		CreateAddComponentButton(_entity);
+
 		layout->update();
 	}
 
@@ -53,28 +80,6 @@ public:
 		layout->addSpacerItem(new QSpacerItem(0, 10));
 
 		UpdateComponents(_entity);
-
-		QPushButton* addComponentButton = new QPushButton("Add Component", this);
-		layout->addWidget(addComponentButton);
-
-		connect(addComponentButton, &QPushButton::clicked, [=] {
-			QMenu* menu = new QMenu(addComponentButton);
-
-			SearchList* searchList = new SearchList(menu);
-			searchList->Populate(ComponentRegistry::GetInstance().GetTypeIndexMap());
-
-			QWidgetAction* widgetAction = new QWidgetAction(menu);
-			widgetAction->setDefaultWidget(searchList);
-			menu->addAction(widgetAction);
-
-			connect(searchList, &SearchList::ItemSelected, [=](std::type_index _type) {
-				ComponentRegistry::GetInstance().CreateComponent(scene->GetECS(), *_entity, _type);
-				UpdateComponents(_entity);
-				if(menu) menu->close();
-				});
-
-			menu->popup(addComponentButton->mapToGlobal(QPoint(0, addComponentButton->height())));
-			});
 	}
 
 	void ShowFile(const std::string& _path)

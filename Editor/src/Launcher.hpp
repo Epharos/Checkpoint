@@ -64,7 +64,7 @@ public:
 		QPushButton* openProjectBtn = new QPushButton("Open Project", this);
 		openProjectBtn->setFixedSize(120, 30);
 		openProjectBtn->setStyleSheet("font-size:16px; color:#fff; background-color:#555; border:none; padding:4px 20px; border-radius:5px;");
-		QHBoxLayout* buttonLayout = new QHBoxLayout(this);
+		QHBoxLayout* buttonLayout = new QHBoxLayout();
         buttonLayout->addWidget(openProjectBtn);
 		buttonLayout->addWidget(newProjectBtn);
 		buttonLayout->setAlignment(Qt::AlignRight);

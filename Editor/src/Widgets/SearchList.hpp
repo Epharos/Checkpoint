@@ -17,7 +17,6 @@ public:
 		layout->addWidget(list);
 
 		searchBox->setPlaceholderText("Search...");
-		searchBox->setFocus();
 
 		connect(searchBox, &QLineEdit::textChanged, this, &SearchList::Search);
 		connect(list, &QListWidget::itemDoubleClicked, this, &SearchList::SelectItem);

@@ -42,6 +42,7 @@ int main(int argc, char* args[])
 			QFont font(fontFamilies.first(), 10);
 			font.setWeight(QFont::Weight::Normal);
 			font.setStyleStrategy(QFont::PreferQuality);
+			font.setHintingPreference(QFont::HintingPreference::PreferNoHinting);
 			app.setFont(font);
 		}
 		else
