@@ -99,7 +99,7 @@ protected:
 		setMenuBar(menuBar);
 	}
 
-	void CreateSceneHierarchyDockWidget()
+	void CreateSceneHierarchyDockWidget(bool floating = true)
 	{
 		QDockWidget* dock = new QDockWidget("Scene hierarchy", this);
 		if (!sceneHierarchy)
@@ -159,11 +159,11 @@ protected:
 
 		sceneHierarchy->setHeaderLabel(currentScene ? QString::fromStdString(currentScene->GetName()) : "No scene selected");
 		dock->setWidget(sceneHierarchy);
-		dock->setFloating(true);
+		dock->setFloating(floating);
 		addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, dock);
 	}
 
-	void CreateFileExplorerDockWidget()
+	void CreateFileExplorerDockWidget(bool floating = true)
 	{
 		QFileSystemModel* fileSystemModel = new QFileSystemModel;
 		fileSystemModel->setRootPath(projectData.path + "/Resources");
@@ -174,16 +174,16 @@ protected:
 
 		QDockWidget* dock = new QDockWidget("File explorer", this);
 		dock->setWidget(fileExplorer);
-		dock->setFloating(true);
-		addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, dock);
+		dock->setFloating(floating);
+		addDockWidget(Qt::DockWidgetArea::BottomDockWidgetArea, dock);
 	}
 
-	void CreateInspectorDockWidget()
+	void CreateInspectorDockWidget(bool floating = true)
 	{
 		QDockWidget* dock = new QDockWidget("Inspector", this);
 		Inspector* inspector = new Inspector(currentScene, dock);
 		dock->setWidget(inspector);
-		dock->setFloating(true);
+		dock->setFloating(floating);
 		addDockWidget(Qt::DockWidgetArea::RightDockWidgetArea, dock);
 
 		connect(sceneHierarchy, &QTreeWidget::itemSelectionChanged, [=] {
@@ -222,7 +222,11 @@ public:
 		QWidget* container = QWidget::createWindowContainer(window);
 		setCentralWidget(container);
 
-		resize(1280, 720);
+		resize(1824, 1026);
+
+		CreateSceneHierarchyDockWidget(false);
+		CreateFileExplorerDockWidget(false);
+		CreateInspectorDockWidget(false);
 
 		QTimer::singleShot(0, this, &MainWindow::InitializeVulkanRenderer);
 	}

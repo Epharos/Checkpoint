@@ -2,6 +2,8 @@
 
 #define PRINT_VULKAN_SPECS
 
+#define ENGINE_VERSION VK_MAKE_API_VERSION(0, 1, 0, 0)
+
 #include "../pch.hpp"
 #include "Platforms/Platform.hpp"
 
@@ -60,6 +62,8 @@ namespace Context
 		inline Pipeline::DescriptorSetLayoutsManager* GetDescriptorSetLayoutsManager() const { return descriptorSetLayoutsManager; }
 		inline Pipeline::DescriptorSetManager* GetDescriptorSetManager() const { return descriptorSetManager; }
 		inline constexpr vk::DescriptorPool GetDescriptorPool() const { return descriptorSetManager->GetDescriptorPool(); }
+
+		static std::string VersionToString(const uint32& _version);
 #pragma endregion
 
 	private:
@@ -98,8 +102,6 @@ namespace Context
 
 #pragma region Helper Functions
 		void ValidateExtensions(const VulkanExtensions& _extensions) const;
-
-		std::string VersionToString(const uint32& _version) const;
 #pragma endregion
 	};
 }

@@ -5,105 +5,86 @@
 #include "NewProjectDialog.hpp"
 #include "MainWindow.hpp"
 
-class ProjectListItemWidget : public QWidget
+#include "Widgets/Launcher/Button.hpp"
+#include "Widgets/Launcher/ProjectTableView.hpp"
+#include "Widgets/Launcher/ProjectOverview.hpp"
+
+class Launcher : public QWidget
 {
-    Q_OBJECT
-
-protected:
-	ProjectData data;
-    QList<ProjectData>* list;
-
-    void DeleteItemFromList()
-    {
-
-    }
-
-public:
-	ProjectListItemWidget(const ProjectData& data, QWidget* parent = nullptr) : QWidget(parent), data(data), list(nullptr)
-	{
-		QVBoxLayout* layout = new QVBoxLayout(this);
-
-		QLabel* nameLabel = new QLabel(data.name, this);
-		nameLabel->setStyleSheet("font-weight: 600; font-size:16px");
-		QLabel* pathLabel = new QLabel(data.path, this);
-		pathLabel->setStyleSheet("font-size:12px; color:#888;");
-		QLabel* lastOpenedLabel = new QLabel(data.lastOpened.toString("yyyy-MM-dd HH:mm"), this);
-		lastOpenedLabel->setStyleSheet("font-size:12px; color:#bbb;");
-
-        QPushButton* deleteBtn = new QPushButton("Delete", this);
-        deleteBtn->setStyleSheet("background-color:#f33; border-color:#ddd; border-radius:5px; font-size:10px;");
-        deleteBtn->setFixedSize(60, 16);
-
-		layout->addWidget(nameLabel);
-        layout->addWidget(lastOpenedLabel);
-		layout->addWidget(pathLabel);
-        layout->addWidget(deleteBtn);
-
-        connect(deleteBtn, &QPushButton::clicked, this, &ProjectListItemWidget::DeleteItemFromList);
-	}
-
-	const ProjectData& GetData() const { return data; }
-};
-
-class Launcher : public QWidget {
     Q_OBJECT
 
 public:
     Launcher() {
         setWindowTitle("Checkpoint Launcher");
-        //setFixedSize(400, 200);
+		setWindowFlags(Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint);
+        setWindowIcon(QIcon("Editor_Resources/template.png"));
+
+		setFixedHeight(700);
 
         QVBoxLayout* layout = new QVBoxLayout(this);
+
 		QLabel* titleLabel = new QLabel("Recent Projects", this);
 		titleLabel->setStyleSheet("font-size:24px; font-weight:bold;");
-        listWidget = new QListWidget(this);
-        listWidget->setMinimumSize(500, 350);
-        QPushButton* newProjectBtn = new QPushButton("New Project", this);
-		newProjectBtn->setFixedSize(120, 30);
-        newProjectBtn->setStyleSheet("font-size:16px; color:#fff; background-color:#007bff; border:none; padding:4px 20px; border-radius:5px;");
-		QPushButton* openProjectBtn = new QPushButton("Open Project", this);
-		openProjectBtn->setFixedSize(120, 30);
-		openProjectBtn->setStyleSheet("font-size:16px; color:#fff; background-color:#555; border:none; padding:4px 20px; border-radius:5px;");
+
+		Button* createNewProjectBtn = new Button("Create", ButtonImportance::Primary, this);
+		Button* openProjectBtn = new Button("Load", ButtonImportance::Secondary, this);
 		QHBoxLayout* buttonLayout = new QHBoxLayout();
         buttonLayout->addWidget(openProjectBtn);
-		buttonLayout->addWidget(newProjectBtn);
+		buttonLayout->addWidget(createNewProjectBtn);
 		buttonLayout->setAlignment(Qt::AlignRight);
+
+		tableView = new ProjectTableView(this);
+		projectOverview = new ProjectOverview(this);
+
+		QHBoxLayout* tableViewLayout = new QHBoxLayout();
+		tableViewLayout->addWidget(tableView);
+		tableViewLayout->addWidget(projectOverview);
 
         layout->addWidget(titleLabel);
 		layout->addLayout(buttonLayout);
-        layout->addWidget(listWidget);
+		layout->addLayout(tableViewLayout);
 
-        QList<ProjectData> projects = LoadRecentProjects();
+        std::vector<ProjectData> projects = LoadRecentProjects();
 
-        for (const auto& project : projects)
-        {
-            ProjectListItemWidget* item = new ProjectListItemWidget(project);
+        tableView->Populate(projects);
 
-            QListWidgetItem* listItem = new QListWidgetItem();
-            listItem->setSizeHint(item->sizeHint());
-            listWidget->addItem(listItem);
-            listWidget->setItemWidget(listItem, item);
-        }
-
-        connect(listWidget, &QListWidget::itemDoubleClicked, this, &Launcher::OpenProject);
-        connect(newProjectBtn, &QPushButton::clicked, this, &Launcher::CreateNewProject);
+        connect(createNewProjectBtn, &QPushButton::clicked, this, &Launcher::CreateNewProject);
+		connect(tableView, &ProjectTableView::ProjectOpened, this, &Launcher::OpenProject);
+        connect(tableView, &ProjectTableView::ItemSelected, this, &Launcher::ShowProjectData);
     }
     
 private slots:
-    void OpenProject(QListWidgetItem* item) 
+    void OpenProject(const std::string& _path) 
     {
-		ProjectListItemWidget* widget = dynamic_cast<ProjectListItemWidget*>(listWidget->itemWidget(item));
+		QFile file(QString::fromStdString(_path + "/project.data"));
+		if (!file.open(QIODevice::ReadWrite)) return;
 
-		if (widget)
-		{
-			ProjectData data = widget->GetData();
-			MainWindow* mainWindow = new MainWindow(data);
-			mainWindow->setWindowTitle("Checkpoint - " + data.name);
-			mainWindow->show();
-		}
+		QJsonObject projectDataObject = QJsonDocument::fromJson(file.readAll()).object();
+		ProjectData projectData = ProjectData::FromJson(projectDataObject);
+		projectData.lastOpened = QDateTime::currentDateTime();
+        
+		projectDataObject = ProjectData::ToJson(projectData);
 
-        this->close();
+		file.seek(0);
+		file.write(QJsonDocument(projectDataObject).toJson());
+
+		MainWindow* mainWindow = new MainWindow(projectData);
+		mainWindow->setWindowTitle("Checkpoint Editor - " + projectData.name);
+		mainWindow->show();
+
+        close();
     }
+
+	void ShowProjectData(const std::string& _path)
+	{
+		QFile file(QString::fromStdString(_path + "/project.data"));
+		if (!file.open(QIODevice::ReadOnly)) return;
+
+		QJsonObject projectDataObject = QJsonDocument::fromJson(file.readAll()).object();
+		ProjectData projectData = ProjectData::FromJson(projectDataObject);
+
+		projectOverview->SetProject(projectData);
+	}
 
     void CreateNewProject() 
     {
@@ -116,38 +97,25 @@ private slots:
 
     void SaveNewProject(const ProjectData& projectData) 
     {
-        QList<ProjectData> projects = LoadRecentProjects();
+        std::vector<ProjectData> projects = LoadRecentProjects();
 
-        if (!projects.contains(projectData)) 
-        {
-            projects.prepend(projectData);
-            SaveRecentProjects(projects);
+		auto it = std::find(projects.begin(), projects.end(), projectData);
+        if (it != projects.end())
+            return;
 
-            listWidget->clear();
-            
-			for (const auto& project : projects)
-			{
-				ProjectListItemWidget* item = new ProjectListItemWidget(project);
+		projects.insert(projects.begin(), projectData);
+        SaveRecentProjects(projects);
 
-				QListWidgetItem* listItem = new QListWidgetItem();
-				listItem->setSizeHint(item->sizeHint());
-				listWidget->addItem(listItem);
-				listWidget->setItemWidget(listItem, item);
-			}
-        }
+		tableView->Populate(projects);
     }
 
-    void SaveRecentProjects(const QList<ProjectData>& projects) 
+    void SaveRecentProjects(const std::vector<ProjectData>& projects) 
     {
         QJsonArray jsonArray;
 
         for (const auto& project : projects) 
         {
-			QJsonObject obj;
-			obj["name"] = project.name;
-			obj["path"] = project.path;
-			obj["lastOpened"] = project.lastOpened.toString("yyyy-MM-dd HH:mm");
-            jsonArray.append(obj);
+            jsonArray.append(project.path);
         }
 
         QJsonObject root;
@@ -160,7 +128,7 @@ private slots:
         }
     }
 
-    QList<ProjectData> LoadRecentProjects() 
+    std::vector<ProjectData> LoadRecentProjects() 
     {
         QFile file("recent_projects.json");
         if (!file.open(QIODevice::ReadOnly)) return {};
@@ -168,17 +136,27 @@ private slots:
         QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
         QJsonArray jsonArray = doc.object()["recentProjects"].toArray();
 
-        QList<ProjectData> projects;
+        std::vector<ProjectData> projects;
 
         for (const auto& value : jsonArray)
         {
-            QJsonObject obj = value.toObject();
-            projects.append(ProjectData(obj["name"].toString(), obj["path"].toString(), QDateTime::fromString(obj["lastOpened"].toString(), "yyyy-MM-dd HH:mm")));
+			QFile projectDataFile(value.toString() + "/project.data");
+			if (!projectDataFile.open(QIODevice::ReadOnly)) continue;
+
+			QJsonDocument projectDoc = QJsonDocument::fromJson(projectDataFile.readAll());
+			QJsonObject projectObj = projectDoc.object();
+
+			projects.push_back(ProjectData::FromJson(projectObj));
         }
+
+		std::sort(projects.begin(), projects.end(), [](const ProjectData& a, const ProjectData& b) {
+			return a.lastOpened > b.lastOpened;
+			});
 
         return projects;
     }
 
 private:
-    QListWidget* listWidget;
+	ProjectTableView* tableView;
+	ProjectOverview* projectOverview;
 };

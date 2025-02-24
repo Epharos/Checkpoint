@@ -31,7 +31,7 @@ int main(int argc, char* args[])
 
 	app.setStyleSheet(LoadStyleSheet("Editor_Resources/Stylesheet.qss"));
 
-	int fontID = QFontDatabase::addApplicationFont("Editor_Resources/Metropolis.otf");
+	int fontID = QFontDatabase::addApplicationFont("Editor_Resources/OpenSans.ttf");
 
 	if (fontID != -1)
 	{
@@ -40,7 +40,6 @@ int main(int argc, char* args[])
 		if (!fontFamilies.isEmpty())
 		{
 			QFont font(fontFamilies.first(), 10);
-			font.setWeight(QFont::Weight::Normal);
 			font.setStyleStrategy(QFont::PreferQuality);
 			font.setHintingPreference(QFont::HintingPreference::PreferNoHinting);
 			app.setFont(font);
@@ -57,9 +56,6 @@ int main(int argc, char* args[])
 
 	Launcher launcher;
 	launcher.show();
-
-	/*MainWindow mainWindow;
-	mainWindow.show();*/
 
 	return app.exec();
 }

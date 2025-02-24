@@ -57,6 +57,7 @@ public:
 		while ((child = layout->takeAt(2)) != nullptr)
 		{
 			if(child->widget()) child->widget()->deleteLater();
+			else if (child->layout()) child->layout()->deleteLater();
 			else delete child;
 		}
 

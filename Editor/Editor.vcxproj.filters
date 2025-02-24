@@ -42,10 +42,19 @@
     <ClCompile Include="src\Widgets\MOC_SearchList.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Widgets\Fields\MOC_Quat.cpp">
+    <ClCompile Include="src\Widgets\ComponentFields\MOC_Quat.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Widgets\Fields\MOC_Vec3.cpp">
+    <ClCompile Include="src\Widgets\ComponentFields\MOC_Vec3.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Widgets\Launcher\MOC_Button.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Widgets\Launcher\MOC_ProjectOverview.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Widgets\Launcher\MOC_ProjectTableView.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -86,20 +95,32 @@
     <ClInclude Include="src\Components\Transform.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Widgets\Fields\Vec3.hpp">
+    <ClInclude Include="src\Widgets\ComponentFields\Vec3.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Widgets\Fields\Quat.hpp">
+    <ClInclude Include="src\Widgets\ComponentFields\Quat.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Widgets\Fields\Field.hpp">
+    <ClInclude Include="src\Widgets\ComponentFields\Field.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Widgets\Launcher\Button.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Widgets\Launcher\ProjectTableView.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Widgets\Launcher\ProjectOverview.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Font Include="Editor_Resources\Montserrat.ttf" />
+    <Font Include="Editor_Resources\Metropolis.otf" />
+    <Font Include="Editor_Resources\Oswald.ttf" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DEBUG\HALF_QUAD.slang" />
+    <None Include="Editor_Resources\Stylesheet.qss" />
   </ItemGroup>
 </Project>

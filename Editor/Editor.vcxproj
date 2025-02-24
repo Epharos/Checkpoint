@@ -171,8 +171,11 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="src\Widgets\Fields\MOC_Quat.cpp" />
-    <ClCompile Include="src\Widgets\Fields\MOC_Vec3.cpp" />
+    <ClCompile Include="src\Widgets\ComponentFields\MOC_Quat.cpp" />
+    <ClCompile Include="src\Widgets\ComponentFields\MOC_Vec3.cpp" />
+    <ClCompile Include="src\Widgets\Launcher\MOC_Button.cpp" />
+    <ClCompile Include="src\Widgets\Launcher\MOC_ProjectOverview.cpp" />
+    <ClCompile Include="src\Widgets\Launcher\MOC_ProjectTableView.cpp" />
     <ClCompile Include="src\Widgets\MOC_Inspector.cpp" />
     <ClCompile Include="src\Widgets\MOC_SearchList.cpp" />
   </ItemGroup>
@@ -186,18 +189,24 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
     <ClInclude Include="src\pch.hpp" />
     <ClInclude Include="src\Renderers\MinimalistRenderer.hpp" />
     <ClInclude Include="src\VulkanRenderer.hpp" />
-    <ClInclude Include="src\Widgets\Fields\Field.hpp" />
-    <ClInclude Include="src\Widgets\Fields\Quat.hpp" />
-    <ClInclude Include="src\Widgets\Fields\Vec3.hpp" />
+    <ClInclude Include="src\Widgets\ComponentFields\Field.hpp" />
+    <ClInclude Include="src\Widgets\ComponentFields\Quat.hpp" />
+    <ClInclude Include="src\Widgets\ComponentFields\Vec3.hpp" />
     <ClInclude Include="src\Widgets\Inspector.hpp" />
+    <ClInclude Include="src\Widgets\Launcher\Button.hpp" />
+    <ClInclude Include="src\Widgets\Launcher\ProjectOverview.hpp" />
+    <ClInclude Include="src\Widgets\Launcher\ProjectTableView.hpp" />
     <ClInclude Include="src\Widgets\SearchList.hpp" />
     <ClInclude Include="src\Widgets\TreeEntityItem.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <Font Include="Editor_Resources\Metropolis.otf" />
     <Font Include="Editor_Resources\Montserrat.ttf" />
+    <Font Include="Editor_Resources\Oswald.ttf" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DEBUG\HALF_QUAD.slang" />
+    <None Include="Editor_Resources\Stylesheet.qss" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

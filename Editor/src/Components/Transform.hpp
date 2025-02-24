@@ -2,8 +2,8 @@
 
 #include "../pch.hpp"
 #include "DirtyPattern.hpp"
-#include "../Widgets/Fields/Vec3.hpp"
-#include "../Widgets/Fields/Quat.hpp"
+#include "../Widgets/ComponentFields/Vec3.hpp"
+#include "../Widgets/ComponentFields/Quat.hpp"
 
 struct Transform : public IComponentBase, public DirtyPattern
 {

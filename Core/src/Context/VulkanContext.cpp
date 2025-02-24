@@ -1,8 +1,6 @@
 #include "pch.hpp"
 #include "VulkanContext.hpp"
 
-#define ENGINE_VERSION VK_MAKE_API_VERSION(0, 1, 0, 0)
-
 VKAPI_ATTR vk::Bool32 VKAPI_PTR DebugLayerCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT _messageSeverity, vk::DebugUtilsMessageTypeFlagsEXT _messageType, const vk::DebugUtilsMessengerCallbackDataEXT* _callbackData, void* _userData);
 
 void Context::VulkanContext::Initialize(VulkanContextInfo& _contextInfo)
@@ -78,7 +76,7 @@ void Context::VulkanContext::Shutdown()
 	delete descriptorSetManager;
 }
 
-std::string Context::VulkanContext::VersionToString(const uint32& _version) const
+std::string Context::VulkanContext::VersionToString(const uint32& _version)
 {
 	std::stringstream ss;
 	ss << VK_VERSION_MAJOR(_version) << "." << VK_VERSION_MINOR(_version) << "." << VK_VERSION_PATCH(_version);
