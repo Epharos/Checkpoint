@@ -32,6 +32,11 @@ namespace ECS
 			return componentManager.AddComponent<T>(_entity, {});
 		}
 
+		std::list<Entity> GetEntities() const
+		{
+			return entityManager.GetEntities();
+		}
+
 		template <typename T>
 		bool RemoveComponent(Entity _entity)
 		{
@@ -42,6 +47,21 @@ namespace ECS
 		T& GetComponent(Entity _entity)
 		{
 			return componentManager.GetComponent<T>(_entity);
+		}
+
+		/*
+		* @brief Get component of a specific type from an entity
+		* Should not be used too often as it returns a void pointer (which create indirections)
+		* Useful when you need to get a component of an unknown type (eg. for deserialization)
+		*/
+		void* GetComponent(Entity _entity, std::type_index _type)
+		{
+			return componentManager.GetComponent(_entity, _type);
+		}
+
+		void* GetComponent(Entity _entity, const std::string& _typeName)
+		{
+			return componentManager.GetComponent(_entity, _typeName);
 		}
 
 		template <typename ...T>

@@ -171,6 +171,7 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="src\Widgets\ComponentFields\MOC_FileDropLineEdit.cpp" />
     <ClCompile Include="src\Widgets\ComponentFields\MOC_Quat.cpp" />
     <ClCompile Include="src\Widgets\ComponentFields\MOC_Vec3.cpp" />
     <ClCompile Include="src\Widgets\Launcher\MOC_Button.cpp" />
@@ -192,6 +193,7 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
     <ClInclude Include="src\Widgets\ComponentFields\Field.hpp" />
     <ClInclude Include="src\Widgets\ComponentFields\Quat.hpp" />
     <ClInclude Include="src\Widgets\ComponentFields\Vec3.hpp" />
+    <ClInclude Include="src\Widgets\ComponentFields\FileDropLineEdit.hpp" />
     <ClInclude Include="src\Widgets\Inspector.hpp" />
     <ClInclude Include="src\Widgets\Launcher\Button.hpp" />
     <ClInclude Include="src\Widgets\Launcher\ProjectOverview.hpp" />

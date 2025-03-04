@@ -21,8 +21,9 @@ public:
 		setLayout(layout);
 		layout->setAlignment(Qt::AlignTop);
 
+		setBaseSize(400, 960);
 
-		setMinimumWidth(240);
+		setMinimumWidth(350);
 		setMinimumHeight(480);
 	}
 

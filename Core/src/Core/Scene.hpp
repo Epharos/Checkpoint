@@ -3,6 +3,9 @@
 #include "../pch.hpp"
 #include "../Render/Renderer/Renderer.hpp"
 
+#include <QtCore/qjsonobject.h>
+#include <QtCore/qjsonarray.h>
+
 namespace Core
 {
 	class Scene
@@ -21,6 +24,9 @@ namespace Core
 		void Cleanup();
 
 		void Update(float dt);
+
+		QJsonObject Serialize();
+		void Deserialize(const QJsonObject& _data);
 
 		inline constexpr ECS::EntityComponentSystem& GetECS() { return ecs; }
 		inline constexpr Render::Renderer* GetRenderer() { return renderer; }

@@ -4,6 +4,9 @@
 #include "../Entity.hpp"
 #include "ComponentSparseSet.hpp"
 #include "ComponentBase.hpp"
+#include "../EntityManager.hpp"
+
+class ComponentRegistry;
 
 namespace ECS
 {
@@ -46,6 +49,9 @@ namespace ECS
 		{
 			return GetOrCreateComponentSparseSet<T>().Get(std::move(entity));
 		}
+
+		void* GetComponent(Entity entity, std::type_index type);
+		void* GetComponent(Entity entity, const std::string& type);
 
 		template<typename ...T>
 		std::tuple<T&...> GetComponents(Entity entity)

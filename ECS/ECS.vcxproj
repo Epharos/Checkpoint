@@ -25,6 +25,7 @@
     <ClInclude Include="src\Component\ComponentRegistry.hpp" />
     <ClInclude Include="src\Component\ComponentSparseSet.hpp" />
     <ClInclude Include="src\Component\ComponentWidget.hpp" />
+    <ClInclude Include="src\Component\IComponentSerializer.hpp" />
     <ClInclude Include="src\Entity.hpp" />
     <ClInclude Include="src\EntityComponentSystem.hpp" />
     <ClInclude Include="src\EntityManager.hpp" />
@@ -34,6 +35,7 @@
     <ClInclude Include="src\SystemManager.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Component\ComponentManager.cpp" />
     <ClCompile Include="src\EntityManager.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

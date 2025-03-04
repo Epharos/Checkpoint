@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../pch.hpp"
+#include "../Context/VulkanContext.hpp"
 #include <typeindex>
 
 namespace Resource
@@ -15,9 +16,13 @@ namespace Resource
 	class ResourceType : public ResourceTypeBase
 	{
 	private:
-		std::unordered_map<std::string, T*> resources;
+		std::unordered_map<std::string, std::shared_ptr<T>> resources;
 
-		std::function<T* (const Context::VulkanContext& _context, const std::string&)> loadFunction = [](const Context::VulkanContext& _context, const std::string& _path)
+#ifdef IN_EDITOR
+		std::unordered_map<std::shared_ptr<T>, std::string> resourcePath;
+#endif
+
+		std::function<std::shared_ptr<T> (const Context::VulkanContext& _context, const std::string&)> loadFunction = [](const Context::VulkanContext& _context, const std::string& _path)
 			{ 
 				LOG_WARNING(MF("Loading was not implemented for ", typeid(T).name())); 
 				return nullptr;
@@ -29,11 +34,11 @@ namespace Resource
 		{
 			for (auto& resource : resources)
 			{
-				delete resource.second;
+				resource.second.reset();
 			}
 		}
 
-		T* GetResource(const std::string& name)
+		std::shared_ptr<T> GetResource(const std::string& name)
 		{
 			auto it = resources.find(name);
 			if (it == resources.end())
@@ -44,9 +49,39 @@ namespace Resource
 			return it->second;
 		}
 
-		void AddResource(const std::string& name, T* resource)
+		T* GetRawResource(const std::string& name)
+		{
+			auto it = resources.find(name);
+			if (it == resources.end())
+			{
+				return nullptr;
+			}
+
+			return it->second.get();
+		}
+
+#ifdef IN_EDITOR
+		std::string GetResourcePath(std::shared_ptr<T> resource)
+		{
+			auto it = resourcePath.find(resource);
+
+			if (it == resourcePath.end())
+			{
+				return "";
+			}
+
+			return it->second;
+		}
+#endif
+
+		void AddResource(const std::string& name, std::shared_ptr<T> resource)
 		{
 			resources[name] = resource;
+		}
+
+		void AddResource(const std::string& name, T* resource)
+		{
+			resources[name] = std::shared_ptr<T>(resource);
 		}
 
 		void RemoveResource(const std::string& name)
@@ -54,27 +89,64 @@ namespace Resource
 			auto it = resources.find(name);
 			if (it != resources.end())
 			{
-				delete it->second;
+				if (it->second.use_count() > 1)
+				{
+					LOG_WARNING(MF("Resource ", name, " is still in use"));
+				}
+
 				resources.erase(it);
 			}
 		}
 
-		void SetLoader(std::function<T* (const Context::VulkanContext& _context, const std::string&)> _loadFunction)
+		void OptimizeMemory()
+		{
+			for (auto it = resources.begin(); it != resources.end();)
+			{
+				if (it->second.use_count() == 1)
+				{
+					it = resources.erase(it);
+				}
+				else
+				{
+					++it;
+				}
+			}
+		}
+
+		void OptimizeMemory(const std::string& name)
+		{
+			auto it = resources.find(name);
+			if (it != resources.end())
+			{
+				if (it->second.use_count() == 1)
+				{
+					resources.erase(it);
+				}
+			}
+		}
+
+		void SetLoader(std::function<std::shared_ptr<T>(const Context::VulkanContext& _context, const std::string&)> _loadFunction)
 		{
 			loadFunction = _loadFunction;
 		}
 
-		T* LoadResource(const Context::VulkanContext& _context, const std::string& _name, const std::string& _path)
+		std::shared_ptr<T> LoadResource(const Context::VulkanContext& _context, const std::string& _name, const std::string& _path)
 		{
-			T* resource = loadFunction(_context, _path);
+			std::shared_ptr<T> resource = loadFunction(_context, _path);
+
 			if (resource)
 			{
 				resources[_name] = resource;
+#ifdef IN_EDITOR
+				resourcePath[resource] = _path;
+#endif
 			}
 
 			return resource;
 		}
 	};
+
+	//TODO : MAKE THE RESOURCE MANAGER A SINGLETON, RESOURCES SHOULD BE SHARED ACROSS THE WHOLE APPLICATION
 
 	class ResourceManager
 	{
@@ -82,16 +154,16 @@ namespace Resource
 		std::unordered_map<std::type_index, ResourceTypeBase*> resourceTypes;
 		const Context::VulkanContext* context;
 
-	public:
+		static ResourceManager* instance;
+
 		ResourceManager(const Context::VulkanContext& _context) : context(&_context) {}
 
-		void Cleanup()
-		{
-			for (auto& resourceType : resourceTypes)
-			{
-				delete resourceType.second;
-			}
-		}
+	public:
+		NO_COPY(ResourceManager)
+
+		static ResourceManager* Create(const Context::VulkanContext& _context);
+		static ResourceManager* Get();
+		void Cleanup();
 
 		template<class T>
 		void RegisterResourceType()
@@ -120,7 +192,7 @@ namespace Resource
 		}
 
 		template<class T>
-		T* Get(const std::string& name)
+		std::shared_ptr<T> Get(const std::string& name)
 		{
 			ResourceType<T>* resourceType = GetResourceType<T>();
 			if (!resourceType)
@@ -130,6 +202,38 @@ namespace Resource
 			}
 
 			return resourceType->GetResource(name);
+		}
+
+		template<class T>
+		std::shared_ptr<T> GetOrLoad(const std::string& _name, const std::string& _path = "")
+		{
+			ResourceType<T>* resourceType = GetResourceType<T>();
+			if (!resourceType)
+			{
+				throw std::runtime_error("Resource type not found");
+				return nullptr;
+			}
+
+			std::shared_ptr<T> resource = resourceType->GetResource(_name);
+			if (!resource)
+			{
+				resource = resourceType->LoadResource(*context, _name, _path.empty() ? _name : _path);
+			}
+
+			return resource;
+		}
+
+		template<class T>
+		void Add(const std::string& name, std::shared_ptr<T> resource)
+		{
+			ResourceType<T>* resourceType = GetResourceType<T>();
+			if (!resourceType)
+			{
+				throw std::runtime_error("Resource type not found");
+				return;
+			}
+
+			resourceType->AddResource(name, resource);
 		}
 
 		template<class T>
@@ -159,7 +263,7 @@ namespace Resource
 		}
 
 		template<class T>
-		T* Load(const std::string& _name, const std::string& _path)
+		std::shared_ptr<T> Load(const std::string& _name, const std::string& _path)
 		{
 			ResourceType<T>* resourceType = GetResourceType<T>();
 			if (!resourceType)

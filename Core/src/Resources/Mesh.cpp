@@ -11,41 +11,6 @@ Resource::Mesh::Mesh(const Context::VulkanContext& _context, const std::vector<V
 	this->indices = _indices;
 	this->context = &_context;
 
-	/*for (size_t i = 0; i < _indices.size(); i += 3)
-	{
-		Vertex& v0 = vertices[_indices[i + 0]];
-		Vertex& v1 = vertices[_indices[i + 1]];
-		Vertex& v2 = vertices[_indices[i + 2]];
-
-		glm::vec3 edge1 = v1.position - v0.position;
-		glm::vec3 edge2 = v2.position - v0.position;
-
-		glm::vec2 deltaUV1 = v1.uv - v0.uv;
-		glm::vec2 deltaUV2 = v2.uv - v0.uv;
-
-		float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-
-		glm::vec3 tangent;
-		tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-		tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-		tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-		tangent = glm::normalize(tangent);
-
-		glm::vec3 bitangent;
-		bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
-		bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
-		bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-		bitangent = glm::normalize(bitangent);
-
-		v0.tangent += tangent;
-		v1.tangent += tangent;
-		v2.tangent += tangent;
-
-		v0.bitangent += bitangent;
-		v1.bitangent += bitangent;
-		v2.bitangent += bitangent;
-	}*/
-
 	vk::DeviceSize vertexBufferSize = sizeof(Vertex) * vertices.size();
 	vk::DeviceSize indexBufferSize = sizeof(uint32_t) * indices.size();
 
@@ -77,7 +42,7 @@ Resource::Mesh::~Mesh()
 	Helper::Memory::DestroyBuffer(context->GetDevice(), indexBuffer, indexBufferMemory);
 }
 
-Resource::Mesh* Resource::Mesh::LoadMesh(const Context::VulkanContext& _context, const std::string& _path)
+std::shared_ptr<Resource::Mesh> Resource::Mesh::LoadMesh(const Context::VulkanContext& _context, const std::string& _path)
 {
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(_path, aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_FlipUVs);
@@ -125,5 +90,5 @@ Resource::Mesh* Resource::Mesh::LoadMesh(const Context::VulkanContext& _context,
 
 	LOG_INFO("Loaded mesh: " + _path + " with " + std::to_string(vertices.size()) + " vertices and " + std::to_string(indexes.size()) + " indexes");
 
-	return new Resource::Mesh(_context, vertices, indexes);
+	return std::make_shared<Resource::Mesh>(_context, vertices, indexes);
 }

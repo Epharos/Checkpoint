@@ -24,7 +24,7 @@ namespace Resource
 		Texture(const Context::VulkanContext* _context) : context(_context) {}
 		~Texture();
 
-		static Texture* LoadTexture(const Context::VulkanContext& _context, const std::string& _path);
+		static std::shared_ptr<Texture> LoadTexture(const Context::VulkanContext& _context, const std::string& _path);
 
 		inline constexpr const vk::Image GetImage() const { return image; }
 		inline constexpr const vk::ImageView GetImageView() const { return imageView; }

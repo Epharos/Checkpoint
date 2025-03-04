@@ -140,6 +140,28 @@ struct Transform : public IComponentBase, public DirtyPattern
 	};
 };
 
+class TransformSerializer : public IComponentSerializer<Transform>
+{
+public:
+	QJsonObject Serialize(const Transform& _component)
+	{
+		QJsonObject data;
+
+		data["position"] = Helper::Serialize::SerializeVector3(_component.position);
+		data["rotation"] = Helper::Serialize::SerializeQuaternion(_component.rotation);
+		data["scale"] = Helper::Serialize::SerializeVector3(_component.scale);
+
+		return data;
+	}
+
+	void Deserialize(const QJsonObject& _data, Transform& _component)
+	{
+		_component.position = Helper::Serialize::DeserializeVector3(_data["position"].toObject());
+		_component.rotation = Helper::Serialize::DeserializeQuaternion(_data["rotation"].toObject());
+		_component.scale = Helper::Serialize::DeserializeVector3(_data["scale"].toObject());
+	}
+};
+
 class TransformWidget : public ComponentWidget<Transform>
 {
 public:

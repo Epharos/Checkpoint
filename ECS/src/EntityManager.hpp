@@ -12,6 +12,10 @@ namespace ECS
 		std::deque<ID> availableIDs;
 		std::vector<Version> versions;
 
+#ifdef IN_EDITOR
+		std::list<Entity> entities;
+#endif
+
 	public:
 		inline static Entity NULL_ENTITY = { static_cast<ID>(-1), 0};
 		EntityManager();
@@ -24,5 +28,9 @@ namespace ECS
 
 		uint8_t GetValidVersion(Entity _entity) const;
 		uint32_t GetEntityCount() const;
+
+#ifdef IN_EDITOR
+		inline const std::list<Entity>& GetEntities() const { return entities; }
+#endif
 	};
 }

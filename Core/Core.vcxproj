@@ -164,6 +164,7 @@
     <ClCompile Include="src\Resources\Material.cpp" />
     <ClCompile Include="src\Resources\MaterialInstance.cpp" />
     <ClCompile Include="src\Resources\Mesh.cpp" />
+    <ClCompile Include="src\Resources\ResourceManager.cpp" />
     <ClCompile Include="src\Resources\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -175,6 +176,7 @@
     <ClInclude Include="src\Context\VulkanContext.hpp" />
     <ClInclude Include="src\Core\Scene.hpp" />
     <ClInclude Include="src\Helpers\Helpers.hpp" />
+    <ClInclude Include="src\Interfaces\ISerializable.hpp" />
     <ClInclude Include="src\pch.hpp" />
     <ClInclude Include="src\Render\Pipeline\DescriptorSetManager.hpp" />
     <ClInclude Include="src\Render\Pipeline\SetLayoutsManager.hpp" />

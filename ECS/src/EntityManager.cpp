@@ -14,11 +14,21 @@ namespace ECS
 		{
 			ID entityID = nextID++;
 			versions.push_back(0);
+
+#ifdef IN_EDITOR
+			entities.push_back({ entityID, 0 });
+#endif
+
 			return { entityID, 0 };
 		}
 
 		ID entityID = availableIDs.back();
 		availableIDs.pop_back();
+
+#ifdef IN_EDITOR
+		entities.push_back({ entityID, 0 });
+#endif
+
 		return { entityID, versions[entityID] };
 	}
 
@@ -26,6 +36,10 @@ namespace ECS
 	{
 		versions[_entityID]++;
 		availableIDs.push_back(_entityID);
+
+#ifdef IN_EDITOR
+		entities.remove_if([_entityID](const Entity& _entity) { return _entityID == _entity.id; });
+#endif
 	}
 
 	void EntityManager::DestroyEntity(Entity _entity)

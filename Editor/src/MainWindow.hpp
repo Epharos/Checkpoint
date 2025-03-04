@@ -37,13 +37,13 @@ protected:
 
 		QAction* newAction = fileMenu->addAction("New project");
 		QAction* openAction = fileMenu->addAction("Open project");
-		QAction* saveAction = fileMenu->addAction("Save project");
 		QAction* closeAction = fileMenu->addAction("Close project");
 
 		QAction* undoAction = fileMenu->addAction("Undo");
 		QAction* redoAction = fileMenu->addAction("Redo");
 
 		QAction* createNewSceneAction = projectMenu->addAction("Create new scene");
+		QAction* saveSceneAction = projectMenu->addAction("Save scene");
 
 		QAction* openSceneHierarchyAction = windowMenu->addAction("Scene hierarchy");
 		QAction* openInspectorAction = windowMenu->addAction("Inspector");
@@ -58,8 +58,30 @@ protected:
 			// Open project
 			});
 
-		connect(saveAction, &QAction::triggered, [=] {
-			// Save project
+		connect(saveSceneAction, &QAction::triggered, [=] {
+			std::string path = projectData.path.toStdString() + "/Resources/Scenes/" + sceneHierarchy->headerItem()->text(0).toStdString() + ".cpscene";
+			QFile sceneFile(QString::fromStdString(path).replace(" ", "_"));
+
+			if (sceneFile.exists())
+			{
+				// Open a dialog to ask if the user wants to overwrite the file
+			}
+			else
+			{
+				
+			}
+
+			if (sceneFile.open(QIODevice::WriteOnly))
+			{
+				QJsonDocument doc;
+				doc.setObject(currentScene->Serialize());
+				sceneFile.write(doc.toJson());
+				sceneFile.close();
+			}
+			else
+			{
+				// Show an error message
+			}
 			});
 
 		connect(closeAction, &QAction::triggered, [=] {
@@ -158,6 +180,7 @@ protected:
 		}
 
 		sceneHierarchy->setHeaderLabel(currentScene ? QString::fromStdString(currentScene->GetName()) : "No scene selected");
+		sceneHierarchy->headerItem()->setFlags(sceneHierarchy->headerItem()->flags() & ~Qt::ItemIsEditable);
 		dock->setWidget(sceneHierarchy);
 		dock->setFloating(floating);
 		addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, dock);
@@ -171,11 +194,47 @@ protected:
 		QTreeView* fileExplorer = new QTreeView;
 		fileExplorer->setModel(fileSystemModel);
 		fileExplorer->setRootIndex(fileSystemModel->index(projectData.path + "/Resources"));
+		fileExplorer->setDragEnabled(true);
+		fileExplorer->setSelectionMode(QAbstractItemView::SingleSelection);
+		fileExplorer->setDragDropMode(QAbstractItemView::DragDropMode::DragOnly);
 
 		QDockWidget* dock = new QDockWidget("File explorer", this);
 		dock->setWidget(fileExplorer);
 		dock->setFloating(floating);
 		addDockWidget(Qt::DockWidgetArea::BottomDockWidgetArea, dock);
+
+		connect(fileExplorer, &QTreeView::doubleClicked, [=](const QModelIndex& index) {
+			QString path = fileSystemModel->filePath(index);
+			QFileInfo fileInfo(path);
+
+			if (fileInfo.isFile())
+			{
+				if (fileInfo.suffix().endsWith("cpscene"))
+				{
+					QFile sceneFile(path);
+
+					if (!sceneFile.open(QIODevice::ReadOnly))
+					{
+						LOG_ERROR(MF("Couldn't open scene file ", fileInfo.fileName().toStdString()));
+						return;
+					}
+
+					delete currentScene;
+					currentScene = new Core::Scene(activeRenderer);
+					currentScene->Deserialize(QJsonDocument::fromJson(sceneFile.readAll()).object());
+
+					
+					sceneHierarchy->headerItem()->setText(0, QString::fromStdString(currentScene->GetName()));
+					
+					for (const auto& entity : currentScene->GetECS().GetEntities())
+					{
+						TreeEntityItem* item = new TreeEntityItem(entity, sceneHierarchy);
+						item->setFlags(item->flags() | Qt::ItemIsEditable);
+						item->setText(0, QString::fromStdString(entity.GetDisplayName()));
+					}
+				}
+			}
+			});
 	}
 
 	void CreateInspectorDockWidget(bool floating = true)
@@ -224,9 +283,9 @@ public:
 
 		resize(1824, 1026);
 
-		CreateSceneHierarchyDockWidget(false);
+		/*CreateSceneHierarchyDockWidget(false);
 		CreateFileExplorerDockWidget(false);
-		CreateInspectorDockWidget(false);
+		CreateInspectorDockWidget(false);*/
 
 		QTimer::singleShot(0, this, &MainWindow::InitializeVulkanRenderer);
 	}
@@ -253,6 +312,8 @@ public:
 		contextInfo.platform = platform;
 
 		vulkanContext.Initialize(contextInfo);
+
+		Resource::ResourceManager::Create(vulkanContext);
 
 		activeRenderer = new MinimalistRenderer(&vulkanContext);
 		activeRenderer->Build();

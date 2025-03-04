@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ComponentWidget.hpp"
+#include "IComponentSerializer.hpp"
 #include "ComponentBase.hpp"
 #include "../EntityComponentSystem.hpp"
 
@@ -10,8 +11,9 @@ public:
 	ComponentRegistry() = default;
 	NO_COPY(ComponentRegistry)
 
-	using ComponentFactoryFunction = std::function<void(ECS::EntityComponentSystem&, Entity&)>;
+	using ComponentFactoryFunction = std::function<bool(ECS::EntityComponentSystem&, Entity&)>;
 	using WidgetFactoryFunction = std::function<std::unique_ptr<ComponentWidgetBase>(ECS::EntityComponentSystem&, Entity&)>;
+	using SerializerFactoryFunction = std::function<std::unique_ptr<ComponentSerializerBase>()>;
 
 	static ComponentRegistry& GetInstance()
 	{
@@ -19,14 +21,19 @@ public:
 		return instance;
 	}
 
-	template<typename ComponentType, typename WidgetType>
+	template<typename ComponentType, typename WidgetType, typename SerializerType>
 	void Register(const std::string& _registerName)
 	{
 		typeIndexMap[std::type_index(typeid(ComponentType))] = _registerName;
 
 		componentFactory[_registerName] = [](ECS::EntityComponentSystem& _ecs, Entity& _entity)
 			{
-				_ecs.AddComponent<ComponentType>(_entity);
+				return _ecs.AddComponent<ComponentType>(_entity);
+			};
+
+		serializerFactory[_registerName] = []()
+			{
+				return std::make_unique<SerializerType>();
 			};
 
 #ifdef IN_EDITOR
@@ -37,35 +44,72 @@ public:
 #endif
 	}
 
-	void CreateComponent(ECS::EntityComponentSystem& _ecs, Entity& _entity, const std::string& _componentName)
+	bool CreateComponent(ECS::EntityComponentSystem& _ecs, Entity& _entity, const std::string& _componentName)
 	{
 		auto it = componentFactory.find(_componentName);
 
 		if (it != componentFactory.end())
 		{
-			it->second(_ecs, _entity);
+			return it->second(_ecs, _entity);
 		}
 	}
 
-	void CreateComponent(ECS::EntityComponentSystem& _ecs, Entity& _entity, const std::type_index& _typeIndex)
+	bool CreateComponent(ECS::EntityComponentSystem& _ecs, Entity& _entity, const std::type_index& _typeIndex)
 	{
 		auto it = componentFactory.find(typeIndexMap[_typeIndex]);
 
 		if (it != componentFactory.end())
 		{
-			it->second(_ecs, _entity);
+			return it->second(_ecs, _entity);
 		}
 	}
 
 	template<typename ComponentType>
-	void CreateComponent(ECS::EntityComponentSystem& _ecs, Entity& _entity)
+	bool CreateComponent(ECS::EntityComponentSystem& _ecs, Entity& _entity)
 	{
 		auto it = componentFactory.find(typeIndexMap[std::type_index(typeid(ComponentType))]);
 
 		if (it != componentFactory.end())
 		{
-			it->second(_ecs, _entity);
+			return it->second(_ecs, _entity);
 		}
+	}
+
+	std::unique_ptr<ComponentSerializerBase> CreateSerializer(const std::string& _componentName)
+	{
+		auto it = serializerFactory.find(_componentName);
+
+		if (it != serializerFactory.end())
+		{
+			return it->second();
+		}
+
+		return nullptr;
+	}
+
+	std::unique_ptr<ComponentSerializerBase> CreateSerializer(const std::type_index& _typeIndex)
+	{
+		auto it = serializerFactory.find(typeIndexMap[_typeIndex]);
+
+		if (it != serializerFactory.end())
+		{
+			return it->second();
+		}
+
+		return nullptr;
+	}
+
+	template<typename ComponentType>
+	std::unique_ptr<ComponentSerializerBase> CreateSerializer()
+	{
+		auto it = serializerFactory.find(typeIndexMap[std::type_index(typeid(ComponentType))]);
+
+		if (it != serializerFactory.end())
+		{
+			return it->second();
+		}
+
+		return nullptr;
 	}
 
 #ifdef IN_EDITOR
@@ -134,10 +178,25 @@ public:
 		return typeIndexMap;
 	}
 
+	std::type_index GetTypeIndex(const std::string& _typeName)
+	{
+		for (auto& [typeIndex, name] : typeIndexMap)
+		{
+			if (name == _typeName)
+				return typeIndex;
+		}
+	}
+
+	std::string GetTypeName(const std::type_index& _typeIndex)
+	{
+		return typeIndexMap[_typeIndex];
+	}
+
 private:
 #ifdef IN_EDITOR
 	std::unordered_map<std::string, WidgetFactoryFunction> widgetFactory;
 #endif
 	std::unordered_map<std::string, ComponentFactoryFunction> componentFactory;
+	std::unordered_map<std::string, SerializerFactoryFunction> serializerFactory;
 	std::unordered_map<std::type_index, std::string> typeIndexMap;
 };

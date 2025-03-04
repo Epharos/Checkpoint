@@ -15,9 +15,9 @@ Resource::Texture::~Texture()
 	device.destroyImage(image);
 }
 
-Resource::Texture* Resource::Texture::LoadTexture(const Context::VulkanContext& _context, const std::string& _path)
+std::shared_ptr<Resource::Texture> Resource::Texture::LoadTexture(const Context::VulkanContext& _context, const std::string& _path)
 {
-	Texture* texture = new Texture(&_context);
+	std::shared_ptr<Texture> texture = std::make_shared<Texture>(&_context);
 	stbi_uc* pixels = stbi_load(_path.c_str(), &texture->width, &texture->height, &texture->channels, STBI_rgb_alpha);
 
 	if (!pixels)
