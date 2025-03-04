@@ -162,6 +162,13 @@ protected:
 			sceneHierarchy->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
 			sceneHierarchy->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
+			for (const auto& entity : currentScene->GetECS().GetEntities())
+			{
+				TreeEntityItem* item = new TreeEntityItem(entity, sceneHierarchy);
+				item->setFlags(item->flags() | Qt::ItemIsEditable);
+				item->setText(0, QString::fromStdString(entity.GetDisplayName()));
+			}
+
 			connect(sceneHierarchy, &QTreeWidget::customContextMenuRequested, [=] (QPoint pos) {
 					QTreeWidgetItem* item = sceneHierarchy->itemAt(pos);
 
@@ -170,17 +177,17 @@ protected:
 				});
 
 			connect(sceneHierarchy, &QTreeWidget::itemChanged, [=](QTreeWidgetItem* item, int column) {
-				TreeEntityItem* entityItem = dynamic_cast<TreeEntityItem*>(item);
+					TreeEntityItem* entityItem = dynamic_cast<TreeEntityItem*>(item);
 
-				if (entityItem)
-				{
-					entityItem->GetEntity().SetDisplayName(item->text(0).toStdString());
-				}
+					if (entityItem)
+					{
+						entityItem->GetEntity().SetDisplayName(item->text(0).toStdString());
+					}
 				});
 		}
 
 		sceneHierarchy->setHeaderLabel(currentScene ? QString::fromStdString(currentScene->GetName()) : "No scene selected");
-		sceneHierarchy->headerItem()->setFlags(sceneHierarchy->headerItem()->flags() & ~Qt::ItemIsEditable);
+		sceneHierarchy->headerItem()->setFlags(sceneHierarchy->headerItem()->flags() | Qt::ItemIsEditable);
 		dock->setWidget(sceneHierarchy);
 		dock->setFloating(floating);
 		addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, dock);
@@ -223,14 +230,16 @@ protected:
 					currentScene = new Core::Scene(activeRenderer);
 					currentScene->Deserialize(QJsonDocument::fromJson(sceneFile.readAll()).object());
 
-					
-					sceneHierarchy->headerItem()->setText(0, QString::fromStdString(currentScene->GetName()));
-					
-					for (const auto& entity : currentScene->GetECS().GetEntities())
+					if(sceneHierarchy)
 					{
-						TreeEntityItem* item = new TreeEntityItem(entity, sceneHierarchy);
-						item->setFlags(item->flags() | Qt::ItemIsEditable);
-						item->setText(0, QString::fromStdString(entity.GetDisplayName()));
+						sceneHierarchy->headerItem()->setText(0, QString::fromStdString(currentScene->GetName()));
+
+						for (const auto& entity : currentScene->GetECS().GetEntities())
+						{
+							TreeEntityItem* item = new TreeEntityItem(entity, sceneHierarchy);
+							item->setFlags(item->flags() | Qt::ItemIsEditable);
+							item->setText(0, QString::fromStdString(entity.GetDisplayName()));
+						}
 					}
 				}
 			}
