@@ -72,6 +72,23 @@ namespace Resource
 
 			return it->second;
 		}
+
+		std::string GetResourceDisplayName(std::shared_ptr<T> resource)
+		{
+			for (auto [name, res] : resources)
+			{
+				if (res.get() == resource.get())
+				{
+					if (name != GetResourcePath(resource))
+					{
+						return name;
+					}
+
+					size_t nameStart = name.find_last_of("/\\");
+					return name.substr(nameStart + 1);
+				}
+			}
+		}
 #endif
 
 		void AddResource(const std::string& name, std::shared_ptr<T> resource)
@@ -146,8 +163,6 @@ namespace Resource
 		}
 	};
 
-	//TODO : MAKE THE RESOURCE MANAGER A SINGLETON, RESOURCES SHOULD BE SHARED ACROSS THE WHOLE APPLICATION
-
 	class ResourceManager
 	{
 	private:
@@ -181,12 +196,11 @@ namespace Resource
 		ResourceType<T>* GetResourceType()
 		{
 			auto it = resourceTypes.find(typeid(T));
+
 			if (it == resourceTypes.end())
 			{
 				return nullptr;
 			}
-
-			//LOG_DEBUG(MF("Found resource type ", typeid(T).name()));
 
 			return dynamic_cast<ResourceType<T>*>(it->second);
 		}
@@ -274,5 +288,19 @@ namespace Resource
 
 			return resourceType->LoadResource(*context, _name, _path);
 		}
+
+#ifdef IN_EDITOR
+		template<class T>
+		std::string GetResourcePath(std::shared_ptr<T> resource)
+		{
+			return GetResourceType<T>()->GetResourcePath(resource);
+		}
+
+		template<class T>
+		std::string GetResourceDisplayName(std::shared_ptr<T> resource)
+		{
+			return GetResourceType<T>()->GetResourceDisplayName(resource);
+		}
+#endif
 	};
 }

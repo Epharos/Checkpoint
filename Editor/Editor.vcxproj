@@ -167,6 +167,7 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="src\Project.cpp" />
     <ClCompile Include="src\Renderers\MinimalistRenderer.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
@@ -188,6 +189,7 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
     <ClInclude Include="src\MainWindow.hpp" />
     <ClInclude Include="src\NewProjectDialog.hpp" />
     <ClInclude Include="src\pch.hpp" />
+    <ClInclude Include="src\Project.hpp" />
     <ClInclude Include="src\Renderers\MinimalistRenderer.hpp" />
     <ClInclude Include="src\VulkanRenderer.hpp" />
     <ClInclude Include="src\Widgets\ComponentFields\Field.hpp" />

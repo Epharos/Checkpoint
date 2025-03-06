@@ -95,3 +95,5 @@ struct ProjectData
 		return obj;
 	}
 };
+
+#include "Project.hpp"

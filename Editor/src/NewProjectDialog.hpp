@@ -179,6 +179,7 @@ private slots:
 		QDir().mkdir(projectPath);
 
 		QDir().mkdir(projectPath + "/Resources");
+		QDir().mkdir(projectPath + "/Resources/Scenes");
 
 		QFile file(projectPath + "/project.data");
 

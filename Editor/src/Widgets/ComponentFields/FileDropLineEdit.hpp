@@ -29,6 +29,7 @@ public:
 	void SetResource(std::shared_ptr<T>* _resource)
 	{
 		resource = _resource;
+		if(*_resource) setText(QString::fromStdString(Project::GetResourceRelativePath(Resource::ResourceManager::Get()->GetResourcePath(*_resource))));
 	}
 
 	void SetResourcePath(const std::string& _resourcePath)

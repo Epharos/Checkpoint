@@ -280,6 +280,7 @@ public:
 		SetupMenuBar();
 
 		projectData = ProjectData(_projectData);
+		Project::data = projectData;
 
 		instance = new QVulkanInstance;
 		instance->create();
