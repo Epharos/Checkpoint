@@ -1,6 +1,8 @@
 #include "pch.hpp"
 #include "Scene.hpp"
 
+#include "../ECS/Component/ComponentRegistry.hpp"
+
 #include "../Resources/ResourceManager.hpp"
 #include "../Resources/Mesh.hpp"
 #include "../Resources/Texture.hpp"
@@ -36,6 +38,34 @@ void Core::Scene::Cleanup()
 void Core::Scene::Update(float dt)
 {
 	ecs.Update(dt);
+}
+
+void Core::Scene::Serialize(Serializer& _serializer) const
+{
+	_serializer.WriteString("name", sceneName);
+
+	_serializer.WriteObjectArray("entities", ecs.GetEntities().size(), [&_serializer, this](Serializer& _s)
+		{
+			for (const auto& entity : ecs.GetEntities())
+			{
+				_s.WriteObject("entity", [&_serializer, this, entity, ecs](Serializer& _s)
+					{
+						_s.WriteInt("id", entity.id);
+
+						_s.WriteObjectArray("components", ecs.GetAllComponentsOf(entity).size(), [&_serializer, this, entity](Serializer& _s)
+							{
+								for (const auto& [type, component] : ecs.GetAllComponentsOf(entity))
+								{
+									_s.WriteObject("component", [&_serializer, this, type, component](Serializer& _s)
+										{
+											_s.WriteString("type", ComponentRegistry::GetInstance().GetTypeIndexMap().at(type));
+											ComponentRegistry::GetInstance().CreateSerializer(type)->Serialize(component, _s);
+										});
+								}
+							});
+					});
+			}
+		});
 }
 
 QJsonObject Core::Scene::Serialize()

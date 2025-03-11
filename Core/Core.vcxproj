@@ -145,6 +145,8 @@
     <ClCompile Include="src\Context\Platforms\PlatformQt.cpp" />
     <ClCompile Include="src\Context\VulkanContext.cpp" />
     <ClCompile Include="src\Core\Scene.cpp" />
+    <ClCompile Include="src\ECS\Component\ComponentManager.cpp" />
+    <ClCompile Include="src\ECS\Entity\EntityManager.cpp" />
     <ClCompile Include="src\Helpers\Helpers.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -166,15 +168,29 @@
     <ClCompile Include="src\Resources\Mesh.cpp" />
     <ClCompile Include="src\Resources\ResourceManager.cpp" />
     <ClCompile Include="src\Resources\Texture.cpp" />
+    <ClCompile Include="src\Util\Serializers\JsonSerializer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Core.hpp" />
+    <ClInclude Include="Include\ECS.hpp" />
     <ClInclude Include="src\Context\Devices.hpp" />
     <ClInclude Include="src\Context\Platforms\PlatformGLFW.hpp" />
     <ClInclude Include="src\Context\Platforms\Platform.hpp" />
     <ClInclude Include="src\Context\Platforms\PlatformQt.hpp" />
     <ClInclude Include="src\Context\VulkanContext.hpp" />
     <ClInclude Include="src\Core\Scene.hpp" />
+    <ClInclude Include="src\Data Structures\SparseSet.hpp" />
+    <ClInclude Include="src\ECS\Component\ComponentBase.hpp" />
+    <ClInclude Include="src\ECS\Component\ComponentManager.hpp" />
+    <ClInclude Include="src\ECS\Component\ComponentRegistry.hpp" />
+    <ClInclude Include="src\ECS\Component\ComponentSparseSet.hpp" />
+    <ClInclude Include="src\ECS\Component\ComponentWidget.hpp" />
+    <ClInclude Include="src\ECS\Component\IComponentSerializer.hpp" />
+    <ClInclude Include="src\ECS\EntityComponentSystem.hpp" />
+    <ClInclude Include="src\ECS\Entity\Entity.hpp" />
+    <ClInclude Include="src\ECS\Entity\EntityManager.hpp" />
+    <ClInclude Include="src\ECS\System\System.hpp" />
+    <ClInclude Include="src\ECS\System\SystemManager.hpp" />
     <ClInclude Include="src\Helpers\Helpers.hpp" />
     <ClInclude Include="src\Interfaces\ISerializable.hpp" />
     <ClInclude Include="src\pch.hpp" />
@@ -195,6 +211,7 @@
     <ClInclude Include="src\Util\Clock.hpp" />
     <ClInclude Include="src\Util\Logger.hpp" />
     <ClInclude Include="src\Util\Serializers\JsonSerializer.hpp" />
+    <ClInclude Include="src\Util\Serializers\Serializable.hpp" />
     <ClInclude Include="src\Util\Serializers\Serializer.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

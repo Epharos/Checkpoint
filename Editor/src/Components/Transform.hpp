@@ -143,22 +143,18 @@ struct Transform : public IComponentBase, public DirtyPattern
 class TransformSerializer : public IComponentSerializer<Transform>
 {
 public:
-	QJsonObject Serialize(const Transform& _component)
+	void Serialize(Serializer& _serializer) const override
 	{
-		QJsonObject data;
-
-		data["position"] = Helper::Serialize::SerializeVector3(_component.position);
-		data["rotation"] = Helper::Serialize::SerializeQuaternion(_component.rotation);
-		data["scale"] = Helper::Serialize::SerializeVector3(_component.scale);
-
-		return data;
+		_serializer.WriteVector3("position", component.position);
+		_serializer.WriteQuaternion("rotation", component.rotation);
+		_serializer.WriteVector3("scale", component.scale);
 	}
 
-	void Deserialize(const QJsonObject& _data, Transform& _component)
+	void Deserialize(Serializer& _serializer) override
 	{
-		_component.position = Helper::Serialize::DeserializeVector3(_data["position"].toObject());
-		_component.rotation = Helper::Serialize::DeserializeQuaternion(_data["rotation"].toObject());
-		_component.scale = Helper::Serialize::DeserializeVector3(_data["scale"].toObject());
+		component.position = _serializer.ReadVector3("position", glm::vec3(0.0f));
+		component.rotation = _serializer.ReadQuaternion("rotation", glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+		component.scale = _serializer.ReadVector3("scale", glm::vec3(1.0f));
 	}
 };
 

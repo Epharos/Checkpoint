@@ -2,13 +2,18 @@
 
 #include "../pch.hpp"
 #include "../Render/Renderer/Renderer.hpp"
+#include "../ECS/EntityComponentSystem.hpp"
+
+#include "../Util/Serializers/Serializable.hpp"
+#include "../Util/Serializers/Serializer.hpp"
+
 
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qjsonarray.h>
 
 namespace Core
 {
-	class Scene
+	class Scene : public Serializable
 	{
 	protected:
 		ECS::EntityComponentSystem ecs;
@@ -25,8 +30,8 @@ namespace Core
 
 		void Update(float dt);
 
-		QJsonObject Serialize();
-		void Deserialize(const QJsonObject& _data);
+		void Serialize(Serializer& _serializer) const override;
+		void Deserialize(Serializer& _serializer) override;
 
 		inline constexpr ECS::EntityComponentSystem& GetECS() { return ecs; }
 		inline constexpr Render::Renderer* GetRenderer() { return renderer; }

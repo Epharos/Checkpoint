@@ -25,18 +25,16 @@ struct MeshRenderer : public IComponentBase
 
 class MeshRendererSerializer : public IComponentSerializer<MeshRenderer>
 {
-	virtual QJsonObject Serialize(const MeshRenderer& _component)
+	void Serialize(Serializer& _serializer) const override
 	{
-		QJsonObject obj;
-
-		obj["mesh"] = QString::fromStdString(Resource::ResourceManager::Get()->GetResourceType<Resource::Mesh>()->GetResourcePath(_component.mesh));
-
-		return obj;
+		std::string meshRelativePath = Project::GetResourceRelativePath(Resource::ResourceManager::Get()->GetResourceType<Resource::Mesh>()->GetResourcePath(component.mesh));
+		_serializer.WriteString("mesh", meshRelativePath);
 	}
 
-	virtual void Deserialize(const QJsonObject& _data, MeshRenderer& _component)
+	void Deserialize(Serializer& _serializer) override
 	{
-		_component.mesh = Resource::ResourceManager::Get()->GetOrLoad<Resource::Mesh>(_data["mesh"].toString().toStdString());
+		std::string fullMeshPath = Project::GetResourcePath() + "/" + _serializer.ReadString("mesh", "");
+		if(!fullMeshPath.empty()) component.mesh = Resource::ResourceManager::Get()->GetOrLoad<Resource::Mesh>(fullMeshPath);
 	}
 };
 

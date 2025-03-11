@@ -6,6 +6,8 @@
 
 #define GLM_FORCE_RADIANS
 
+#include <PreProcessor.hpp>
+
 #include <iostream>
 #include <string>
 #include <memory>
@@ -15,6 +17,7 @@
 #include <filesystem>
 #include <sstream>
 #include <chrono>
+#include <typeindex>
 
 #include <array>
 #include <list>
@@ -24,6 +27,7 @@
 #include <set>
 #include <unordered_set>
 #include <optional>
+#include <deque>
 
 #include <thread>
 #include <mutex>
@@ -41,8 +45,11 @@
 
 #include "GLFW/glfw3.h"
 
-#include <PreProcessor.hpp>
-#include <ECS.hpp>
+#ifdef IN_EDITOR
+#include <QtWidgets/qwidget.h>
+#include <QtWidgets/qboxlayout.h>
+#include <QtWidgets/qlabel.h>
+#endif
 
 #define VEC3_FORWARD glm::vec3(0.0f, 0.0f, 1.0f)
 #define VEC3_UP glm::vec3(0.0f, 1.0f, 0.0f)

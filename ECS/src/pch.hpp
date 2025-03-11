@@ -22,9 +22,3 @@
 #include <QtWidgets/qboxlayout.h>
 #include <QtWidgets/qlabel.h>
 #endif
-
-const uint32_t MAX_COMPONENTS = 32;
-const uint32_t MAX_ENTITIES = 10000;
-
-template<uint32_t N>
-using Signature = std::bitset<N>;
