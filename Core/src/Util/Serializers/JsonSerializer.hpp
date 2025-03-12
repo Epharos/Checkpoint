@@ -45,7 +45,7 @@ public:
 	void WriteQuaternionArray(const std::string& _name, const size_t& _size, const glm::quat* _values) override;
 	void WriteColorArray(const std::string& _name, const size_t& _size, const glm::vec4* _values) override;
 	void WriteObjectArray(const std::string& _name, const size_t& _size, const Serializable**& _objects) override;
-	void WriteObjectArray(const std::string& _name, const size_t& _size, const void* _objects, std::function<void(const void*, Serializer&)> _serializeFunction) override;
+	void WriteObjectArray(const std::string& _name, const size_t& _size, const void** _objects, std::function<void(const void*, Serializer&)> _serializeFunction) override;
 
 	std::string ReadString(const std::string& _name, const std::string& _defaultValue) override;
 	int ReadInt(const std::string& _name, int _defaultValue) override;

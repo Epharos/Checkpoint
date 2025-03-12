@@ -8,7 +8,7 @@ class ComponentBaseHelper
 
 };
 
-struct IComponentBase
+class IComponentBase
 {
 	
 };

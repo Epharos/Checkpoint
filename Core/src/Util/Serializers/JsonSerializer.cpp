@@ -233,7 +233,7 @@ void JsonSerializer::WriteObjectArray(const std::string& _name, const size_t& _s
 	data[_name] = array;
 }
 
-void JsonSerializer::WriteObjectArray(const std::string& _name, const size_t& _size, const void* _objects, std::function<void(const void*, Serializer&)> _serializeFunction)
+void JsonSerializer::WriteObjectArray(const std::string& _name, const size_t& _size, const void** _objects, std::function<void(const void*, Serializer&)> _serializeFunction)
 {
 	json array = json::array();
 
