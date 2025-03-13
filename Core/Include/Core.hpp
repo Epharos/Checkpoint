@@ -17,3 +17,5 @@
 #include "../src/Resources/ResourceManager.hpp"
 
 #include "../src/Util/Clock.hpp"
+
+#include "../src/Util/Serializers/JsonSerializer.hpp"

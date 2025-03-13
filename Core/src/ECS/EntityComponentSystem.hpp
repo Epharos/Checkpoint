@@ -32,7 +32,7 @@ namespace ECS
 			return componentManager.AddComponent<T>(_entity, {});
 		}
 
-		std::list<Entity> GetEntities() const
+		std::vector<Entity> GetEntities() const
 		{
 			return entityManager.GetEntities();
 		}
@@ -71,6 +71,11 @@ namespace ECS
 		}
 
 		std::vector<std::pair<std::type_index, void*>> GetAllComponentsOf(Entity _entity)
+		{
+			return componentManager.GetAllComponentsOf(_entity);
+		}
+
+		const std::vector<std::pair<std::type_index, void*>> GetAllComponentsOf(Entity _entity) const
 		{
 			return componentManager.GetAllComponentsOf(_entity);
 		}

@@ -73,6 +73,21 @@ namespace ECS
 			return result;
 		}
 
+		const std::vector<std::pair<std::type_index, void*>> GetAllComponentsOf(Entity entity) const
+		{
+			std::vector<std::pair<std::type_index, void*>> result;
+
+			for (auto& [type, storage] : componentStorage)
+			{
+				if (storage->Has(entity))
+				{
+					result.push_back({ type, storage->GetRaw(entity) });
+				}
+			}
+
+			return result;
+		}
+
 		template<typename T>
 		bool HasComponent(Entity entity) const
 		{

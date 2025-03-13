@@ -2,8 +2,6 @@
 
 #include "pch.hpp"
 #include "../../Util/Serializers/Serializer.hpp"
-#include "../Component/ComponentBase.hpp"
-#include "../Component/ComponentRegistry.hpp"
 
 using ID = uint32_t;
 using Version = uint8_t;
@@ -30,21 +28,7 @@ struct Entity
 		return !(*this == _other);
 	}
 
-	static void Serialize(const Entity& _entity, const std::vector<std::pair<std::type_index, void*>>& _components, Serializer& _serializer)
-	{
-		_serializer.WriteInt("ID", _entity.id);
-
-		const void** components = new const void* [_components.size()];
-		for (size_t i = 0; i < _components.size(); i++)
-		{
-			components[i] = _components[i].second;
-		}
-
-		_serializer.WriteObjectArray("Components", _components.size(), components, [&_serializer](const void* _component, Serializer& _s)
-			{
-				ComponentRegistry::GetInstance().CreateSerializer(*dynamic_cast<const IComponentBase*>(_component))->Serialize(_s);
-			});
-	}
+	static void Serialize(const Entity& _entity, const std::vector<std::pair<std::type_index, void*>>& _components, Serializer& _serializer);
 
 
 #ifdef IN_EDITOR

@@ -1,6 +1,11 @@
 #include "pch.hpp"
 #include "JsonSerializer.hpp"
 
+JsonSerializer::JsonSerializer()
+{
+	objectStack.push_back(&data);
+}
+
 void JsonSerializer::Write(const std::string& _path)
 {
 	std::ofstream file(_path);
@@ -20,73 +25,71 @@ std::string JsonSerializer::Read(const std::string& _path)
 
 void JsonSerializer::WriteString(const std::string& _name, const std::string& _value)
 {
-	data[_name] = _value;
+	(*objectStack.back())[_name] = _value;
 }
 
 void JsonSerializer::WriteInt(const std::string& _name, int _value)
 {
-	data[_name] = _value;
+	(*objectStack.back())[_name] = _value;
 }
 
 void JsonSerializer::WriteFloat(const std::string& _name, float _value)
 {
-	data[_name] = _value;
+	(*objectStack.back())[_name] = _value;
 }
 
 void JsonSerializer::WriteBool(const std::string& _name, bool _value)
 {
-	data[_name] = _value;
+	(*objectStack.back())[_name] = _value;
 }
 
 void JsonSerializer::WriteVector2(const std::string& _name, const glm::vec2& _value)
 {
-	data[_name]["x"] = _value.x;
-	data[_name]["y"] = _value.y;
+	(*objectStack.back())[_name]["x"] = _value.x;
+	(*objectStack.back())[_name]["y"] = _value.y;
 }
 
 void JsonSerializer::WriteVector3(const std::string& _name, const glm::vec3& _value)
 {
-	data[_name]["x"] = _value.x;
-	data[_name]["y"] = _value.y;
-	data[_name]["z"] = _value.z;
+	(*objectStack.back())[_name]["x"] = _value.x;
+	(*objectStack.back())[_name]["y"] = _value.y;
+	(*objectStack.back())[_name]["z"] = _value.z;
 }
 
 void JsonSerializer::WriteVector4(const std::string& _name, const glm::vec4& _value)
 {
-	data[_name]["x"] = _value.x;
-	data[_name]["y"] = _value.y;
-	data[_name]["z"] = _value.z;
-	data[_name]["w"] = _value.w;
+	(*objectStack.back())[_name]["x"] = _value.x;
+	(*objectStack.back())[_name]["y"] = _value.y;
+	(*objectStack.back())[_name]["z"] = _value.z;
+	(*objectStack.back())[_name]["w"] = _value.w;
 }
 
 void JsonSerializer::WriteQuaternion(const std::string& _name, const glm::quat& _value)
 {
-	data[_name]["x"] = _value.x;
-	data[_name]["y"] = _value.y;
-	data[_name]["z"] = _value.z;
-	data[_name]["w"] = _value.w;
+	(*objectStack.back())[_name]["x"] = _value.x;
+	(*objectStack.back())[_name]["y"] = _value.y;
+	(*objectStack.back())[_name]["z"] = _value.z;
+	(*objectStack.back())[_name]["w"] = _value.w;
 }
 
 void JsonSerializer::WriteColor(const std::string& _name, const glm::vec4& _value)
 {
-	data[_name]["r"] = _value.r;
-	data[_name]["g"] = _value.g;
-	data[_name]["b"] = _value.b;
-	data[_name]["a"] = _value.a;
+	(*objectStack.back())[_name]["r"] = _value.r;
+	(*objectStack.back())[_name]["g"] = _value.g;
+	(*objectStack.back())[_name]["b"] = _value.b;
+	(*objectStack.back())[_name]["a"] = _value.a;
 }
 
-void JsonSerializer::WriteObject(const std::string& _name, const Serializable*& _object)
+void JsonSerializer::BeginObject(const std::string& _name)
 {
-	JsonSerializer serializer;
-	_object->Serialize(serializer);
-	data[_name] = serializer.GetRawData();
+	objectStack.back()->operator[](_name) = json::object();
+	objectStack.push_back(&(*objectStack.back())[_name]);
 }
 
-void JsonSerializer::WriteObject(const std::string& _name, std::function<void(Serializer&)> _serializeFunction)
+void JsonSerializer::EndObject()
 {
-	JsonSerializer serializer;
-	_serializeFunction(serializer);
-	data[_name] = serializer.GetRawData();
+	if (objectStack.size() > 1)
+		objectStack.pop_back();
 }
 
 void JsonSerializer::WriteStringArray(const std::string& _name, const size_t& _size, const std::string* _values)
@@ -98,7 +101,7 @@ void JsonSerializer::WriteStringArray(const std::string& _name, const size_t& _s
 		array.push_back(_values[i]);
 	}
 
-	data[_name] = array;
+	(*objectStack.back())[_name] = array;
 }
 
 void JsonSerializer::WriteIntArray(const std::string& _name, const size_t& _size, const int* _values)
@@ -110,7 +113,7 @@ void JsonSerializer::WriteIntArray(const std::string& _name, const size_t& _size
 		array.push_back(_values[i]);
 	}
 
-	data[_name] = array;
+	(*objectStack.back())[_name] = array;
 }
 
 void JsonSerializer::WriteFloatArray(const std::string& _name, const size_t& _size, const float* _values)
@@ -122,7 +125,7 @@ void JsonSerializer::WriteFloatArray(const std::string& _name, const size_t& _si
 		array.push_back(_values[i]);
 	}
 
-	data[_name] = array;
+	(*objectStack.back())[_name] = array;
 }
 
 void JsonSerializer::WriteBoolArray(const std::string& _name, const size_t& _size, const bool* _values)
@@ -134,7 +137,7 @@ void JsonSerializer::WriteBoolArray(const std::string& _name, const size_t& _siz
 		array.push_back(_values[i]);
 	}
 
-	data[_name] = array;
+	(*objectStack.back())[_name] = array;
 }
 
 void JsonSerializer::WriteVector2Array(const std::string& _name, const size_t& _size, const glm::vec2* _values)
@@ -149,7 +152,7 @@ void JsonSerializer::WriteVector2Array(const std::string& _name, const size_t& _
 		array.push_back(vec);
 	}
 
-	data[_name] = array;
+	(*objectStack.back())[_name] = array;
 }
 
 void JsonSerializer::WriteVector3Array(const std::string& _name, const size_t& _size, const glm::vec3* _values)
@@ -165,7 +168,7 @@ void JsonSerializer::WriteVector3Array(const std::string& _name, const size_t& _
 		array.push_back(vec);
 	}
 
-	data[_name] = array;
+	(*objectStack.back())[_name] = array;
 }
 
 void JsonSerializer::WriteVector4Array(const std::string& _name, const size_t& _size, const glm::vec4* _values)
@@ -182,7 +185,7 @@ void JsonSerializer::WriteVector4Array(const std::string& _name, const size_t& _
 		array.push_back(vec);
 	}
 
-	data[_name] = array;
+	(*objectStack.back())[_name] = array;
 }
 
 void JsonSerializer::WriteQuaternionArray(const std::string& _name, const size_t& _size, const glm::quat* _values)
@@ -199,7 +202,7 @@ void JsonSerializer::WriteQuaternionArray(const std::string& _name, const size_t
 		array.push_back(vec);
 	}
 
-	data[_name] = array;
+	(*objectStack.back())[_name] = array;
 }
 
 void JsonSerializer::WriteColorArray(const std::string& _name, const size_t& _size, const glm::vec4* _values)
@@ -216,35 +219,14 @@ void JsonSerializer::WriteColorArray(const std::string& _name, const size_t& _si
 		array.push_back(vec);
 	}
 
-	data[_name] = array;
+	(*objectStack.back())[_name] = array;
 }
 
-void JsonSerializer::WriteObjectArray(const std::string& _name, const size_t& _size, const Serializable**& _objects)
+void JsonSerializer::BeginObjectArray(const std::string& _name)
 {
-	json array = json::array();
-
-	for (size_t i = 0; i < _size; i++)
-	{
-		JsonSerializer serializer;
-		_objects[i]->Serialize(serializer);
-		array.push_back(serializer.GetRawData());
-	}
-
-	data[_name] = array;
-}
-
-void JsonSerializer::WriteObjectArray(const std::string& _name, const size_t& _size, const void** _objects, std::function<void(const void*, Serializer&)> _serializeFunction)
-{
-	json array = json::array();
-
-	for (size_t i = 0; i < _size; i++)
-	{
-		JsonSerializer serializer;
-		_serializeFunction(_objects[i], serializer);
-		array.push_back(serializer.GetRawData());
-	}
-
-	data[_name] = array;
+	json* array = new json();
+	(*objectStack.back())[_name] = *array;
+	objectStack.push_back(array);
 }
 
 std::string JsonSerializer::ReadString(const std::string& _name, const std::string& _defaultValue)

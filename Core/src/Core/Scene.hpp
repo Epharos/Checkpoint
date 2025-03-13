@@ -8,9 +8,6 @@
 #include "../Util/Serializers/Serializer.hpp"
 
 
-#include <QtCore/qjsonobject.h>
-#include <QtCore/qjsonarray.h>
-
 namespace Core
 {
 	class Scene : public Serializable

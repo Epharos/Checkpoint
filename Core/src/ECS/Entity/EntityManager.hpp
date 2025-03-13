@@ -13,7 +13,7 @@ namespace ECS
 		std::vector<Version> versions;
 
 #ifdef IN_EDITOR
-		std::list<Entity> entities;
+		std::vector<Entity> entities;
 #endif
 
 	public:
@@ -30,7 +30,7 @@ namespace ECS
 		uint32_t GetEntityCount() const;
 
 #ifdef IN_EDITOR
-		inline const std::list<Entity>& GetEntities() const { return entities; }
+		inline const std::vector<Entity>& GetEntities() const { return entities; }
 #endif
 	};
 }

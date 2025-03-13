@@ -19,20 +19,8 @@ namespace ECS
 			return *static_cast<T*>(system);
 		};
 
-		void Update(EntityManager& _entityManager, ComponentManager& _componentManager, const float& _dt)
-		{
-			for (auto& system : systems)
-			{
-				system->Update(_entityManager, _componentManager, _dt);
-			}
-		}
+		void Update(EntityManager& _entityManager, ComponentManager& _componentManager, const float& _dt);
 
-		void Cleanup()
-		{
-			for (auto& system : systems)
-			{
-				system->Cleanup();
-			}
-		}
+		void Cleanup();
 	};
 }

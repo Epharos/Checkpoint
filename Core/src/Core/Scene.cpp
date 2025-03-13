@@ -44,99 +44,21 @@ void Core::Scene::Serialize(Serializer& _serializer) const
 {
 	_serializer.WriteString("name", sceneName);
 
-	_serializer.WriteObjectArray("entities", ecs.GetEntities().size(), [&_serializer, this](Serializer& _s)
-		{
-			for (const auto& entity : ecs.GetEntities())
-			{
-				_s.WriteObject("entity", [&_serializer, this, entity, ecs](Serializer& _s)
-					{
-						_s.WriteInt("id", entity.id);
+	const void** entities = new const void* [ecs.GetEntities().size()];
 
-						_s.WriteObjectArray("components", ecs.GetAllComponentsOf(entity).size(), [&_serializer, this, entity](Serializer& _s)
-							{
-								for (const auto& [type, component] : ecs.GetAllComponentsOf(entity))
-								{
-									_s.WriteObject("component", [&_serializer, this, type, component](Serializer& _s)
-										{
-											_s.WriteString("type", ComponentRegistry::GetInstance().GetTypeIndexMap().at(type));
-											ComponentRegistry::GetInstance().CreateSerializer(type)->Serialize(component, _s);
-										});
-								}
-							});
-					});
-			}
+	for (size_t i = 0; i < ecs.GetEntities().size(); i++)
+	{
+		entities[i] = &ecs.GetEntities()[i];
+	}
+
+	_serializer.WriteObjectArray("Entities", ecs.GetEntities().size(), entities, [&](const void* _entity, Serializer& _s)
+		{
+			const Entity* entity = static_cast<const Entity*>(_entity);
+			Entity::Serialize(*entity, ecs.GetAllComponentsOf(*entity), _s);
 		});
 }
 
-QJsonObject Core::Scene::Serialize()
+void Core::Scene::Deserialize(Serializer& _serializer)
 {
-	QJsonObject obj;
 
-	obj["name"] = QString::fromStdString(sceneName);
-
-	QJsonArray entitiesArray;
-
-	for (const auto& entity : ecs.GetEntities())
-	{
-		QJsonObject entityObj;
-
-		entityObj["id"] = static_cast<qint64>(entity.id);
-
-		QJsonArray componentsArray;
-
-		for (const auto& [type, component] : ecs.GetAllComponentsOf(entity))
-		{
-			QJsonObject componentObj;
-
-			componentObj["type"] = QString::fromStdString(ComponentRegistry::GetInstance().GetTypeIndexMap().at(type));
-			componentObj["data"] = ComponentRegistry::GetInstance().CreateSerializer(type)->Serialize(component);
-
-			componentsArray.append(componentObj);
-		}
-
-		entityObj["components"] = componentsArray;
-
-		entitiesArray.append(entityObj);
-	}
-
-	obj["entities"] = entitiesArray;
-
-	return obj;
-}
-
-void Core::Scene::Deserialize(const QJsonObject& _data)
-{
-#ifdef IN_EDITOR
-	sceneName = _data["name"].toString().toStdString();
-#endif
-
-	ecs.Cleanup();
-
-	QJsonArray entitiesArray = _data["entities"].toArray();
-
-	for (const auto& entity : entitiesArray)
-	{
-		Entity e = ecs.CreateEntity();
-
-		QJsonObject entityObj = entity.toObject();
-
-		e.id = entityObj["id"].toInt();
-
-		QJsonArray componentsArray = entityObj["components"].toArray();
-
-		for (const auto& component : componentsArray)
-		{
-			QJsonObject componentObj = component.toObject();
-
-			std::string type = componentObj["type"].toString().toStdString();
-			QJsonObject data = componentObj["data"].toObject();
-
-			if (!ComponentRegistry::GetInstance().CreateComponent(ecs, e, type))
-			{
-				throw std::runtime_error("Couldn't create component of type: " + type);
-			}
-
-			ComponentRegistry::GetInstance().CreateSerializer(type)->Deserialize(data, ecs.GetComponent(e, type));
-		}
-	}
 }

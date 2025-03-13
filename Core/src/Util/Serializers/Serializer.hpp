@@ -19,8 +19,8 @@ public:
 	virtual void WriteVector4(const std::string& _name, const glm::vec4& _value) = 0;
 	virtual void WriteQuaternion(const std::string& _name, const glm::quat& _value) = 0;
 	virtual void WriteColor(const std::string& _name, const glm::vec4& _value) = 0;
-	virtual void WriteObject(const std::string& _name, const Serializable*& _object) = 0;
-	virtual void WriteObject(const std::string& _name, std::function<void(Serializer&)> _serializeFunction) = 0;
+	virtual void BeginObject(const std::string& _name) = 0;
+	virtual void EndObject() = 0;
 	virtual void WriteStringArray(const std::string& _name, const size_t& _size, const std::string* _values) = 0;
 	virtual void WriteIntArray(const std::string& _name, const size_t& _size, const int* _values) = 0;
 	virtual void WriteFloatArray(const std::string& _name, const size_t& _size, const float* _values) = 0;
@@ -30,8 +30,10 @@ public:
 	virtual void WriteVector4Array(const std::string& _name, const size_t& _size, const glm::vec4* _values) = 0;
 	virtual void WriteQuaternionArray(const std::string& _name, const size_t& _size, const glm::quat* _values) = 0;
 	virtual void WriteColorArray(const std::string& _name, const size_t& _size, const glm::vec4* _values) = 0;
-	virtual void WriteObjectArray(const std::string& _name, const size_t& _size, const Serializable**& _objects) = 0;
-	virtual void WriteObjectArray(const std::string& _name, const size_t& _size, const void** _objects, std::function<void(const void*, Serializer&)> _serializeFunction) = 0;
+	virtual void BeginObjectArray(const std::string& _name) = 0;
+	virtual void EndObjectArray() = 0;
+	virtual void BeginObjectArrayElement() = 0;
+	virtual void EndObjectArrayElement() = 0;
 
 	virtual std::string ReadString(const std::string& _name, const std::string& _defaultValue) = 0;
 	virtual int ReadInt(const std::string& _name, int _defaultValue) = 0;
@@ -42,8 +44,6 @@ public:
 	virtual glm::vec4 ReadVector4(const std::string& _name, const glm::vec4& _defaultValue) = 0;
 	virtual glm::quat ReadQuaternion(const std::string& _name, const glm::quat& _defaultValue) = 0;
 	virtual glm::vec4 ReadColor(const std::string& _name, const glm::vec4& _defaultValue) = 0;
-	virtual void ReadObject(const std::string& _name, Serializable*& _object) = 0;
-	virtual void ReadObject(const std::string& _name, std::function<void(Serializer&)> _deserializeFunction) = 0;
 	virtual std::tuple<size_t, std::string*> ReadStringArray(const std::string& _name) = 0;
 	virtual std::tuple<size_t, int*> ReadIntArray(const std::string& _name) = 0;
 	virtual std::tuple<size_t, float*> ReadFloatArray(const std::string& _name) = 0;
@@ -53,6 +53,4 @@ public:
 	virtual std::tuple<size_t, glm::vec4*> ReadVector4Array(const std::string& _name) = 0;
 	virtual std::tuple<size_t, glm::quat*> ReadQuaternionArray(const std::string& _name) = 0;
 	virtual std::tuple<size_t, glm::vec4*> ReadColorArray(const std::string& _name) = 0;
-	virtual size_t ReadObjectArray(const std::string& _name, Serializable**& _objects) = 0;
-	virtual size_t ReadObjectArray(const std::string& _name, std::function<void(Serializer&)> _deserializeFunction) = 0;
 };

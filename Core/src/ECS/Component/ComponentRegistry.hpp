@@ -31,7 +31,7 @@ public:
 				return _ecs.AddComponent<ComponentType>(_entity);
 			};
 
-		serializerFactory[_registerName] = [](ComponentType& _component)
+		serializerFactory[_registerName] = [](IComponentBase& _component)
 			{
 				return std::make_unique<SerializerType>(_component);
 			};
@@ -112,7 +112,7 @@ public:
 		return nullptr;
 	}*/
 
-	std::unique_ptr<ComponentSerializerBase> CreateSerializer(const IComponentBase& _component)
+	std::unique_ptr<ComponentSerializerBase> CreateSerializer(IComponentBase& _component) 
 	{
 		auto it = serializerFactory.find(typeIndexMap[std::type_index(typeid(_component))]);
 

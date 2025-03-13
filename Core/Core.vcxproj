@@ -105,7 +105,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;QT_WIDGETS_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(VCPKG_ROOT)\installed\x64-windows\include;$(ProjectDir)src;$(VULKAN_SDK)\Include;$(SolutionDir)Pre-Proc;$(SolutionDir)ECS\Include;$(SolutionDir)Dependencies\stb_image.h;$(SolutionDir)Dependencies\glfw\include;C:\Qt68\6.8.0\msvc2022_64\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(VULKAN_SDK)\Include;$(SolutionDir)Pre-Proc;$(SolutionDir)ECS\Include;$(SolutionDir)Dependencies\;$(SolutionDir)Dependencies\glfw\include;C:\Qt68\6.8.0\msvc2022_64\include;$(VCPKG_ROOT)\installed\x64-windows\include</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
       <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
@@ -146,7 +146,9 @@
     <ClCompile Include="src\Context\VulkanContext.cpp" />
     <ClCompile Include="src\Core\Scene.cpp" />
     <ClCompile Include="src\ECS\Component\ComponentManager.cpp" />
+    <ClCompile Include="src\ECS\Entity\Entity.cpp" />
     <ClCompile Include="src\ECS\Entity\EntityManager.cpp" />
+    <ClCompile Include="src\ECS\System\SystemManager.cpp" />
     <ClCompile Include="src\Helpers\Helpers.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

@@ -37,8 +37,8 @@ namespace ECS
 		versions[_entityID]++;
 		availableIDs.push_back(_entityID);
 
-#ifdef IN_EDITOR
-		entities.remove_if([_entityID](const Entity& _entity) { return _entityID == _entity.id; });
+#ifdef IN_EDITOR		
+		std::erase_if(entities, [_entityID](const Entity& _entity) { return _entity.id == _entityID; });
 #endif
 	}
 

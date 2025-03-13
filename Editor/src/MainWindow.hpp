@@ -59,29 +59,11 @@ protected:
 			});
 
 		connect(saveSceneAction, &QAction::triggered, [=] {
-			std::string path = projectData.path.toStdString() + "/Resources/Scenes/" + sceneHierarchy->headerItem()->text(0).toStdString() + ".cpscene";
-			QFile sceneFile(QString::fromStdString(path).replace(" ", "_"));
-
-			if (sceneFile.exists())
-			{
-				// Open a dialog to ask if the user wants to overwrite the file
-			}
-			else
-			{
-				
-			}
-
-			if (sceneFile.open(QIODevice::WriteOnly))
-			{
-				QJsonDocument doc;
-				doc.setObject(currentScene->Serialize());
-				sceneFile.write(doc.toJson());
-				sceneFile.close();
-			}
-			else
-			{
-				// Show an error message
-			}
+			std::string path = projectData.path.toStdString() + "/Resources/Scenes/" + sceneHierarchy->headerItem()->text(0).toStdString() + ".scn";
+			std::replace(path.begin(), path.end(), ' ', '_');
+			JsonSerializer serializer;
+			currentScene->Serialize(serializer);
+			serializer.Write(path);
 			});
 
 		connect(closeAction, &QAction::triggered, [=] {
@@ -218,17 +200,12 @@ protected:
 			{
 				if (fileInfo.suffix().endsWith("cpscene"))
 				{
-					QFile sceneFile(path);
-
-					if (!sceneFile.open(QIODevice::ReadOnly))
-					{
-						LOG_ERROR(MF("Couldn't open scene file ", fileInfo.fileName().toStdString()));
-						return;
-					}
-
+					JsonSerializer serializer;
+					serializer.Read(path.toStdString());
+					
 					delete currentScene;
 					currentScene = new Core::Scene(activeRenderer);
-					currentScene->Deserialize(QJsonDocument::fromJson(sceneFile.readAll()).object());
+					currentScene->Deserialize(serializer);
 
 					if(sceneHierarchy)
 					{
