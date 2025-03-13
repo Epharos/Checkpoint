@@ -23,16 +23,21 @@ struct MeshRenderer : public IComponentBase
 	};
 };
 
-class MeshRendererSerializer : public IComponentSerializer<MeshRenderer>
+class MeshRendererSerializer : public IComponentSerializer
 {
-	void Serialize(Serializer& _serializer) const override
+public:
+	MeshRendererSerializer(IComponentBase& _component) : IComponentSerializer(_component) {}
+
+	void Serialize(ISerializer& _serializer) const override
 	{
+		MeshRenderer& component = static_cast<MeshRenderer&>(this->component);
 		std::string meshRelativePath = Project::GetResourceRelativePath(Resource::ResourceManager::Get()->GetResourceType<Resource::Mesh>()->GetResourcePath(component.mesh));
 		_serializer.WriteString("mesh", meshRelativePath);
 	}
 
-	void Deserialize(Serializer& _serializer) override
+	void Deserialize(ISerializer& _serializer) override
 	{
+		MeshRenderer& component = static_cast<MeshRenderer&>(this->component);
 		std::string fullMeshPath = Project::GetResourcePath() + "/" + _serializer.ReadString("mesh", "");
 		if(!fullMeshPath.empty()) component.mesh = Resource::ResourceManager::Get()->GetOrLoad<Resource::Mesh>(fullMeshPath);
 	}

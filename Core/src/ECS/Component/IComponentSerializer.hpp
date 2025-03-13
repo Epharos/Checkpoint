@@ -1,19 +1,18 @@
 #pragma once
 
 #include "../../Util/Serializers/Serializable.hpp"
-#include "../../Util/Serializers/Serializer.hpp"
+#include "../../Util/Serializers/ISerializer.hpp"
 
-class ComponentSerializerBase : public Serializable
+class ComponentSerializerBase : public ISerializable
 {
 
 };
 
-template<class T>
 class IComponentSerializer : public ComponentSerializerBase
 {
 protected:
-	T& component;
+	IComponentBase& component;
 
 public:
-	IComponentSerializer(T& _component) : component(_component) {}
+	IComponentSerializer(IComponentBase& _component) : component(_component) {}
 };

@@ -140,18 +140,22 @@ struct Transform : public IComponentBase, public DirtyPattern
 	};
 };
 
-class TransformSerializer : public IComponentSerializer<Transform>
+class TransformSerializer : public IComponentSerializer
 {
 public:
-	void Serialize(Serializer& _serializer) const override
+	TransformSerializer(IComponentBase& _component) : IComponentSerializer(_component) {}
+
+	void Serialize(ISerializer& _serializer) const override
 	{
+		Transform& component = static_cast<Transform&>(this->component);
 		_serializer.WriteVector3("position", component.position);
 		_serializer.WriteQuaternion("rotation", component.rotation);
 		_serializer.WriteVector3("scale", component.scale);
 	}
 
-	void Deserialize(Serializer& _serializer) override
+	void Deserialize(ISerializer& _serializer) override
 	{
+		Transform& component = static_cast<Transform&>(this->component);
 		component.position = _serializer.ReadVector3("position", glm::vec3(0.0f));
 		component.rotation = _serializer.ReadQuaternion("rotation", glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
 		component.scale = _serializer.ReadVector3("scale", glm::vec3(1.0f));

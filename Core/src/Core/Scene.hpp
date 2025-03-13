@@ -5,12 +5,12 @@
 #include "../ECS/EntityComponentSystem.hpp"
 
 #include "../Util/Serializers/Serializable.hpp"
-#include "../Util/Serializers/Serializer.hpp"
+#include "../Util/Serializers/ISerializer.hpp"
 
 
 namespace Core
 {
-	class Scene : public Serializable
+	class Scene : public ISerializable
 	{
 	protected:
 		ECS::EntityComponentSystem ecs;
@@ -27,8 +27,8 @@ namespace Core
 
 		void Update(float dt);
 
-		void Serialize(Serializer& _serializer) const override;
-		void Deserialize(Serializer& _serializer) override;
+		void Serialize(ISerializer& _serializer) const override;
+		void Deserialize(ISerializer& _serializer) override;
 
 		inline constexpr ECS::EntityComponentSystem& GetECS() { return ecs; }
 		inline constexpr Render::Renderer* GetRenderer() { return renderer; }

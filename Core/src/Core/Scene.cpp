@@ -40,15 +40,15 @@ void Core::Scene::Update(float dt)
 	ecs.Update(dt);
 }
 
-void Core::Scene::Serialize(Serializer& _serializer) const
+void Core::Scene::Serialize(ISerializer& _serializer) const
 {
-	_serializer.WriteString("name", sceneName);
+	_serializer.WriteString("Name", sceneName);
 
 	_serializer.BeginObjectArray("Entities");
 
 	for (const Entity& entity : ecs.GetEntities())
 	{
-		_serializer.BeginObjectArrayElement();
+		_serializer.BeginObjectArrayElementWriting();
 		Entity::Serialize(entity, ecs.GetAllComponentsOf(entity), _serializer);
 		_serializer.EndObjectArrayElement();
 	}
@@ -56,7 +56,7 @@ void Core::Scene::Serialize(Serializer& _serializer) const
 	_serializer.EndObjectArray();
 }
 
-void Core::Scene::Deserialize(Serializer& _serializer)
+void Core::Scene::Deserialize(ISerializer& _serializer)
 {
 
 }

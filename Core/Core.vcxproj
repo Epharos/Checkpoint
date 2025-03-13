@@ -214,7 +214,7 @@
     <ClInclude Include="src\Util\Logger.hpp" />
     <ClInclude Include="src\Util\Serializers\JsonSerializer.hpp" />
     <ClInclude Include="src\Util\Serializers\Serializable.hpp" />
-    <ClInclude Include="src\Util\Serializers\Serializer.hpp" />
+    <ClInclude Include="src\Util\Serializers\ISerializer.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

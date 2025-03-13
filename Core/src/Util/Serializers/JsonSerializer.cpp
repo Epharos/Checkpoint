@@ -80,7 +80,7 @@ void JsonSerializer::WriteColor(const std::string& _name, const glm::vec4& _valu
 	(*objectStack.back())[_name]["a"] = _value.a;
 }
 
-void JsonSerializer::BeginObject(const std::string& _name)
+void JsonSerializer::BeginObjectWriting(const std::string& _name)
 {
 	objectStack.back()->operator[](_name) = json::object();
 	objectStack.push_back(&(*objectStack.back())[_name]);
@@ -234,7 +234,7 @@ void JsonSerializer::EndObjectArray()
 		objectStack.pop_back();
 }
 
-void JsonSerializer::BeginObjectArrayElement()
+void JsonSerializer::BeginObjectArrayElementWriting()
 {
 	objectStack.back()->push_back(json::object());
 	objectStack.push_back(&objectStack.back()->back());

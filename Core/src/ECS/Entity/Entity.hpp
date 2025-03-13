@@ -1,7 +1,7 @@
 #pragma once
 
 #include "pch.hpp"
-#include "../../Util/Serializers/Serializer.hpp"
+#include "../../Util/Serializers/ISerializer.hpp"
 
 using ID = uint32_t;
 using Version = uint8_t;
@@ -28,7 +28,7 @@ struct Entity
 		return !(*this == _other);
 	}
 
-	static void Serialize(const Entity& _entity, const std::vector<std::pair<std::type_index, void*>>& _components, Serializer& _serializer);
+	static void Serialize(const Entity& _entity, const std::vector<std::pair<std::type_index, void*>>& _components, ISerializer& _serializer);
 
 
 #ifdef IN_EDITOR

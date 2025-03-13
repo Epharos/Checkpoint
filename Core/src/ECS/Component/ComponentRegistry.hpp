@@ -13,7 +13,7 @@ public:
 
 	using ComponentFactoryFunction = std::function<bool(ECS::EntityComponentSystem&, Entity&)>;
 	using WidgetFactoryFunction = std::function<std::unique_ptr<ComponentWidgetBase>(ECS::EntityComponentSystem&, Entity&)>;
-	using SerializerFactoryFunction = std::function<std::unique_ptr<ComponentSerializerBase>(IComponentBase&)>;
+	using SerializerFactoryFunction = std::function<std::unique_ptr<ComponentSerializerBase>(IComponentBase*&)>;
 
 	static ComponentRegistry& GetInstance()
 	{
@@ -31,9 +31,9 @@ public:
 				return _ecs.AddComponent<ComponentType>(_entity);
 			};
 
-		serializerFactory[_registerName] = [](IComponentBase& _component)
+		serializerFactory[_registerName] = [](IComponentBase*& _component)
 			{
-				return std::make_unique<SerializerType>(static_cast<ComponentType&>(_component));
+				return std::make_unique<SerializerType>(*_component);
 			};
 
 #ifdef IN_EDITOR
@@ -75,46 +75,23 @@ public:
 		}
 	}
 
-	/*std::unique_ptr<ComponentSerializerBase> CreateSerializer(const std::string& _componentName)
+	std::unique_ptr<ComponentSerializerBase> CreateSerializer(std::type_index _componentType, IComponentBase*& _component)
 	{
-		auto it = serializerFactory.find(_componentName);
+		auto it = serializerFactory.find(typeIndexMap[_componentType]);
+		LOG_DEBUG(MF("Looking for serializer of name: ", _componentType.name(), " found: ", it != serializerFactory.end()));
 
 		if (it != serializerFactory.end())
 		{
-			return it->second();
+			return it->second(_component);
 		}
 
 		return nullptr;
 	}
 
-	std::unique_ptr<ComponentSerializerBase> CreateSerializer(const std::type_index& _typeIndex)
+	std::unique_ptr<ComponentSerializerBase> CreateSerializer(IComponentBase*& _component) 
 	{
-		auto it = serializerFactory.find(typeIndexMap[_typeIndex]);
-
-		if (it != serializerFactory.end())
-		{
-			return it->second();
-		}
-
-		return nullptr;
-	}
-
-	template<typename ComponentType>
-	std::unique_ptr<ComponentSerializerBase> CreateSerializer()
-	{
-		auto it = serializerFactory.find(typeIndexMap[std::type_index(typeid(ComponentType))]);
-
-		if (it != serializerFactory.end())
-		{
-			return it->second();
-		}
-
-		return nullptr;
-	}*/
-
-	std::unique_ptr<ComponentSerializerBase> CreateSerializer(IComponentBase& _component) 
-	{
-		auto it = serializerFactory.find(typeIndexMap[std::type_index(typeid(_component))]);
+		auto it = serializerFactory.find(typeIndexMap[std::type_index(typeid(*_component))]);
+		LOG_DEBUG(MF("Looking for serializer of name: ", typeid(*_component).name(), " found: ", it != serializerFactory.end()));
 
 		if (it != serializerFactory.end())
 		{

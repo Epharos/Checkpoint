@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Serializer.hpp"
+#include "ISerializer.hpp"
 #include <fstream>
 
 #include <nlohmann/json.hpp>
@@ -9,7 +9,7 @@
 
 using json = nlohmann::json;
 
-class JsonSerializer : public Serializer 
+class JsonSerializer : public ISerializer 
 {
 protected:
 	json data;
@@ -34,7 +34,7 @@ public:
 	void WriteVector4(const std::string& _name, const glm::vec4& _value) override;
 	void WriteQuaternion(const std::string& _name, const glm::quat& _value) override;
 	void WriteColor(const std::string& _name, const glm::vec4& _value) override;
-	void BeginObject(const std::string& _name) override;
+	void BeginObjectWriting(const std::string& _name) override;
 	void EndObject() override;
 	void WriteStringArray(const std::string& _name, const size_t& _size, const std::string* _values) override;
 	void WriteIntArray(const std::string& _name, const size_t& _size, const int* _values) override;
@@ -47,7 +47,7 @@ public:
 	void WriteColorArray(const std::string& _name, const size_t& _size, const glm::vec4* _values) override;
 	void BeginObjectArray(const std::string& _name) override;
 	void EndObjectArray() override;
-	void BeginObjectArrayElement() override;
+	void BeginObjectArrayElementWriting() override;
 	void EndObjectArrayElement() override;
 
 	std::string ReadString(const std::string& _name, const std::string& _defaultValue) override;
