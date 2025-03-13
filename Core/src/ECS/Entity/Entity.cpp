@@ -8,17 +8,18 @@ void Entity::Serialize(const Entity& _entity, const std::vector<std::pair<std::t
 {
 		_serializer.WriteInt("ID", _entity.id);
 
-		const void** components = new const void* [_components.size()];
-		for (size_t i = 0; i < _components.size(); i++)
+		_serializer.BeginObjectArray("Components");
+
+		for (const auto& component : _components)
 		{
-			components[i] = _components[i].second;
+			_serializer.BeginObjectArrayElement();
+			_serializer.WriteString("Type", ComponentRegistry::GetInstance().GetTypeIndexMap().at(component.first));
+			const Serializable* componentSerializer = ComponentRegistry::GetInstance().CreateSerializer(*static_cast<IComponentBase*>(component.second)).release();
+			_serializer.BeginObject("Data");
+			componentSerializer->Serialize(_serializer);
+			_serializer.EndObject();
+			_serializer.EndObjectArrayElement();
 		}
 
-		_serializer.WriteObjectArray("Components", _components.size(), components, [&_serializer](const void* _component, Serializer& _s)
-			{
-				const IComponentBase* component = static_cast<const IComponentBase*>(_component);
-				_s.WriteString("Type", ComponentRegistry::GetInstance().GetTypeIndexMap().at(typeid(*component)));
-				const Serializable* componentSerializer = ComponentRegistry::GetInstance().CreateSerializer(*component).release();
-				_s.WriteObject("Data", componentSerializer);
-			});
+		_serializer.EndObjectArray();
 }

@@ -143,11 +143,6 @@ struct Transform : public IComponentBase, public DirtyPattern
 class TransformSerializer : public IComponentSerializer<Transform>
 {
 public:
-	TransformSerializer(const Transform& _component) : IComponentSerializer(_component)
-	{
-
-	}
-
 	void Serialize(Serializer& _serializer) const override
 	{
 		_serializer.WriteVector3("position", component.position);

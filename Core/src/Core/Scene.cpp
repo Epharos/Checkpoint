@@ -44,18 +44,16 @@ void Core::Scene::Serialize(Serializer& _serializer) const
 {
 	_serializer.WriteString("name", sceneName);
 
-	const void** entities = new const void* [ecs.GetEntities().size()];
+	_serializer.BeginObjectArray("Entities");
 
-	for (size_t i = 0; i < ecs.GetEntities().size(); i++)
+	for (const Entity& entity : ecs.GetEntities())
 	{
-		entities[i] = &ecs.GetEntities()[i];
+		_serializer.BeginObjectArrayElement();
+		Entity::Serialize(entity, ecs.GetAllComponentsOf(entity), _serializer);
+		_serializer.EndObjectArrayElement();
 	}
 
-	_serializer.WriteObjectArray("Entities", ecs.GetEntities().size(), entities, [&](const void* _entity, Serializer& _s)
-		{
-			const Entity* entity = static_cast<const Entity*>(_entity);
-			Entity::Serialize(*entity, ecs.GetAllComponentsOf(*entity), _s);
-		});
+	_serializer.EndObjectArray();
 }
 
 void Core::Scene::Deserialize(Serializer& _serializer)

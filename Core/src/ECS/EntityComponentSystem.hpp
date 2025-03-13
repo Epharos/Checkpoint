@@ -32,7 +32,7 @@ namespace ECS
 			return componentManager.AddComponent<T>(_entity, {});
 		}
 
-		std::vector<Entity> GetEntities() const
+		std::list<Entity> GetEntities() const
 		{
 			return entityManager.GetEntities();
 		}

@@ -33,7 +33,7 @@ public:
 
 		serializerFactory[_registerName] = [](IComponentBase& _component)
 			{
-				return std::make_unique<SerializerType>(_component);
+				return std::make_unique<SerializerType>(static_cast<ComponentType&>(_component));
 			};
 
 #ifdef IN_EDITOR

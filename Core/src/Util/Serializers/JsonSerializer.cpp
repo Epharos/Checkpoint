@@ -146,7 +146,7 @@ void JsonSerializer::WriteVector2Array(const std::string& _name, const size_t& _
 
 	for (size_t i = 0; i < _size; i++)
 	{
-		json vec;
+		json vec = json::object();
 		vec["x"] = _values[i].x;
 		vec["y"] = _values[i].y;
 		array.push_back(vec);
@@ -161,7 +161,7 @@ void JsonSerializer::WriteVector3Array(const std::string& _name, const size_t& _
 
 	for (size_t i = 0; i < _size; i++)
 	{
-		json vec;
+		json vec = json::object();
 		vec["x"] = _values[i].x;
 		vec["y"] = _values[i].y;
 		vec["z"] = _values[i].z;
@@ -177,7 +177,7 @@ void JsonSerializer::WriteVector4Array(const std::string& _name, const size_t& _
 
 	for (size_t i = 0; i < _size; i++)
 	{
-		json vec;
+		json vec = json::object();
 		vec["x"] = _values[i].x;
 		vec["y"] = _values[i].y;
 		vec["z"] = _values[i].z;
@@ -194,7 +194,7 @@ void JsonSerializer::WriteQuaternionArray(const std::string& _name, const size_t
 
 	for (size_t i = 0; i < _size; i++)
 	{
-		json vec;
+		json vec = json::object();
 		vec["x"] = _values[i].x;
 		vec["y"] = _values[i].y;
 		vec["z"] = _values[i].z;
@@ -211,7 +211,7 @@ void JsonSerializer::WriteColorArray(const std::string& _name, const size_t& _si
 
 	for (size_t i = 0; i < _size; i++)
 	{
-		json vec;
+		json vec = json::object();
 		vec["r"] = _values[i].r;
 		vec["g"] = _values[i].g;
 		vec["b"] = _values[i].b;
@@ -224,9 +224,26 @@ void JsonSerializer::WriteColorArray(const std::string& _name, const size_t& _si
 
 void JsonSerializer::BeginObjectArray(const std::string& _name)
 {
-	json* array = new json();
-	(*objectStack.back())[_name] = *array;
-	objectStack.push_back(array);
+	objectStack.back()->operator[](_name) = json::array();
+	objectStack.push_back(&(*objectStack.back())[_name]);
+}
+
+void JsonSerializer::EndObjectArray()
+{
+	if (objectStack.size() > 1)
+		objectStack.pop_back();
+}
+
+void JsonSerializer::BeginObjectArrayElement()
+{
+	objectStack.back()->push_back(json::object());
+	objectStack.push_back(&objectStack.back()->back());
+}
+
+void JsonSerializer::EndObjectArrayElement()
+{
+	if (objectStack.size() > 1)
+		objectStack.pop_back();
 }
 
 std::string JsonSerializer::ReadString(const std::string& _name, const std::string& _defaultValue)
@@ -319,20 +336,6 @@ glm::vec4 JsonSerializer::ReadColor(const std::string& _name, const glm::vec4& _
 	}
 
 	return _defaultValue;
-}
-
-void JsonSerializer::ReadObject(const std::string& _name, Serializable*& _object)
-{
-	JsonSerializer serializer;
-	serializer.SetRawData(data[_name]);
-	_object->Deserialize(serializer);
-}
-
-void JsonSerializer::ReadObject(const std::string& _name, std::function<void(Serializer&)> _deserializeFunction)
-{
-	JsonSerializer serializer;
-	serializer.SetRawData(data[_name]);
-	_deserializeFunction(serializer);
 }
 
 std::tuple<size_t, std::string*> JsonSerializer::ReadStringArray(const std::string& _name)
@@ -462,36 +465,4 @@ std::tuple<size_t, glm::vec4*> JsonSerializer::ReadColorArray(const std::string&
 	}
 
 	return std::make_tuple(size, array);
-}
-
-size_t JsonSerializer::ReadObjectArray(const std::string& _name, Serializable**& _objects)
-{
-	if (!data.contains(_name)) return static_cast<size_t>(0);
-
-	size_t size = data[_name].size();
-
-	for (size_t i = 0; i < size; i++)
-	{
-		JsonSerializer serializer;
-		serializer.SetRawData(data[_name][i]);
-		_objects[i]->Deserialize(serializer);
-	}
-
-	return size;
-}
-
-size_t JsonSerializer::ReadObjectArray(const std::string& _name, std::function<void(Serializer&)> _deserializeFunction)
-{
-	if (!data.contains(_name)) return static_cast<size_t>(0);
-
-	size_t size = data[_name].size();
-
-	for (size_t i = 0; i < size; i++)
-	{
-		JsonSerializer serializer;
-		serializer.SetRawData(data[_name][i]);
-		_deserializeFunction(serializer);
-	}
-
-	return size;
 }
