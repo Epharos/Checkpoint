@@ -44,7 +44,7 @@ void Core::Scene::Serialize(ISerializer& _serializer) const
 {
 	_serializer.WriteString("Name", sceneName);
 
-	_serializer.BeginObjectArray("Entities");
+	_serializer.BeginObjectArrayWriting("Entities");
 
 	for (const Entity& entity : ecs.GetEntities())
 	{
@@ -58,5 +58,21 @@ void Core::Scene::Serialize(ISerializer& _serializer) const
 
 void Core::Scene::Deserialize(ISerializer& _serializer)
 {
+	sceneName = _serializer.ReadString("Name", "Name error");
 
+	size_t elements = -1;
+	if ((elements = _serializer.BeginObjectArrayReading("Entities")) > 0)
+	{
+		for (uint64_t index = 0; index < elements; index++)
+		{
+			if (!_serializer.BeginObjectArrayElementReading(index)) continue; //Is continue the thing to do here ? Shouldn't I break instead ?
+
+			Entity readEntity = ecs.CreateEntity();
+			Entity::Deserialize(readEntity, ecs, _serializer);
+
+			_serializer.EndObjectArrayElement();
+		}
+
+		_serializer.EndObjectArray();
+	}
 }

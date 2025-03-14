@@ -35,7 +35,6 @@ public:
 	void WriteQuaternion(const std::string& _name, const glm::quat& _value) override;
 	void WriteColor(const std::string& _name, const glm::vec4& _value) override;
 	void BeginObjectWriting(const std::string& _name) override;
-	void EndObject() override;
 	void WriteStringArray(const std::string& _name, const size_t& _size, const std::string* _values) override;
 	void WriteIntArray(const std::string& _name, const size_t& _size, const int* _values) override;
 	void WriteFloatArray(const std::string& _name, const size_t& _size, const float* _values) override;
@@ -45,10 +44,8 @@ public:
 	void WriteVector4Array(const std::string& _name, const size_t& _size, const glm::vec4* _values) override;
 	void WriteQuaternionArray(const std::string& _name, const size_t& _size, const glm::quat* _values) override;
 	void WriteColorArray(const std::string& _name, const size_t& _size, const glm::vec4* _values) override;
-	void BeginObjectArray(const std::string& _name) override;
-	void EndObjectArray() override;
+	void BeginObjectArrayWriting(const std::string& _name) override;
 	void BeginObjectArrayElementWriting() override;
-	void EndObjectArrayElement() override;
 
 	std::string ReadString(const std::string& _name, const std::string& _defaultValue) override;
 	int ReadInt(const std::string& _name, int _defaultValue) override;
@@ -59,6 +56,7 @@ public:
 	glm::vec4 ReadVector4(const std::string& _name, const glm::vec4& _defaultValue) override;
 	glm::quat ReadQuaternion(const std::string& _name, const glm::quat& _defaultValue) override;
 	glm::vec4 ReadColor(const std::string& _name, const glm::vec4& _defaultValue) override;
+	bool BeginObjectReading(const std::string& _name) override;
 	std::tuple<size_t, std::string*> ReadStringArray(const std::string& _name) override;
 	std::tuple<size_t, int*> ReadIntArray(const std::string& _name) override;
 	std::tuple<size_t, float*> ReadFloatArray(const std::string& _name) override;
@@ -68,4 +66,10 @@ public:
 	std::tuple<size_t, glm::vec4*> ReadVector4Array(const std::string& _name) override;
 	std::tuple<size_t, glm::quat*> ReadQuaternionArray(const std::string& _name) override;
 	std::tuple<size_t, glm::vec4*> ReadColorArray(const std::string& _name) override;
+	size_t BeginObjectArrayReading(const std::string& _name) override;
+	bool BeginObjectArrayElementReading(const uint64_t _index) override;
+
+	void EndObject() override;
+	void EndObjectArray() override;
+	void EndObjectArrayElement() override;
 };

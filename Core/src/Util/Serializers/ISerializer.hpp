@@ -29,7 +29,7 @@ public:
 	virtual void WriteVector4Array(const std::string& _name, const size_t& _size, const glm::vec4* _values) = 0;
 	virtual void WriteQuaternionArray(const std::string& _name, const size_t& _size, const glm::quat* _values) = 0;
 	virtual void WriteColorArray(const std::string& _name, const size_t& _size, const glm::vec4* _values) = 0;
-	virtual void BeginObjectArray(const std::string& _name) = 0;
+	virtual void BeginObjectArrayWriting(const std::string& _name) = 0;
 	virtual void BeginObjectArrayElementWriting() = 0;
 	
 
@@ -52,8 +52,8 @@ public:
 	virtual std::tuple<size_t, glm::vec4*> ReadVector4Array(const std::string& _name) = 0;
 	virtual std::tuple<size_t, glm::quat*> ReadQuaternionArray(const std::string& _name) = 0;
 	virtual std::tuple<size_t, glm::vec4*> ReadColorArray(const std::string& _name) = 0;
-	virtual bool BeginObjectArrayReading(const std::string& _name) = 0;
-	virtual bool BeginObjectArrayElementReading() = 0;
+	virtual size_t BeginObjectArrayReading(const std::string& _name) = 0;
+	virtual bool BeginObjectArrayElementReading(const uint64_t _index) = 0;
 
 	virtual void EndObject() = 0;
 	virtual void EndObjectArray() = 0;

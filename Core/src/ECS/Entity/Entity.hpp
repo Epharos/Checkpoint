@@ -6,6 +6,11 @@
 using ID = uint32_t;
 using Version = uint8_t;
 
+namespace ECS
+{
+	class EntityComponentSystem;
+}
+
 struct Entity
 {
 	ID id : 24;
@@ -29,6 +34,7 @@ struct Entity
 	}
 
 	static void Serialize(const Entity& _entity, const std::vector<std::pair<std::type_index, void*>>& _components, ISerializer& _serializer);
+	static void Deserialize(Entity& _entity, ECS::EntityComponentSystem& _ecs, ISerializer& _serializer);
 
 
 #ifdef IN_EDITOR

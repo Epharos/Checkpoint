@@ -222,7 +222,7 @@ void JsonSerializer::WriteColorArray(const std::string& _name, const size_t& _si
 	(*objectStack.back())[_name] = array;
 }
 
-void JsonSerializer::BeginObjectArray(const std::string& _name)
+void JsonSerializer::BeginObjectArrayWriting(const std::string& _name)
 {
 	objectStack.back()->operator[](_name) = json::array();
 	objectStack.push_back(&(*objectStack.back())[_name]);
@@ -248,31 +248,31 @@ void JsonSerializer::EndObjectArrayElement()
 
 std::string JsonSerializer::ReadString(const std::string& _name, const std::string& _defaultValue)
 {
-	return data.contains(_name) ? data[_name].get<std::string>() : _defaultValue;
+	return objectStack.back()->contains(_name) ? objectStack.back()->operator[](_name).get<std::string>() : _defaultValue;
 }
 
 int JsonSerializer::ReadInt(const std::string& _name, int _defaultValue)
 {
-	return data.contains(_name) ? data[_name].get<int>() : _defaultValue;
+	return objectStack.back()->contains(_name) ? objectStack.back()->operator[](_name).get<int>() : _defaultValue;
 }
 
 float JsonSerializer::ReadFloat(const std::string& _name, float _defaultValue)
 {
-	return data.contains(_name) ? data[_name].get<float>() : _defaultValue;
+	return objectStack.back()->contains(_name) ? objectStack.back()->operator[](_name).get<float>() : _defaultValue;
 }
 
 bool JsonSerializer::ReadBool(const std::string& _name, bool _defaultValue)
 {
-	return data.contains(_name) ? data[_name].get<bool>() : _defaultValue;
+	return objectStack.back()->contains(_name) ? objectStack.back()->operator[](_name).get<bool>() : _defaultValue;
 }
 
 glm::vec2 JsonSerializer::ReadVector2(const std::string& _name, const glm::vec2& _defaultValue)
 {
-	if (data.contains(_name))
+	if (objectStack.back()->contains(_name) && objectStack.back()->operator[](_name).is_object())
 	{
 		glm::vec2 vec;
-		vec.x = data[_name]["x"].get<float>();
-		vec.y = data[_name]["y"].get<float>();
+		vec.x = objectStack.back()->operator[](_name)["x"].get<float>();
+		vec.y = objectStack.back()->operator[](_name)["y"].get<float>();
 		return vec;
 	}
 
@@ -281,12 +281,12 @@ glm::vec2 JsonSerializer::ReadVector2(const std::string& _name, const glm::vec2&
 
 glm::vec3 JsonSerializer::ReadVector3(const std::string& _name, const glm::vec3& _defaultValue)
 {
-	if (data.contains(_name))
+	if (objectStack.back()->contains(_name) && objectStack.back()->operator[](_name).is_object())
 	{
 		glm::vec3 vec;
-		vec.x = data[_name]["x"].get<float>();
-		vec.y = data[_name]["y"].get<float>();
-		vec.z = data[_name]["z"].get<float>();
+		vec.x = objectStack.back()->operator[](_name)["x"].get<float>();
+		vec.y = objectStack.back()->operator[](_name)["y"].get<float>();
+		vec.z = objectStack.back()->operator[](_name)["z"].get<float>();
 		return vec;
 	}
 
@@ -295,13 +295,13 @@ glm::vec3 JsonSerializer::ReadVector3(const std::string& _name, const glm::vec3&
 
 glm::vec4 JsonSerializer::ReadVector4(const std::string& _name, const glm::vec4& _defaultValue)
 {
-	if (data.contains(_name))
+	if (objectStack.back()->contains(_name) && objectStack.back()->operator[](_name).is_object())
 	{
 		glm::vec4 vec;
-		vec.x = data[_name]["x"].get<float>();
-		vec.y = data[_name]["y"].get<float>();
-		vec.z = data[_name]["z"].get<float>();
-		vec.w = data[_name]["w"].get<float>();
+		vec.x = objectStack.back()->operator[](_name)["x"].get<float>();
+		vec.y = objectStack.back()->operator[](_name)["y"].get<float>();
+		vec.z = objectStack.back()->operator[](_name)["z"].get<float>();
+		vec.w = objectStack.back()->operator[](_name)["w"].get<float>();
 		return vec;
 	}
 
@@ -310,13 +310,13 @@ glm::vec4 JsonSerializer::ReadVector4(const std::string& _name, const glm::vec4&
 
 glm::quat JsonSerializer::ReadQuaternion(const std::string& _name, const glm::quat& _defaultValue)
 {
-	if (data.contains(_name))
+	if (objectStack.back()->contains(_name) && objectStack.back()->operator[](_name).is_object())
 	{
 		glm::quat vec;
-		vec.x = data[_name]["x"].get<float>();
-		vec.y = data[_name]["y"].get<float>();
-		vec.z = data[_name]["z"].get<float>();
-		vec.w = data[_name]["w"].get<float>();
+		vec.x = objectStack.back()->operator[](_name)["x"].get<float>();
+		vec.y = objectStack.back()->operator[](_name)["y"].get<float>();
+		vec.z = objectStack.back()->operator[](_name)["z"].get<float>();
+		vec.w = objectStack.back()->operator[](_name)["w"].get<float>();
 		return vec;
 	}
 
@@ -325,17 +325,28 @@ glm::quat JsonSerializer::ReadQuaternion(const std::string& _name, const glm::qu
 
 glm::vec4 JsonSerializer::ReadColor(const std::string& _name, const glm::vec4& _defaultValue)
 {
-	if (data.contains(_name))
+	if (objectStack.back()->contains(_name) && objectStack.back()->operator[](_name).is_object())
 	{
 		glm::vec4 vec;
-		vec.r = data[_name]["r"].get<float>();
-		vec.g = data[_name]["g"].get<float>();
-		vec.b = data[_name]["b"].get<float>();
-		vec.a = data[_name]["a"].get<float>();
+		vec.r = objectStack.back()->operator[](_name)["r"].get<float>();
+		vec.g = objectStack.back()->operator[](_name)["g"].get<float>();
+		vec.b = objectStack.back()->operator[](_name)["b"].get<float>();
+		vec.a = objectStack.back()->operator[](_name)["a"].get<float>();
 		return vec;
 	}
 
 	return _defaultValue;
+}
+
+bool JsonSerializer::BeginObjectReading(const std::string& _name)
+{
+	if (objectStack.back()->contains(_name) && objectStack.back()->is_object())
+	{
+		objectStack.push_back(&(*objectStack.back())[_name]);
+		return true;
+	}
+
+	return false;
 }
 
 std::tuple<size_t, std::string*> JsonSerializer::ReadStringArray(const std::string& _name)
@@ -465,4 +476,26 @@ std::tuple<size_t, glm::vec4*> JsonSerializer::ReadColorArray(const std::string&
 	}
 
 	return std::make_tuple(size, array);
+}
+
+size_t JsonSerializer::BeginObjectArrayReading(const std::string& _name)
+{
+	if (objectStack.back()->contains(_name) && objectStack.back()->operator[](_name).is_array())
+	{
+		objectStack.push_back(&(*objectStack.back())[_name]);
+		return objectStack.back()->size();
+	}
+
+	return -1;
+}
+
+bool JsonSerializer::BeginObjectArrayElementReading(const uint64_t _index)
+{
+	if (objectStack.back()->size() > _index && objectStack.back()->at(_index).is_object())
+	{
+		objectStack.push_back(&objectStack.back()->at(_index));
+		return true;
+	}
+
+	return false;
 }

@@ -198,7 +198,7 @@ protected:
 
 			if (fileInfo.isFile())
 			{
-				if (fileInfo.suffix().endsWith("cpscene"))
+				if (fileInfo.suffix().endsWith("scn"))
 				{
 					JsonSerializer serializer;
 					serializer.Read(path.toStdString());

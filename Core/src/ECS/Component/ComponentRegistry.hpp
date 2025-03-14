@@ -52,6 +52,8 @@ public:
 		{
 			return it->second(_ecs, _entity);
 		}
+
+		return false;
 	}
 
 	bool CreateComponent(ECS::EntityComponentSystem& _ecs, Entity& _entity, const std::type_index& _typeIndex)
@@ -174,6 +176,8 @@ public:
 			if (name == _typeName)
 				return typeIndex;
 		}
+
+		return std::type_index(typeid(void));
 	}
 
 	std::string GetTypeName(const std::type_index& _typeIndex)
