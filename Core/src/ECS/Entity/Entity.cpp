@@ -4,6 +4,8 @@
 
 #include "../Component/ComponentRegistry.hpp"
 
+#include "Util/Serializers/ISerializer.hpp"
+
 void Entity::Serialize(const Entity& _entity, const std::vector<std::pair<std::type_index, void*>>& _components, ISerializer& _serializer)
 {
 	_serializer.WriteInt("ID", _entity.id);
@@ -46,10 +48,12 @@ void Entity::Deserialize(Entity& _entity, ECS::EntityComponentSystem& _ecs, ISer
 				throw std::runtime_error("Couldn't deserialize component");
 			}
 			
+			_serializer.BeginObjectReading("Data");
 			std::type_index componentType = ComponentRegistry::GetInstance().GetTypeIndex(componentTypeStr);
 			IComponentBase* component = static_cast<IComponentBase*>(_ecs.GetComponent(_entity, componentType));
 			ISerializable* componentSerializer = ComponentRegistry::GetInstance().CreateSerializer(componentType, component).release();
 			componentSerializer->Deserialize(_serializer);
+			_serializer.EndObject();
 
 			_serializer.EndObjectArrayElement();
 
