@@ -29,7 +29,7 @@ public:
 	void SetResource(std::shared_ptr<T>* _resource)
 	{
 		resource = _resource;
-		if(*_resource) setText(QString::fromStdString(Project::GetResourceRelativePath(Resource::ResourceManager::Get()->GetResourcePath(*_resource))));
+		if(*_resource) setText(QString::fromStdString(Project::GetResourceRelativePath(cp::ResourceManager::Get()->GetResourcePath(*_resource))));
 	}
 
 	void SetResourcePath(const std::string& _resourcePath)
@@ -64,8 +64,8 @@ protected:
 
 					if (resource)
 					{
-						*resource = Resource::ResourceManager::Get()->GetOrLoad<T>(url.toStdString());
-						Resource::ResourceManager::Get()->GetResourceType<T>()->OptimizeMemory(resourcePath);
+						*resource = cp::ResourceManager::Get()->GetOrLoad<T>(url.toStdString());
+						cp::ResourceManager::Get()->GetResourceType<T>()->OptimizeMemory(resourcePath);
 						resourcePath = url.toStdString();
 					}
 				}
@@ -74,7 +74,7 @@ protected:
 	}
 };
 
-class MeshDropLineEdit : public FileDropLineEdit<Resource::Mesh>
+class MeshDropLineEdit : public FileDropLineEdit<cp::Mesh>
 {
 	Q_OBJECT
 

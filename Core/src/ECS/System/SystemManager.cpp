@@ -2,7 +2,7 @@
 
 #include "SystemManager.hpp"
 
-namespace ECS
+namespace cp
 {
 	void SystemManager::Update(EntityManager& _entityManager, ComponentManager& _componentManager, const float& _dt)
 	{

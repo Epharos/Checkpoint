@@ -2,7 +2,7 @@
 
 #include "../pch.hpp"
 
-namespace Context
+namespace cp
 {
 	struct QueueFamilyIndices
 	{

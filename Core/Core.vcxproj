@@ -194,7 +194,6 @@
     <ClInclude Include="src\ECS\System\System.hpp" />
     <ClInclude Include="src\ECS\System\SystemManager.hpp" />
     <ClInclude Include="src\Helpers\Helpers.hpp" />
-    <ClInclude Include="src\Interfaces\ISerializable.hpp" />
     <ClInclude Include="src\pch.hpp" />
     <ClInclude Include="src\Render\Pipeline\DescriptorSetManager.hpp" />
     <ClInclude Include="src\Render\Pipeline\SetLayoutsManager.hpp" />

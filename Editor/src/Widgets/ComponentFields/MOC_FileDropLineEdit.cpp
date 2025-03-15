@@ -61,7 +61,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMeshDropLineEditENDCLASS[] = {
 };
 
 Q_CONSTINIT const QMetaObject MeshDropLineEdit::staticMetaObject = { {
-    QMetaObject::SuperData::link<FileDropLineEdit<Resource::Mesh>::staticMetaObject>(),
+    QMetaObject::SuperData::link<FileDropLineEdit<cp::Mesh>::staticMetaObject>(),
     qt_meta_stringdata_CLASSMeshDropLineEditENDCLASS.offsetsAndSizes,
     qt_meta_data_CLASSMeshDropLineEditENDCLASS,
     qt_static_metacall,
@@ -91,12 +91,12 @@ void *MeshDropLineEdit::qt_metacast(const char *_clname)
     if (!_clname) return nullptr;
     if (!strcmp(_clname, qt_meta_stringdata_CLASSMeshDropLineEditENDCLASS.stringdata0))
         return static_cast<void*>(this);
-    return FileDropLineEdit<Resource::Mesh>::qt_metacast(_clname);
+    return FileDropLineEdit<cp::Mesh>::qt_metacast(_clname);
 }
 
 int MeshDropLineEdit::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
-    _id = FileDropLineEdit<Resource::Mesh>::qt_metacall(_c, _id, _a);
+    _id = FileDropLineEdit<cp::Mesh>::qt_metacall(_c, _id, _a);
     return _id;
 }
 QT_WARNING_POP

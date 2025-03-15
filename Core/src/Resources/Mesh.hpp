@@ -3,7 +3,7 @@
 #include "../pch.hpp"
 #include "../Context/VulkanContext.hpp"
 
-namespace Resource
+namespace cp
 {
 	struct Vertex
 	{
@@ -25,10 +25,10 @@ namespace Resource
 		vk::Buffer indexBuffer;
 		vk::DeviceMemory indexBufferMemory;
 
-		const Context::VulkanContext* context;
+		const cp::VulkanContext* context;
 
 	public:
-		Mesh(const Context::VulkanContext& _context, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+		Mesh(const cp::VulkanContext& _context, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 		~Mesh();
 
 		inline constexpr const std::vector<Vertex>& GetVertices() const { return vertices; }
@@ -41,6 +41,6 @@ namespace Resource
 		inline constexpr vk::Buffer GetIndexBuffer() const { return indexBuffer; }
 		inline constexpr vk::DeviceMemory GetIndexBufferMemory() const { return indexBufferMemory; }
 
-		static std::shared_ptr<Mesh> LoadMesh(const Context::VulkanContext& _context, const std::string& _path);
+		static std::shared_ptr<Mesh> LoadMesh(const cp::VulkanContext& _context, const std::string& _path);
 	};
 }

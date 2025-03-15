@@ -3,14 +3,14 @@
 
 #include "Material.hpp"
 
-Resource::MaterialInstance::MaterialInstance(Material* _material, const Context::VulkanContext*& _context)
+cp::MaterialInstance::MaterialInstance(Material* _material, const cp::VulkanContext*& _context)
 	: material(_material), context(_context) 
 {
 	descriptorSet = context->GetDescriptorSetManager()->CreateOrphanedDescriptorSet(material->GetDescriptorSetLayout());
 	LOG_DEBUG(MF("CREATING MATERIAL INSTANCE (", GetMaterial(), ")"));
 }
 
-Resource::MaterialInstance::~MaterialInstance()
+cp::MaterialInstance::~MaterialInstance()
 {
 	context->GetDescriptorSetManager()->DestroyOrphanedDescriptorSet(descriptorSet);
 }

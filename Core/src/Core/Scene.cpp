@@ -9,38 +9,38 @@
 #include "../Resources/Material.hpp"
 #include "../Resources/MaterialInstance.hpp"
 
-Core::Scene::Scene(Render::Renderer* _renderer) : renderer(_renderer)
+cp::Scene::Scene(cp::Renderer* _renderer) : renderer(_renderer)
 {
 	LOG_INFO("Scene created");
 
-	Resource::ResourceManager::Get()->RegisterResourceType<Resource::Mesh>();
-	Resource::ResourceManager::Get()->GetResourceType<Resource::Mesh>()->SetLoader(std::bind(&Resource::Mesh::LoadMesh, std::placeholders::_1, std::placeholders::_2));
-	Resource::ResourceManager::Get()->RegisterResourceType<Resource::Texture>();
-	Resource::ResourceManager::Get()->GetResourceType<Resource::Texture>()->SetLoader(std::bind(&Resource::Texture::LoadTexture, std::placeholders::_1, std::placeholders::_2));
-	Resource::ResourceManager::Get()->RegisterResourceType<Resource::Material>();
-	Resource::ResourceManager::Get()->RegisterResourceType<Resource::MaterialInstance>();
+	cp::ResourceManager::Get()->RegisterResourceType<cp::Mesh>();
+	cp::ResourceManager::Get()->GetResourceType<cp::Mesh>()->SetLoader(std::bind(&cp::Mesh::LoadMesh, std::placeholders::_1, std::placeholders::_2));
+	cp::ResourceManager::Get()->RegisterResourceType<cp::Texture>();
+	cp::ResourceManager::Get()->GetResourceType<cp::Texture>()->SetLoader(std::bind(&cp::Texture::LoadTexture, std::placeholders::_1, std::placeholders::_2));
+	cp::ResourceManager::Get()->RegisterResourceType<cp::Material>();
+	cp::ResourceManager::Get()->RegisterResourceType<cp::MaterialInstance>();
 
 #ifdef IN_EDITOR
 	sceneName = "Untitled scene";
 #endif
 }
 
-Core::Scene::~Scene()
+cp::Scene::~Scene()
 {
 	
 }
 
-void Core::Scene::Cleanup()
+void cp::Scene::Cleanup()
 {
 	ecs.Cleanup();
 }
 
-void Core::Scene::Update(float dt)
+void cp::Scene::Update(float dt)
 {
 	ecs.Update(dt);
 }
 
-void Core::Scene::Serialize(ISerializer& _serializer) const
+void cp::Scene::Serialize(ISerializer& _serializer) const
 {
 	_serializer.WriteString("Name", sceneName);
 
@@ -56,7 +56,7 @@ void Core::Scene::Serialize(ISerializer& _serializer) const
 	_serializer.EndObjectArray();
 }
 
-void Core::Scene::Deserialize(ISerializer& _serializer)
+void cp::Scene::Deserialize(ISerializer& _serializer)
 {
 	sceneName = _serializer.ReadString("Name", "Name error");
 

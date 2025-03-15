@@ -4,7 +4,7 @@
 
 #include "RenderTarget.hpp"
 
-namespace Render
+namespace cp
 {
 	class Frame
 	{
@@ -17,10 +17,10 @@ namespace Render
 		vk::Semaphore renderFinishedSemaphore;
 		vk::Fence inFlightFence;
 
-		Context::VulkanContext* context;
+		cp::VulkanContext* context;
 
 	public:
-		Frame(Context::VulkanContext*& _context);
+		Frame(cp::VulkanContext*& _context);
 		~Frame();
 
 		void AddRenderTarget(RenderTarget* _renderTarget);

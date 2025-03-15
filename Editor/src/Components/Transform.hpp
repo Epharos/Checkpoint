@@ -5,7 +5,7 @@
 #include "../Widgets/ComponentFields/Vec3.hpp"
 #include "../Widgets/ComponentFields/Quat.hpp"
 
-struct Transform : public IComponentBase, public DirtyPattern
+struct Transform : public cp::IComponentBase, public DirtyPattern
 {
 	glm::vec3 position = glm::vec3(0.0f);
 	glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
@@ -14,7 +14,7 @@ struct Transform : public IComponentBase, public DirtyPattern
 	glm::mat4 matrix = glm::mat4(1.0f);
 	glm::mat3 normalMatrix = glm::mat3(1.0f);
 
-	static class Helper : public ComponentBaseHelper<Transform>
+	static class Helper : public cp::ComponentBaseHelper<Transform>
 	{
 		void Translate(Transform& _component, const glm::vec3& _translation)
 		{
@@ -140,12 +140,12 @@ struct Transform : public IComponentBase, public DirtyPattern
 	};
 };
 
-class TransformSerializer : public IComponentSerializer
+class TransformSerializer : public cp::IComponentSerializer
 {
 public:
-	TransformSerializer(IComponentBase& _component) : IComponentSerializer(_component) {}
+	TransformSerializer(cp::IComponentBase& _component) : IComponentSerializer(_component) {}
 
-	void Serialize(ISerializer& _serializer) const override
+	void Serialize(cp::ISerializer& _serializer) const override
 	{
 		Transform& component = static_cast<Transform&>(this->component);
 		_serializer.WriteVector3("position", component.position);
@@ -153,7 +153,7 @@ public:
 		_serializer.WriteVector3("scale", component.scale);
 	}
 
-	void Deserialize(ISerializer& _serializer) override
+	void Deserialize(cp::ISerializer& _serializer) override
 	{
 		Transform& component = static_cast<Transform&>(this->component);
 		component.position = _serializer.ReadVector3("position", glm::vec3(0.0f));
@@ -162,7 +162,7 @@ public:
 	}
 };
 
-class TransformWidget : public ComponentWidget<Transform>
+class TransformWidget : public cp::ComponentWidget<Transform>
 {
 public:
 	TransformWidget(Transform& _component, QWidget* _parent = nullptr) : ComponentWidget(_component, "Transform", _parent)

@@ -2,18 +2,18 @@
 
 #define CONSOLE_LOG
 
-#define LOG_TRACE(message) Util::Logger::GetInstance().Log(Util::LogLevel::TRACE, message, __FILE__, std::this_thread::get_id())
-#define LOG_DEBUG(message) Util::Logger::GetInstance().Log(Util::LogLevel::DEBUG, message, __FILE__, std::this_thread::get_id())
-#define LOG_INFO(message) Util::Logger::GetInstance().Log(Util::LogLevel::INFO, message, __FILE__, std::this_thread::get_id())
-#define LOG_WARNING(message) Util::Logger::GetInstance().Log(Util::LogLevel::WARNING, message, __FILE__, std::this_thread::get_id())
-#define LOG_ERROR(message) Util::Logger::GetInstance().Log(Util::LogLevel::ERROR, message, __FILE__, std::this_thread::get_id())
-#define LOG_FATAL(message) Util::Logger::GetInstance().Log(Util::LogLevel::FATAL, message, __FILE__, std::this_thread::get_id())
+#define LOG_TRACE(message) cp::Logger::GetInstance().Log(cp::LogLevel::TRACE, message, __FILE__, std::this_thread::get_id())
+#define LOG_DEBUG(message) cp::Logger::GetInstance().Log(cp::LogLevel::DEBUG, message, __FILE__, std::this_thread::get_id())
+#define LOG_INFO(message) cp::Logger::GetInstance().Log(cp::LogLevel::INFO, message, __FILE__, std::this_thread::get_id())
+#define LOG_WARNING(message) cp::Logger::GetInstance().Log(cp::LogLevel::WARNING, message, __FILE__, std::this_thread::get_id())
+#define LOG_ERROR(message) cp::Logger::GetInstance().Log(cp::LogLevel::ERROR, message, __FILE__, std::this_thread::get_id())
+#define LOG_FATAL(message) cp::Logger::GetInstance().Log(cp::LogLevel::FATAL, message, __FILE__, std::this_thread::get_id())
 
-#define MF Util::Logger::MessageFormat
+#define MF cp::Logger::MessageFormat
 
 #include "../pch.hpp"
 
-namespace Util
+namespace cp
 {
 	enum LogLevel
 	{

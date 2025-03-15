@@ -5,7 +5,7 @@
 #include "../../Context/VulkanContext.hpp"
 #include "../../Helpers/Helpers.hpp"
 
-namespace Render
+namespace cp
 {
 	class RenderTargetAttachment
 	{
@@ -15,17 +15,17 @@ namespace Render
 		vk::DeviceMemory imageMemory;
 		vk::Sampler sampler = VK_NULL_HANDLE;
 
-		Context::VulkanContext* context;
+		cp::VulkanContext* context;
 
 		virtual void Destroy(const vk::Device& device);
-		void Build(Context::VulkanContext*& _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler = false, const uint32_t& _layerCount = 1);
-		void Build(Context::VulkanContext*& _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler = false, const uint32_t& _layerCount = 1);
+		void Build(cp::VulkanContext*& _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler = false, const uint32_t& _layerCount = 1);
+		void Build(cp::VulkanContext*& _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler = false, const uint32_t& _layerCount = 1);
 
 	public:
 		bool isSwapchain = false;
 
-		RenderTargetAttachment(Context::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler = false, const uint32_t& _layerCount = 1);
-		RenderTargetAttachment(Context::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler = false, const uint32_t& _layerCount = 1);
+		RenderTargetAttachment(cp::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler = false, const uint32_t& _layerCount = 1);
+		RenderTargetAttachment(cp::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler = false, const uint32_t& _layerCount = 1);
 		~RenderTargetAttachment();
 
 		inline constexpr const vk::Image& GetImage() const { return image; }
@@ -44,10 +44,10 @@ namespace Render
 
 		vk::Extent2D extent;
 
-		Context::VulkanContext* context;
+		cp::VulkanContext* context;
 
 	public:
-		RenderTarget(Context::VulkanContext& _context, const vk::Extent2D& _extent);
+		RenderTarget(cp::VulkanContext& _context, const vk::Extent2D& _extent);
 		~RenderTarget();
 
 		void AddAttachment(const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const uint32_t _layerCount = 1);

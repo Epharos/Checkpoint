@@ -2,9 +2,9 @@
 
 #include "RenderTarget.hpp"
 
-namespace Render
+namespace cp
 {
-	RenderTarget::RenderTarget(Context::VulkanContext& _context, const vk::Extent2D& _extent) : context(&_context), extent(_extent)
+	RenderTarget::RenderTarget(cp::VulkanContext& _context, const vk::Extent2D& _extent) : context(&_context), extent(_extent)
 	{
 
 	}
@@ -69,13 +69,13 @@ namespace Render
 		context->GetDevice().destroyFramebuffer(framebuffer);
 	}
 
-	RenderTargetAttachment::RenderTargetAttachment(Context::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler, const uint32_t& _layerCount)
+	RenderTargetAttachment::RenderTargetAttachment(cp::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler, const uint32_t& _layerCount)
 	{
 		context = _context;
 		Build(_context, _extent, _format, _usage, _aspectFlags, _shouldCreateSampler, _layerCount);
 	}
 
-	RenderTargetAttachment::RenderTargetAttachment(Context::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler, const uint32_t& _layerCount)
+	RenderTargetAttachment::RenderTargetAttachment(cp::VulkanContext* _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler, const uint32_t& _layerCount)
 	{
 		context = _context;
 		Build(_context, _image, _format, _aspectFlags, _shouldCreateSampler, _layerCount);
@@ -94,7 +94,7 @@ namespace Render
 		if (sampler != VK_NULL_HANDLE) device.destroySampler(sampler);
 	}
 
-	void RenderTargetAttachment::Build(Context::VulkanContext*& _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler, const uint32_t& _layerCount)
+	void RenderTargetAttachment::Build(cp::VulkanContext*& _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler, const uint32_t& _layerCount)
 	{
 		vk::ImageCreateInfo imageInfo;
 		imageInfo.imageType = vk::ImageType::e2D;
@@ -150,7 +150,7 @@ namespace Render
 		}
 	}
 	
-	void RenderTargetAttachment::Build(Context::VulkanContext*& _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler, const uint32_t& _layerCount)
+	void RenderTargetAttachment::Build(cp::VulkanContext*& _context, const vk::Image& _image, const vk::Format& _format, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler, const uint32_t& _layerCount)
 	{
 		image = _image;
 

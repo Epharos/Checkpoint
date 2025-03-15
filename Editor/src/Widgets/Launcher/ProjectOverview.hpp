@@ -79,7 +79,7 @@ public:
 		QHBoxLayout* engineVersionLayout = new QHBoxLayout();
 		engineVersionLayout->setAlignment(Qt::AlignLeft);
 		QLabel* engineVersionLabel = new QLabel("Engine Version: ", this);
-		QLabel* engineVersionValue = new QLabel(QString::fromStdString(Context::VulkanContext::VersionToString(_data.engineVersion)), this);
+		QLabel* engineVersionValue = new QLabel(QString::fromStdString(cp::VulkanContext::VersionToString(_data.engineVersion)), this);
 		engineVersionValue->setStyleSheet("font-weight: 600;");
 		engineVersionLayout->addWidget(engineVersionLabel);
 		engineVersionLayout->addWidget(engineVersionValue);

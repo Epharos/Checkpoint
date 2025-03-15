@@ -170,9 +170,6 @@
     <ClInclude Include="src\Context\Platforms\PlatformQt.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Interfaces\ISerializable.hpp">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
     <ClInclude Include="src\Util\Serializers\ISerializer.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>

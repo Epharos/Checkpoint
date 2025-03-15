@@ -3,7 +3,7 @@
 #include "../../pch.hpp"
 #include "../../Context/VulkanContext.hpp"
 
-namespace Render
+namespace cp
 {
 	struct CameraUBO
 	{
@@ -13,7 +13,7 @@ namespace Render
 	class Camera
 	{
 	public:
-		Camera(Context::VulkanContext* _context);
+		Camera(cp::VulkanContext* _context);
 		~Camera();
 
 		void SetPosition(const glm::vec3& _position);
@@ -46,7 +46,7 @@ namespace Render
 		void UpdateUniformBuffer();
 
 	private:
-		Context::VulkanContext* context;
+		cp::VulkanContext* context;
 
 		glm::vec3 position;
 		glm::quat rotation;

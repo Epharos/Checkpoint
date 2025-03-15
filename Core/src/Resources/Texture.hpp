@@ -3,7 +3,7 @@
 #include "../pch.hpp"
 #include "../Context/VulkanContext.hpp"
 
-namespace Resource
+namespace cp
 {
 	class Texture
 	{
@@ -18,13 +18,13 @@ namespace Resource
 		vk::ImageView imageView;
 		vk::Sampler sampler;
 
-		const Context::VulkanContext* context;
+		const cp::VulkanContext* context;
 
 	public:
-		Texture(const Context::VulkanContext* _context) : context(_context) {}
+		Texture(const cp::VulkanContext* _context) : context(_context) {}
 		~Texture();
 
-		static std::shared_ptr<Texture> LoadTexture(const Context::VulkanContext& _context, const std::string& _path);
+		static std::shared_ptr<Texture> LoadTexture(const cp::VulkanContext& _context, const std::string& _path);
 
 		inline constexpr const vk::Image GetImage() const { return image; }
 		inline constexpr const vk::ImageView GetImageView() const { return imageView; }

@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include "DescriptorSetManager.hpp"
 
-Pipeline::DescriptorSetManager::DescriptorSetManager(vk::Device _device) : device(_device)
+cp::DescriptorSetManager::DescriptorSetManager(vk::Device _device) : device(_device)
 {
 	vk::DescriptorPoolSize poolSize = {};
 	poolSize.type = vk::DescriptorType::eUniformBuffer;
@@ -16,12 +16,12 @@ Pipeline::DescriptorSetManager::DescriptorSetManager(vk::Device _device) : devic
 	pool = device.createDescriptorPool(poolInfo);
 }
 
-vk::DescriptorSet& Pipeline::DescriptorSetManager::GetDescriptorSet(const std::string& _name)
+vk::DescriptorSet& cp::DescriptorSetManager::GetDescriptorSet(const std::string& _name)
 {
 	return sets[_name];
 }
 
-void Pipeline::DescriptorSetManager::UpdateDescriptorSet(const std::string& _name, const DescriptorSetUpdate& _write)
+void cp::DescriptorSetManager::UpdateDescriptorSet(const std::string& _name, const DescriptorSetUpdate& _write)
 {
 #ifdef _DEBUG
 	if (sets.find(_name) == sets.end())
@@ -48,7 +48,7 @@ void Pipeline::DescriptorSetManager::UpdateDescriptorSet(const std::string& _nam
 	device.updateDescriptorSets(1, &write, 0, nullptr);
 }
 
-void Pipeline::DescriptorSetManager::UpdateDescriptorSet(const std::string& _name, const std::vector<DescriptorSetUpdate>& _writes)
+void cp::DescriptorSetManager::UpdateDescriptorSet(const std::string& _name, const std::vector<DescriptorSetUpdate>& _writes)
 {
 #ifdef _DEBUG
 	if (sets.find(_name) == sets.end())
@@ -82,7 +82,7 @@ void Pipeline::DescriptorSetManager::UpdateDescriptorSet(const std::string& _nam
 	device.updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 }
 
-void Pipeline::DescriptorSetManager::UpdateDescriptorSets(const std::vector<std::string>& _names, const std::vector<DescriptorSetUpdate>& _writes)
+void cp::DescriptorSetManager::UpdateDescriptorSets(const std::vector<std::string>& _names, const std::vector<DescriptorSetUpdate>& _writes)
 {
 #ifdef _DEBUG
 	if (_names.size() != _writes.size())
@@ -120,7 +120,7 @@ void Pipeline::DescriptorSetManager::UpdateDescriptorSets(const std::vector<std:
 	device.updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 }
 
-vk::DescriptorSet Pipeline::DescriptorSetManager::CreateDescriptorSet(const std::string& _name, const vk::DescriptorSetLayout& _layout)
+vk::DescriptorSet cp::DescriptorSetManager::CreateDescriptorSet(const std::string& _name, const vk::DescriptorSetLayout& _layout)
 {
 #ifdef _DEBUG
 	if (sets.find(_name) != sets.end())
@@ -131,7 +131,7 @@ vk::DescriptorSet Pipeline::DescriptorSetManager::CreateDescriptorSet(const std:
 	return sets[_name];
 }
 
-std::vector<vk::DescriptorSet> Pipeline::DescriptorSetManager::CreateDescriptorSets(const std::vector<std::string>& _names, const std::vector<vk::DescriptorSetLayout>& _layouts)
+std::vector<vk::DescriptorSet> cp::DescriptorSetManager::CreateDescriptorSets(const std::vector<std::string>& _names, const std::vector<vk::DescriptorSetLayout>& _layouts)
 {
 #ifdef _DEBUG
 	if (_names.size() != _layouts.size())
@@ -150,12 +150,12 @@ std::vector<vk::DescriptorSet> Pipeline::DescriptorSetManager::CreateDescriptorS
 	return results;
 }
 
-vk::DescriptorSet Pipeline::DescriptorSetManager::CreateOrphanedDescriptorSet(const vk::DescriptorSetLayout& _layout)
+vk::DescriptorSet cp::DescriptorSetManager::CreateOrphanedDescriptorSet(const vk::DescriptorSetLayout& _layout)
 {
 	return device.allocateDescriptorSets(vk::DescriptorSetAllocateInfo(pool, 1, &_layout))[0];
 }
 
-void Pipeline::DescriptorSetManager::UpdateOrphanedDescriptorSet(const vk::DescriptorSet& _set, const DescriptorSetUpdate& _write)
+void cp::DescriptorSetManager::UpdateOrphanedDescriptorSet(const vk::DescriptorSet& _set, const DescriptorSetUpdate& _write)
 {
 	vk::WriteDescriptorSet write = {};
 	write.dstSet = _set;
@@ -177,7 +177,7 @@ void Pipeline::DescriptorSetManager::UpdateOrphanedDescriptorSet(const vk::Descr
 	device.updateDescriptorSets(1, &write, 0, nullptr);
 }
 
-void Pipeline::DescriptorSetManager::UpdateOrphanedDescriptorSet(const vk::DescriptorSet& _set, const std::vector<DescriptorSetUpdate>& _writes)
+void cp::DescriptorSetManager::UpdateOrphanedDescriptorSet(const vk::DescriptorSet& _set, const std::vector<DescriptorSetUpdate>& _writes)
 {
 	std::vector<vk::WriteDescriptorSet> writes;
 
@@ -207,12 +207,12 @@ void Pipeline::DescriptorSetManager::UpdateOrphanedDescriptorSet(const vk::Descr
 
 }
 
-void Pipeline::DescriptorSetManager::DestroyOrphanedDescriptorSet(const vk::DescriptorSet& _set)
+void cp::DescriptorSetManager::DestroyOrphanedDescriptorSet(const vk::DescriptorSet& _set)
 {
 	device.freeDescriptorSets(pool, _set);
 }
 
-void Pipeline::DescriptorSetManager::DestroyDescriptorSet(const std::string& _name)
+void cp::DescriptorSetManager::DestroyDescriptorSet(const std::string& _name)
 {
 #ifdef _DEBUG
 	if (sets.find(_name) == sets.end())
@@ -223,7 +223,7 @@ void Pipeline::DescriptorSetManager::DestroyDescriptorSet(const std::string& _na
 	sets.erase(_name);
 }
 
-void Pipeline::DescriptorSetManager::Cleanup()
+void cp::DescriptorSetManager::Cleanup()
 {
 	for (auto& set : sets)
 		device.freeDescriptorSets(pool, set.second);

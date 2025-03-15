@@ -2,13 +2,16 @@
 
 #include "pch.hpp"
 
-template<typename T>
-class ComponentBaseHelper
+namespace cp
 {
+	template<typename T>
+	class ComponentBaseHelper
+	{
 
-};
+	};
 
-class IComponentBase
-{
-	
+	class IComponentBase
+	{
+
+	};
 };

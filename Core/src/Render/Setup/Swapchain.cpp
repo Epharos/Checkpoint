@@ -7,7 +7,7 @@
 
 #include <QtCore/qapplicationstatic.h>
 
-void Render::Swapchain::CreateData()
+void cp::Swapchain::CreateData()
 {
 	uint32_t imageCount = std::min(surfaceCapabilities.minImageCount + 1, surfaceCapabilities.maxImageCount);
 
@@ -66,7 +66,7 @@ void Render::Swapchain::CreateData()
 	}
 }
 
-void Render::Swapchain::QuerySupport()
+void cp::Swapchain::QuerySupport()
 {
 	auto physicalDevice = context->GetPhysicalDevice();
 
@@ -75,7 +75,7 @@ void Render::Swapchain::QuerySupport()
 	presentModes = physicalDevice.getSurfacePresentModesKHR(context->GetSurface());
 }
 
-vk::SurfaceFormatKHR Render::Swapchain::SelectSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& _formats, vk::Format _format, vk::ColorSpaceKHR _colorSpace)
+vk::SurfaceFormatKHR cp::Swapchain::SelectSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& _formats, vk::Format _format, vk::ColorSpaceKHR _colorSpace)
 {
 	for (const auto& format : _formats)
 	{
@@ -88,7 +88,7 @@ vk::SurfaceFormatKHR Render::Swapchain::SelectSurfaceFormat(const std::vector<vk
 	return _formats[0];
 }
 
-vk::PresentModeKHR Render::Swapchain::SelectPresentMode(const std::vector<vk::PresentModeKHR>& _presentModes, vk::PresentModeKHR _presentMode)
+vk::PresentModeKHR cp::Swapchain::SelectPresentMode(const std::vector<vk::PresentModeKHR>& _presentModes, vk::PresentModeKHR _presentMode)
 {
 	for (const auto& presentMode : _presentModes)
 	{
@@ -101,7 +101,7 @@ vk::PresentModeKHR Render::Swapchain::SelectPresentMode(const std::vector<vk::Pr
 	return vk::PresentModeKHR::eFifo;
 }
 
-vk::Extent2D Render::Swapchain::SelectExtent(const vk::SurfaceCapabilitiesKHR& _capabilities, const uint32& _width, const uint32& _height)
+vk::Extent2D cp::Swapchain::SelectExtent(const vk::SurfaceCapabilitiesKHR& _capabilities, const uint32& _width, const uint32& _height)
 {
 	if (_capabilities.currentExtent.width != std::numeric_limits<uint32>().max())
 	{
@@ -116,18 +116,18 @@ vk::Extent2D Render::Swapchain::SelectExtent(const vk::SurfaceCapabilitiesKHR& _
 	return actualExtent;
 }
 
-Render::Swapchain::Swapchain(Context::VulkanContext* _context)
+cp::Swapchain::Swapchain(cp::VulkanContext* _context)
 {
 	context = _context;
 	Setup();
 }
 
-Render::Swapchain::~Swapchain()
+cp::Swapchain::~Swapchain()
 {
 	Cleanup();
 }
 
-void Render::Swapchain::Setup()
+void cp::Swapchain::Setup()
 {
 	QuerySupport();
 
@@ -140,14 +140,14 @@ void Render::Swapchain::Setup()
 	presentMode = newPresentMode;
 }
 
-void Render::Swapchain::Create(vk::RenderPass _mainRenderPass)
+void cp::Swapchain::Create(vk::RenderPass _mainRenderPass)
 {
 	if(!mainRenderPass) mainRenderPass = _mainRenderPass;
 	CreateData();
 	maxFramesInFlight = static_cast<uint32>(frames.size());
 }
 
-void Render::Swapchain::Recreate()
+void cp::Swapchain::Recreate()
 {
 	auto windowExtent = context->GetPlatform()->GetExtent();
 
@@ -156,10 +156,10 @@ void Render::Swapchain::Recreate()
 		extent = windowExtent;
 		switch (context->GetPlatform()->GetType())
 		{
-		case Context::PlatformType::GLFW:
+		case cp::PlatformType::GLFW:
 			glfwWaitEvents();
 			break;
-		case Context::PlatformType::QT:
+		case cp::PlatformType::QT:
 			QCoreApplication::processEvents();
 			break;
 		default:
@@ -174,7 +174,7 @@ void Render::Swapchain::Recreate()
 	Create(mainRenderPass);
 }
 
-void Render::Swapchain::Cleanup()
+void cp::Swapchain::Cleanup()
 {
 	context->GetDevice().destroySwapchainKHR(swapchain);
 

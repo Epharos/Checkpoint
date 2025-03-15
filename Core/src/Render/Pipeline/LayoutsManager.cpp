@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include "LayoutsManager.hpp"
 
-namespace Pipeline
+namespace cp
 {
 	LayoutsManager::LayoutsManager(vk::Device _device) : device(_device)
 	{

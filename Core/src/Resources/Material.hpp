@@ -4,18 +4,18 @@
 #include "MaterialInstance.hpp"
 #include "../Context/VulkanContext.hpp"
 
-namespace Resource
+namespace cp
 {
 	class Material
 	{
 	protected:
-		const Pipeline::PipelineData* pipelineData;
+		const cp::PipelineData* pipelineData;
 		const vk::DescriptorSetLayout descriptorSetLayout;
 
-		const Context::VulkanContext* context;
+		const cp::VulkanContext* context;
 
 	public:
-		Material(const Pipeline::PipelineData& _pipeline, const vk::DescriptorSetLayout& _descriptorSetLayout, const Context::VulkanContext* _context);
+		Material(const cp::PipelineData& _pipeline, const vk::DescriptorSetLayout& _descriptorSetLayout, const cp::VulkanContext* _context);
 
 		template <class T, typename... Args>
 		T* CreateMaterialInstance(Args&& ... args)

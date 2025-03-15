@@ -3,7 +3,7 @@
 #include "pch.hpp"
 #include "../ECS/Entity/Entity.hpp"
 
-namespace ECS
+namespace cp
 {
 	class SparseSet
 	{

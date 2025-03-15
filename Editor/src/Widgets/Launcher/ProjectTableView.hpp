@@ -80,7 +80,7 @@ public:
 			QStandardItem* nameItem = new QStandardItem(data.name);
 			nameItem->setToolTip(data.path);
 			QStandardItem* lastOpenedItem = new QStandardItem(data.lastOpened.toString("yyyy.MM.dd HH:mm"));
-			QStandardItem* versionItem = new QStandardItem(QString::fromStdString(Context::VulkanContext::VersionToString(data.engineVersion)));
+			QStandardItem* versionItem = new QStandardItem(QString::fromStdString(cp::VulkanContext::VersionToString(data.engineVersion)));
 
 			model->setItem(i, 0, nameItem);
 			model->setItem(i, 1, lastOpenedItem);

@@ -3,7 +3,7 @@
 #include "ComponentManager.hpp"
 #include "ComponentRegistry.hpp"
 
-namespace ECS
+namespace cp
 {
 	void* ComponentManager::GetComponent(Entity entity, std::type_index type)
 	{

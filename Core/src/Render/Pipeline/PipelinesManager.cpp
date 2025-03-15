@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include "PipelinesManager.hpp"
 
-namespace Pipeline
+namespace cp
 {
 	PipelinesManager::PipelinesManager(vk::Device _device)
 		: device(_device)

@@ -15,7 +15,7 @@
 
 #include "Camera.hpp"
 
-namespace Render
+namespace cp
 {
 	struct TransformData
 	{
@@ -25,9 +25,9 @@ namespace Render
 
 	struct InstanceGroup
 	{
-		Resource::Material* material;
-		Resource::MaterialInstance* materialInstance;
-		Resource::Mesh* mesh;
+		cp::Material* material;
+		cp::MaterialInstance* materialInstance;
+		cp::Mesh* mesh;
 		std::vector<TransformData> transforms;
 		uint32_t instanceOffset = 0;
 	};
@@ -35,7 +35,7 @@ namespace Render
 	class Renderer
 	{
 	protected:
-		Context::VulkanContext* context;
+		cp::VulkanContext* context;
 		Swapchain* swapchain;
 
 		vk::RenderPass mainRenderPass;
@@ -54,7 +54,7 @@ namespace Render
 		virtual void RenderFrame(const std::vector<InstanceGroup>& _instanceGroups) = 0;
 
 	public:
-		Renderer(Context::VulkanContext* _context) : context(_context) {}
+		Renderer(cp::VulkanContext* _context) : context(_context) {}
 		virtual ~Renderer();
 
 		virtual void Build();
@@ -64,7 +64,7 @@ namespace Render
 		virtual void Render(const std::vector<InstanceGroup>& _instanceGroups);
 
 		inline constexpr const uint32_t GetSubpassCount() const { return subpassCount; }
-		inline constexpr Context::VulkanContext* GetContext() { return context; }
+		inline constexpr cp::VulkanContext* GetContext() { return context; }
 		
 	};
 }

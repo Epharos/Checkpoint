@@ -3,7 +3,7 @@
 #include "../pch.hpp"
 #include "../Context/VulkanContext.hpp"
 
-namespace Resource
+namespace cp
 {
 	class Material;
 
@@ -13,10 +13,10 @@ namespace Resource
 		Material* material;
 		vk::DescriptorSet descriptorSet;
 
-		const Context::VulkanContext* context;
+		const cp::VulkanContext* context;
 
 	public:
-		MaterialInstance(Material* _material, const Context::VulkanContext*& _context);
+		MaterialInstance(Material* _material, const cp::VulkanContext*& _context);
 		virtual ~MaterialInstance();
 
 		virtual void PopulateDescriptorSet() = 0;

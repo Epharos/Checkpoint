@@ -7,7 +7,7 @@
 
 class ComponentRegistry;
 
-namespace ECS
+namespace cp
 {
 	class ComponentManager
 	{

@@ -5,12 +5,12 @@
 class TreeEntityItem : public QTreeWidgetItem
 {
 protected:
-	Entity entity;
+	cp::Entity entity;
 public:
-	TreeEntityItem(Entity _entity, QTreeWidget* _parent) : QTreeWidgetItem(_parent), entity(_entity)
+	TreeEntityItem(cp::Entity _entity, QTreeWidget* _parent) : QTreeWidgetItem(_parent), entity(_entity)
 	{
 		setText(0, QString::fromStdString(_entity.GetDisplayName()));
 	}
 
-	Entity& GetEntity() { return entity; }
+	cp::Entity& GetEntity() { return entity; }
 };

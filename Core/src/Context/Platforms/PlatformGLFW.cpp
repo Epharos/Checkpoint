@@ -3,7 +3,7 @@
 #include "PlatformGLFW.hpp"
 #include "../VulkanContext.hpp"
 
-namespace Context
+namespace cp
 {
 	void PlatformGLFW::Initialize(VulkanContextInfo _context, vk::Extent2D _extent)
 	{

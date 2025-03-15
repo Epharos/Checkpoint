@@ -1,9 +1,9 @@
 #include "pch.hpp"
 #include "Camera.hpp"
 
-namespace Render
+namespace cp
 {
-	Camera::Camera(Context::VulkanContext* _context)
+	Camera::Camera(cp::VulkanContext* _context)
 	{
 		context = _context;
 

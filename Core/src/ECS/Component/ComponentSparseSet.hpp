@@ -3,7 +3,7 @@
 #include "../../Data Structures/SparseSet.hpp"
 #include "../Entity/Entity.hpp"
 
-namespace ECS
+namespace cp
 {
 	template <typename T>
 	class ComponentSparseSet : public SparseSet

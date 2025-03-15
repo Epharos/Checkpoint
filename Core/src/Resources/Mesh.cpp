@@ -5,7 +5,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-Resource::Mesh::Mesh(const Context::VulkanContext& _context, const std::vector<Vertex>& _vertices, const std::vector<uint32_t>& _indices)
+cp::Mesh::Mesh(const cp::VulkanContext& _context, const std::vector<Vertex>& _vertices, const std::vector<uint32_t>& _indices)
 {
 	this->vertices = _vertices;
 	this->indices = _indices;
@@ -35,14 +35,14 @@ Resource::Mesh::Mesh(const Context::VulkanContext& _context, const std::vector<V
 	Helper::Memory::DestroyBuffer(_context.GetDevice(), stagingIndexBuffer, stagingIndexBufferMemory);
 }
 
-Resource::Mesh::~Mesh()
+cp::Mesh::~Mesh()
 {
 	context->GetDevice().waitIdle();
 	Helper::Memory::DestroyBuffer(context->GetDevice(), vertexBuffer, vertexBufferMemory);
 	Helper::Memory::DestroyBuffer(context->GetDevice(), indexBuffer, indexBufferMemory);
 }
 
-std::shared_ptr<Resource::Mesh> Resource::Mesh::LoadMesh(const Context::VulkanContext& _context, const std::string& _path)
+std::shared_ptr<cp::Mesh> cp::Mesh::LoadMesh(const cp::VulkanContext& _context, const std::string& _path)
 {
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(_path, aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_FlipUVs);
@@ -56,12 +56,12 @@ std::shared_ptr<Resource::Mesh> Resource::Mesh::LoadMesh(const Context::VulkanCo
 
 	aiMesh* mesh = scene->mMeshes[0];
 
-	std::vector<Resource::Vertex> vertices;
+	std::vector<cp::Vertex> vertices;
 	std::vector<uint32_t> indexes;
 
 	for (uint32_t i = 0; i < mesh->mNumVertices; i++)
 	{
-		Resource::Vertex vertex;
+		cp::Vertex vertex;
 		vertex.position = { mesh->mVertices[i].x, -mesh->mVertices[i].y, -mesh->mVertices[i].z };
 		vertex.normal = { mesh->mNormals[i].x, -mesh->mNormals[i].y, -mesh->mNormals[i].z };
 		vertex.tangent = { mesh->mTangents[i].x, -mesh->mTangents[i].y, -mesh->mTangents[i].z };
@@ -90,5 +90,5 @@ std::shared_ptr<Resource::Mesh> Resource::Mesh::LoadMesh(const Context::VulkanCo
 
 	LOG_INFO("Loaded mesh: " + _path + " with " + std::to_string(vertices.size()) + " vertices and " + std::to_string(indexes.size()) + " indexes");
 
-	return std::make_shared<Resource::Mesh>(_context, vertices, indexes);
+	return std::make_shared<cp::Mesh>(_context, vertices, indexes);
 }

@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include "Devices.hpp"
 
-namespace Context
+namespace cp
 {
 	QueueFamilyIndices FindQueueFamilies(const vk::PhysicalDevice& _device, const vk::SurfaceKHR& _surface)
 	{

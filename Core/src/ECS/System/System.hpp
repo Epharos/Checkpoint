@@ -5,7 +5,7 @@
 #include "../Entity/EntityManager.hpp"
 #include "../Component/ComponentManager.hpp"
 
-namespace ECS
+namespace cp
 {
 	class System
 	{

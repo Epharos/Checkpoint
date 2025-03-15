@@ -3,7 +3,7 @@
 
 VKAPI_ATTR vk::Bool32 VKAPI_PTR DebugLayerCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT _messageSeverity, vk::DebugUtilsMessageTypeFlagsEXT _messageType, const vk::DebugUtilsMessengerCallbackDataEXT* _callbackData, void* _userData);
 
-void Context::VulkanContext::Initialize(VulkanContextInfo& _contextInfo)
+void cp::VulkanContext::Initialize(VulkanContextInfo& _contextInfo)
 {
 	LOG_TRACE("Checkpoint (" + VersionToString(ENGINE_VERSION) + ")");
 
@@ -44,13 +44,13 @@ void Context::VulkanContext::Initialize(VulkanContextInfo& _contextInfo)
 	CreateLogicalDevice();
 	CreateCommandPool();
 
-	pipelinesManager = new Pipeline::PipelinesManager(GetDevice());
-	layoutsManager = new Pipeline::LayoutsManager(GetDevice());
-	descriptorSetLayoutsManager = new Pipeline::DescriptorSetLayoutsManager(GetDevice());
-	descriptorSetManager = new Pipeline::DescriptorSetManager(GetDevice());
+	pipelinesManager = new cp::PipelinesManager(GetDevice());
+	layoutsManager = new cp::LayoutsManager(GetDevice());
+	descriptorSetLayoutsManager = new cp::DescriptorSetLayoutsManager(GetDevice());
+	descriptorSetManager = new cp::DescriptorSetManager(GetDevice());
 }
 
-void Context::VulkanContext::Shutdown()
+void cp::VulkanContext::Shutdown()
 {
 	LOG_TRACE("Shutting down Vulkan context");
 
@@ -76,14 +76,14 @@ void Context::VulkanContext::Shutdown()
 	delete descriptorSetManager;
 }
 
-std::string Context::VulkanContext::VersionToString(const uint32& _version)
+std::string cp::VulkanContext::VersionToString(const uint32& _version)
 {
 	std::stringstream ss;
 	ss << VK_VERSION_MAJOR(_version) << "." << VK_VERSION_MINOR(_version) << "." << VK_VERSION_PATCH(_version);
 	return ss.str();
 }
 
-void Context::VulkanContext::CreateInstance(const uint32& _vulkanVersion, const std::string& _appName, const uint32& _appVersion, const VulkanExtensions& _extensions)
+void cp::VulkanContext::CreateInstance(const uint32& _vulkanVersion, const std::string& _appName, const uint32& _appVersion, const VulkanExtensions& _extensions)
 {
 	vk::ApplicationInfo appInfo(_appName.c_str(), _appVersion, "Checkpoint", ENGINE_VERSION, _vulkanVersion);
 
@@ -94,7 +94,7 @@ void Context::VulkanContext::CreateInstance(const uint32& _vulkanVersion, const 
 	instance = vk::createInstance(instanceInfo);
 }
 
-void Context::VulkanContext::PickPhysicalDevice()
+void cp::VulkanContext::PickPhysicalDevice()
 {
 	auto physicalDevices = instance.enumeratePhysicalDevices();
 
@@ -127,7 +127,7 @@ void Context::VulkanContext::PickPhysicalDevice()
 #endif
 }
 
-void Context::VulkanContext::CreateLogicalDevice()
+void cp::VulkanContext::CreateLogicalDevice()
 {
 	queueFamilyIndices = FindQueueFamilies(physicalDevice, surface);
 
@@ -169,7 +169,7 @@ void Context::VulkanContext::CreateLogicalDevice()
 	device = physicalDevice.createDevice(deviceInfo);
 }
 
-void Context::VulkanContext::CreateSurface()
+void cp::VulkanContext::CreateSurface()
 {
 	if (platform->GetType() == PlatformType::GLFW)
 	{
@@ -187,7 +187,7 @@ void Context::VulkanContext::CreateSurface()
 	}
 }
 
-void Context::VulkanContext::CreateDebugMessenger()
+void cp::VulkanContext::CreateDebugMessenger()
 {
 	dynamicLoader = vk::detail::DispatchLoaderDynamic(instance, vkGetInstanceProcAddr);
 
@@ -208,13 +208,13 @@ void Context::VulkanContext::CreateDebugMessenger()
 	#endif
 }
 
-void Context::VulkanContext::CreateCommandPool()
+void cp::VulkanContext::CreateCommandPool()
 {
 	vk::CommandPoolCreateInfo poolInfo(vk::CommandPoolCreateFlags() | vk::CommandPoolCreateFlagBits::eResetCommandBuffer, queueFamilyIndices.graphicsFamily.value());
 	commandPool = device.createCommandPool(poolInfo);
 }
 
-void Context::VulkanContext::ValidateExtensions(const VulkanExtensions& _extensions) const
+void cp::VulkanContext::ValidateExtensions(const VulkanExtensions& _extensions) const
 {
 	auto availableExtensions = vk::enumerateInstanceExtensionProperties();
 

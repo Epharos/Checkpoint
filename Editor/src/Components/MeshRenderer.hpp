@@ -4,46 +4,46 @@
 
 #include "../Widgets/ComponentFields/FileDropLineEdit.hpp"
 
-struct MeshRenderer : public IComponentBase
+struct MeshRenderer : public cp::IComponentBase
 {
-	std::shared_ptr<Resource::Mesh> mesh;
-	std::shared_ptr<Resource::MaterialInstance> materialInstance;
+	std::shared_ptr<cp::Mesh> mesh;
+	std::shared_ptr<cp::MaterialInstance> materialInstance;
 
-	static class Helper : public ComponentBaseHelper<MeshRenderer>
+	static class Helper : public cp::ComponentBaseHelper<MeshRenderer>
 	{
-		void SetMesh(MeshRenderer& _component, std::shared_ptr<Resource::Mesh> _mesh)
+		void SetMesh(MeshRenderer& _component, std::shared_ptr<cp::Mesh> _mesh)
 		{
 			_component.mesh = _mesh;
 		}
 
-		void SetMaterialInstance(MeshRenderer& _component, std::shared_ptr<Resource::MaterialInstance> _materialInstance)
+		void SetMaterialInstance(MeshRenderer& _component, std::shared_ptr<cp::MaterialInstance> _materialInstance)
 		{
 			_component.materialInstance = _materialInstance;
 		}
 	};
 };
 
-class MeshRendererSerializer : public IComponentSerializer
+class MeshRendererSerializer : public cp::IComponentSerializer
 {
 public:
-	MeshRendererSerializer(IComponentBase& _component) : IComponentSerializer(_component) {}
+	MeshRendererSerializer(cp::IComponentBase& _component) : IComponentSerializer(_component) {}
 
-	void Serialize(ISerializer& _serializer) const override
+	void Serialize(cp::ISerializer& _serializer) const override
 	{
 		MeshRenderer& component = static_cast<MeshRenderer&>(this->component);
-		std::string meshRelativePath = Project::GetResourceRelativePath(Resource::ResourceManager::Get()->GetResourceType<Resource::Mesh>()->GetResourcePath(component.mesh));
+		std::string meshRelativePath = Project::GetResourceRelativePath(cp::ResourceManager::Get()->GetResourceType<cp::Mesh>()->GetResourcePath(component.mesh));
 		_serializer.WriteString("mesh", meshRelativePath);
 	}
 
-	void Deserialize(ISerializer& _serializer) override
+	void Deserialize(cp::ISerializer& _serializer) override
 	{
 		MeshRenderer& component = static_cast<MeshRenderer&>(this->component);
 		std::string fullMeshPath = Project::GetResourcePath() + "/" + _serializer.ReadString("mesh", "");
-		if(!fullMeshPath.empty()) component.mesh = Resource::ResourceManager::Get()->GetOrLoad<Resource::Mesh>(fullMeshPath);
+		if(!fullMeshPath.empty()) component.mesh = cp::ResourceManager::Get()->GetOrLoad<cp::Mesh>(fullMeshPath);
 	}
 };
 
-class MeshRendererWidget : public ComponentWidget<MeshRenderer>
+class MeshRendererWidget : public cp::ComponentWidget<MeshRenderer>
 {
 public:
 	MeshRendererWidget(MeshRenderer& _component, QWidget* _parent = nullptr) : ComponentWidget(_component, "Mesh Renderer", _parent)

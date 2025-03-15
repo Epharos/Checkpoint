@@ -3,7 +3,7 @@
 #include "../../pch.hpp"
 #include "Entity.hpp"
 
-namespace ECS
+namespace cp
 {
 	class EntityManager
 	{

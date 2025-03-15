@@ -7,31 +7,30 @@
 #include "../Util/Serializers/Serializable.hpp"
 #include "../Util/Serializers/ISerializer.hpp"
 
-
-namespace Core
+namespace cp
 {
 	class Scene : public ISerializable
 	{
 	protected:
-		ECS::EntityComponentSystem ecs;
-		Render::Renderer* renderer;
+		cp::EntityComponentSystem ecs;
+		cp::Renderer* renderer;
 
 #ifdef IN_EDITOR
 		std::string sceneName;
 #endif
 	public:
-		Scene(Render::Renderer* _renderer);
+		Scene(cp::Renderer* _renderer);
 		~Scene();
 
 		void Cleanup();
 
 		void Update(float dt);
 
-		void Serialize(ISerializer& _serializer) const override;
-		void Deserialize(ISerializer& _serializer) override;
+		void Serialize(cp::ISerializer& _serializer) const override;
+		void Deserialize(cp::ISerializer& _serializer) override;
 
-		inline constexpr ECS::EntityComponentSystem& GetECS() { return ecs; }
-		inline constexpr Render::Renderer* GetRenderer() { return renderer; }
+		inline constexpr cp::EntityComponentSystem& GetECS() { return ecs; }
+		inline constexpr cp::Renderer* GetRenderer() { return renderer; }
 
 #ifdef IN_EDITOR
 		inline void SetName(const std::string& name) { sceneName = name; }

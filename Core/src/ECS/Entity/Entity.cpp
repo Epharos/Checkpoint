@@ -6,7 +6,7 @@
 
 #include "Util/Serializers/ISerializer.hpp"
 
-void Entity::Serialize(const Entity& _entity, const std::vector<std::pair<std::type_index, void*>>& _components, ISerializer& _serializer)
+void cp::Entity::Serialize(const Entity& _entity, const std::vector<std::pair<std::type_index, void*>>& _components, ISerializer& _serializer)
 {
 	_serializer.WriteInt("ID", _entity.id);
 
@@ -16,9 +16,9 @@ void Entity::Serialize(const Entity& _entity, const std::vector<std::pair<std::t
 	{
 		_serializer.BeginObjectArrayElementWriting();
 
-		_serializer.WriteString("Type", ComponentRegistry::GetInstance().GetTypeIndexMap().at(component.first));
-		IComponentBase* componentBase = static_cast<IComponentBase*>(component.second);
-		ISerializable* componentSerializer = ComponentRegistry::GetInstance().CreateSerializer(component.first, componentBase).release();
+		_serializer.WriteString("Type", cp::ComponentRegistry::GetInstance().GetTypeIndexMap().at(component.first));
+		cp::IComponentBase* componentBase = static_cast<cp::IComponentBase*>(component.second);
+		cp::ISerializable* componentSerializer = cp::ComponentRegistry::GetInstance().CreateSerializer(component.first, componentBase).release();
 		_serializer.BeginObjectWriting("Data");
 		componentSerializer->Serialize(_serializer);
 
@@ -31,7 +31,7 @@ void Entity::Serialize(const Entity& _entity, const std::vector<std::pair<std::t
 	_serializer.EndObjectArray();
 }
 
-void Entity::Deserialize(Entity& _entity, ECS::EntityComponentSystem& _ecs, ISerializer& _serializer)
+void cp::Entity::Deserialize(Entity& _entity, EntityComponentSystem& _ecs, ISerializer& _serializer)
 {
 	uint64_t elements = -1;
 

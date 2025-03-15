@@ -8,12 +8,12 @@ class VulkanWindow : public QWindow
 {
     Q_OBJECT
 protected:
-    Core::Scene* currentScene;
+    cp::Scene* currentScene;
 
 	QTimer renderTimer;
 
 public:
-    VulkanWindow(Core::Scene* _scene) : QWindow(), currentScene(_scene)
+    VulkanWindow(cp::Scene* _scene) : QWindow(), currentScene(_scene)
     {
 		setSurfaceType(QSurface::VulkanSurface);
 
@@ -37,7 +37,7 @@ public:
 		renderTimer.start();
 	}
 
-	void SetScene(Core::Scene* _scene) 
+	void SetScene(cp::Scene* _scene) 
     {
         currentScene = _scene;
     }

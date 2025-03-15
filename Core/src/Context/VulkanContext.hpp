@@ -16,7 +16,7 @@
 
 typedef uint32_t uint32;
 
-namespace Context
+namespace cp
 {
 	struct VulkanExtensions
 	{
@@ -57,10 +57,10 @@ namespace Context
 		inline constexpr vk::CommandPool GetCommandPool() const { return commandPool; }
 		inline constexpr QueueFamilyIndices GetQueueFamilyIndices() const { return queueFamilyIndices; }
 		inline constexpr vk::detail::DispatchLoaderDynamic GetDynamicLoader() const { return dynamicLoader; }
-		inline Pipeline::PipelinesManager* GetPipelinesManager() const { return pipelinesManager; }
-		inline Pipeline::LayoutsManager* GetLayoutsManager() const { return layoutsManager; }
-		inline Pipeline::DescriptorSetLayoutsManager* GetDescriptorSetLayoutsManager() const { return descriptorSetLayoutsManager; }
-		inline Pipeline::DescriptorSetManager* GetDescriptorSetManager() const { return descriptorSetManager; }
+		inline cp::PipelinesManager* GetPipelinesManager() const { return pipelinesManager; }
+		inline cp::LayoutsManager* GetLayoutsManager() const { return layoutsManager; }
+		inline cp::DescriptorSetLayoutsManager* GetDescriptorSetLayoutsManager() const { return descriptorSetLayoutsManager; }
+		inline cp::DescriptorSetManager* GetDescriptorSetManager() const { return descriptorSetManager; }
 		inline constexpr vk::DescriptorPool GetDescriptorPool() const { return descriptorSetManager->GetDescriptorPool(); }
 
 		static std::string VersionToString(const uint32& _version);
@@ -85,10 +85,10 @@ namespace Context
 
 		vk::CommandPool commandPool;
 
-		Pipeline::PipelinesManager* pipelinesManager;
-		Pipeline::LayoutsManager* layoutsManager;
-		Pipeline::DescriptorSetLayoutsManager* descriptorSetLayoutsManager;
-		Pipeline::DescriptorSetManager* descriptorSetManager;
+		cp::PipelinesManager* pipelinesManager;
+		cp::LayoutsManager* layoutsManager;
+		cp::DescriptorSetLayoutsManager* descriptorSetLayoutsManager;
+		cp::DescriptorSetManager* descriptorSetManager;
 #pragma endregion
 
 #pragma region Context Creation

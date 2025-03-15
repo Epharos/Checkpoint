@@ -3,14 +3,14 @@
 #include "../../pch.hpp"
 #include "../../Context/VulkanContext.hpp"
 
-namespace Render
+namespace cp
 {
 	class Frame;
 
 	class Swapchain
 	{
 	private:
-		Context::VulkanContext* context;
+		cp::VulkanContext* context;
 
 		vk::SurfaceCapabilitiesKHR surfaceCapabilities;
 		std::vector<vk::SurfaceFormatKHR> surfaceFormats;
@@ -36,7 +36,7 @@ namespace Render
 		vk::Extent2D SelectExtent(const vk::SurfaceCapabilitiesKHR& _capabilities, const uint32& _width, const uint32& _height);
 
 	public:
-		Swapchain(Context::VulkanContext* _context);
+		Swapchain(cp::VulkanContext* _context);
 		~Swapchain();
 
 		void Setup();

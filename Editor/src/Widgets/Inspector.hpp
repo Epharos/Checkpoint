@@ -10,10 +10,10 @@ class Inspector : public QWidget
 protected:
 	QVBoxLayout* layout;
 	QLabel* titleLabel;
-	Core::Scene* scene = nullptr;
+	cp::Scene* scene = nullptr;
 
 public:
-	Inspector(Core::Scene* _scene, QWidget* _parent = nullptr) : QWidget(_parent), scene(_scene)
+	Inspector(cp::Scene* _scene, QWidget* _parent = nullptr) : QWidget(_parent), scene(_scene)
 	{
 		layout = new QVBoxLayout(this);
 		titleLabel = new QLabel("Select an entity or a file", this);
@@ -27,7 +27,7 @@ public:
 		setMinimumHeight(480);
 	}
 
-	void CreateAddComponentButton(Entity* _entity)
+	void CreateAddComponentButton(cp::Entity* _entity)
 	{
 		QPushButton* addComponentButton = new QPushButton("Add Component", this);
 		layout->addWidget(addComponentButton);
@@ -36,14 +36,14 @@ public:
 			QMenu* menu = new QMenu(addComponentButton);
 
 			SearchList* searchList = new SearchList(menu);
-			searchList->Populate(ComponentRegistry::GetInstance().GetTypeIndexMap());
+			searchList->Populate(cp::ComponentRegistry::GetInstance().GetTypeIndexMap());
 
 			QWidgetAction* widgetAction = new QWidgetAction(menu);
 			widgetAction->setDefaultWidget(searchList);
 			menu->addAction(widgetAction);
 
 			connect(searchList, &SearchList::ItemSelected, [=](std::type_index _type) {
-				ComponentRegistry::GetInstance().CreateComponent(scene->GetECS(), *_entity, _type);
+				cp::ComponentRegistry::GetInstance().CreateComponent(scene->GetECS(), *_entity, _type);
 				UpdateComponents(_entity);
 				if (menu) menu->close();
 				});
@@ -52,7 +52,7 @@ public:
 			});
 	}
 
-	void UpdateComponents(Entity* _entity)
+	void UpdateComponents(cp::Entity* _entity)
 	{
 		QLayoutItem* child;
 		while ((child = layout->takeAt(2)) != nullptr)
@@ -64,7 +64,7 @@ public:
 
 		for (auto& [type, component] : scene->GetECS().GetAllComponentsOf(*_entity))
 		{
-			auto widget = ComponentRegistry::GetInstance().CreateWidget(scene->GetECS(), *_entity, type);
+			auto widget = cp::ComponentRegistry::GetInstance().CreateWidget(scene->GetECS(), *_entity, type);
 			widget->Initialize();
 			layout->addWidget(widget.release());
 			layout->addSpacerItem(new QSpacerItem(0, 10));
@@ -75,7 +75,7 @@ public:
 		layout->update();
 	}
 
-	void ShowEntity(Entity* _entity)
+	void ShowEntity(cp::Entity* _entity)
 	{
 		titleLabel->setText(QString::fromStdString(_entity->GetDisplayName()));
 

@@ -1,10 +1,13 @@
 #pragma once
 
-class ISerializer;
-
-class ISerializable
+namespace cp
 {
-public:
-	virtual void Serialize(ISerializer& _serializer) const = 0;
-	virtual void Deserialize(ISerializer& _serializer) = 0;
+	class ISerializer;
+
+	class ISerializable
+	{
+	public:
+		virtual void Serialize(ISerializer& _serializer) const = 0;
+		virtual void Deserialize(ISerializer& _serializer) = 0;
+	};
 };

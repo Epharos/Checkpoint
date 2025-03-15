@@ -26,8 +26,8 @@ int main(int argc, char* args[])
 {
 	QApplication app(argc, args);
 
-	ComponentRegistry::GetInstance().Register<Transform, TransformWidget, TransformSerializer>("Transform");
-	ComponentRegistry::GetInstance().Register<MeshRenderer, MeshRendererWidget, MeshRendererSerializer>("Mesh Renderer");
+	cp::ComponentRegistry::GetInstance().Register<Transform, TransformWidget, TransformSerializer>("Transform");
+	cp::ComponentRegistry::GetInstance().Register<MeshRenderer, MeshRendererWidget, MeshRendererSerializer>("Mesh Renderer");
 
 	app.setStyleSheet(LoadStyleSheet("Editor_Resources/Stylesheet.qss"));
 

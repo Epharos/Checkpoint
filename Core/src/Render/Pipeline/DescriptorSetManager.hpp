@@ -2,7 +2,7 @@
 
 #include "../../pch.hpp"
 
-namespace Pipeline
+namespace cp
 {
 	enum DescriptorSetUpdateType
 	{

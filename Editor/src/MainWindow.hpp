@@ -12,9 +12,9 @@ class MainWindow : public QMainWindow
 {
 	Q_OBJECT
 protected:
-	Context::VulkanContext vulkanContext;
-	Render::Renderer* activeRenderer = nullptr;
-	Core::Scene* currentScene = nullptr;
+	cp::VulkanContext vulkanContext;
+	cp::Renderer* activeRenderer = nullptr;
+	cp::Scene* currentScene = nullptr;
 
 	VulkanWindow* window = nullptr;
 	QVulkanInstance* instance = nullptr;
@@ -61,7 +61,7 @@ protected:
 		connect(saveSceneAction, &QAction::triggered, [=] {
 			std::string path = projectData.path.toStdString() + "/Resources/Scenes/" + sceneHierarchy->headerItem()->text(0).toStdString() + ".scn";
 			std::replace(path.begin(), path.end(), ' ', '_');
-			JsonSerializer serializer;
+			cp::JsonSerializer serializer;
 			currentScene->Serialize(serializer);
 			serializer.Write(path);
 			});
@@ -80,7 +80,7 @@ protected:
 
 		connect(createNewSceneAction, &QAction::triggered, [=] {
 			// TODO : Save current scene
-			currentScene = new Core::Scene(activeRenderer);
+			currentScene = new cp::Scene(activeRenderer);
 			window->SetScene(currentScene);
 			});
 
@@ -200,11 +200,11 @@ protected:
 			{
 				if (fileInfo.suffix().endsWith("scn"))
 				{
-					JsonSerializer serializer;
+					cp::JsonSerializer serializer;
 					serializer.Read(path.toStdString());
 					
 					delete currentScene;
-					currentScene = new Core::Scene(activeRenderer);
+					currentScene = new cp::Scene(activeRenderer);
 					currentScene->Deserialize(serializer);
 
 					if(sceneHierarchy)
@@ -279,7 +279,7 @@ public:
 
 	void InitializeVulkanRenderer()
 	{
-		Context::VulkanContextInfo contextInfo =
+		cp::VulkanContextInfo contextInfo =
 		{
 			.appName = "App Example",
 			.appVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
@@ -294,13 +294,13 @@ public:
 
 		contextInfo.instance = instance->vkInstance();
 		contextInfo.surface = QVulkanInstance::surfaceForWindow(window);
-		Context::PlatformQt* platform = new Context::PlatformQt;
+		cp::PlatformQt* platform = new cp::PlatformQt;
 		platform->Initialize(window);
 		contextInfo.platform = platform;
 
 		vulkanContext.Initialize(contextInfo);
 
-		Resource::ResourceManager::Create(vulkanContext);
+		cp::ResourceManager::Create(vulkanContext);
 
 		activeRenderer = new MinimalistRenderer(&vulkanContext);
 		activeRenderer->Build();

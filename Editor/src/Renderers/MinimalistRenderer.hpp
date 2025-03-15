@@ -2,19 +2,19 @@
 
 #include <Core.hpp>
 
-class MinimalistRenderer : public Render::Renderer
+class MinimalistRenderer : public cp::Renderer
 {
 protected:
-	Resource::Mesh* quadMesh = nullptr;
+	cp::Mesh* quadMesh = nullptr;
 
 	void CreateMainRenderPass() override;
 
-	void RenderFrame(const std::vector<Render::InstanceGroup>& _instanceGroups) override;
+	void RenderFrame(const std::vector<cp::InstanceGroup>& _instanceGroups) override;
 
 	void SetupPipelines() override;
 
 public:
-	MinimalistRenderer(Context::VulkanContext* _context);
+	MinimalistRenderer(cp::VulkanContext* _context);
 
 	virtual void Cleanup() override;
 };

@@ -2,8 +2,6 @@
 
 #include "../pch.hpp"
 
-class QJsonObject;
-
 namespace Helper
 {
 	namespace Memory
@@ -43,15 +41,6 @@ namespace Helper
 	{
 		vk::CommandBuffer BeginSingleTimeCommands(const vk::Device& device, const vk::CommandPool& commandPool);
 		void EndSingleTimeCommands(const vk::Device& device, const vk::CommandPool& commandPool, const vk::Queue& queue, const vk::CommandBuffer& commandBuffer);
-	}
-
-	namespace Serialize
-	{
-		QJsonObject SerializeVector3(const glm::vec3& _vector);
-		QJsonObject SerializeQuaternion(const glm::quat& _quaternion);
-
-		glm::vec3 DeserializeVector3(const QJsonObject& _json);
-		glm::quat DeserializeQuaternion(const QJsonObject& _json);
 	}
 
 	namespace Hash

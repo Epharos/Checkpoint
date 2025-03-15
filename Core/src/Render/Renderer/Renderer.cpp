@@ -3,12 +3,12 @@
 
 #include "../Setup/Frame.hpp"
 
-void Render::Renderer::CreateRenderPasses()
+void cp::Renderer::CreateRenderPasses()
 {
 
 }
 
-uint32_t Render::Renderer::PrepareFrame()
+uint32_t cp::Renderer::PrepareFrame()
 {
 	if (context->GetDevice().waitForFences(1, &swapchain->GetCurrentFrame()->GetInFlightFence(), VK_TRUE, std::numeric_limits<uint32_t>().max()) != vk::Result::eSuccess)
 	{
@@ -42,7 +42,7 @@ uint32_t Render::Renderer::PrepareFrame()
 	return imageIndex;
 }
 
-void Render::Renderer::SubmitFrame()
+void cp::Renderer::SubmitFrame()
 {
 	swapchain->GetCurrentFrame()->GetCommandBuffer().end();
 
@@ -68,7 +68,7 @@ void Render::Renderer::SubmitFrame()
 	}
 }
 
-void Render::Renderer::PresentFrame(uint32_t _index)
+void cp::Renderer::PresentFrame(uint32_t _index)
 {
 	vk::Result result = vk::Result::eSuccess;
 	vk::Queue graphicsQueue = context->GetDevice().getQueue(context->GetQueueFamilyIndices().graphicsFamily.value(), 0);
@@ -101,12 +101,12 @@ void Render::Renderer::PresentFrame(uint32_t _index)
 	}
 }
 
-void Render::Renderer::EndFrame()
+void cp::Renderer::EndFrame()
 {
 	swapchain->SetCurrentFrame((swapchain->GetCurrentFrameIndex() + 1) % swapchain->GetFrameCount());
 }
 
-void Render::Renderer::Build()
+void cp::Renderer::Build()
 {
 	swapchain = new Swapchain(context);
 	CreateMainRenderPass();
@@ -116,18 +116,18 @@ void Render::Renderer::Build()
 	SetupPipelines();
 }
 
-Render::Renderer::~Renderer()
+cp::Renderer::~Renderer()
 {
 	
 }
 
-void Render::Renderer::Cleanup()
+void cp::Renderer::Cleanup()
 {
 	delete swapchain;
 	context->GetDevice().destroyRenderPass(mainRenderPass);
 }
 
-void Render::Renderer::Render(const std::vector<InstanceGroup>& _instanceGroups)
+void cp::Renderer::Render(const std::vector<InstanceGroup>& _instanceGroups)
 {
 	uint32 index = PrepareFrame();
 

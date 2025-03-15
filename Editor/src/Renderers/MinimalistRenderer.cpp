@@ -63,7 +63,7 @@ void MinimalistRenderer::CreateMainRenderPass()
 	mainRenderPass = context->GetDevice().createRenderPass(renderPassInfo);
 }
 
-void MinimalistRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _instanceGroups)
+void MinimalistRenderer::RenderFrame(const std::vector<cp::InstanceGroup>& _instanceGroups)
 {
 	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4> { 1.0f, 0.0f, 0.0f, 1.0f });
 	vk::ClearDepthStencilValue clearDepth = vk::ClearDepthStencilValue(1.0f, 0);
@@ -88,7 +88,7 @@ void MinimalistRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _
 	commandBuffer.setViewport(0, vp);
 	commandBuffer.setScissor(0, scissor);
 
-	Pipeline::PipelineCreateData config = {};
+	cp::PipelineCreateData config = {};
 	config.config.name = "Colored";
 
 	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, context->GetPipelinesManager()->GetPipeline(config).pipeline);
@@ -105,14 +105,14 @@ void MinimalistRenderer::RenderFrame(const std::vector<Render::InstanceGroup>& _
 
 void MinimalistRenderer::SetupPipelines()
 {
-	Pipeline::DescriptorSetLayoutsManager* descriptorSetLayoutsManager = context->GetDescriptorSetLayoutsManager();
-	Pipeline::DescriptorSetManager* descriptorSetManager = context->GetDescriptorSetManager();
-	Pipeline::PipelinesManager* pipelinesManager = context->GetPipelinesManager();
-	Pipeline::LayoutsManager* layoutsManager = context->GetLayoutsManager();
+	cp::DescriptorSetLayoutsManager* descriptorSetLayoutsManager = context->GetDescriptorSetLayoutsManager();
+	cp::DescriptorSetManager* descriptorSetManager = context->GetDescriptorSetManager();
+	cp::PipelinesManager* pipelinesManager = context->GetPipelinesManager();
+	cp::LayoutsManager* layoutsManager = context->GetLayoutsManager();
 
 	vk::PipelineLayout colorLayout = layoutsManager->GetOrCreateLayout({}, {});
 
-	Pipeline::PipelineCreateData pipelineData = {};
+	cp::PipelineCreateData pipelineData = {};
 	pipelineData.config.name = "Colored";
 
 	std::vector<vk::DynamicState> dynamicStates = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
@@ -121,14 +121,14 @@ void MinimalistRenderer::SetupPipelines()
 	colorBlendAttachment->colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 	colorBlendAttachment->blendEnable = VK_FALSE;
 
-	vk::VertexInputBindingDescription* bindingDescription = new vk::VertexInputBindingDescription(0, sizeof(Resource::Vertex), vk::VertexInputRate::eVertex);
+	vk::VertexInputBindingDescription* bindingDescription = new vk::VertexInputBindingDescription(0, sizeof(cp::Vertex), vk::VertexInputRate::eVertex);
 
 	vk::VertexInputAttributeDescription* attributeDescriptions = new vk::VertexInputAttributeDescription[5];
-	attributeDescriptions[0] = vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, position));
-	attributeDescriptions[1] = vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, normal));
-	attributeDescriptions[2] = vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Resource::Vertex, uv));
-	attributeDescriptions[3] = vk::VertexInputAttributeDescription(3, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, tangent));
-	attributeDescriptions[4] = vk::VertexInputAttributeDescription(4, 0, vk::Format::eR32G32B32Sfloat, offsetof(Resource::Vertex, bitangent));
+	attributeDescriptions[0] = vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(cp::Vertex, position));
+	attributeDescriptions[1] = vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(cp::Vertex, normal));
+	attributeDescriptions[2] = vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(cp::Vertex, uv));
+	attributeDescriptions[3] = vk::VertexInputAttributeDescription(3, 0, vk::Format::eR32G32B32Sfloat, offsetof(cp::Vertex, tangent));
+	attributeDescriptions[4] = vk::VertexInputAttributeDescription(4, 0, vk::Format::eR32G32B32Sfloat, offsetof(cp::Vertex, bitangent));
 
 	pipelineData.createInfo = vk::GraphicsPipelineCreateInfo();
 	pipelineData.createInfo.layout = colorLayout;
@@ -152,9 +152,9 @@ void MinimalistRenderer::SetupPipelines()
 	pipelinesManager->CreatePipeline(pipelineData);
 }
 
-MinimalistRenderer::MinimalistRenderer(Context::VulkanContext* _context) : Render::Renderer(_context)
+MinimalistRenderer::MinimalistRenderer(cp::VulkanContext* _context) : cp::Renderer(_context)
 {
-	Resource::Vertex quadVertices[] = {
+	cp::Vertex quadVertices[] = {
 		{ { 0.5f, 0.5f, 0.0f } },
 		{ { -0.5f, 0.5f, 0.0f } },
 		{ { -0.5f, -0.5f, 0.0f } },
@@ -163,7 +163,7 @@ MinimalistRenderer::MinimalistRenderer(Context::VulkanContext* _context) : Rende
 
 	uint32_t quadIndices[] = { 0, 2, 1, 2, 0, 3 };
 
-	quadMesh = new Resource::Mesh(*context, std::vector<Resource::Vertex>(quadVertices, quadVertices + 4), std::vector<uint32_t>(quadIndices, quadIndices + 6));
+	quadMesh = new cp::Mesh(*context, std::vector<cp::Vertex>(quadVertices, quadVertices + 4), std::vector<uint32_t>(quadIndices, quadIndices + 6));
 }
 
 void MinimalistRenderer::Cleanup()

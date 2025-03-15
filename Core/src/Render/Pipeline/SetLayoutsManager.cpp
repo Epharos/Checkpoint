@@ -2,17 +2,17 @@
 
 #include "SetLayoutsManager.hpp"
 
-Pipeline::DescriptorSetLayoutsManager::DescriptorSetLayoutsManager(vk::Device _device) : device(_device)
+cp::DescriptorSetLayoutsManager::DescriptorSetLayoutsManager(vk::Device _device) : device(_device)
 {
 
 }
 
-vk::DescriptorSetLayout Pipeline::DescriptorSetLayoutsManager::GetDescriptorSetLayout(const std::string& _name)
+vk::DescriptorSetLayout cp::DescriptorSetLayoutsManager::GetDescriptorSetLayout(const std::string& _name)
 {
 	return layouts.at(_name);
 }
 
-vk::DescriptorSetLayout Pipeline::DescriptorSetLayoutsManager::CreateDescriptorSetLayout(const std::string& _name, const std::vector<vk::DescriptorSetLayoutBinding>& _bindings)
+vk::DescriptorSetLayout cp::DescriptorSetLayoutsManager::CreateDescriptorSetLayout(const std::string& _name, const std::vector<vk::DescriptorSetLayoutBinding>& _bindings)
 {
 	if (layouts.find(_name) == layouts.end())
 	{
@@ -30,7 +30,7 @@ vk::DescriptorSetLayout Pipeline::DescriptorSetLayoutsManager::CreateDescriptorS
 	return layouts[_name];
 }
 
-void Pipeline::DescriptorSetLayoutsManager::Cleanup()
+void cp::DescriptorSetLayoutsManager::Cleanup()
 {
 	for (auto& layout : layouts)
 	{

@@ -3,7 +3,7 @@
 #include "pch.hpp"
 #include "System.hpp"
 
-namespace ECS
+namespace cp
 {
 	class SystemManager
 	{

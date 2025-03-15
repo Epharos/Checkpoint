@@ -4,7 +4,7 @@
 #include "Platform.hpp"
 #include <QtGui/qwindow.h>
 
-namespace Context
+namespace cp
 {
 	struct VulkanContextInfo;
 

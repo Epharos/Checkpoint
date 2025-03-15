@@ -3,7 +3,7 @@
 #include "../../pch.hpp"
 #include "Platform.hpp"
 
-namespace Context
+namespace cp
 {
 	struct VulkanContextInfo;
 

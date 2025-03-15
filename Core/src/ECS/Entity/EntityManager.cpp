@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include "EntityManager.hpp"
 
-namespace ECS
+namespace cp
 {
 	EntityManager::EntityManager()
 	{

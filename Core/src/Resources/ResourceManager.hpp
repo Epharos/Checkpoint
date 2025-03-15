@@ -4,7 +4,7 @@
 #include "../Context/VulkanContext.hpp"
 #include <typeindex>
 
-namespace Resource
+namespace cp
 {
 	class ResourceTypeBase
 	{
@@ -22,7 +22,7 @@ namespace Resource
 		std::unordered_map<std::shared_ptr<T>, std::string> resourcePath;
 #endif
 
-		std::function<std::shared_ptr<T> (const Context::VulkanContext& _context, const std::string&)> loadFunction = [](const Context::VulkanContext& _context, const std::string& _path)
+		std::function<std::shared_ptr<T> (const cp::VulkanContext& _context, const std::string&)> loadFunction = [](const cp::VulkanContext& _context, const std::string& _path)
 			{ 
 				LOG_WARNING(MF("Loading was not implemented for ", typeid(T).name())); 
 				return nullptr;
@@ -142,12 +142,12 @@ namespace Resource
 			}
 		}
 
-		void SetLoader(std::function<std::shared_ptr<T>(const Context::VulkanContext& _context, const std::string&)> _loadFunction)
+		void SetLoader(std::function<std::shared_ptr<T>(const cp::VulkanContext& _context, const std::string&)> _loadFunction)
 		{
 			loadFunction = _loadFunction;
 		}
 
-		std::shared_ptr<T> LoadResource(const Context::VulkanContext& _context, const std::string& _name, const std::string& _path)
+		std::shared_ptr<T> LoadResource(const cp::VulkanContext& _context, const std::string& _name, const std::string& _path)
 		{
 			std::shared_ptr<T> resource = loadFunction(_context, _path);
 
@@ -167,16 +167,16 @@ namespace Resource
 	{
 	private:
 		std::unordered_map<std::type_index, ResourceTypeBase*> resourceTypes;
-		const Context::VulkanContext* context;
+		const cp::VulkanContext* context;
 
 		static ResourceManager* instance;
 
-		ResourceManager(const Context::VulkanContext& _context) : context(&_context) {}
+		ResourceManager(const cp::VulkanContext& _context) : context(&_context) {}
 
 	public:
 		NO_COPY(ResourceManager)
 
-		static ResourceManager* Create(const Context::VulkanContext& _context);
+		static ResourceManager* Create(const cp::VulkanContext& _context);
 		static ResourceManager* Get();
 		void Cleanup();
 

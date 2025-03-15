@@ -2,9 +2,9 @@
 
 #include "Frame.hpp"
 
-namespace Render
+namespace cp
 {
-	Frame::Frame(Context::VulkanContext*& _context) : context(_context)
+	Frame::Frame(cp::VulkanContext*& _context) : context(_context)
 	{
 		vk::SemaphoreCreateInfo semaphoreInfo;
 
