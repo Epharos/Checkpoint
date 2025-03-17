@@ -4,11 +4,34 @@
 #include "MaterialInstance.hpp"
 #include "../Context/VulkanContext.hpp"
 
+#include "../Util/Serializers/Serializable.hpp"
+
 namespace cp
 {
-	class Material
+	enum class MaterialFieldType
+	{
+		BOOL,
+		FLOAT,
+		INT,
+		VEC2,
+		VEC3,
+		VEC4,
+		MAT4,
+		TEXTURE
+	};
+
+	struct MaterialField
+	{
+		MaterialFieldType type;
+		std::string name;
+		size_t offset;
+	};
+
+	class Material : public ISerializable
 	{
 	protected:
+		static std::unordered_map<MaterialFieldType, size_t> MaterialFieldSizeMap;
+
 		const cp::PipelineData* pipelineData;
 		const vk::DescriptorSetLayout descriptorSetLayout;
 
@@ -35,5 +58,11 @@ namespace cp
 		inline constexpr vk::DescriptorSetLayout GetDescriptorSetLayout() const { return descriptorSetLayout; }
 
 		virtual void BindMaterial(vk::CommandBuffer& _command);
+
+		void Reload(); //TODO : Create 2 pipelines, one for the shadow pass and one for the main pass
+		// REFLEXION : Should I use Dynamic Rendering ? Maybe not now, maybe later
+
+		void Serialize(ISerializer& _serializer) const override;
+		void Deserialize(ISerializer& _serializer) override;
 	};
 }
