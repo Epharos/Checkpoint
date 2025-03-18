@@ -43,6 +43,13 @@ namespace Helper
 			return buffer;
 		}
 
+		cp::Buffer CreateBuffer(const vk::Device& device, const vk::PhysicalDevice& physicalDevice, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties)
+		{
+			cp::Buffer buffer;
+			buffer.buffer = CreateBuffer(device, physicalDevice, size, usage, properties, buffer.memory);
+			return buffer;
+		}
+
 		void MapMemory(const vk::Device& device, const vk::DeviceMemory& memory, vk::DeviceSize size, void* data)
 		{
 			MapMemory(device, memory, size, 0, data);

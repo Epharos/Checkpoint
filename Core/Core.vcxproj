@@ -209,6 +209,7 @@
     <ClInclude Include="src\Resources\Mesh.hpp" />
     <ClInclude Include="src\Resources\ResourceManager.hpp" />
     <ClInclude Include="src\Resources\Texture.hpp" />
+    <ClInclude Include="src\Util\Buffer.hpp" />
     <ClInclude Include="src\Util\Clock.hpp" />
     <ClInclude Include="src\Util\Logger.hpp" />
     <ClInclude Include="src\Util\Serializers\JsonSerializer.hpp" />
