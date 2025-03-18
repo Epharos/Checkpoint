@@ -15,7 +15,7 @@ std::unordered_map<cp::MaterialFieldType, size_t> cp::Material::MaterialFieldSiz
 };
 
 cp::Material::Material(const cp::PipelineData& _pipeline, const vk::DescriptorSetLayout& _descriptorSetLayout, const cp::VulkanContext* _context) :
-	pipelineData(&_pipeline), descriptorSetLayout(_descriptorSetLayout), context(_context)
+	pipelineData(&_pipeline), context(_context)
 {
 
 }
@@ -27,6 +27,8 @@ void cp::Material::BindMaterial(vk::CommandBuffer& _command)
 
 void cp::Material::Serialize(cp::ISerializer& _serializer) const
 {
+	//TODO: Allow user to define their own descriptor sets (layouts)
+
 	_serializer.BeginObjectArrayWriting("Fields");
 
 	for (const MaterialField& field : fields)
