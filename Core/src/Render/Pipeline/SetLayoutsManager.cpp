@@ -4,7 +4,21 @@
 
 cp::DescriptorSetLayoutsManager::DescriptorSetLayoutsManager(vk::Device _device) : device(_device)
 {
+	// Initialize global descriptor set layout holding camera data for lit shader
+	globalLit = CreateDescriptorSetLayout("Global Lit", {
+		vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex), //Camera data
+		vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment), //Sun (directional light) data
+		vk::DescriptorSetLayoutBinding(2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex), //Cascades
+		vk::DescriptorSetLayoutBinding(3, vk::DescriptorType::eSampledImage, 1, vk::ShaderStageFlagBits::eFragment), //Shadow map texture array
+		});
 
+	globalUnlit = CreateDescriptorSetLayout("Global Unlit", {
+		vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex), //Camera data
+		});
+
+	instancedDrawing = CreateDescriptorSetLayout("Instanced Drawing", {
+		vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eVertex), //Model instances
+		});
 }
 
 vk::DescriptorSetLayout cp::DescriptorSetLayoutsManager::GetDescriptorSetLayout(const std::string& _name)

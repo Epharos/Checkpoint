@@ -32,8 +32,9 @@ namespace cp
 	protected:
 		static std::unordered_map<MaterialFieldType, size_t> MaterialFieldSizeMap;
 
+		std::vector<MaterialField> fields;
+
 		const cp::PipelineData* pipelineData;
-		const vk::DescriptorSetLayout descriptorSetLayout;
 
 		const cp::VulkanContext* context;
 
