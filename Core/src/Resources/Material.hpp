@@ -27,14 +27,19 @@ namespace cp
 		size_t offset;
 	};
 
+	struct RenderPassRequirement
+	{
+		//RenderPassID renderPassID;
+		bool requireUniquePipeline;
+	};
+
 	class Material : public ISerializable
 	{
 	protected:
 		static std::unordered_map<MaterialFieldType, size_t> MaterialFieldSizeMap;
 
 		std::vector<MaterialField> fields;
-
-		const cp::PipelineData* pipelineData;
+		vk::DescriptorSetLayout layout;
 
 		const cp::VulkanContext* context;
 
