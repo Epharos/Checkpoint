@@ -177,20 +177,71 @@ protected:
 
 	void CreateFileExplorerDockWidget(bool floating = true)
 	{
-		QFileSystemModel* fileSystemModel = new QFileSystemModel;
+		fileSystemModel = new QFileSystemModel;
 		fileSystemModel->setRootPath(projectData.path + "/Resources");
+		fileSystemModel->setReadOnly(false);
 
-		QTreeView* fileExplorer = new QTreeView;
+		fileExplorer = new QTreeView;
 		fileExplorer->setModel(fileSystemModel);
 		fileExplorer->setRootIndex(fileSystemModel->index(projectData.path + "/Resources"));
 		fileExplorer->setDragEnabled(true);
 		fileExplorer->setSelectionMode(QAbstractItemView::SingleSelection);
 		fileExplorer->setDragDropMode(QAbstractItemView::DragDropMode::DragOnly);
+		fileExplorer->setEditTriggers(QAbstractItemView::EditKeyPressed | QAbstractItemView::DoubleClicked);
+
+		fileExplorer->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+		fileExplorer->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
 		QDockWidget* dock = new QDockWidget("File explorer", this);
 		dock->setWidget(fileExplorer);
 		dock->setFloating(floating);
 		addDockWidget(Qt::DockWidgetArea::BottomDockWidgetArea, dock);
+
+		QMenu* contextMenu = new QMenu(fileExplorer);
+		QAction* createMaterial = new QAction("Create Material", fileExplorer);
+		contextMenu->addAction(createMaterial);
+
+		QString* rcPath = new QString();
+
+		connect(createMaterial, &QAction::triggered, [=] {
+			cp::Material mat(&vulkanContext);
+			cp::JsonSerializer serializer;
+			mat.Serialize(serializer);
+
+			QString matFileName = QString::fromStdString(rcPath->toStdString() + "\\New_Material.mat");
+			QFileInfo fileInfo(matFileName);
+
+			uint16_t tryIndex = 0;
+
+			while (fileInfo.exists())
+			{
+				matFileName = QString::fromStdString(rcPath->toStdString() + "\\New_Material_" + std::to_string(tryIndex) + ".mat");
+				tryIndex++;
+				fileInfo = QFileInfo(matFileName);
+			}
+
+			serializer.Write(matFileName.toStdString());
+
+			QModelIndex index = fileSystemModel->index(matFileName);
+			
+			if (index.isValid())
+			{
+				fileExplorer->edit(index);
+			}
+			});
+
+		connect(fileExplorer, &QTreeView::customContextMenuRequested, [=](QPoint _point)
+			{
+				QModelIndex index = fileExplorer->indexAt(_point);
+
+				*rcPath = fileSystemModel->filePath(index);
+				QFileInfo fileInfo(*rcPath);
+
+				if (fileInfo.isDir())
+				{
+					contextMenu->popup(fileExplorer->viewport()->mapToGlobal(_point));
+				}
+			});
 
 		connect(fileExplorer, &QTreeView::doubleClicked, [=](const QModelIndex& index) {
 			QString path = fileSystemModel->filePath(index);
@@ -243,10 +294,17 @@ protected:
 					inspector->ShowEntity(&entityItem->GetEntity());
 				}
 			}
-			else
+			});
+
+		connect(fileExplorer, &QTreeWidget::clicked, [=](const QModelIndex& index)
 			{
-				inspector->ShowFile("");
-			}
+				QString path = fileSystemModel->filePath(index);
+				QFileInfo fileInfo(path);
+
+				if (fileInfo.isFile())
+				{
+					inspector->ShowFile(path.toStdString(), fileInfo);
+				}
 			});
 	}
 
@@ -304,5 +362,7 @@ public:
 
 		activeRenderer = new MinimalistRenderer(&vulkanContext);
 		activeRenderer->Build();
+
+		currentScene = new cp::Scene(activeRenderer);
 	}
 };

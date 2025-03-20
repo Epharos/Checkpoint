@@ -38,13 +38,17 @@ namespace cp
 	protected:
 		static std::unordered_map<MaterialFieldType, size_t> MaterialFieldSizeMap;
 
+		std::string name = "Material";
+
 		std::vector<MaterialField> fields;
 		vk::DescriptorSetLayout layout;
 
 		const cp::VulkanContext* context;
 
+		std::vector<vk::DescriptorSetLayoutBinding> GenerateBindings();
+
 	public:
-		Material(const cp::PipelineData& _pipeline, const vk::DescriptorSetLayout& _descriptorSetLayout, const cp::VulkanContext* _context);
+		Material(const cp::VulkanContext* _context);
 
 		template <class T, typename... Args>
 		T* CreateMaterialInstance(Args&& ... args)
@@ -59,16 +63,16 @@ namespace cp
 			return instance;
 		}
 
-		inline constexpr vk::Pipeline GetPipeline() const { return pipelineData->pipeline; }
-		inline constexpr vk::PipelineLayout GetPipelineLayout() const { return pipelineData->pipelineLayout; }
-		inline constexpr vk::DescriptorSetLayout GetDescriptorSetLayout() const { return descriptorSetLayout; }
+		inline constexpr vk::DescriptorSetLayout GetDescriptorSetLayout() const { return layout; }
 
 		virtual void BindMaterial(vk::CommandBuffer& _command);
 
-		void Reload(); //TODO : Create 2 pipelines, one for the shadow pass and one for the main pass
-		// REFLEXION : Should I use Dynamic Rendering ? Maybe not now, maybe later
+		virtual void Reload(); // REFLEXION : Should I use Dynamic Rendering ? Not now, maybe later
 
-		void Serialize(ISerializer& _serializer) const override;
-		void Deserialize(ISerializer& _serializer) override;
+		virtual void Serialize(ISerializer& _serializer) const override;
+		virtual void Deserialize(ISerializer& _serializer) override;
+
+		const std::string& GetName() const { return name; }
+		std::string* GetNamePtr() { return &name; }
 	};
 }

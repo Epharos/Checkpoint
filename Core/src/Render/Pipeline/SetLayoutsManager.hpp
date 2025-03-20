@@ -20,6 +20,9 @@ namespace cp
 
 		vk::DescriptorSetLayout GetDescriptorSetLayout(const std::string& _name);
 		vk::DescriptorSetLayout CreateDescriptorSetLayout(const std::string& _name, const std::vector<vk::DescriptorSetLayoutBinding>& _bindings);
+		vk::DescriptorSetLayout OverrideDescriptorSetLayout(const std::string& _name, const std::vector<vk::DescriptorSetLayoutBinding>& _bindings);
+		void DestroyDescriptorSetLayout(const std::string& _name);
+		void DestroyDescriptorSetLayout(const vk::DescriptorSetLayout& _layout);
 
 		inline constexpr vk::DescriptorSetLayout GlobalLit() { return globalLit; }
 		inline constexpr vk::DescriptorSetLayout GlobalUnlit() { return globalUnlit; }

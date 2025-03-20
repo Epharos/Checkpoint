@@ -44,6 +44,52 @@ vk::DescriptorSetLayout cp::DescriptorSetLayoutsManager::CreateDescriptorSetLayo
 	return layouts[_name];
 }
 
+vk::DescriptorSetLayout cp::DescriptorSetLayoutsManager::OverrideDescriptorSetLayout(const std::string& _name, const std::vector<vk::DescriptorSetLayoutBinding>& _bindings)
+{
+	if (layouts.find(_name) == layouts.end())
+	{
+		LOG_ERROR("Couldn't override descriptor set layout");
+		return VK_NULL_HANDLE;
+	}
+
+	device.destroyDescriptorSetLayout(layouts.at(_name));
+
+	vk::DescriptorSetLayoutCreateInfo createInfo = {
+			{},
+			static_cast<std::uint32_t>(_bindings.size()),
+			_bindings.data()
+	};
+
+	layouts[_name] = device.createDescriptorSetLayout(createInfo);
+}
+
+void cp::DescriptorSetLayoutsManager::DestroyDescriptorSetLayout(const std::string& _name)
+{
+	if (layouts.find(_name) != layouts.end())
+	{
+		device.destroyDescriptorSetLayout(layouts[_name]);
+		layouts.erase(_name);
+		return;
+	}
+
+	LOG_WARNING(MF("Could not destroy descriptor set layout (", _name, ")"));
+}
+
+void cp::DescriptorSetLayoutsManager::DestroyDescriptorSetLayout(const vk::DescriptorSetLayout& _layout)
+{
+	for (auto& layout : layouts)
+	{
+		if (layout.second == _layout)
+		{
+			device.destroyDescriptorSetLayout(layout.second);
+			layouts.erase(layout.first);
+			return;
+		}
+	}
+
+	LOG_WARNING(MF("Could not destroy descriptor set layout handle (", _layout, ")"));
+}
+
 void cp::DescriptorSetLayoutsManager::Cleanup()
 {
 	for (auto& layout : layouts)

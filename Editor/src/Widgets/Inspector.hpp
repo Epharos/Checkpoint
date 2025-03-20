@@ -3,6 +3,8 @@
 #include "../pch.hpp"
 #include "SearchList.hpp"
 
+#include "Widgets/ComponentFields/String.hpp"
+
 class Inspector : public QWidget
 {
 	Q_OBJECT
@@ -84,7 +86,7 @@ public:
 		UpdateComponents(_entity);
 	}
 
-	void ShowFile(const std::string& _path)
+	void ShowFile(const std::string& _path, const QFileInfo& _fileInfo)
 	{
 		size_t lastSlash = _path.find_last_of("\\");
 		size_t lastDot = _path.find_last_of(".");
@@ -96,8 +98,21 @@ public:
 		QLayoutItem* child;
 		while ((child = layout->takeAt(1)) != nullptr)
 		{
-			delete child->widget();
-			delete child;
+			if(child->widget()) child->widget()->deleteLater();
+			else if(child->layout()) child->layout()->deleteLater();
+			else delete child;
 		}
+
+		if (_fileInfo.suffix().endsWith("mat")) // Material file
+		{
+			cp::Material* tmp = new cp::Material(scene->GetRenderer()->GetContext()); //Don't forget to destroy it sometime
+			cp::JsonSerializer serializer;
+			serializer.Read(_path);
+			tmp->Deserialize(serializer);
+			String* nameMat = new String(tmp.GetNamePtr(), "Material name");
+			layout->addWidget(nameMat);
+		}
+
+		layout->update();
 	}
 };
