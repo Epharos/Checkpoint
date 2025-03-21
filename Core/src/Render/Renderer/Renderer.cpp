@@ -106,6 +106,33 @@ void cp::Renderer::EndFrame()
 	swapchain->SetCurrentFrame((swapchain->GetCurrentFrameIndex() + 1) % swapchain->GetFrameCount());
 }
 
+cp::RenderPassID cp::Renderer::RegisterRenderPass(const std::string& _name)
+{
+	if (renderPassIndex.find(_name) == renderPassIndex.end())
+	{
+		renderPassIndex[_name] = renderPassIndex.size();
+	}
+
+	return renderPassIndex[_name];
+}
+
+cp::RenderPassID cp::Renderer::GetRenderPassID(const std::string& _name)
+{
+	return renderPassIndex.at(_name);
+}
+
+std::vector<std::string> cp::Renderer::GetRenderPassNames()
+{
+	std::vector<std::string> names;
+
+	for (auto& [name, id] : renderPassIndex)
+	{
+		names.push_back(name);
+	}
+
+	return names;
+}
+
 void cp::Renderer::Build()
 {
 	swapchain = new Swapchain(context);
@@ -114,6 +141,11 @@ void cp::Renderer::Build()
 	swapchain->Create(mainRenderPass);
 
 	SetupPipelines();
+}
+
+cp::Renderer::Renderer(cp::VulkanContext* _context) : context(_context)
+{
+	RegisterRenderPass("Main");
 }
 
 cp::Renderer::~Renderer()

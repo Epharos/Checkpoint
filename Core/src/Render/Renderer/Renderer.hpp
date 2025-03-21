@@ -32,14 +32,18 @@ namespace cp
 		uint32_t instanceOffset = 0;
 	};
 
+	using RenderPassID = uint32_t;
+
 	class Renderer
 	{
 	protected:
-		cp::VulkanContext* context;
-		Swapchain* swapchain;
+		cp::VulkanContext* context = nullptr;
+		Swapchain* swapchain = nullptr;
 
-		vk::RenderPass mainRenderPass;
+		vk::RenderPass mainRenderPass = VK_NULL_HANDLE;
 		uint32_t subpassCount = -1;
+
+		std::unordered_map<std::string, RenderPassID> renderPassIndex;
 
 		virtual void SetupPipelines() = 0;
 
@@ -53,8 +57,12 @@ namespace cp
 
 		virtual void RenderFrame(const std::vector<InstanceGroup>& _instanceGroups) = 0;
 
+		RenderPassID RegisterRenderPass(const std::string& _name);
+		RenderPassID GetRenderPassID(const std::string& _name);
+		std::vector<std::string> GetRenderPassNames();
+
 	public:
-		Renderer(cp::VulkanContext* _context) : context(_context) {}
+		Renderer(cp::VulkanContext* _context);
 		virtual ~Renderer();
 
 		virtual void Build();

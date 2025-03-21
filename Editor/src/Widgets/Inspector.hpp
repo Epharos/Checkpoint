@@ -14,6 +14,8 @@ protected:
 	QLabel* titleLabel;
 	cp::Scene* scene = nullptr;
 
+	void* readFile = nullptr;
+
 public:
 	Inspector(cp::Scene* _scene, QWidget* _parent = nullptr) : QWidget(_parent), scene(_scene)
 	{
@@ -88,12 +90,12 @@ public:
 
 	void ShowFile(const std::string& _path, const QFileInfo& _fileInfo)
 	{
-		size_t lastSlash = _path.find_last_of("\\");
-		size_t lastDot = _path.find_last_of(".");
-
-		QString fileName = QString::fromStdString(_path.substr(lastSlash + 1, lastDot - lastSlash - 1));
+		QString fileName = QString::fromStdString(Project::GetResourceRelativePath(_path));
 
 		titleLabel->setText(fileName);
+
+		delete readFile;
+		readFile = nullptr; 
 
 		QLayoutItem* child;
 		while ((child = layout->takeAt(1)) != nullptr)
@@ -105,12 +107,14 @@ public:
 
 		if (_fileInfo.suffix().endsWith("mat")) // Material file
 		{
-			cp::Material* tmp = new cp::Material(scene->GetRenderer()->GetContext()); //Don't forget to destroy it sometime
+			readFile = new cp::Material(scene->GetRenderer()->GetContext()); //Don't forget to destroy it sometime
+			cp::Material* tmp = static_cast<cp::Material*>(readFile);
 			cp::JsonSerializer serializer;
 			serializer.Read(_path);
 			tmp->Deserialize(serializer);
-			String* nameMat = new String(tmp.GetNamePtr(), "Material name");
+			String* nameMat = new String(tmp->GetNamePtr(), "Material name", this);
 			layout->addWidget(nameMat);
+			layout->addSpacing(20);
 		}
 
 		layout->update();

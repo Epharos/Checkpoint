@@ -187,7 +187,7 @@ protected:
 		fileExplorer->setDragEnabled(true);
 		fileExplorer->setSelectionMode(QAbstractItemView::SingleSelection);
 		fileExplorer->setDragDropMode(QAbstractItemView::DragDropMode::DragOnly);
-		fileExplorer->setEditTriggers(QAbstractItemView::EditKeyPressed | QAbstractItemView::DoubleClicked);
+		fileExplorer->setEditTriggers(QAbstractItemView::EditKeyPressed);
 
 		fileExplorer->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
 		fileExplorer->setSelectionMode(QAbstractItemView::ExtendedSelection);
