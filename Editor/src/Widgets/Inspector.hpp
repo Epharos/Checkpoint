@@ -81,6 +81,12 @@ public:
 
 	void ShowEntity(cp::Entity* _entity)
 	{
+		if (readFile)
+		{
+			delete readFile;
+			readFile = nullptr;
+		}
+
 		titleLabel->setText(QString::fromStdString(_entity->GetDisplayName()));
 
 		layout->addSpacerItem(new QSpacerItem(0, 10));
@@ -94,8 +100,11 @@ public:
 
 		titleLabel->setText(fileName);
 
-		delete readFile;
-		readFile = nullptr; 
+		if(readFile)
+		{
+			delete readFile;
+			readFile = nullptr;
+		}
 
 		QLayoutItem* child;
 		while ((child = layout->takeAt(1)) != nullptr)
@@ -107,7 +116,7 @@ public:
 
 		if (_fileInfo.suffix().endsWith("mat")) // Material file
 		{
-			readFile = new cp::Material(scene->GetRenderer()->GetContext()); //Don't forget to destroy it sometime
+			readFile = new cp::Material(scene->GetRenderer()->GetContext());
 			cp::Material* tmp = static_cast<cp::Material*>(readFile);
 			cp::JsonSerializer serializer;
 			serializer.Read(_path);
@@ -115,6 +124,15 @@ public:
 			String* nameMat = new String(tmp->GetNamePtr(), "Material name", this);
 			layout->addWidget(nameMat);
 			layout->addSpacing(20);
+
+			QPushButton* saveButton = new QPushButton("Save", this);
+			layout->addWidget(saveButton);
+
+			connect(saveButton, &QPushButton::clicked, [=] {
+				cp::JsonSerializer serializer;
+				tmp->Serialize(serializer);
+				serializer.Write(_path);
+				});
 		}
 
 		layout->update();

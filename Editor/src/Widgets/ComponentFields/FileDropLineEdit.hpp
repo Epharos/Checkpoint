@@ -38,7 +38,7 @@ public:
 	}
 
 protected:
-	void dragEnterEvent(QDragEnterEvent* event) override
+	virtual void dragEnterEvent(QDragEnterEvent* event) override
 	{
 		if (event->mimeData()->hasUrls())
 		{
@@ -46,7 +46,7 @@ protected:
 		}
 	}
 
-	void dropEvent(QDropEvent* event) override
+	virtual void dropEvent(QDropEvent* event) override
 	{
 		const QMimeData* mimeData = event->mimeData();
 		if (mimeData->hasUrls())

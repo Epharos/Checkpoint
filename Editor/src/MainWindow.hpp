@@ -4,6 +4,7 @@
 
 #include "Widgets/TreeEntityItem.hpp"
 #include "Widgets/Inspector.hpp"
+#include <QtWidgets/qheaderview.h>
 
 #include "Renderers/MinimalistRenderer.hpp"
 #include "VulkanRenderer.hpp"
@@ -85,11 +86,11 @@ protected:
 			});
 
 		connect(openSceneHierarchyAction, &QAction::triggered, [=] {
-			CreateSceneHierarchyDockWidget();
+			CreateSceneHierarchyDockWidget(false);
 			});
 
 		connect(openInspectorAction, &QAction::triggered, [=] {
-			CreateInspectorDockWidget();
+			CreateInspectorDockWidget(false);
 			});
 
 		connect(openConsoleAction, &QAction::triggered, [=] {
@@ -97,7 +98,7 @@ protected:
 			});
 
 		connect(openFileExplorerAction, &QAction::triggered, [=] {
-			CreateFileExplorerDockWidget();
+			CreateFileExplorerDockWidget(false);
 			});
 
 		setMenuBar(menuBar);
@@ -188,6 +189,8 @@ protected:
 		fileExplorer->setSelectionMode(QAbstractItemView::SingleSelection);
 		fileExplorer->setDragDropMode(QAbstractItemView::DragDropMode::DragOnly);
 		fileExplorer->setEditTriggers(QAbstractItemView::EditKeyPressed);
+		fileExplorer->setBaseSize(800, 250);
+		fileExplorer->header()->resizeSection(0, 300);
 
 		fileExplorer->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
 		fileExplorer->setSelectionMode(QAbstractItemView::ExtendedSelection);
@@ -364,5 +367,9 @@ public:
 		activeRenderer->Build();
 
 		currentScene = new cp::Scene(activeRenderer);
+
+		CreateFileExplorerDockWidget(false);
+		CreateSceneHierarchyDockWidget(false);
+		CreateInspectorDockWidget(false);
 	}
 };
