@@ -2,7 +2,7 @@
 
 #include "../pch.hpp"
 
-#include "../Widgets/ComponentFields/FileDropLineEdit.hpp"
+#include "../Widgets/ComponentFields/ResourceDropLineEdit.hpp"
 
 struct MeshRenderer : public cp::IComponentBase
 {

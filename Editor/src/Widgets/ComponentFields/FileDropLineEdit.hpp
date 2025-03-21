@@ -5,14 +5,9 @@
 #include <QtGui/qevent.h>
 #include <QtCore/qmimedata.h>
 
-template<class T>
 class FileDropLineEdit : public QLineEdit
 {
-protected:
-	std::shared_ptr<T>* resource = nullptr;
-	std::string resourcePath;
-
-	QStringList acceptedExtensions;
+	Q_OBJECT
 
 public:
 	FileDropLineEdit(QWidget* parent = nullptr) : QLineEdit(parent)
@@ -26,18 +21,17 @@ public:
 		acceptedExtensions = _acceptedExtensions;
 	}
 
-	void SetResource(std::shared_ptr<T>* _resource)
-	{
-		resource = _resource;
-		if(*_resource) setText(QString::fromStdString(Project::GetResourceRelativePath(cp::ResourceManager::Get()->GetResourcePath(*_resource))));
-	}
-
 	void SetResourcePath(const std::string& _resourcePath)
 	{
 		resourcePath = _resourcePath;
+		setText(QString::fromStdString(Project::GetResourceRelativePath(resourcePath)));
 	}
 
 protected:
+	std::string resourcePath;
+
+	QStringList acceptedExtensions;
+
 	virtual void dragEnterEvent(QDragEnterEvent* event) override
 	{
 		if (event->mimeData()->hasUrls())
@@ -59,28 +53,16 @@ protected:
 
 				if (fileInfo.isFile() && acceptedExtensions.contains(fileInfo.suffix(), Qt::CaseInsensitive))
 				{
-					setText(fileInfo.fileName());
 					setToolTip(fileInfo.absoluteFilePath());
 
-					if (resource)
-					{
-						*resource = cp::ResourceManager::Get()->GetOrLoad<T>(url.toStdString());
-						cp::ResourceManager::Get()->GetResourceType<T>()->OptimizeMemory(resourcePath);
-						resourcePath = url.toStdString();
-					}
+					resourcePath = url.toStdString();
+					setText(QString::fromStdString(Project::GetResourceRelativePath(resourcePath)));
+					emit ResourcePathChanged(resourcePath);
 				}
 			}
 		}
 	}
-};
 
-class MeshDropLineEdit : public FileDropLineEdit<cp::Mesh>
-{
-	Q_OBJECT
-
-public:
-	MeshDropLineEdit(QWidget* parent = nullptr) : FileDropLineEdit(parent)
-	{
-		acceptedExtensions << "obj" << "fbx" << "gltf";
-	}
+signals:
+	void ResourcePathChanged(const std::string& _resourcePath);
 };

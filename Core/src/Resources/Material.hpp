@@ -39,6 +39,7 @@ namespace cp
 		static std::unordered_map<MaterialFieldType, size_t> MaterialFieldSizeMap;
 
 		std::string name = "Material";
+		std::string shaderPath = "";
 
 		std::vector<MaterialField> fields;
 		vk::DescriptorSetLayout layout;
@@ -74,5 +75,8 @@ namespace cp
 
 		const std::string& GetName() const { return name; }
 		std::string* GetNamePtr() { return &name; }
+
+		const std::string& GetShaderPath() const { return shaderPath; }
+		void SetShaderPath(const std::string& _path) { shaderPath = _path; }
 	};
 }

@@ -55,6 +55,7 @@ void cp::Material::Serialize(cp::ISerializer& _serializer) const
 	//TODO: Allow user to define their own descriptor sets (layouts)
 
 	_serializer.WriteString("Name", name);
+	_serializer.WriteString("ShaderPath", shaderPath);
 
 	_serializer.BeginObjectArrayWriting("Fields");
 
@@ -73,6 +74,7 @@ void cp::Material::Serialize(cp::ISerializer& _serializer) const
 void cp::Material::Deserialize(ISerializer& _serializer)
 {
 	name = _serializer.ReadString("Name", "Unknown");
+	shaderPath = _serializer.ReadString("ShaderPath", "");
 
 	size_t elements = _serializer.BeginObjectArrayReading("Fields");
 

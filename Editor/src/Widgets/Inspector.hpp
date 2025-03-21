@@ -4,6 +4,7 @@
 #include "SearchList.hpp"
 
 #include "Widgets/ComponentFields/String.hpp"
+#include "Widgets/ComponentFields/FileDropLineEdit.hpp"
 
 class Inspector : public QWidget
 {
@@ -125,8 +126,17 @@ public:
 			layout->addWidget(nameMat);
 			layout->addSpacing(20);
 
+			FileDropLineEdit* shaderPath = new FileDropLineEdit(this);
+			shaderPath->SetResourcePath(tmp->GetShaderPath());
+			shaderPath->SetAcceptedExtensions({ "slang" });
+			layout->addWidget(shaderPath);
+
 			QPushButton* saveButton = new QPushButton("Save", this);
 			layout->addWidget(saveButton);
+
+			connect(shaderPath, &FileDropLineEdit::ResourcePathChanged, [=](const std::string& _path) {
+				tmp->SetShaderPath(_path);
+				});
 
 			connect(saveButton, &QPushButton::clicked, [=] {
 				cp::JsonSerializer serializer;
