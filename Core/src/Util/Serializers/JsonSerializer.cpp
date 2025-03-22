@@ -486,7 +486,7 @@ size_t cp::JsonSerializer::BeginObjectArrayReading(const std::string& _name)
 		return objectStack.back()->size();
 	}
 
-	return -1;
+	return 0;
 }
 
 bool cp::JsonSerializer::BeginObjectArrayElementReading(const uint64_t _index)

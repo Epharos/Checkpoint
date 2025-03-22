@@ -180,6 +180,7 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
     <ClCompile Include="src\Widgets\Launcher\MOC_Button.cpp" />
     <ClCompile Include="src\Widgets\Launcher\MOC_ProjectOverview.cpp" />
     <ClCompile Include="src\Widgets\Launcher\MOC_ProjectTableView.cpp" />
+    <ClCompile Include="src\Widgets\MOC_Collapsible.cpp" />
     <ClCompile Include="src\Widgets\MOC_Inspector.cpp" />
     <ClCompile Include="src\Widgets\MOC_SearchList.cpp" />
   </ItemGroup>
@@ -194,6 +195,7 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
     <ClInclude Include="src\Project.hpp" />
     <ClInclude Include="src\Renderers\MinimalistRenderer.hpp" />
     <ClInclude Include="src\VulkanRenderer.hpp" />
+    <ClInclude Include="src\Widgets\Collapsible.hpp" />
     <ClInclude Include="src\Widgets\ComponentFields\Field.hpp" />
     <ClInclude Include="src\Widgets\ComponentFields\Quat.hpp" />
     <ClInclude Include="src\Widgets\ComponentFields\ResourceDropLineEdit.hpp" />

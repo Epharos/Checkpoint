@@ -5,6 +5,9 @@
 
 #include "Widgets/ComponentFields/String.hpp"
 #include "Widgets/ComponentFields/FileDropLineEdit.hpp"
+#include "Widgets/Collapsible.hpp"
+
+#include <QtWidgets/qcheckbox.h>
 
 class Inspector : public QWidget
 {
@@ -16,6 +19,8 @@ protected:
 	cp::Scene* scene = nullptr;
 
 	void* readFile = nullptr;
+
+	std::unordered_map<std::string, std::function<void(const std::string&, const QFileInfo&)>> fileInspector;
 
 public:
 	Inspector(cp::Scene* _scene, QWidget* _parent = nullptr) : QWidget(_parent), scene(_scene)
@@ -30,6 +35,8 @@ public:
 
 		setMinimumWidth(350);
 		setMinimumHeight(480);
+
+		fileInspector["mat"] = [=](const std::string& _path, const QFileInfo& _fileInfo) { ShowMaterial(_path, _fileInfo); };
 	}
 
 	void CreateAddComponentButton(cp::Entity* _entity)
@@ -115,36 +122,71 @@ public:
 			else delete child;
 		}
 
-		if (_fileInfo.suffix().endsWith("mat")) // Material file
+		if (fileInspector.find(_fileInfo.suffix().toStdString()) != fileInspector.end())
 		{
-			readFile = new cp::Material(scene->GetRenderer()->GetContext());
-			cp::Material* tmp = static_cast<cp::Material*>(readFile);
-			cp::JsonSerializer serializer;
-			serializer.Read(_path);
-			tmp->Deserialize(serializer);
-			String* nameMat = new String(tmp->GetNamePtr(), "Material name", this);
-			layout->addWidget(nameMat);
-			layout->addSpacing(20);
-
-			FileDropLineEdit* shaderPath = new FileDropLineEdit(this);
-			shaderPath->SetResourcePath(tmp->GetShaderPath());
-			shaderPath->SetAcceptedExtensions({ "slang" });
-			layout->addWidget(shaderPath);
-
-			QPushButton* saveButton = new QPushButton("Save", this);
-			layout->addWidget(saveButton);
-
-			connect(shaderPath, &FileDropLineEdit::ResourcePathChanged, [=](const std::string& _path) {
-				tmp->SetShaderPath(_path);
-				});
-
-			connect(saveButton, &QPushButton::clicked, [=] {
-				cp::JsonSerializer serializer;
-				tmp->Serialize(serializer);
-				serializer.Write(_path);
-				});
+			fileInspector[_fileInfo.suffix().toStdString()](_path, _fileInfo);
+		}
+		else
+		{
+			QLabel* label = new QLabel("No inspector available for this file type", this);
+			layout->addWidget(label);
 		}
 
 		layout->update();
+	}
+
+	void ShowMaterial(const std::string& _path, const QFileInfo& _fileInfo)
+	{
+		readFile = new cp::Material(scene->GetRenderer()->GetContext());
+		cp::Material* mat = static_cast<cp::Material*>(readFile);
+		cp::JsonSerializer serializer;
+		serializer.Read(_path);
+		mat->Deserialize(serializer);
+
+		Collapsible* properties = new Collapsible("Properties", this);
+		layout->addWidget(properties);
+
+		String* nameMat = new String(mat->GetNamePtr(), "Material name", this);
+		properties->AddWidget(nameMat);
+
+		QLabel* shaderLabel = new QLabel("Shader path", this);
+		FileDropLineEdit* shaderPath = new FileDropLineEdit(this);
+		shaderPath->SetResourcePath(mat->GetShaderPath());
+		shaderPath->SetAcceptedExtensions({ "slang" });
+		properties->AddWidget(shaderLabel);
+		properties->AddWidget(shaderPath);
+
+		Collapsible* renderpasses = new Collapsible("Render passes", this);
+		layout->addWidget(renderpasses);
+
+		for (auto& rp : scene->GetRenderer()->GetRenderPassNames())
+		{
+			QLabel* rpLabel = new QLabel(QString::fromStdString(rp), this);
+			renderpasses->AddWidget(rpLabel);
+
+			QCheckBox* rpCheckBox = new QCheckBox("Require unique shader", this);
+			renderpasses->AddWidget(rpCheckBox);
+
+			rpCheckBox->setChecked(mat->GetRenderPassRequirement(rp).requireUniqueShader);
+
+			connect(rpCheckBox, &QCheckBox::checkStateChanged, [=](Qt::CheckState _state) {
+				mat->GetRenderPassRequirement(rp).requireUniqueShader = _state == Qt::CheckState::Checked;
+				});
+
+			renderpasses->AddSpacing(10);
+		}
+
+		QPushButton* saveButton = new QPushButton("Save", this);
+		layout->addWidget(saveButton);
+
+		connect(shaderPath, &FileDropLineEdit::ResourcePathChanged, [=](const std::string& _path) {
+			mat->SetShaderPath(_path);
+			});
+
+		connect(saveButton, &QPushButton::clicked, [=] {
+			cp::JsonSerializer serializer;
+			mat->Serialize(serializer);
+			serializer.Write(_path);
+			});
 	}
 };

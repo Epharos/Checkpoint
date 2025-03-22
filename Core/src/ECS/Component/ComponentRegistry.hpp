@@ -13,7 +13,7 @@ namespace cp
 		ComponentRegistry() = default;
 		NO_COPY(ComponentRegistry)
 
-			using ComponentFactoryFunction = std::function<bool(cp::EntityComponentSystem&, Entity&)>;
+		using ComponentFactoryFunction = std::function<bool(cp::EntityComponentSystem&, Entity&)>;
 		using WidgetFactoryFunction = std::function<std::unique_ptr<ComponentWidgetBase>(cp::EntityComponentSystem&, Entity&)>;
 		using SerializerFactoryFunction = std::function<std::unique_ptr<ComponentSerializerBase>(IComponentBase*&)>;
 

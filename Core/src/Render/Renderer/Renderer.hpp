@@ -57,10 +57,6 @@ namespace cp
 
 		virtual void RenderFrame(const std::vector<InstanceGroup>& _instanceGroups) = 0;
 
-		RenderPassID RegisterRenderPass(const std::string& _name);
-		RenderPassID GetRenderPassID(const std::string& _name);
-		std::vector<std::string> GetRenderPassNames();
-
 	public:
 		Renderer(cp::VulkanContext* _context);
 		virtual ~Renderer();
@@ -73,6 +69,12 @@ namespace cp
 
 		inline constexpr const uint32_t GetSubpassCount() const { return subpassCount; }
 		inline constexpr cp::VulkanContext* GetContext() { return context; }
+
+		RenderPassID RegisterRenderPass(const std::string& _name);
+		RenderPassID GetRenderPassID(const std::string& _name);
+		std::vector<std::string> GetRenderPassNames();
+
+		inline std::unordered_map<std::string, RenderPassID> GetRenderPassIndexes() { return renderPassIndex; }
 		
 	};
 }

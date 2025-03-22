@@ -69,6 +69,20 @@ void cp::Material::Serialize(cp::ISerializer& _serializer) const
 	}
 
 	_serializer.EndObjectArray();
+
+	_serializer.BeginObjectArrayWriting("RenderPass Requirements");
+
+	for (const auto& [name, rpr] : rpRequirements)
+	{
+		_serializer.BeginObjectArrayElementWriting();
+		_serializer.WriteString("RP Name", name);
+		_serializer.BeginObjectWriting("Requirements");
+		rpr.Serialize(_serializer);
+		_serializer.EndObject();
+		_serializer.EndObjectArrayElement();
+	}
+
+	_serializer.EndObjectArray();
 }
 
 void cp::Material::Deserialize(ISerializer& _serializer)
@@ -90,4 +104,37 @@ void cp::Material::Deserialize(ISerializer& _serializer)
 	}
 
 	_serializer.EndObjectArray();
+
+	elements = _serializer.BeginObjectArrayReading("RenderPass Requirements");
+
+	for (uint64_t i = 0; i < elements; i++)
+	{
+		_serializer.BeginObjectArrayElementReading(i);
+		std::string rpName = _serializer.ReadString("RP Name", "Error");
+
+		if (rpName == "Error")
+		{
+			_serializer.EndObjectArrayElement();
+			continue;
+		}
+
+		RenderPassRequirement rpr;
+		_serializer.BeginObjectReading("Requirements");
+		rpr.Deserialize(_serializer);
+		_serializer.EndObject();
+		rpRequirements[rpName] = rpr;
+		_serializer.EndObjectArrayElement();
+	}
+
+	_serializer.EndObjectArray();
+}
+
+void cp::RenderPassRequirement::Serialize(ISerializer& _serializer) const
+{
+	_serializer.WriteBool("RequireUniqueShader", requireUniqueShader);
+}
+
+void cp::RenderPassRequirement::Deserialize(ISerializer& _serializer)
+{
+	requireUniqueShader = _serializer.ReadBool("RequireUniqueShader", false);
 }

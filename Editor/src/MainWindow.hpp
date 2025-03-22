@@ -60,8 +60,8 @@ protected:
 			});
 
 		connect(saveSceneAction, &QAction::triggered, [=] {
-			std::string path = projectData.path.toStdString() + "/Resources/Scenes/" + sceneHierarchy->headerItem()->text(0).toStdString() + ".scn";
-			std::replace(path.begin(), path.end(), ' ', '_');
+			std::string path = Project::GetResourcePath() + "/Scenes/" + sceneHierarchy->headerItem()->text(0).replace(" ", "_").toStdString() + ".scn";
+			LOG_DEBUG(MF("Saving scene to: ", path));
 			cp::JsonSerializer serializer;
 			currentScene->Serialize(serializer);
 			serializer.Write(path);
@@ -315,10 +315,10 @@ protected:
 public:
 	MainWindow(const ProjectData& _projectData, QWidget* parent = nullptr)
 	{
-		SetupMenuBar();
-
 		projectData = ProjectData(_projectData);
 		Project::data = projectData;
+
+		SetupMenuBar();
 
 		instance = new QVulkanInstance;
 		instance->create();

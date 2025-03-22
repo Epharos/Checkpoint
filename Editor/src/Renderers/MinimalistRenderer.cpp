@@ -164,6 +164,9 @@ MinimalistRenderer::MinimalistRenderer(cp::VulkanContext* _context) : cp::Render
 	uint32_t quadIndices[] = { 0, 2, 1, 2, 0, 3 };
 
 	quadMesh = new cp::Mesh(*context, std::vector<cp::Vertex>(quadVertices, quadVertices + 4), std::vector<uint32_t>(quadIndices, quadIndices + 6));
+
+	RegisterRenderPass("Depth");
+	RegisterRenderPass("G-Buffer");
 }
 
 void MinimalistRenderer::Cleanup()

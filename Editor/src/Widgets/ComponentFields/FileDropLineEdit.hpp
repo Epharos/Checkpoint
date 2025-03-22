@@ -24,7 +24,7 @@ public:
 	void SetResourcePath(const std::string& _resourcePath)
 	{
 		resourcePath = _resourcePath;
-		setText(QString::fromStdString(Project::GetResourceRelativePath(resourcePath)));
+		if(!_resourcePath.empty() && _resourcePath.starts_with(Project::GetProjectPath())) setText(QString::fromStdString(Project::GetResourceRelativePath(resourcePath)));
 	}
 
 protected:

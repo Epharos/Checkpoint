@@ -27,10 +27,13 @@ namespace cp
 		size_t offset;
 	};
 
-	struct RenderPassRequirement
+	struct RenderPassRequirement : public ISerializable
 	{
-		//RenderPassID renderPassID;
-		bool requireUniquePipeline;
+		bool requireUniqueShader;
+
+		void Serialize(ISerializer& _serializer) const override;
+
+		void Deserialize(ISerializer& _serializer) override;
 	};
 
 	class Material : public ISerializable
@@ -43,6 +46,8 @@ namespace cp
 
 		std::vector<MaterialField> fields;
 		vk::DescriptorSetLayout layout;
+
+		std::unordered_map<std::string, RenderPassRequirement> rpRequirements;
 
 		const cp::VulkanContext* context;
 
@@ -78,5 +83,7 @@ namespace cp
 
 		const std::string& GetShaderPath() const { return shaderPath; }
 		void SetShaderPath(const std::string& _path) { shaderPath = _path; }
+
+		inline RenderPassRequirement& GetRenderPassRequirement(const std::string& _rpName) { return rpRequirements[_rpName]; }
 	};
 }
