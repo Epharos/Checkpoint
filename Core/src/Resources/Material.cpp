@@ -37,7 +37,8 @@ std::vector<vk::DescriptorSetLayoutBinding> cp::Material::GenerateBindings()
 cp::Material::Material(const cp::VulkanContext* _context) :
 	context(_context)
 {
-
+	AddShaderStage(cp::ShaderStages::Vertex);
+	AddShaderStage(cp::ShaderStages::Fragment);
 }
 
 void cp::Material::BindMaterial(vk::CommandBuffer& _command)
@@ -56,6 +57,7 @@ void cp::Material::Serialize(cp::ISerializer& _serializer) const
 
 	_serializer.WriteString("Name", name);
 	_serializer.WriteString("ShaderPath", shaderPath);
+	_serializer.WriteInt("Shader Stages", static_cast<int>(shaderStages));
 
 	_serializer.BeginObjectArrayWriting("Fields");
 
@@ -89,6 +91,7 @@ void cp::Material::Deserialize(ISerializer& _serializer)
 {
 	name = _serializer.ReadString("Name", "Unknown");
 	shaderPath = _serializer.ReadString("ShaderPath", "");
+	shaderStages = static_cast<uint16_t>(_serializer.ReadInt("Shader Stages", 0));
 
 	size_t elements = _serializer.BeginObjectArrayReading("Fields");
 
@@ -131,10 +134,63 @@ void cp::Material::Deserialize(ISerializer& _serializer)
 
 void cp::RenderPassRequirement::Serialize(ISerializer& _serializer) const
 {
-	_serializer.WriteBool("RequireUniqueShader", requireUniqueShader);
+	_serializer.WriteBool("ShouldRenderToPass", renderToPass);
+
+	if (!customEntryPoints.empty())
+	{
+		_serializer.BeginObjectWriting("CustomEntryPoints");
+
+		for (const auto& [stage, entryPoint] : customEntryPoints)
+		{
+			switch (stage)
+			{
+			case ShaderStages::Vertex:
+				_serializer.WriteString("VertexEntryPoint", entryPoint);
+				break;
+			case ShaderStages::Fragment:
+				_serializer.WriteString("FragmentEntryPoint", entryPoint);
+				break;
+			case ShaderStages::Geometry:
+				_serializer.WriteString("GeometryEntryPoint", entryPoint);
+				break;
+			case ShaderStages::TessellationControl:
+				_serializer.WriteString("TCEntryPoint", entryPoint);
+				break;
+			case ShaderStages::TessellationEvaluation:
+				_serializer.WriteString("TEEntryPoint", entryPoint);
+				break;
+			case ShaderStages::Mesh:
+				_serializer.WriteString("MeshEntryPoint", entryPoint);
+				break;
+			case ShaderStages::Compute:
+				_serializer.WriteString("ComputeEntryPoint", entryPoint);
+				break;
+			}
+		}
+
+		_serializer.EndObject();
+	}
+
+	if (!customShaderPath.empty()) _serializer.WriteString("CustomShaderPath", customShaderPath);
 }
 
 void cp::RenderPassRequirement::Deserialize(ISerializer& _serializer)
 {
-	requireUniqueShader = _serializer.ReadBool("RequireUniqueShader", false);
+	renderToPass = _serializer.ReadBool("ShouldRenderToPass", false);
+
+	if (_serializer.BeginObjectReading("CustomEntryPoints"))
+	{
+		std::string entryPoint;
+		if (entryPoint = _serializer.ReadString("VertexEntryPoint", ""); !entryPoint.empty()) customEntryPoints[ShaderStages::Vertex] = entryPoint;
+		if (entryPoint = _serializer.ReadString("FragmentEntryPoint", ""); !entryPoint.empty()) customEntryPoints[ShaderStages::Fragment] = entryPoint;
+		if (entryPoint = _serializer.ReadString("GeometryEntryPoint", ""); !entryPoint.empty()) customEntryPoints[ShaderStages::Geometry] = entryPoint;
+		if (entryPoint = _serializer.ReadString("TCEntryPoint", ""); !entryPoint.empty()) customEntryPoints[ShaderStages::TessellationControl] = entryPoint;
+		if (entryPoint = _serializer.ReadString("TEEntryPoint", ""); !entryPoint.empty()) customEntryPoints[ShaderStages::TessellationEvaluation] = entryPoint;
+		if (entryPoint = _serializer.ReadString("MeshEntryPoint", ""); !entryPoint.empty()) customEntryPoints[ShaderStages::Mesh] = entryPoint;
+		if (entryPoint = _serializer.ReadString("ComputeEntryPoint", ""); !entryPoint.empty()) customEntryPoints[ShaderStages::Compute] = entryPoint;
+
+		_serializer.EndObject();
+	}
+
+	customShaderPath = _serializer.ReadString("CustomShaderPath", "");
 }

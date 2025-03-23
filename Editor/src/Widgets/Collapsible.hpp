@@ -8,7 +8,7 @@ class Collapsible : public QWidget
     Q_OBJECT
 
 public:
-    Collapsible(const QString& title, const bool& _expanded = true, QWidget* parent = nullptr)
+    Collapsible(const QString& title, QWidget* parent = nullptr, const bool& _expanded = true)
         : QWidget(parent)
     {
         QVBoxLayout* layout = new QVBoxLayout(this);
@@ -18,7 +18,7 @@ public:
         toggleButton = new QToolButton(this);
         toggleButton->setText(title);
         toggleButton->setCheckable(true);
-        toggleButton->setChecked(true);
+        toggleButton->setChecked(_expanded);
         toggleButton->setStyleSheet("QToolButton { border: none; font-weight: bold; background-color: #444; }");
         toggleButton->setArrowType(Qt::DownArrow);
         toggleButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);

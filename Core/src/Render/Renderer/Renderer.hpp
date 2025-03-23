@@ -34,6 +34,12 @@ namespace cp
 
 	using RenderPassID = uint32_t;
 
+	struct RenderPassData
+	{
+		RenderPassID id;
+		bool depthOnly = false;
+	};
+
 	class Renderer
 	{
 	protected:
@@ -43,7 +49,7 @@ namespace cp
 		vk::RenderPass mainRenderPass = VK_NULL_HANDLE;
 		uint32_t subpassCount = -1;
 
-		std::unordered_map<std::string, RenderPassID> renderPassIndex;
+		std::unordered_map<std::string, RenderPassData> renderPassIndex;
 
 		virtual void SetupPipelines() = 0;
 
@@ -70,11 +76,11 @@ namespace cp
 		inline constexpr const uint32_t GetSubpassCount() const { return subpassCount; }
 		inline constexpr cp::VulkanContext* GetContext() { return context; }
 
-		RenderPassID RegisterRenderPass(const std::string& _name);
-		RenderPassID GetRenderPassID(const std::string& _name);
+		RenderPassData RegisterRenderPass(const std::string& _name, const bool& _depthOnly = false);
+		RenderPassData GetRenderPassID(const std::string& _name);
 		std::vector<std::string> GetRenderPassNames();
 
-		inline std::unordered_map<std::string, RenderPassID> GetRenderPassIndexes() { return renderPassIndex; }
+		inline std::unordered_map<std::string, RenderPassData> GetRenderPassIndexes() { return renderPassIndex; }
 		
 	};
 }

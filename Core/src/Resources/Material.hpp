@@ -27,9 +27,33 @@ namespace cp
 		size_t offset;
 	};
 
+	enum class ShaderStages : uint16_t
+	{
+		Vertex = 1 << 0,
+		Fragment = 1 << 1,
+		Geometry = 1 << 2,
+		TessellationControl = 1 << 3,
+		TessellationEvaluation = 1 << 4,
+		Mesh = 1 << 5, //Experimental
+
+		Compute = 1 << 6,
+
+		RayGen = 1 << 7,
+		AnyHit = 1 << 8,
+		ClosestHit = 1 << 9,
+		Miss = 1 << 10,
+		Intersection = 1 << 11,
+
+		Pixel = Fragment, // Alias
+		AllGraphics = Vertex | Fragment | Geometry | TessellationControl | TessellationEvaluation | Mesh,
+		RayTracing = RayGen | AnyHit | ClosestHit | Miss | Intersection
+	};
+
 	struct RenderPassRequirement : public ISerializable
 	{
-		bool requireUniqueShader;
+		bool renderToPass;
+		std::string customShaderPath;
+		std::unordered_map<ShaderStages, std::string> customEntryPoints;
 
 		void Serialize(ISerializer& _serializer) const override;
 
@@ -43,6 +67,8 @@ namespace cp
 
 		std::string name = "Material";
 		std::string shaderPath = "";
+
+		uint16_t shaderStages = 0;
 
 		std::vector<MaterialField> fields;
 		vk::DescriptorSetLayout layout;
@@ -72,6 +98,10 @@ namespace cp
 		inline constexpr vk::DescriptorSetLayout GetDescriptorSetLayout() const { return layout; }
 
 		virtual void BindMaterial(vk::CommandBuffer& _command);
+
+		inline bool HasShaderStage(const ShaderStages& _stage) const { return (shaderStages & static_cast<uint16_t>(_stage)) != 0; }
+		inline void AddShaderStage(const ShaderStages& _stage) { shaderStages |= static_cast<uint16_t>(_stage); }
+		inline void RemoveShaderStage(const ShaderStages& _stage) { shaderStages &= ~static_cast<uint16_t>(_stage); }
 
 		virtual void Reload(); // REFLEXION : Should I use Dynamic Rendering ? Not now, maybe later
 

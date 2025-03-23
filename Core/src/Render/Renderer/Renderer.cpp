@@ -106,17 +106,17 @@ void cp::Renderer::EndFrame()
 	swapchain->SetCurrentFrame((swapchain->GetCurrentFrameIndex() + 1) % swapchain->GetFrameCount());
 }
 
-cp::RenderPassID cp::Renderer::RegisterRenderPass(const std::string& _name)
+cp::RenderPassData cp::Renderer::RegisterRenderPass(const std::string& _name, const bool& _depthOnly)
 {
 	if (renderPassIndex.find(_name) == renderPassIndex.end())
 	{
-		renderPassIndex[_name] = renderPassIndex.size();
+		renderPassIndex[_name] = { static_cast<RenderPassID>(renderPassIndex.size()), _depthOnly };
 	}
 
 	return renderPassIndex[_name];
 }
 
-cp::RenderPassID cp::Renderer::GetRenderPassID(const std::string& _name)
+cp::RenderPassData cp::Renderer::GetRenderPassID(const std::string& _name)
 {
 	return renderPassIndex.at(_name);
 }

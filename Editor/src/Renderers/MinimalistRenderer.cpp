@@ -165,7 +165,7 @@ MinimalistRenderer::MinimalistRenderer(cp::VulkanContext* _context) : cp::Render
 
 	quadMesh = new cp::Mesh(*context, std::vector<cp::Vertex>(quadVertices, quadVertices + 4), std::vector<uint32_t>(quadIndices, quadIndices + 6));
 
-	RegisterRenderPass("Depth");
+	RegisterRenderPass("Depth", true);
 	RegisterRenderPass("G-Buffer");
 }
 
