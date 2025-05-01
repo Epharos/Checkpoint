@@ -17,6 +17,7 @@ namespace cp
 		LayoutsManager(vk::Device _device);
 
 		vk::PipelineLayout GetOrCreateLayout(const std::vector<vk::DescriptorSetLayout>& _descriptorSetLayouts, const std::vector<vk::PushConstantRange>& _pushConstantRanges);
+		void UnloadLayout(vk::PipelineLayout _layout);
 
 		void Cleanup();
 	};

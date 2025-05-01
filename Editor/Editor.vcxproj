@@ -172,7 +172,10 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="src\Widgets\ComponentFields\MOC_ComponentField.cpp" />
     <ClCompile Include="src\Widgets\ComponentFields\MOC_FileDropLineEdit.cpp" />
+    <ClCompile Include="src\Widgets\ComponentFields\MOC_Int.cpp" />
+    <ClCompile Include="src\Widgets\ComponentFields\MOC_NumericFields.cpp" />
     <ClCompile Include="src\Widgets\ComponentFields\MOC_Quat.cpp" />
     <ClCompile Include="src\Widgets\ComponentFields\MOC_ResourceDropLineEdit.cpp" />
     <ClCompile Include="src\Widgets\ComponentFields\MOC_String.cpp" />
@@ -181,6 +184,7 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
     <ClCompile Include="src\Widgets\Launcher\MOC_ProjectOverview.cpp" />
     <ClCompile Include="src\Widgets\Launcher\MOC_ProjectTableView.cpp" />
     <ClCompile Include="src\Widgets\MOC_Collapsible.cpp" />
+    <ClCompile Include="src\Widgets\MOC_EnumMultiSelectDropDown.cpp" />
     <ClCompile Include="src\Widgets\MOC_Inspector.cpp" />
     <ClCompile Include="src\Widgets\MOC_SearchList.cpp" />
   </ItemGroup>
@@ -196,12 +200,17 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
     <ClInclude Include="src\Renderers\MinimalistRenderer.hpp" />
     <ClInclude Include="src\VulkanRenderer.hpp" />
     <ClInclude Include="src\Widgets\Collapsible.hpp" />
+    <ClInclude Include="src\Widgets\ComponentFields\ComponentField.hpp" />
     <ClInclude Include="src\Widgets\ComponentFields\Field.hpp" />
+    <ClInclude Include="src\Widgets\ComponentFields\Int.hpp" />
+    <ClInclude Include="src\Widgets\ComponentFields\Numeric.hpp" />
     <ClInclude Include="src\Widgets\ComponentFields\Quat.hpp" />
     <ClInclude Include="src\Widgets\ComponentFields\ResourceDropLineEdit.hpp" />
     <ClInclude Include="src\Widgets\ComponentFields\String.hpp" />
+    <ClInclude Include="src\Widgets\ComponentFields\NumericFields.hpp" />
     <ClInclude Include="src\Widgets\ComponentFields\Vec3.hpp" />
     <ClInclude Include="src\Widgets\ComponentFields\FileDropLineEdit.hpp" />
+    <ClInclude Include="src\Widgets\EnumMultiSelectDropDown.hpp" />
     <ClInclude Include="src\Widgets\Inspector.hpp" />
     <ClInclude Include="src\Widgets\Launcher\Button.hpp" />
     <ClInclude Include="src\Widgets\Launcher\ProjectOverview.hpp" />

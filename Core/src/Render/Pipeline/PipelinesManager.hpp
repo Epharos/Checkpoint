@@ -10,8 +10,6 @@ namespace cp
 		vk::PipelineLayout pipelineLayout;
 		std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
 
-		vk::RenderPass renderPass;
-
 		std::string shaderFile;
 		std::vector<std::pair<vk::ShaderStageFlagBits, std::string>> mains;
 	};
@@ -47,16 +45,16 @@ namespace cp
 	class PipelinesManager
 	{
 	protected:
-		std::unordered_map<PipelineConfig, PipelineData, PipelineConfigHasher> pipelines;
+		std::unordered_map<PipelineConfig, cp::PipelineData, PipelineConfigHasher> pipelines;
 
 		vk::Device device;
 
 	public:
 		PipelinesManager(vk::Device device);
 
-		const PipelineData& CreatePipeline(PipelineCreateData& _pipelineData);
-
-		const PipelineData& GetPipeline(const PipelineCreateData& _pipelineData) const;
+		PipelineData& CreatePipeline(PipelineCreateData& _pipelineData);
+		PipelineData& GetPipeline(const PipelineCreateData& _pipelineData);
+		void DestroyPipeline(const PipelineConfig& _pipelineConfig);
 
 		void Cleanup();
 	};

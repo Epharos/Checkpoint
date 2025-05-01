@@ -1,6 +1,7 @@
 #include "pch.hpp"
 
 #include "Helpers.hpp"
+#include "../Resources/Material.hpp"
 #include <QtCore/qjsonobject.h>
 
 namespace Helper
@@ -358,3 +359,169 @@ void Helper::CommandBuffer::EndSingleTimeCommands(const vk::Device& device, cons
 
 	device.freeCommandBuffers(commandPool, 1, &commandBuffer);
 }
+
+cp::ShaderStages Helper::Material::GetShaderStageFromString(const std::string& stage)
+{
+	if (stage == "Vertex")
+		return cp::ShaderStages::Vertex;
+	else if (stage == "Fragment")
+		return cp::ShaderStages::Fragment;
+	else if (stage == "Pixel")
+		return cp::ShaderStages::Fragment; // Alias
+	else if (stage == "Geometry")
+		return cp::ShaderStages::Geometry;
+	else if (stage == "Tessellation Control")
+		return cp::ShaderStages::TessellationControl;
+	else if (stage == "Tessellation Evaluation")
+		return cp::ShaderStages::TessellationEvaluation;
+	else if (stage == "Mesh")
+		return cp::ShaderStages::Mesh;
+	else if (stage == "Compute")
+		return cp::ShaderStages::Compute;
+	else
+		throw std::invalid_argument("Invalid shader stage: " + stage);
+}
+
+std::string Helper::Material::GetShaderStageString(const cp::ShaderStages& stage)
+{
+	switch (stage)
+	{
+	case cp::ShaderStages::Vertex:
+		return "Vertex";
+	case cp::ShaderStages::Fragment:
+		return "Fragment";
+	case cp::ShaderStages::Geometry:
+		return "Geometry";
+	case cp::ShaderStages::TessellationControl:
+		return "Tessellation Control";
+	case cp::ShaderStages::TessellationEvaluation:
+		return "Tessellation Evaluation";
+	case cp::ShaderStages::Mesh:
+		return "Mesh";
+	case cp::ShaderStages::Compute:
+		return "Compute";
+	default:
+		throw std::invalid_argument("Invalid shader stage");
+	}
+}
+
+cp::MaterialFieldType Helper::Material::GetMaterialFieldTypeFromString(const std::string& type)
+{
+	if (type == "Boolean")
+		return cp::MaterialFieldType::BOOL;
+	else if (type == "Half")
+		return cp::MaterialFieldType::HALF;
+	else if (type == "Float")
+		return cp::MaterialFieldType::FLOAT;
+	else if (type == "Integer")
+		return cp::MaterialFieldType::INT;
+	else if (type == "Unsigned Integer")
+		return cp::MaterialFieldType::UINT;
+	else if (type == "Vector")
+		return cp::MaterialFieldType::VECTOR;
+	else if (type == "Matrix")
+		return cp::MaterialFieldType::MATRIX;
+	else
+		throw std::invalid_argument("Invalid material field type: " + type);
+}
+
+std::string Helper::Material::GetMaterialFieldTypeString(const cp::MaterialFieldType& type)
+{
+	switch (type)
+	{
+	case cp::MaterialFieldType::BOOL:
+		return "Boolean";
+	case cp::MaterialFieldType::HALF:
+		return "Half";
+	case cp::MaterialFieldType::FLOAT:
+		return "Float";
+	case cp::MaterialFieldType::INT:
+		return "Integer";
+	case cp::MaterialFieldType::UINT:
+		return "Unsigned Integer";
+	case cp::MaterialFieldType::VECTOR:
+		return "Vector";
+	case cp::MaterialFieldType::MATRIX:
+		return "Matrix";
+	default:
+		throw std::invalid_argument("Invalid material field type");
+	}
+}
+
+cp::BindingType Helper::Material::GetMaterialBindingFromString(const std::string& binding)
+{
+	if (binding == "Uniform Buffer")
+		return cp::BindingType::UNIFORM_BUFFER;
+	else if (binding == "Storage Buffer")
+		return cp::BindingType::STORAGE_BUFFER;
+	else if (binding == "Texture")
+		return cp::BindingType::TEXTURE;
+	else
+		throw std::invalid_argument("Invalid material binding: " + binding);
+}
+
+std::string Helper::Material::GetMaterialBindingString(const cp::BindingType& binding)
+{
+	switch (binding)
+	{
+	case cp::BindingType::UNIFORM_BUFFER:
+		return "Uniform Buffer";
+	case cp::BindingType::STORAGE_BUFFER:
+		return "Storage Buffer";
+	case cp::BindingType::TEXTURE:
+		return "Texture";
+	default:
+		throw std::invalid_argument("Invalid material binding");
+	}
+}
+
+vk::DescriptorType Helper::Material::GetDescriptorTypeFromBindingType(const cp::BindingType& binding)
+{
+	switch (binding)
+	{
+	case cp::BindingType::UNIFORM_BUFFER:
+		return vk::DescriptorType::eUniformBuffer;
+	case cp::BindingType::STORAGE_BUFFER:
+		return vk::DescriptorType::eStorageBuffer;
+	case cp::BindingType::TEXTURE:
+		return vk::DescriptorType::eCombinedImageSampler;
+	default:
+		throw std::invalid_argument("Invalid material binding");
+	}
+}
+
+vk::ShaderStageFlags Helper::Material::GetShaderStageFlags(const uint16_t& stages)
+{
+	vk::ShaderStageFlags stageFlags = static_cast<vk::ShaderStageFlagBits>(0);
+
+	if (stages & static_cast<uint16_t>(cp::ShaderStages::Vertex))
+		stageFlags |= vk::ShaderStageFlagBits::eVertex;
+
+	if (stages & static_cast<uint16_t>(cp::ShaderStages::Fragment))
+		stageFlags |= vk::ShaderStageFlagBits::eFragment;
+
+	if (stages & static_cast<uint16_t>(cp::ShaderStages::Geometry))
+		stageFlags |= vk::ShaderStageFlagBits::eGeometry;
+
+	if (stages & static_cast<uint16_t>(cp::ShaderStages::TessellationControl))
+		stageFlags |= vk::ShaderStageFlagBits::eTessellationControl;
+
+	if (stages & static_cast<uint16_t>(cp::ShaderStages::TessellationEvaluation))
+		stageFlags |= vk::ShaderStageFlagBits::eTessellationEvaluation;
+
+	if (stages & static_cast<uint16_t>(cp::ShaderStages::Mesh))
+		stageFlags |= vk::ShaderStageFlagBits::eMeshEXT;
+
+	if (stages & static_cast<uint16_t>(cp::ShaderStages::Compute))
+		stageFlags |= vk::ShaderStageFlagBits::eCompute;
+
+	if (static_cast<uint32_t>(stageFlags) == 0)
+	{
+		LOG_ERROR("Invalid shader stage flags");
+		throw std::invalid_argument("Invalid shader stage flags");
+	}
+
+	return stageFlags;
+}
+
+

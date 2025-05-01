@@ -149,7 +149,7 @@ void MinimalistRenderer::SetupPipelines()
 		{ vk::ShaderStageFlagBits::eFragment, "pixelMain" }
 	};
 
-	pipelinesManager->CreatePipeline(pipelineData);
+	GetRenderPass("Depth").SetDefaultPipeline(pipelinesManager->CreatePipeline(pipelineData));
 }
 
 MinimalistRenderer::MinimalistRenderer(cp::VulkanContext* _context) : cp::Renderer(_context)
@@ -165,7 +165,8 @@ MinimalistRenderer::MinimalistRenderer(cp::VulkanContext* _context) : cp::Render
 
 	quadMesh = new cp::Mesh(*context, std::vector<cp::Vertex>(quadVertices, quadVertices + 4), std::vector<uint32_t>(quadIndices, quadIndices + 6));
 
-	RegisterRenderPass("Depth", true);
+	cp::Renderpass& depthRP = RegisterRenderPass("Depth");
+	depthRP.SetDepthOnly(true);
 	RegisterRenderPass("G-Buffer");
 }
 

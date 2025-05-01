@@ -6,7 +6,7 @@
 cp::MaterialInstance::MaterialInstance(Material* _material, const cp::VulkanContext*& _context)
 	: material(_material), context(_context) 
 {
-	descriptorSet = context->GetDescriptorSetManager()->CreateOrphanedDescriptorSet(material->GetDescriptorSetLayout());
+	//descriptorSet = context->GetDescriptorSetManager()->CreateOrphanedDescriptorSet(material->GetDescriptorSetLayout());
 	LOG_DEBUG(MF("CREATING MATERIAL INSTANCE (", GetMaterial(), ")"));
 }
 

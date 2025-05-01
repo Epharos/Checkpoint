@@ -30,6 +30,22 @@ namespace cp
 		return layouts[hash];
 	}
 
+	void LayoutsManager::UnloadLayout(vk::PipelineLayout _layout)
+	{
+		for (auto it = layouts.begin(); it != layouts.end(); ++it)
+		{
+			if (it->second == _layout)
+			{
+				device.destroyPipelineLayout(it->second);
+				layouts.erase(it);
+				LOG_TRACE("Unloaded pipeline layout");
+				break;
+			}
+		}
+		
+		LOG_WARNING("Pipeline layout not found");
+	}
+
 	void LayoutsManager::Cleanup()
 	{
 		for (auto& layout : layouts)

@@ -8,7 +8,7 @@ class Collapsible : public QWidget
     Q_OBJECT
 
 public:
-    Collapsible(const QString& title, QWidget* parent = nullptr, const bool& _expanded = true)
+    Collapsible(const QString& title, QWidget* parent = nullptr, const bool& _expanded = true, const std::string& _bgColor = "#555")
         : QWidget(parent)
     {
         QVBoxLayout* layout = new QVBoxLayout(this);
@@ -27,7 +27,8 @@ public:
         contentArea = new QFrame(this);
         contentArea->setFrameShape(QFrame::NoFrame);
         contentArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        contentArea->setStyleSheet("background-color: #555;");
+        std::string contentStyle = "background-color: " + _bgColor + "; ";
+        contentArea->setStyleSheet(QString::fromStdString(contentStyle));
 
         contentLayout = new QVBoxLayout(contentArea);
         contentLayout->setContentsMargins(10, 5, 10, 5);

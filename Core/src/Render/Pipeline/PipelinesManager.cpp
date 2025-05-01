@@ -9,7 +9,7 @@ namespace cp
 
 	}
 
-	const PipelineData& PipelinesManager::CreatePipeline(PipelineCreateData& _pipelineData)
+	PipelineData& PipelinesManager::CreatePipeline(PipelineCreateData& _pipelineData)
 	{
 		PipelineData data;
 
@@ -48,9 +48,24 @@ namespace cp
 		return pipelines[_pipelineData.config];
 	}
 
-	const PipelineData& PipelinesManager::GetPipeline(const PipelineCreateData& _pipelineData) const
+	PipelineData& PipelinesManager::GetPipeline(const PipelineCreateData& _pipelineData)
 	{
 		return pipelines.at(_pipelineData.config);
+	}
+
+	void PipelinesManager::DestroyPipeline(const PipelineConfig& _pipelineConfig)
+	{
+		auto it = pipelines.find(_pipelineConfig);
+
+		if (it != pipelines.end())
+		{
+			device.destroyPipeline(it->second.pipeline);
+			pipelines.erase(it);
+		}
+		else
+		{
+			LOG_ERROR(MF("Pipeline [", _pipelineConfig.name, "] not found"));
+		}
 	}
 
 	void PipelinesManager::Cleanup()

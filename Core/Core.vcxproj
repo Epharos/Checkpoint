@@ -161,6 +161,7 @@
     <ClCompile Include="src\Render\Pipeline\PipelinesManager.cpp" />
     <ClCompile Include="src\Render\Pipeline\SetLayoutsManager.cpp" />
     <ClCompile Include="src\Render\Renderer\Camera.cpp" />
+    <ClCompile Include="src\Render\Renderer\Renderpass.cpp" />
     <ClCompile Include="src\Render\Setup\Frame.cpp" />
     <ClCompile Include="src\Render\Renderer\Renderer.cpp" />
     <ClCompile Include="src\Render\Setup\RenderTarget.cpp" />
@@ -198,6 +199,7 @@
     <ClInclude Include="src\Render\Pipeline\DescriptorSetManager.hpp" />
     <ClInclude Include="src\Render\Pipeline\SetLayoutsManager.hpp" />
     <ClInclude Include="src\Render\Pipeline\LayoutsManager.hpp" />
+    <ClInclude Include="src\Render\Renderer\Renderpass.hpp" />
     <ClInclude Include="src\Resources\Material.hpp" />
     <ClInclude Include="src\Render\Pipeline\PipelinesManager.hpp" />
     <ClInclude Include="src\Render\Renderer\Camera.hpp" />

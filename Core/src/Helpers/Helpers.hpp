@@ -3,6 +3,13 @@
 #include "../pch.hpp"
 #include "../Util/Buffer.hpp"
 
+namespace cp
+{
+	enum class ShaderStages : uint16_t;
+	enum class MaterialFieldType : uint8_t;
+	enum class BindingType : uint8_t;
+}
+
 namespace Helper
 {
 	namespace Memory
@@ -71,5 +78,20 @@ namespace Helper
 				return seed;
 			}
 		};
+	}
+
+	namespace Material
+	{
+		cp::ShaderStages GetShaderStageFromString(const std::string& stage);
+		std::string GetShaderStageString(const cp::ShaderStages& stage);
+
+		cp::MaterialFieldType GetMaterialFieldTypeFromString(const std::string& type);
+		std::string GetMaterialFieldTypeString(const cp::MaterialFieldType& type);
+
+		cp::BindingType GetMaterialBindingFromString(const std::string& binding);
+		std::string GetMaterialBindingString(const cp::BindingType& binding);
+
+		vk::DescriptorType GetDescriptorTypeFromBindingType(const cp::BindingType& binding);
+		vk::ShaderStageFlags GetShaderStageFlags(const uint16_t& stages);
 	}
 }

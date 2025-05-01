@@ -9,6 +9,8 @@
 #include "../Pipeline/SetLayoutsManager.hpp"
 #include "../Pipeline/DescriptorSetManager.hpp"
 
+#include "Renderpass.hpp"
+
 #include "../../Resources/Material.hpp"
 #include "../../Resources/MaterialInstance.hpp"
 #include "../../Resources/Mesh.hpp"
@@ -32,14 +34,6 @@ namespace cp
 		uint32_t instanceOffset = 0;
 	};
 
-	using RenderPassID = uint32_t;
-
-	struct RenderPassData
-	{
-		RenderPassID id;
-		bool depthOnly = false;
-	};
-
 	class Renderer
 	{
 	protected:
@@ -49,7 +43,7 @@ namespace cp
 		vk::RenderPass mainRenderPass = VK_NULL_HANDLE;
 		uint32_t subpassCount = -1;
 
-		std::unordered_map<std::string, RenderPassData> renderPassIndex;
+		std::unordered_map<std::string, Renderpass> renderPasses;
 
 		virtual void SetupPipelines() = 0;
 
@@ -76,11 +70,11 @@ namespace cp
 		inline constexpr const uint32_t GetSubpassCount() const { return subpassCount; }
 		inline constexpr cp::VulkanContext* GetContext() { return context; }
 
-		RenderPassData RegisterRenderPass(const std::string& _name, const bool& _depthOnly = false);
-		RenderPassData GetRenderPassID(const std::string& _name);
+		Renderpass& RegisterRenderPass(const std::string& _name);
+		Renderpass& GetRenderPass(const std::string& _name);
 		std::vector<std::string> GetRenderPassNames();
 
-		inline std::unordered_map<std::string, RenderPassData> GetRenderPassIndexes() { return renderPassIndex; }
+		inline std::unordered_map<std::string, Renderpass>& GetRenderPasses() { return renderPasses; }
 		
 	};
 }
