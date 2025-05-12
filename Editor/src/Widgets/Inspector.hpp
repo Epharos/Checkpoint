@@ -340,7 +340,7 @@ public:
 					bufferCollapsible->setVisible(true);
 					descriptorCollapsible->AddWidget(bufferCollapsible);
 
-					for (auto& field : binding.fields)
+					for (auto& [name, field] : binding.fields)
 					{
 						ShowField(field, bufferCollapsible, binding);
 					}
@@ -353,8 +353,8 @@ public:
 						field.type = cp::MaterialFieldType::FLOAT;
 						field.name = "New field";
 						field.offset = 0;
-						binding.AddField(field);
-						ShowField(binding.fields.back(), bufferCollapsible, binding);
+						cp::MaterialField& mf = binding.AddField(field);
+						ShowField(mf, bufferCollapsible, binding);
 						});
 				}
 
@@ -381,7 +381,39 @@ public:
 		Collapsible* buffers = new Collapsible("Buffers data", this);
 		layout->addWidget(buffers);
 
-		for (auto& descriptor : mat->GetDescriptors())
+		std::sort(mat->GetShaderReflection()->resources.begin(), mat->GetShaderReflection()->resources.end(), [](const cp::ShaderResource& a, const cp::ShaderResource& b) {
+			return a.set < b.set && a.binding < b.binding;
+			});
+
+		if (!mat->GetShaderReflection()->resources.empty())
+		{
+			auto it = mat->GetShaderReflection()->resources.begin();
+
+			QLabel* setLabel = new QLabel(QString::fromStdString("Set " + std::to_string(it->set)), this);
+			setLabel->setAlignment(Qt::AlignCenter);
+			setLabel->setStyleSheet("font-weight: bold;");
+			buffers->AddWidget(setLabel);
+
+			cp::SlangCompiler compiler; //Only use to render things there
+
+			while (it != mat->GetShaderReflection()->resources.end())
+			{
+				buffers->AddWidget(compiler.CreateResourceWidget(*it, this));
+
+				auto prev = it;
+				it++;
+
+				if (it != mat->GetShaderReflection()->resources.end() && it->set != prev->set)
+				{
+					setLabel = new QLabel(QString::fromStdString("Set " + std::to_string(it->set)), this);
+					setLabel->setAlignment(Qt::AlignCenter);
+					setLabel->setStyleSheet("font-weight: bold;");
+					buffers->AddWidget(setLabel);
+				}
+			}
+		}
+
+		/*for (auto& [name, descriptor] : mat->GetDescriptors())
 		{
 			Collapsible* descriptorCollapsible = new Collapsible(QString::fromStdString(descriptor.name), this, true, "#666");
 			buffers->AddWidget(descriptorCollapsible);
@@ -395,7 +427,7 @@ public:
 			bindingLabel->setAlignment(Qt::AlignCenter);
 			descriptorCollapsible->AddWidget(bindingLabel);
 
-			for (auto& binding : descriptor.bindings)
+			for (auto& [name, binding] : descriptor.bindings)
 			{
 				ShowBinding(binding, descriptorCollapsible, descriptor);
 			}
@@ -409,9 +441,9 @@ public:
 				binding.shaderStages = mat->GetShaderStages();
 				binding.index = descriptor.bindings.size() + 1;
 				binding.name = "New binding";
-				descriptor.bindings.push_back(binding);
+				cp::MaterialBinding& mb = descriptor.AddBinding(binding);
 
-				ShowBinding(descriptor.bindings.back(), descriptorCollapsible, descriptor);
+				ShowBinding(mb, descriptorCollapsible, descriptor);
 				});
 		}
 
@@ -425,15 +457,41 @@ public:
 			mat->AddDescriptor(descriptor);
 			Collapsible* descriptorCollapsible = new Collapsible(QString::fromStdString(descriptor.name), this);
 			buffers->AddWidget(descriptorCollapsible);
-			UInt8* bindingIndex = new UInt8(&descriptor.index, "Binding index", this); //C-style casts will need to be adressed
+			UInt8* bindingIndex = new UInt8(&descriptor.index, "Binding index", this);
 			String* bindingName = new String(descriptor.GetNamePtr(), "Binding name", this);
 			descriptorCollapsible->AddWidget(bindingIndex);
 			descriptorCollapsible->AddWidget(bindingName);
-			});
+			});*/
 #pragma endregion
 
 		QPushButton* saveButton = new QPushButton("Save", this);
 		layout->addWidget(saveButton);
+
+		//+DEBUG
+
+		QPushButton* compileButton = new QPushButton("Recompile", this);
+		layout->addWidget(compileButton);
+
+		connect(compileButton, &QPushButton::clicked, [=] {
+			cp::SlangCompiler compiler;
+
+			if (!mat)
+			{
+				LOG_ERROR("Material is null");
+				return;
+			}
+			
+			if (compiler.CompileMaterialSlangToSpirV(*mat))
+			{
+				LOG_INFO("Compiled shader to SPIR-V");
+			}
+			else
+			{
+				LOG_ERROR("Failed to compile shader to SPIR-V");
+			}
+			});
+
+		//-DEBUG
 
 		connect(saveButton, &QPushButton::clicked, [=] {
 			cp::JsonSerializer serializer;

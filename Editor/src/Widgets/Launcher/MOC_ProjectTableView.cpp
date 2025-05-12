@@ -68,11 +68,11 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSProjectTableViewENDCLASS[] = {
        0,       // flags
        2,       // signalCount
 
- // signals: name, argc, parameters, tag, flags, initial metatype offsets
+ // signals: moduleName, argc, parameters, tag, flags, initial metatype offsets
        1,    1,   44,    2, 0x06,    1 /* Public */,
        5,    1,   47,    2, 0x06,    3 /* Public */,
 
- // slots: name, argc, parameters, tag, flags, initial metatype offsets
+ // slots: moduleName, argc, parameters, tag, flags, initial metatype offsets
        6,    1,   50,    2, 0x08,    5 /* Private */,
        8,    1,   53,    2, 0x08,    7 /* Private */,
       11,    1,   56,    2, 0x08,    9 /* Private */,

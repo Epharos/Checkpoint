@@ -59,7 +59,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSFileDropLineEditENDCLASS[] = {
        0,       // flags
        1,       // signalCount
 
- // signals: name, argc, parameters, tag, flags, initial metatype offsets
+ // signals: moduleName, argc, parameters, tag, flags, initial metatype offsets
        1,    1,   20,    2, 0x06,    1 /* Public */,
 
  // signals: parameters

@@ -64,10 +64,10 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSQuatENDCLASS[] = {
        0,       // flags
        1,       // signalCount
 
- // signals: name, argc, parameters, tag, flags, initial metatype offsets
+ // signals: moduleName, argc, parameters, tag, flags, initial metatype offsets
        1,    0,   44,    2, 0x06,    1 /* Public */,
 
- // slots: name, argc, parameters, tag, flags, initial metatype offsets
+ // slots: moduleName, argc, parameters, tag, flags, initial metatype offsets
        3,    1,   45,    2, 0x08,    2 /* Private */,
        5,    1,   48,    2, 0x08,    4 /* Private */,
        6,    1,   51,    2, 0x08,    6 /* Private */,

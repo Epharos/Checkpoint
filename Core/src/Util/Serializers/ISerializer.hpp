@@ -13,6 +13,7 @@ namespace cp
 		virtual std::string Read(const std::string& _path) = 0;
 
 		virtual void WriteString(const std::string& _name, const std::string& _value) = 0;
+		virtual void WriteByte(const std::string& _name, const uint8_t& _value) = 0;
 		virtual void WriteInt(const std::string& _name, int _value) = 0;
 		virtual void WriteFloat(const std::string& _name, float _value) = 0;
 		virtual void WriteBool(const std::string& _name, bool _value) = 0;
@@ -23,6 +24,7 @@ namespace cp
 		virtual void WriteColor(const std::string& _name, const glm::vec4& _value) = 0;
 		virtual void BeginObjectWriting(const std::string& _name) = 0;
 		virtual void WriteStringArray(const std::string& _name, const size_t& _size, const std::string* _values) = 0;
+		virtual void WriteByteArray(const std::string& _name, const size_t& _size, const uint8_t* _values) = 0;
 		virtual void WriteIntArray(const std::string& _name, const size_t& _size, const int* _values) = 0;
 		virtual void WriteFloatArray(const std::string& _name, const size_t& _size, const float* _values) = 0;
 		virtual void WriteBoolArray(const std::string& _name, const size_t& _size, const bool* _values) = 0;
@@ -36,6 +38,7 @@ namespace cp
 
 
 		virtual std::string ReadString(const std::string& _name, const std::string& _defaultValue) = 0;
+		virtual uint8_t ReadByte(const std::string& _name, const uint8_t& _defaultValue) = 0;
 		virtual int ReadInt(const std::string& _name, int _defaultValue) = 0;
 		virtual float ReadFloat(const std::string& _name, float _defaultValue) = 0;
 		virtual bool ReadBool(const std::string& _name, bool _defaultValue) = 0;
@@ -46,6 +49,7 @@ namespace cp
 		virtual glm::vec4 ReadColor(const std::string& _name, const glm::vec4& _defaultValue) = 0;
 		virtual bool BeginObjectReading(const std::string& _name) = 0;
 		virtual std::tuple<size_t, std::string*> ReadStringArray(const std::string& _name) = 0;
+		virtual std::tuple<size_t, uint8_t*> ReadByteArray(const std::string& _name) = 0;
 		virtual std::tuple<size_t, int*> ReadIntArray(const std::string& _name) = 0;
 		virtual std::tuple<size_t, float*> ReadFloatArray(const std::string& _name) = 0;
 		virtual std::tuple<size_t, bool*> ReadBoolArray(const std::string& _name) = 0;

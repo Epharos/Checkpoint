@@ -28,6 +28,11 @@ void cp::JsonSerializer::WriteString(const std::string& _name, const std::string
 	(*objectStack.back())[_name] = _value;
 }
 
+void cp::JsonSerializer::WriteByte(const std::string& _name, const uint8_t& _value)
+{
+	(*objectStack.back())[_name] = static_cast<int>(_value);
+}
+
 void cp::JsonSerializer::WriteInt(const std::string& _name, int _value)
 {
 	(*objectStack.back())[_name] = _value;
@@ -99,6 +104,18 @@ void cp::JsonSerializer::WriteStringArray(const std::string& _name, const size_t
 	for (size_t i = 0; i < _size; i++)
 	{
 		array.push_back(_values[i]);
+	}
+
+	(*objectStack.back())[_name] = array;
+}
+
+void cp::JsonSerializer::WriteByteArray(const std::string& _name, const size_t& _size, const uint8_t* _values)
+{
+	json array = json::array();
+
+	for (size_t i = 0; i < _size; i++)
+	{
+		array.push_back(static_cast<int>(_values[i]));
 	}
 
 	(*objectStack.back())[_name] = array;
@@ -251,6 +268,11 @@ std::string cp::JsonSerializer::ReadString(const std::string& _name, const std::
 	return objectStack.back()->contains(_name) ? objectStack.back()->operator[](_name).get<std::string>() : _defaultValue;
 }
 
+uint8_t cp::JsonSerializer::ReadByte(const std::string& _name, const uint8_t& _defaultValue)
+{
+	return objectStack.back()->contains(_name) ? static_cast<uint8_t>(objectStack.back()->operator[](_name).get<int>()) : _defaultValue;
+}
+
 int cp::JsonSerializer::ReadInt(const std::string& _name, int _defaultValue)
 {
 	return objectStack.back()->contains(_name) ? objectStack.back()->operator[](_name).get<int>() : _defaultValue;
@@ -357,6 +379,19 @@ std::tuple<size_t, std::string*> cp::JsonSerializer::ReadStringArray(const std::
 	for (size_t i = 0; i < size; i++)
 	{
 		array[i] = data[_name][i].get<std::string>();
+	}
+
+	return std::make_tuple(size, array);
+}
+
+std::tuple<size_t, uint8_t*> cp::JsonSerializer::ReadByteArray(const std::string& _name)
+{
+	size_t size = data[_name].size();
+	uint8_t* array = new uint8_t[size];
+
+	for (size_t i = 0; i < size; i++)
+	{
+		array[i] = static_cast<uint8_t>(data[_name][i].get<int>());
 	}
 
 	return std::make_tuple(size, array);

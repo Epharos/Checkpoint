@@ -2,6 +2,7 @@
 
 #include "Material.hpp"
 #include "Render/Renderer/Renderer.hpp"
+#include "MaterialInstance.hpp"
 
 #include "Util/Serializers/ISerializer.hpp"
 
@@ -22,6 +23,22 @@ cp::Material::Material(const cp::VulkanContext* _context) :
 	AddShaderStage(cp::ShaderStages::Fragment);
 }
 
+cp::Material::~Material()
+{
+	for (auto& [name, pipelineData] : pipelineDatas)
+	{
+		if (rpRequirements.at(name).useDefaultShader) continue; // Skip if the material is using the default shader
+
+		if (pipelineData->pipelineLayout) context->GetLayoutsManager()->UnloadLayout(pipelineData->pipelineLayout); // Unload the previous layout if it exists
+		if (pipelineData->pipeline) context->GetPipelinesManager()->DestroyPipeline({ this->moduleName + "_" + name }); // Unload the previous pipeline if it exists
+	}
+
+	for (auto& [name, desc] : descriptors)
+	{
+		if(desc.layout) context->GetDevice().destroyDescriptorSetLayout(desc.layout); // Destroy the descriptor set layout
+	}
+}
+
 void cp::Material::BindMaterial(vk::CommandBuffer& _command)
 {
 	//_command.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineData->pipeline);
@@ -29,18 +46,18 @@ void cp::Material::BindMaterial(vk::CommandBuffer& _command)
 
 void cp::Material::Reload(cp::Renderer& _renderer)
 {
-	auto ValueOrDefault = [](const std::string& str, const std::string& defaultValue) { return str.empty() ? defaultValue : str; }; // This function is used to check if the string is empty and return the default value if it is
+	auto ValueOrDefault = [](const std::string& str, const std::string& defaultValue) { return str.empty() ? defaultValue : str; }; // This lambda is used to check if the string is empty and return the default value if it is
 
 	// Since this function in called when a material is loaded in the scene and needs to be reloaded
 	// we can generate the descriptor set layouts and pipeline layout here
 
-	for (auto& desc : descriptors)
+	for (auto& [name, desc] : descriptors)
 	{
 		desc.GenerateDescriptorSetLayout(context); //This (re)generate the descriptor set layout
 	}
 
 	std::vector<vk::DescriptorSetLayout> layouts;
-	for (auto& desc : descriptors)
+	for (auto& [name, desc] : descriptors)
 		layouts.push_back(desc.layout);
 
 	cp::LayoutsManager* layoutsManager = context->GetLayoutsManager();
@@ -49,7 +66,7 @@ void cp::Material::Reload(cp::Renderer& _renderer)
 	for (auto& [name, rpRequirement] : rpRequirements)
 	{
 		if (!rpRequirement.renderToPass) continue; // Skip if the material is not rendered in the renderpass
-		// TODO : For now it's okay but we should check if pipelineDatas[name] exists, we should unload the previous data if it now doesn't render to the pass
+		// TODO : For now it's okay but we should check if pipelineDatas[moduleName] exists, we should unload the previous data if it now doesn't render to the pass
 		if (rpRequirement.useDefaultShader && _renderer.GetRenderPass(name).GetDefaultPipeline().has_value())
 		{
 			pipelineDatas.insert({ name, _renderer.GetRenderPass(name).GetDefaultPipeline().value() }); // Store the renderpass default pipeline if it's the one being used by the Material for that pass
@@ -66,13 +83,13 @@ void cp::Material::Reload(cp::Renderer& _renderer)
 		{
 			//In this case, we unload the previous layout and pipeline
 			if (pipelineDatas[name]->pipelineLayout) layoutsManager->UnloadLayout(pipelineDatas[name]->pipelineLayout); // Unload the previous layout if it exists
-			if (pipelineDatas[name]->pipeline) pipelinesManager->DestroyPipeline({ this->name + "_" + name }); // Unload the previous pipeline if it exists
+			if (pipelineDatas[name]->pipeline) pipelinesManager->DestroyPipeline({ this->moduleName + "_" + name }); // Unload the previous pipeline if it exists
 		}
 
 		vk::PipelineLayout pipelineLayout = layoutsManager->GetOrCreateLayout(layouts, {}); // Create the new layout // TODO : Add PushConstants support
 
 		cp::PipelineCreateData pipelineCreateData;
-		pipelineCreateData.config = { this->name + "_" + name }; // Create a unique name for the pipeline
+		pipelineCreateData.config = { this->moduleName + "_" + name }; // Create a unique moduleName for the pipeline
 		pipelineCreateData.createInfo.layout = pipelineLayout;
 		pipelineCreateData.createInfo.renderPass = _renderer.GetRenderPass(name).GetRenderPass();
 		pipelineCreateData.shaderFile = rpRequirement.customShaderPath;
@@ -83,7 +100,7 @@ void cp::Material::Reload(cp::Renderer& _renderer)
 			{ vk::ShaderStageFlagBits::eGeometry, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::Geometry], "Geometry_Default") },
 			{ vk::ShaderStageFlagBits::eTessellationControl, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::TessellationControl], "TessellationControl_Default") },
 			{ vk::ShaderStageFlagBits::eTessellationEvaluation, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::TessellationEvaluation], "TessellationEvaluation_Default") },
-			{ vk::ShaderStageFlagBits::eMeshNV, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::Mesh], "Mesh_Default") },
+			{ vk::ShaderStageFlagBits::eMeshEXT, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::Mesh], "Mesh_Default") },
 			{ vk::ShaderStageFlagBits::eCompute, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::Compute], "Compute_Default") }
 		};
 		pipelineCreateData.descriptorSetLayouts = layouts;
@@ -127,20 +144,20 @@ void cp::Material::Reload(cp::Renderer& _renderer)
 
 void cp::Material::Serialize(cp::ISerializer& _serializer) const
 {
-	_serializer.WriteString("Name", name);
+	_serializer.WriteString("Name", moduleName);
 	_serializer.WriteString("ShaderPath", shaderPath);
 	_serializer.WriteInt("Shader Stages", static_cast<int>(shaderStages));
 
-	_serializer.BeginObjectArrayWriting("Descriptors");
+	/*_serializer.BeginObjectArrayWriting("Descriptors");
 
-	for (const MaterialDescriptor& desc : descriptors)
+	for (const auto& [name, desc] : descriptors)
 	{
 		_serializer.BeginObjectArrayElementWriting();
 		desc.Serialize(_serializer);
 		_serializer.EndObjectArrayElement();
 	}
 
-	_serializer.EndObjectArray();
+	_serializer.EndObjectArray();*/
 
 	_serializer.BeginObjectArrayWriting("RenderPass Requirements");
 
@@ -155,15 +172,26 @@ void cp::Material::Serialize(cp::ISerializer& _serializer) const
 	}
 
 	_serializer.EndObjectArray();
+
+	if (shaderReflection) // Check if the shader reflection exists
+	{
+		_serializer.BeginObjectWriting("ShaderReflection");
+		shaderReflection->Serialize(_serializer); // Serialize the shader reflection
+		_serializer.EndObject();
+	}
+	else
+	{
+		LOG_WARNING(MF("Shader reflection is null for material [", moduleName, "]"));
+	}
 }
 
 void cp::Material::Deserialize(ISerializer& _serializer)
 {
-	name = _serializer.ReadString("Name", "Unknown");
+	moduleName = _serializer.ReadString("Name", "Unknown");
 	shaderPath = _serializer.ReadString("ShaderPath", "");
 	shaderStages = static_cast<uint16_t>(_serializer.ReadInt("Shader Stages", 0));
 
-	size_t elements = _serializer.BeginObjectArrayReading("Descriptors");
+	/*size_t elements = _serializer.BeginObjectArrayReading("Descriptors");
 
 	for (uint64_t i = 0; i < elements; i++)
 	{
@@ -171,13 +199,13 @@ void cp::Material::Deserialize(ISerializer& _serializer)
 		MaterialDescriptor desc;
 		desc.Deserialize(_serializer);
 
-		descriptors.push_back(desc);
+		descriptors.insert({ desc.name, desc });
 		_serializer.EndObjectArrayElement();
 	}
 
-	_serializer.EndObjectArray();
+	_serializer.EndObjectArray();*/
 
-	elements = _serializer.BeginObjectArrayReading("RenderPass Requirements");
+	size_t elements = _serializer.BeginObjectArrayReading("RenderPass Requirements");
 
 	for (uint64_t i = 0; i < elements; i++)
 	{
@@ -199,6 +227,32 @@ void cp::Material::Deserialize(ISerializer& _serializer)
 	}
 
 	_serializer.EndObjectArray();
+
+	if (shaderReflection) delete shaderReflection; // Delete the previous shader reflection if it exists
+
+	shaderReflection = new ShaderReflection(); // Create a new shader reflection
+	_serializer.BeginObjectReading("ShaderReflection");
+	shaderReflection->Deserialize(_serializer); // Deserialize the shader reflection
+	_serializer.EndObject();
+}
+
+std::vector<std::string> cp::Material::GetUniqueEntryPoints() const
+{
+	std::vector<std::string> entryPoints;
+
+	for (const auto& [name, rpRequirement] : rpRequirements)
+	{
+		if (rpRequirement.renderToPass && !rpRequirement.useDefaultShader)
+		{
+			for (const auto& [stage, entryPoint] : rpRequirement.customEntryPoints)
+			{
+				if (std::find(entryPoints.begin(), entryPoints.end(), entryPoint) == entryPoints.end())
+					entryPoints.push_back(entryPoint);
+			}
+		}
+	}
+
+	return entryPoints;
 }
 
 void cp::RenderPassRequirement::Serialize(ISerializer& _serializer) const
@@ -272,7 +326,7 @@ void cp::MaterialDescriptor::Serialize(ISerializer& _serializer) const
 	_serializer.WriteString("Name", name);
 
 	_serializer.BeginObjectArrayWriting("Bindings");
-	for (const MaterialBinding& binding : bindings)
+	for (const auto& [name, binding] : bindings)
 	{
 		_serializer.BeginObjectArrayElementWriting();
 		binding.Serialize(_serializer);
@@ -293,7 +347,7 @@ void cp::MaterialDescriptor::Deserialize(ISerializer& _serializer)
 		_serializer.BeginObjectArrayElementReading(i);
 		MaterialBinding binding;
 		binding.Deserialize(_serializer);
-		bindings.push_back(binding);
+		bindings.insert({ binding.name, binding });
 		_serializer.EndObjectArrayElement();
 	}
 
@@ -310,7 +364,7 @@ void cp::MaterialDescriptor::GenerateDescriptorSetLayout(const cp::VulkanContext
 
 	std::vector<vk::DescriptorSetLayoutBinding> bindings;
 
-	for (const MaterialBinding& binding : this->bindings)
+	for (const auto& [name, binding] : this->bindings)
 	{
 		vk::DescriptorSetLayoutBinding layoutBinding;
 		layoutBinding.binding = binding.index;
@@ -329,8 +383,14 @@ void cp::MaterialDescriptor::GenerateDescriptorSetLayout(const cp::VulkanContext
 
 bool cp::MaterialDescriptor::RemoveBinding(const MaterialBinding& _binding)
 {
-	auto it = std::remove_if(bindings.begin(), bindings.end(), [&_binding](const MaterialBinding& binding) { return &_binding == &binding; });
-	return it != bindings.end() ? (bindings.erase(it), true) : false;
+	if (bindings.contains(_binding.name)) return bindings.erase(_binding.name);
+
+	for (auto& [name, binding] : bindings)
+	{
+		if (&binding == &_binding) return bindings.erase(name);
+	}
+
+	return false;
 }
 
 void cp::MaterialBinding::Serialize(ISerializer& _serializer) const
@@ -341,7 +401,7 @@ void cp::MaterialBinding::Serialize(ISerializer& _serializer) const
 	_serializer.WriteString("Name", name);
 
 	_serializer.BeginObjectArrayWriting("Fields");
-	for (const MaterialField& field : fields)
+	for (const auto& [name, field] : fields)
 	{
 		_serializer.BeginObjectArrayElementWriting();
 		field.Serialize(_serializer);
@@ -363,7 +423,7 @@ void cp::MaterialBinding::Deserialize(ISerializer& _serializer)
 		_serializer.BeginObjectArrayElementReading(i);
 		MaterialField field;
 		field.Deserialize(_serializer);
-		fields.push_back(field);
+		fields.insert({ field.name, field });
 		_serializer.EndObjectArrayElement();
 	}
 
@@ -372,9 +432,14 @@ void cp::MaterialBinding::Deserialize(ISerializer& _serializer)
 
 bool cp::MaterialBinding::RemoveField(const MaterialField& _field)
 {
-	auto it = std::remove_if(fields.begin(), fields.end(), [&_field](const MaterialField& field) { return &_field == &field; });
-	
-	return it != fields.end() ? (fields.erase(it), true) : false;
+	if (fields.contains(_field.name)) return fields.erase(_field.name);
+
+	for (auto& [name, field] : fields)
+	{
+		if (&field == &_field) return fields.erase(name);
+	}
+
+	return false;
 }
 
 void cp::MaterialField::Serialize(ISerializer& _serializer) const

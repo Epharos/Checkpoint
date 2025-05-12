@@ -130,10 +130,10 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSNewProjectDialogENDCLASS[] = {
        0,       // flags
        1,       // signalCount
 
- // signals: name, argc, parameters, tag, flags, initial metatype offsets
+ // signals: moduleName, argc, parameters, tag, flags, initial metatype offsets
        1,    1,   32,    2, 0x06,    1 /* Public */,
 
- // slots: name, argc, parameters, tag, flags, initial metatype offsets
+ // slots: moduleName, argc, parameters, tag, flags, initial metatype offsets
        5,    0,   35,    2, 0x08,    3 /* Private */,
        6,    0,   36,    2, 0x08,    4 /* Private */,
 

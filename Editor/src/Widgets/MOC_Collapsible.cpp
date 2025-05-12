@@ -59,7 +59,7 @@ Q_CONSTINIT static const uint qt_meta_data_ZN11CollapsibleE[] = {
        0,       // flags
        0,       // signalCount
 
- // slots: name, argc, parameters, tag, flags, initial metatype offsets
+ // slots: moduleName, argc, parameters, tag, flags, initial metatype offsets
        1,    1,   20,    2, 0x08,    1 /* Private */,
 
  // slots: parameters

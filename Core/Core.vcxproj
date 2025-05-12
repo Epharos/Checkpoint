@@ -172,6 +172,7 @@
     <ClCompile Include="src\Resources\ResourceManager.cpp" />
     <ClCompile Include="src\Resources\Texture.cpp" />
     <ClCompile Include="src\Util\Serializers\JsonSerializer.cpp" />
+    <ClCompile Include="src\Util\ShaderCompiler\SlangCompiler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Core.hpp" />
@@ -217,6 +218,7 @@
     <ClInclude Include="src\Util\Serializers\JsonSerializer.hpp" />
     <ClInclude Include="src\Util\Serializers\Serializable.hpp" />
     <ClInclude Include="src\Util\Serializers\ISerializer.hpp" />
+    <ClInclude Include="src\Util\ShaderCompiler\SlangCompiler.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

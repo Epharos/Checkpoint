@@ -63,10 +63,10 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSVec3ENDCLASS[] = {
        0,       // flags
        1,       // signalCount
 
- // signals: name, argc, parameters, tag, flags, initial metatype offsets
+ // signals: moduleName, argc, parameters, tag, flags, initial metatype offsets
        1,    0,   38,    2, 0x06,    1 /* Public */,
 
- // slots: name, argc, parameters, tag, flags, initial metatype offsets
+ // slots: moduleName, argc, parameters, tag, flags, initial metatype offsets
        3,    1,   39,    2, 0x08,    2 /* Private */,
        5,    1,   42,    2, 0x08,    4 /* Private */,
        6,    1,   45,    2, 0x08,    6 /* Private */,

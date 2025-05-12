@@ -183,6 +183,12 @@ namespace cp
 		template<class T>
 		void RegisterResourceType()
 		{
+			if (resourceTypes.find(typeid(T)) != resourceTypes.end())
+			{
+				LOG_WARNING(MF("Resource type ", typeid(T).name(), " is already registered"));
+				return;
+			}
+
 			resourceTypes[typeid(T)] = new ResourceType<T>();
 
 			std::string typeName = typeid(T).name();
@@ -203,6 +209,20 @@ namespace cp
 			}
 
 			return dynamic_cast<ResourceType<T>*>(it->second);
+		}
+
+		template<class T>
+		bool Has(const std::string& name)
+		{
+			ResourceType<T>* resourceType = GetResourceType<T>();
+
+			if (!resourceType)
+			{
+				throw std::runtime_error("Resource type not found");
+				return false;
+			}
+
+			return resourceType->GetResource(name) != nullptr;
 		}
 
 		template<class T>

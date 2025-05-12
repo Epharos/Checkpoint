@@ -10,6 +10,14 @@ namespace cp
 	enum class BindingType : uint8_t;
 }
 
+namespace slang
+{
+	struct VariableReflection;
+	struct VariableLayoutReflection;
+	struct TypeReflection;
+	struct TypeLayoutReflection;
+}
+
 namespace Helper
 {
 	namespace Memory
@@ -35,6 +43,7 @@ namespace Helper
 	namespace File
 	{
 		std::vector<char> ReadShaderFile(const std::string& _path);
+		std::string FileContentToString(const std::string& _path);
 	}
 
 	namespace Image
@@ -93,5 +102,30 @@ namespace Helper
 
 		vk::DescriptorType GetDescriptorTypeFromBindingType(const cp::BindingType& binding);
 		vk::ShaderStageFlags GetShaderStageFlags(const uint16_t& stages);
+	}
+
+	namespace Slang
+	{
+		void DeepnessToString(const std::string& text, uint8_t deepness, std::stringstream& ss);
+
+		std::string VariableToString(slang::VariableLayoutReflection* variable, uint8_t deepness = 0);
+		std::string TypeToString(slang::TypeLayoutReflection* type, uint8_t deepness = 0);
+		std::string ScalarTypeToString(slang::TypeLayoutReflection* type, uint8_t deepness = 0);
+		std::string StructureTypeToString(slang::TypeLayoutReflection* type, uint8_t deepness = 0);
+		std::string ArrayTypeToString(slang::TypeLayoutReflection* type, uint8_t deepness = 0);
+		std::string VectorTypeToString(slang::TypeLayoutReflection* type, uint8_t deepness = 0);
+		std::string MatrixTypeToString(slang::TypeLayoutReflection* type, uint8_t deepness = 0);
+		std::string ResourceTypeToString(slang::TypeLayoutReflection* type, uint8_t deepness = 0);
+		std::string SingleElementContainerTypeToString(slang::TypeLayoutReflection* type, uint8_t deepness = 0);
+		
+		std::string VariableToString(slang::VariableReflection* variable, uint8_t deepness = 0);
+		std::string TypeToString(slang::TypeReflection* type, uint8_t deepness = 0);
+		std::string ScalarTypeToString(slang::TypeReflection* type, uint8_t deepness = 0);
+		std::string StructureTypeToString(slang::TypeReflection* type, uint8_t deepness = 0);
+		std::string ArrayTypeToString(slang::TypeReflection* type, uint8_t deepness = 0);
+		std::string VectorTypeToString(slang::TypeReflection* type, uint8_t deepness = 0);
+		std::string MatrixTypeToString(slang::TypeReflection* type, uint8_t deepness = 0);
+		std::string ResourceTypeToString(slang::TypeReflection* type, uint8_t deepness = 0);
+		std::string SingleElementContainerTypeToString(slang::TypeReflection* type, uint8_t deepness = 0);
 	}
 }

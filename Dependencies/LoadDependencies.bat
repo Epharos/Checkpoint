@@ -26,4 +26,6 @@ del ../slang-2024.14.5-windows-x86_64.zip
 cd ..
 cls
 
+vcpkg install spirv-tools
+
 echo "Dependencies downloaded. You can now build the project."

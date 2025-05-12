@@ -112,7 +112,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\glfw\libs;$(SolutionDir)Core\$(Platform)\$(Configuration)\;$(VULKAN_SDK)\Lib;C:\Qt68\6.8.0\msvc2022_64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Qt6Widgetsd.lib;Qt6Cored.lib;Qt6Guid.lib;$(SolutionDir)$(Platform)\$(Configuration)\Core.lib;$(SolutionDir)$(Platform)\$(Configuration)\ECS.lib;vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Qt6Widgetsd.lib;Qt6Cored.lib;Qt6Guid.lib;$(SolutionDir)$(Platform)\$(Configuration)\Core.lib;$(SolutionDir)$(Platform)\$(Configuration)\ECS.lib;vulkan-1.lib;glfw3.lib;slangd.lib;SPIRVd.lib;SPIRV-Toolsd.lib;SPIRV-Tools-linkd.lib;SPIRV-Tools-diffd.lib;SPIRV-Tools-lintd.lib;SPIRV-Tools-optd.lib;SPIRV-Tools-reduced.lib;SPIRV-Tools-sharedd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
       <Command>moc "$(ProjectDir)src\Launcher.hpp" -o "$(ProjectDir)src\MOC_Launcher.cpp"
@@ -139,7 +139,7 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\glfw\libs;$(SolutionDir)Core\$(Platform)\$(Configuration)\;$(VULKAN_SDK)\Lib;C:\Qt68\6.8.0\msvc2022_64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Qt6Widgets.lib;Qt6Core.lib;Qt6Gui.lib;$(SolutionDir)$(Platform)\$(Configuration)\Core.lib;$(SolutionDir)$(Platform)\$(Configuration)\ECS.lib;vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Qt6Widgets.lib;Qt6Core.lib;Qt6Gui.lib;$(SolutionDir)$(Platform)\$(Configuration)\Core.lib;$(SolutionDir)$(Platform)\$(Configuration)\ECS.lib;vulkan-1.lib;glfw3.lib;slang.lib;SPIRV-Tools.lib;SPIRV-Tools-link.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -224,6 +224,7 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
     <Font Include="Editor_Resources\Oswald.ttf" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="DEBUG\Colored.slang" />
     <None Include="DEBUG\HALF_QUAD.slang" />
     <None Include="Editor_Resources\Stylesheet.qss" />
   </ItemGroup>

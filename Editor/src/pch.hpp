@@ -46,6 +46,8 @@
 
 #include <QtGui/qvulkaninstance.h>
 
+#include <slang/slang.h>
+
 struct ProjectData
 {
     QString name;

@@ -4,6 +4,10 @@
 #include "../Resources/Material.hpp"
 #include <QtCore/qjsonobject.h>
 
+#include <slang/slang.h>
+#include <slang/slang-com-helper.h>
+#include <slang/slang-com-ptr.h>
+
 namespace Helper
 {
 	namespace Memory
@@ -164,6 +168,22 @@ namespace Helper
 			stream.close();
 
 			return buffer;
+		}
+
+		std::string FileContentToString(const std::string& _path)
+		{
+			std::ifstream file(_path);
+
+			if (!file.is_open())
+			{
+				LOG_ERROR("Failed to open file: " + _path);
+				throw std::runtime_error("Failed to open file: " + _path);
+			}
+
+			std::stringstream buffer;
+			buffer << file.rdbuf();
+			file.close();
+			return buffer.str();
 		}
 	}
 }
@@ -524,4 +544,509 @@ vk::ShaderStageFlags Helper::Material::GetShaderStageFlags(const uint16_t& stage
 	return stageFlags;
 }
 
+void Helper::Slang::DeepnessToString(const std::string& text, uint8_t deepness, std::stringstream& ss)
+{
+	for (uint8_t i = 0; i < deepness; i++)
+		ss << "   ";
 
+	ss << text << "\n";
+}
+
+std::string Helper::Slang::VariableToString(slang::VariableLayoutReflection* variable, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	DeepnessToString("Name: " + std::string(variable->getName()), deepness, ss);
+	ss << TypeToString(variable->getTypeLayout(), deepness + 1);
+
+	return ss.str();
+}
+
+std::string Helper::Slang::TypeToString(slang::TypeLayoutReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	DeepnessToString("Type: " + std::string(type->getName()), deepness, ss);
+
+	auto PrintSize = [&](slang::TypeLayoutReflection* type, SlangParameterCategory category)
+		{
+			size_t size = type->getSize();
+
+			if (size == ~size_t(0))
+			{
+				return std::string("Size: Dynamic");
+			}
+			else
+			{
+				return "Size: " + std::to_string(size);
+			}
+
+			return std::string("");
+		};
+
+	for (int i = 0; i < type->getCategoryCount(); i++)
+	{
+		auto layoutUnit = (SlangParameterCategory)type->getCategoryByIndex(i);
+
+		DeepnessToString(PrintSize(type, layoutUnit), deepness + 1, ss);
+
+		if (type->getSize() > 0)
+		{
+			auto alignment = type->getAlignment(layoutUnit);
+			auto stride = type->getStride(layoutUnit);
+			auto alignmentString = "Alignment: " + std::to_string(alignment) + " bytes";
+			auto strideString = "Stride: " + std::to_string(stride) + " bytes";
+			DeepnessToString(alignmentString, deepness + 1, ss);
+			DeepnessToString(strideString, deepness + 1, ss);
+		}
+	}
+
+	switch (type->getKind())
+	{
+	case slang::TypeReflection::Kind::Struct:
+		DeepnessToString(StructureTypeToString(type, deepness + 1), 0, ss);
+		break;
+	case slang::TypeReflection::Kind::Array:
+		DeepnessToString(ArrayTypeToString(type, deepness + 1), 0, ss);
+		break;
+	case slang::TypeReflection::Kind::Matrix:
+		DeepnessToString(MatrixTypeToString(type, deepness + 1), 0, ss);
+		break;
+	case slang::TypeReflection::Kind::Vector:
+		DeepnessToString(VectorTypeToString(type, deepness + 1), 0, ss);
+		break;
+	case slang::TypeReflection::Kind::Scalar:
+		DeepnessToString(ScalarTypeToString(type, deepness + 1), 0, ss);
+		break;
+	case slang::TypeReflection::Kind::Resource:
+		DeepnessToString(ResourceTypeToString(type, deepness + 1), 0, ss);
+		break;
+	case slang::TypeReflection::Kind::ConstantBuffer:
+	case slang::TypeReflection::Kind::ShaderStorageBuffer:
+	case slang::TypeReflection::Kind::ParameterBlock:
+	case slang::TypeReflection::Kind::TextureBuffer:
+		DeepnessToString(SingleElementContainerTypeToString(type, deepness + 1), 0, ss);
+		break;
+	default:
+		DeepnessToString("Unknown type kind: " + std::to_string(static_cast<int>(type->getKind())) + "\n", deepness + 1, ss);
+		break;
+	}
+
+	return ss.str();
+}
+
+std::string Helper::Slang::VariableToString(slang::VariableReflection* variable, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	DeepnessToString("Name: " + std::string(variable->getName()), deepness, ss);
+	ss << TypeToString(variable->getType(), deepness);
+
+	return ss.str();
+}
+
+std::string Helper::Slang::TypeToString(slang::TypeReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	DeepnessToString("Type: " + std::string(type->getName()), deepness + 1, ss);
+
+	switch (type->getKind())
+	{
+	case slang::TypeReflection::Kind::Struct:
+		DeepnessToString(StructureTypeToString(type, 0), deepness + 1, ss);
+		break;
+	case slang::TypeReflection::Kind::Array:
+		DeepnessToString(ArrayTypeToString(type, 0), deepness + 1, ss);
+		break;
+	case slang::TypeReflection::Kind::Matrix:
+		DeepnessToString(MatrixTypeToString(type, 0), deepness + 1, ss);
+		break;
+	case slang::TypeReflection::Kind::Vector:
+		DeepnessToString(VectorTypeToString(type, 0), deepness + 1, ss);
+		break;
+	case slang::TypeReflection::Kind::Scalar:
+		DeepnessToString(ScalarTypeToString(type, 0), deepness + 1, ss);
+		break;
+	case slang::TypeReflection::Kind::Resource:
+		DeepnessToString(ResourceTypeToString(type, 0), deepness + 1, ss);
+		break;
+	case slang::TypeReflection::Kind::ConstantBuffer:
+	case slang::TypeReflection::Kind::ShaderStorageBuffer:
+	case slang::TypeReflection::Kind::ParameterBlock:
+	case slang::TypeReflection::Kind::TextureBuffer:
+		DeepnessToString(SingleElementContainerTypeToString(type, 0), deepness + 1, ss);
+		break;
+	default:
+		DeepnessToString("Unknown type kind: " + std::to_string(static_cast<int>(type->getKind())) + "\n", deepness + 1, ss);
+		break;
+	}
+
+	return ss.str();
+}
+
+std::string Helper::Slang::ScalarTypeToString(slang::TypeLayoutReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	switch (type->getScalarType())
+	{
+	case slang::TypeReflection::ScalarType::Float16:
+		DeepnessToString("Scalar Type: Float16", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Float32:
+		DeepnessToString("Scalar Type: Float32", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Float64:
+		DeepnessToString("Scalar Type: Float64", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Int8:
+		DeepnessToString("Scalar Type: Int8", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Int16:
+		DeepnessToString("Scalar Type: Int16", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Int32:
+		DeepnessToString("Scalar Type: Int32", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Int64:
+		DeepnessToString("Scalar Type: Int64", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::UInt8:
+		DeepnessToString("Scalar Type: UInt8", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::UInt16:
+		DeepnessToString("Scalar Type: UInt16", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::UInt32:
+		DeepnessToString("Scalar Type: UInt32", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::UInt64:
+		DeepnessToString("Scalar Type: UInt64", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Bool:
+		DeepnessToString("Scalar Type: Bool", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Void:
+		DeepnessToString("Scalar Type: String", deepness, ss);
+		break;
+	default:
+		DeepnessToString("Unknown scalar type: " + std::to_string(static_cast<int>(type->getScalarType())) + "\n", deepness, ss);
+		break;
+	}
+
+	return ss.str();
+}
+
+std::string Helper::Slang::StructureTypeToString(slang::TypeLayoutReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	DeepnessToString("Fields:", deepness, ss);
+
+	for (uint32_t i = 0; i < type->getFieldCount(); i++)
+	{
+		auto field = type->getFieldByIndex(i);
+		ss << VariableToString(field, deepness + 1);
+	}
+
+	return ss.str();
+}
+
+std::string Helper::Slang::ArrayTypeToString(slang::TypeLayoutReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	size_t size = type->getElementCount();
+	if (size == ~size_t(0))
+		DeepnessToString("Array Size: Dynamic", deepness, ss);
+	else
+		DeepnessToString("Array Size: " + std::to_string(size), deepness, ss);
+
+	DeepnessToString("Element Type: " + std::string(type->getElementTypeLayout()->getName()), deepness, ss);
+	ss << TypeToString(type->getElementTypeLayout(), deepness + 1) << "\n";
+
+	return ss.str();
+}
+
+std::string Helper::Slang::VectorTypeToString(slang::TypeLayoutReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	DeepnessToString("Vector Length: " + std::to_string(type->getElementCount()), deepness, ss);
+	DeepnessToString("Element Type: " + std::string(type->getElementTypeLayout()->getName()), deepness, ss);
+	ss << TypeToString(type->getElementTypeLayout(), deepness + 1) << "\n";
+
+	return ss.str();
+}
+
+std::string Helper::Slang::MatrixTypeToString(slang::TypeLayoutReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	DeepnessToString("Matrix Type: " + std::to_string(type->getColumnCount()) + "x" + std::to_string(type->getRowCount()), deepness, ss);
+	DeepnessToString("Element Type: " + std::string(type->getElementTypeLayout()->getName()), deepness, ss);
+
+	ss << TypeToString(type->getElementTypeLayout(), deepness + 1) << "\n";
+	return ss.str();
+}
+
+std::string Helper::Slang::ResourceTypeToString(slang::TypeLayoutReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	auto ShapeToString = [&](SlangResourceShape shape, uint8_t deepness)
+		{
+			std::stringstream ss;
+
+			switch (shape)
+			{
+			case SlangResourceShape::SLANG_TEXTURE_1D:
+				ss << "Texture 1D";
+				break;
+			case SlangResourceShape::SLANG_TEXTURE_2D:
+				ss << "Texture 2D";
+				break;
+			case SlangResourceShape::SLANG_TEXTURE_3D:
+				ss << "Texture 3D";
+				break;
+			case SlangResourceShape::SLANG_TEXTURE_CUBE:
+				ss << "Texture Cube";
+				break;
+			case SlangResourceShape::SLANG_TEXTURE_BUFFER:
+				ss << "Texture Buffer";
+				break;
+			case SlangResourceShape::SLANG_TEXTURE_1D_ARRAY:
+				ss << "Texture 1D Array";
+				break;
+			case SlangResourceShape::SLANG_TEXTURE_2D_ARRAY:
+				ss << "Texture 2D Array";
+				break;
+			case SlangResourceShape::SLANG_TEXTURE_CUBE_ARRAY:
+				ss << "Texture Cube Array";
+				break;
+			case SlangResourceShape::SLANG_STRUCTURED_BUFFER:
+				ss << "Structured Buffer";
+				break;
+			}
+
+			return ss.str();
+		};
+	auto AccessToString = [&](SlangResourceAccess access, uint8_t deepness)
+		{
+			std::stringstream ss;
+			switch (access)
+			{
+			case SlangResourceAccess::SLANG_RESOURCE_ACCESS_READ:
+				ss << "Read";
+				break;
+			case SlangResourceAccess::SLANG_RESOURCE_ACCESS_WRITE:
+				ss << "Write";
+				break;
+			case SlangResourceAccess::SLANG_RESOURCE_ACCESS_READ_WRITE:
+				ss << "Read Write";
+				break;
+			}
+			return ss.str();
+		};
+
+	DeepnessToString("Resource Shape: " + ShapeToString(type->getResourceShape(), deepness), deepness, ss);
+	DeepnessToString("Resource Access: " + AccessToString(type->getResourceAccess(), deepness), deepness, ss);
+	DeepnessToString("Resource Type: " + std::string(type->getResourceResultType()->getName()), deepness, ss);
+	ss << TypeToString(type->getResourceResultType(), deepness + 1) << "\n";
+
+	return ss.str();
+}
+
+std::string Helper::Slang::SingleElementContainerTypeToString(slang::TypeLayoutReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	DeepnessToString("Container Type: " + std::string(type->getElementTypeLayout()->getName()), deepness, ss);
+	ss << TypeToString(type->getElementTypeLayout(), deepness + 1) << "\n";
+
+	return ss.str();
+}
+
+std::string Helper::Slang::ScalarTypeToString(slang::TypeReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	switch (type->getScalarType())
+	{
+	case slang::TypeReflection::ScalarType::Float16:
+		DeepnessToString("Scalar Type: Float16", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Float32:
+		DeepnessToString("Scalar Type: Float32", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Float64:
+		DeepnessToString("Scalar Type: Float64", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Int8:
+		DeepnessToString("Scalar Type: Int8", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Int16:
+		DeepnessToString("Scalar Type: Int16", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Int32:
+		DeepnessToString("Scalar Type: Int32", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Int64:
+		DeepnessToString("Scalar Type: Int64", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::UInt8:
+		DeepnessToString("Scalar Type: UInt8", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::UInt16:
+		DeepnessToString("Scalar Type: UInt16", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::UInt32:
+		DeepnessToString("Scalar Type: UInt32", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::UInt64:
+		DeepnessToString("Scalar Type: UInt64", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Bool:
+		DeepnessToString("Scalar Type: Bool", deepness, ss);
+		break;
+	case slang::TypeReflection::ScalarType::Void:
+		DeepnessToString("Scalar Type: String", deepness, ss);
+		break;
+	default:
+		DeepnessToString("Unknown scalar type: " + std::to_string(static_cast<int>(type->getScalarType())) + "\n", deepness, ss);
+		break;
+	}
+
+	return ss.str();
+}
+
+std::string Helper::Slang::StructureTypeToString(slang::TypeReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	DeepnessToString("Fields:", deepness, ss);
+
+	for (uint32_t i = 0; i < type->getFieldCount(); i++)
+	{
+		slang::VariableReflection* field = type->getFieldByIndex(i);
+		ss << VariableToString(field, deepness + 1);
+	}
+
+	return ss.str();
+}
+
+std::string Helper::Slang::ArrayTypeToString(slang::TypeReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	size_t size = type->getElementCount();
+	if (size == ~size_t(0))
+		DeepnessToString("Array Size: Dynamic", deepness, ss);
+	else
+		DeepnessToString("Array Size: " + std::to_string(size), deepness, ss);
+
+	DeepnessToString("Element Type: " + std::string(type->getElementType()->getName()), deepness, ss);
+	ss << TypeToString(type->getElementType(), deepness + 1) << "\n";
+
+	return ss.str();
+}
+
+std::string Helper::Slang::VectorTypeToString(slang::TypeReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	DeepnessToString("Vector Length: " + std::to_string(type->getElementCount()), deepness, ss);
+	DeepnessToString("Element Type: " + std::string(type->getElementType()->getName()), deepness, ss);
+	ss << TypeToString(type->getElementType(), deepness + 1) << "\n";
+
+	return ss.str();
+}
+
+std::string Helper::Slang::MatrixTypeToString(slang::TypeReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	DeepnessToString("Matrix Type: " + std::to_string(type->getColumnCount()) + "x" + std::to_string(type->getRowCount()), deepness, ss);
+	DeepnessToString("Element Type: " + std::string(type->getElementType()->getName()), deepness, ss);
+
+	ss << TypeToString(type->getElementType(), deepness + 1) << "\n";
+	return ss.str();
+}
+
+std::string Helper::Slang::ResourceTypeToString(slang::TypeReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	auto ShapeToString = [&](SlangResourceShape shape, uint8_t deepness)
+		{
+			std::stringstream ss;
+
+			switch (shape)
+			{
+			case SlangResourceShape::SLANG_TEXTURE_1D:
+				ss << "Texture 1D";
+				break;
+			case SlangResourceShape::SLANG_TEXTURE_2D:
+				ss << "Texture 2D";
+				break;
+			case SlangResourceShape::SLANG_TEXTURE_3D:
+				ss << "Texture 3D";
+				break;
+			case SlangResourceShape::SLANG_TEXTURE_CUBE:
+				ss << "Texture Cube";
+				break;
+			case SlangResourceShape::SLANG_TEXTURE_BUFFER:
+				ss << "Texture Buffer";
+				break;
+			case SlangResourceShape::SLANG_TEXTURE_1D_ARRAY:
+				ss << "Texture 1D Array";
+				break;
+			case SlangResourceShape::SLANG_TEXTURE_2D_ARRAY:
+				ss << "Texture 2D Array";
+				break;
+			case SlangResourceShape::SLANG_TEXTURE_CUBE_ARRAY:
+				ss << "Texture Cube Array";
+				break;
+			case SlangResourceShape::SLANG_STRUCTURED_BUFFER:
+				ss << "Structured Buffer";
+				break;
+			}
+
+			return ss.str();
+		};
+	auto AccessToString = [&](SlangResourceAccess access, uint8_t deepness)
+		{
+			std::stringstream ss;
+			switch (access)
+			{
+			case SlangResourceAccess::SLANG_RESOURCE_ACCESS_READ:
+				ss << "Read";
+				break;
+			case SlangResourceAccess::SLANG_RESOURCE_ACCESS_WRITE:
+				ss << "Write";
+				break;
+			case SlangResourceAccess::SLANG_RESOURCE_ACCESS_READ_WRITE:
+				ss << "Read Write";
+				break;
+			}
+			return ss.str();
+		};
+
+	DeepnessToString("Resource Shape: " + ShapeToString(type->getResourceShape(), deepness), deepness, ss);
+	DeepnessToString("Resource Access: " + AccessToString(type->getResourceAccess(), deepness), deepness, ss);
+	DeepnessToString("Resource Type: " + std::string(type->getResourceResultType()->getName()), deepness, ss);
+	ss << TypeToString(type->getResourceResultType(), deepness + 1) << "\n";
+
+	return ss.str();
+}
+
+std::string Helper::Slang::SingleElementContainerTypeToString(slang::TypeReflection* type, uint8_t deepness)
+{
+	std::stringstream ss;
+
+	DeepnessToString("Container Type: " + std::string(type->getElementType()->getName()), deepness, ss);
+	ss << TypeToString(type->getElementType(), deepness + 1) << "\n";
+
+	return ss.str();
+}

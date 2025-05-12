@@ -200,9 +200,13 @@ protected:
 		dock->setFloating(floating);
 		addDockWidget(Qt::DockWidgetArea::BottomDockWidgetArea, dock);
 
-		QMenu* contextMenu = new QMenu(fileExplorer);
+		QMenu* contextMenuFolder = new QMenu(fileExplorer);
 		QAction* createMaterial = new QAction("Create Material", fileExplorer);
-		contextMenu->addAction(createMaterial);
+		contextMenuFolder->addAction(createMaterial);
+
+		QMenu* contextMenuMaterial = new QMenu(fileExplorer);
+		QAction* createInstance = new QAction("Create Instance", fileExplorer);
+		contextMenuMaterial->addAction(createInstance);
 
 		QString* rcPath = new QString();
 
@@ -233,6 +237,31 @@ protected:
 			}
 			});
 
+		connect(createInstance, &QAction::triggered, [=] {
+			QFileInfo matFileInfo(*rcPath);
+			QString instanceFileName = QString::fromStdString(matFileInfo.path().append("\\").append(matFileInfo.baseName()).toStdString() + ".matinstance");
+			QFileInfo fileInfo(instanceFileName);
+
+			uint16_t tryIndex = 0;
+
+			while (fileInfo.exists())
+			{
+				instanceFileName = QString::fromStdString(matFileInfo.path().append("\\").append(matFileInfo.baseName().toStdString() + "_" + std::to_string(tryIndex)).toStdString() + ".matinstance");
+				tryIndex++;
+				fileInfo = QFileInfo(instanceFileName);
+			}
+
+			std::ofstream file(instanceFileName.toStdString(), std::ios::binary);
+			file.close(); //We just create the file
+
+			QModelIndex index = fileSystemModel->index(instanceFileName);
+
+			if (index.isValid())
+			{
+				fileExplorer->edit(index);
+			}
+			});
+
 		connect(fileExplorer, &QTreeView::customContextMenuRequested, [=](QPoint _point)
 			{
 				QModelIndex index = fileExplorer->indexAt(_point);
@@ -242,7 +271,15 @@ protected:
 
 				if (fileInfo.isDir())
 				{
-					contextMenu->popup(fileExplorer->viewport()->mapToGlobal(_point));
+					contextMenuFolder->popup(fileExplorer->viewport()->mapToGlobal(_point));
+				}
+
+				if (fileInfo.isFile())
+				{
+					if (fileInfo.suffix().endsWith("mat"))
+					{
+						contextMenuMaterial->popup(fileExplorer->viewport()->mapToGlobal(_point));
+					}
 				}
 			});
 

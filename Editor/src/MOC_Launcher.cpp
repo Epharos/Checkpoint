@@ -70,7 +70,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSLauncherENDCLASS[] = {
        0,       // flags
        0,       // signalCount
 
- // slots: name, argc, parameters, tag, flags, initial metatype offsets
+ // slots: moduleName, argc, parameters, tag, flags, initial metatype offsets
        1,    1,   50,    2, 0x08,    1 /* Private */,
        5,    1,   53,    2, 0x08,    3 /* Private */,
        6,    0,   56,    2, 0x08,    5 /* Private */,
