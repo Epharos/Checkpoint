@@ -49,8 +49,6 @@ namespace cp
 
 		if (typeLayout->getKind() == TypeReflection::Kind::Struct)
 		{
-			LOG_DEBUG(MF("Hey ! I'm a struct and I have ", typeLayout->getFieldCount(), " fields"));
-
 			for (uint32_t i = 0; i < typeLayout->getFieldCount(); i++)
 			{
 				auto fieldLayout = typeLayout->getFieldByIndex(i);
@@ -131,10 +129,44 @@ namespace cp
 			}
 		}
 
+		const uint32_t entryPointCount = module->getDefinedEntryPointCount();
+		std::vector<IEntryPoint*> entryPoints(entryPointCount);
+
+		for (uint32_t i = 0; i < entryPointCount; i++)
+		{
+			ComPtr<IEntryPoint> entryPoint;
+			module->getDefinedEntryPoint(i, entryPoint.writeRef());
+			entryPoints[i] = entryPoint.get();
+		}
+
+		std::vector<IComponentType*> entryPointsArray(entryPointCount + 1);
+
+		entryPointsArray[0] = module; // The first entry point is null, as it is not used in the compilation process
+
+		for (uint32_t i = 1; i <= entryPointCount; i++)
+		{
+			entryPointsArray[i] = entryPoints[i - 1];
+		}
+
+		LOG_INFO(MF("Compiling with ", entryPointCount, " entry points"));
+
+		ComPtr<IComponentType> composed;
+		{
+			ComPtr<IBlob> diagnostics;
+			SlangResult result = session->createCompositeComponentType(entryPointsArray.data(), entryPointCount + 1, composed.writeRef(), diagnostics.writeRef());
+
+			if (diagnostics)
+			{
+				LOG_ERROR("Failed to create component type: " + std::string(static_cast<const char*>(diagnostics->getBufferPointer())));
+			}
+
+			SLANG_RETURN_FALSE_ON_FAIL(result);
+		}
+
 		ComPtr<IComponentType> linkedProgram;
 		{
 			ComPtr<IBlob> diagnostics;
-			SlangResult result = module->link(linkedProgram.writeRef(), diagnostics.writeRef());
+			SlangResult result = composed->link(linkedProgram.writeRef(), diagnostics.writeRef());
 
 			if (diagnostics)
 			{
@@ -155,6 +187,15 @@ namespace cp
 			}
 
 			SLANG_RETURN_FALSE_ON_FAIL(result);
+		}
+
+		LOG_INFO(MF("Defined entry points: ", module->getDefinedEntryPointCount()));
+
+		for (uint32_t i = 0; i < module->getDefinedEntryPointCount(); i++)
+		{
+			ComPtr<IEntryPoint> entryPoint;
+			module->getDefinedEntryPoint(i, entryPoint.writeRef());
+			LOG_INFO(MF("Entry point name: ", entryPoint->getFunctionReflection()->getName()));
 		}
 
 		std::string outputPath = _material.GetShaderPath();
@@ -197,6 +238,37 @@ namespace cp
 				resource.field = ExtractFieldInfo(paramLayout->getTypeLayout()->getElementTypeLayout());
 
 			shaderReflection->resources.push_back(resource);
+		}
+
+		LOG_INFO(MF("Shader has ", programLayout->getEntryPointCount(), " entry points"));
+
+		auto EntryPointStageName = [](SlangStage stage) -> std::string
+			{
+				switch (stage)
+				{
+				case SlangStage::SLANG_STAGE_COMPUTE:
+					return "Compute";
+				case SlangStage::SLANG_STAGE_VERTEX:
+					return "Vertex";
+				case SlangStage::SLANG_STAGE_FRAGMENT:
+					return "Fragment";
+				case SlangStage::SLANG_STAGE_GEOMETRY:
+					return "Geometry";
+				case SlangStage::SLANG_STAGE_HULL:
+					return "Hull";
+				case SlangStage::SLANG_STAGE_DOMAIN:
+					return "Domain";
+				default:
+					return "Unknown";
+				}
+			};
+
+		for (unsigned int i = 0; i < programLayout->getEntryPointCount(); i++)
+		{
+			EntryPointReflection* entryPointLayout = programLayout->getEntryPointByIndex(i);
+			LOG_INFO(MF("Entry point name: ", entryPointLayout->getName()));
+			LOG_INFO(MF("Entry point parameter count: ", entryPointLayout->getParameterCount()));
+			LOG_INFO(MF("Entry point stage: ", EntryPointStageName(entryPointLayout->getStage())));
 		}
 
 		if (_material.GetShaderReflection() != nullptr)
