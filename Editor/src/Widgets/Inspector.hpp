@@ -172,7 +172,30 @@ public:
 		properties->AddWidget(shaderLabel);
 		properties->AddWidget(shaderPath);
 
-		CheckableComboBox* shaderStageComboBox = new CheckableComboBox(this);
+#ifdef _DEBUG
+		std::set<cp::ShaderStages> uniqueShaderStages;
+
+		for (const auto& [_, stage] : mat->GetShaderReflection()->entryPoints)
+		{
+			uniqueShaderStages.insert(stage);
+		}
+
+		if (uniqueShaderStages.size() >= 1)
+		{
+			QLabel* entryPointsLabel = new QLabel("Shader stages [debug]", this);
+			properties->AddWidget(entryPointsLabel);
+
+			for (const auto& stage : uniqueShaderStages)
+			{
+				QLabel* shaderStage = new QLabel(this);
+				shaderStage->setText(QString::fromStdString(Helper::Material::GetShaderStageString(stage)));
+				shaderStage->setStyleSheet("color : #aaa;");
+				properties->AddWidget(shaderStage);
+			}
+		}
+#endif
+
+		/*CheckableComboBox* shaderStageComboBox = new CheckableComboBox(this);
 		shaderStageComboBox->setMinimumHeight(30);
 		shaderStageComboBox->setMaximumHeight(30);
 		shaderStageComboBox->AddCheckItem(QString::fromStdString(Helper::Material::GetShaderStageString(cp::ShaderStages::Vertex)), mat->HasShaderStage(cp::ShaderStages::Vertex) ? Qt::Checked : Qt::Unchecked);
@@ -181,7 +204,7 @@ public:
 		shaderStageComboBox->AddCheckItem(QString::fromStdString(Helper::Material::GetShaderStageString(cp::ShaderStages::TessellationControl)), mat->HasShaderStage(cp::ShaderStages::TessellationControl) ? Qt::Checked : Qt::Unchecked);
 		shaderStageComboBox->AddCheckItem(QString::fromStdString(Helper::Material::GetShaderStageString(cp::ShaderStages::TessellationEvaluation)), mat->HasShaderStage(cp::ShaderStages::TessellationEvaluation) ? Qt::Checked : Qt::Unchecked);
 		shaderStageComboBox->AddCheckItem(QString::fromStdString(Helper::Material::GetShaderStageString(cp::ShaderStages::Mesh)), mat->HasShaderStage(cp::ShaderStages::Mesh) ? Qt::Checked : Qt::Unchecked);
-		properties->AddWidget(shaderStageComboBox);
+		properties->AddWidget(shaderStageComboBox);*/
 
 		connect(shaderPath, &FileDropLineEdit::ResourcePathChanged, [=](const std::string& _path) {
 			mat->SetShaderPath(_path);
@@ -221,26 +244,48 @@ public:
 			entryPoints->setStyleSheet("margin-left: 10px;");
 			renderpasses->AddWidget(entryPoints);
 
-			if (QLineEdit* entryPoint = CreateEntryPointOverride(*mat, cp::ShaderStages::Vertex, "Vertex_Default", name))
+			/*if (QLineEdit* entryPoint = CreateEntryPointOverride(*mat, cp::ShaderStages::Vertex, "Vertex_Default", name))
+				entryPoints->AddWidget(entryPoint);*/
+
+			if (QComboBox* entryPoint = CreateEntryPointOverrideComboBox(*mat, cp::ShaderStages::Vertex, "Vertex_Default", name))
 				entryPoints->AddWidget(entryPoint);
+
+			//if (!rp.IsDepthOnly()) // Fragment shader is available only if the renderpass is not depth only
+			//	if (QLineEdit* entryPoint = CreateEntryPointOverride(*mat, cp::ShaderStages::Fragment, "Fragment_Default", name))
+			//		entryPoints->AddWidget(entryPoint);
 
 			if (!rp.IsDepthOnly()) // Fragment shader is available only if the renderpass is not depth only
-				if (QLineEdit* entryPoint = CreateEntryPointOverride(*mat, cp::ShaderStages::Fragment, "Fragment_Default", name))
+				if (QComboBox* entryPoint = CreateEntryPointOverrideComboBox(*mat, cp::ShaderStages::Fragment, "Fragment_Default", name))
 					entryPoints->AddWidget(entryPoint);
 
-			if (QLineEdit* entryPoint = CreateEntryPointOverride(*mat, cp::ShaderStages::Geometry, "Geometry_Default", name))
+			/*if (QLineEdit* entryPoint = CreateEntryPointOverride(*mat, cp::ShaderStages::Geometry, "Geometry_Default", name))
+				entryPoints->AddWidget(entryPoint);*/
+
+			if (QComboBox* entryPoint = CreateEntryPointOverrideComboBox(*mat, cp::ShaderStages::Geometry, "Geometry_Default", name))
 				entryPoints->AddWidget(entryPoint);
 
-			if (QLineEdit* entryPoint = CreateEntryPointOverride(*mat, cp::ShaderStages::TessellationControl, "TessellationControl_Default", name))
+			/*if (QLineEdit* entryPoint = CreateEntryPointOverride(*mat, cp::ShaderStages::TessellationControl, "TessellationControl_Default", name))
+				entryPoints->AddWidget(entryPoint);*/
+
+			if (QComboBox* entryPoint = CreateEntryPointOverrideComboBox(*mat, cp::ShaderStages::TessellationControl, "TessellationControl_Default", name))
 				entryPoints->AddWidget(entryPoint);
 
-			if (QLineEdit* entryPoint = CreateEntryPointOverride(*mat, cp::ShaderStages::TessellationEvaluation, "TessellationEvaluation_Default", name))
+			/*if (QLineEdit* entryPoint = CreateEntryPointOverride(*mat, cp::ShaderStages::TessellationEvaluation, "TessellationEvaluation_Default", name))
+				entryPoints->AddWidget(entryPoint);*/
+
+			if (QComboBox* entryPoint = CreateEntryPointOverrideComboBox(*mat, cp::ShaderStages::TessellationEvaluation, "TessellationEvaluation_Default", name))
 				entryPoints->AddWidget(entryPoint);
 
-			if (QLineEdit* entryPoint = CreateEntryPointOverride(*mat, cp::ShaderStages::Mesh, "Mesh_Default", name))
+			/*if (QLineEdit* entryPoint = CreateEntryPointOverride(*mat, cp::ShaderStages::Mesh, "Mesh_Default", name))
+				entryPoints->AddWidget(entryPoint);*/
+
+			if (QComboBox* entryPoint = CreateEntryPointOverrideComboBox(*mat, cp::ShaderStages::Mesh, "Mesh_Default", name))
 				entryPoints->AddWidget(entryPoint);
 
-			if (QLineEdit* entryPoint = CreateEntryPointOverride(*mat, cp::ShaderStages::Compute, "Compute_Default", name))
+			/*if (QLineEdit* entryPoint = CreateEntryPointOverride(*mat, cp::ShaderStages::Compute, "Compute_Default", name))
+				entryPoints->AddWidget(entryPoint);*/
+
+			if (QComboBox* entryPoint = CreateEntryPointOverrideComboBox(*mat, cp::ShaderStages::Compute, "Compute_Default", name))
 				entryPoints->AddWidget(entryPoint);
 
 			renderpasses->AddSpacing(10);
@@ -412,56 +457,6 @@ public:
 				}
 			}
 		}
-
-		/*for (auto& [name, descriptor] : mat->GetDescriptors())
-		{
-			Collapsible* descriptorCollapsible = new Collapsible(QString::fromStdString(descriptor.name), this, true, "#666");
-			buffers->AddWidget(descriptorCollapsible);
-			descriptorCollapsible->setStyleSheet("background-color: #2a2a2a;");
-			String* setName = new String(descriptor.GetNamePtr(), "Set name", this);
-			UInt8* setIndex = new UInt8(&descriptor.index, "Set index", this);
-			descriptorCollapsible->AddWidget(setIndex);
-			descriptorCollapsible->AddWidget(setName);
-
-			QLabel* bindingLabel = new QLabel("Bindings", this);
-			bindingLabel->setAlignment(Qt::AlignCenter);
-			descriptorCollapsible->AddWidget(bindingLabel);
-
-			for (auto& [name, binding] : descriptor.bindings)
-			{
-				ShowBinding(binding, descriptorCollapsible, descriptor);
-			}
-
-			QPushButton* addBindingButton = new QPushButton("Add binding", this);
-			descriptorCollapsible->AddWidget(addBindingButton);
-
-			connect(addBindingButton, &QPushButton::clicked, [=, &descriptor] {
-				cp::MaterialBinding binding;
-				binding.type = cp::BindingType::UNIFORM_BUFFER;
-				binding.shaderStages = mat->GetShaderStages();
-				binding.index = descriptor.bindings.size() + 1;
-				binding.name = "New binding";
-				cp::MaterialBinding& mb = descriptor.AddBinding(binding);
-
-				ShowBinding(mb, descriptorCollapsible, descriptor);
-				});
-		}
-
-		QPushButton* addDescriptorButton = new QPushButton("Add descriptor", this);
-		buffers->AddWidget(addDescriptorButton);
-
-		connect(addDescriptorButton, &QPushButton::clicked, [=] {
-			cp::MaterialDescriptor descriptor;
-			descriptor.index = mat->GetDescriptors().size() + 2;
-			descriptor.name = "New descriptor";
-			mat->AddDescriptor(descriptor);
-			Collapsible* descriptorCollapsible = new Collapsible(QString::fromStdString(descriptor.name), this);
-			buffers->AddWidget(descriptorCollapsible);
-			UInt8* bindingIndex = new UInt8(&descriptor.index, "Binding index", this);
-			String* bindingName = new String(descriptor.GetNamePtr(), "Binding name", this);
-			descriptorCollapsible->AddWidget(bindingIndex);
-			descriptorCollapsible->AddWidget(bindingName);
-			});*/
 #pragma endregion
 
 		QPushButton* saveButton = new QPushButton("Save", this);
@@ -509,6 +504,28 @@ public:
 
 		if(_material.GetRenderPassRequirement(_renderPass).customEntryPoints.find(_stage) != _material.GetRenderPassRequirement(_renderPass).customEntryPoints.end())
 			entryPoint->setText(QString::fromStdString(_material.GetRenderPassRequirement(_renderPass).customEntryPoints.at(_stage)));
+
+		return entryPoint;
+	}
+
+	QComboBox* CreateEntryPointOverrideComboBox(cp::Material& _material, cp::ShaderStages _stage, const std::string& _placeholder, const std::string& _renderPass)
+	{
+		if (!_material.HasShaderStage(_stage)) return nullptr;
+
+		QComboBox* entryPoint = new QComboBox(this);
+		entryPoint->setPlaceholderText(QString::fromStdString(_placeholder));
+
+		if (_material.GetRenderPassRequirement(_renderPass).customEntryPoints.find(_stage) != _material.GetRenderPassRequirement(_renderPass).customEntryPoints.end())
+			entryPoint->setCurrentText(QString::fromStdString(_material.GetRenderPassRequirement(_renderPass).customEntryPoints.at(_stage)));
+
+		for (auto& [name, ep] : _material.GetShaderReflection()->entryPoints)
+		{
+			if (ep == _stage)
+				entryPoint->addItem(QString::fromStdString(name));
+		}
+
+		if (entryPoint->currentText().isEmpty())
+			entryPoint->setCurrentText(entryPoint->itemText(0));
 
 		return entryPoint;
 	}

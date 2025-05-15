@@ -263,12 +263,38 @@ namespace cp
 				}
 			};
 
+		auto EntryPointShaderStage = [](SlangStage stage) -> cp::ShaderStages
+			{
+				switch (stage)
+				{
+				case SlangStage::SLANG_STAGE_COMPUTE:
+					return cp::ShaderStages::Compute;
+				case SlangStage::SLANG_STAGE_VERTEX:
+					return cp::ShaderStages::Vertex;
+				case SlangStage::SLANG_STAGE_FRAGMENT:
+					return cp::ShaderStages::Fragment;
+				case SlangStage::SLANG_STAGE_GEOMETRY:
+					return cp::ShaderStages::Geometry;
+				case SlangStage::SLANG_STAGE_HULL:
+					return cp::ShaderStages::TessellationControl;
+				case SlangStage::SLANG_STAGE_DOMAIN:
+					return cp::ShaderStages::TessellationEvaluation;
+				default:
+					return cp::ShaderStages(0);
+				}
+			};
+
 		for (unsigned int i = 0; i < programLayout->getEntryPointCount(); i++)
 		{
 			EntryPointReflection* entryPointLayout = programLayout->getEntryPointByIndex(i);
 			LOG_INFO(MF("Entry point name: ", entryPointLayout->getName()));
 			LOG_INFO(MF("Entry point parameter count: ", entryPointLayout->getParameterCount()));
 			LOG_INFO(MF("Entry point stage: ", EntryPointStageName(entryPointLayout->getStage())));
+
+			EntryPoint entryPoint;
+			entryPoint.name = entryPointLayout->getName();
+			entryPoint.stage = EntryPointShaderStage(entryPointLayout->getStage());
+			shaderReflection->entryPoints.push_back(entryPoint);
 		}
 
 		if (_material.GetShaderReflection() != nullptr)
@@ -468,6 +494,15 @@ namespace cp
 			_serializer.EndObjectArrayElement();
 		}
 		_serializer.EndObjectArray();
+
+		_serializer.BeginObjectArrayWriting("entryPoints");
+		for (const auto& entryPoint : entryPoints)
+		{
+			_serializer.BeginObjectArrayElementWriting();
+			entryPoint.Serialize(_serializer);
+			_serializer.EndObjectArrayElement();
+		}
+		_serializer.EndObjectArray();
 	}
 
 	void ShaderReflection::Deserialize(ISerializer& _serializer)
@@ -486,5 +521,32 @@ namespace cp
 		}
 
 		_serializer.EndObjectArray();
+
+		size_t entryPointCount = _serializer.BeginObjectArrayReading("entryPoints");
+
+		for (size_t i = 0; i < entryPointCount; i++)
+		{
+			if (_serializer.BeginObjectArrayElementReading(i))
+			{
+				EntryPoint entryPoint;
+				entryPoint.Deserialize(_serializer);
+				entryPoints.push_back(entryPoint);
+				_serializer.EndObjectArrayElement();
+			}
+		}
+
+		_serializer.EndObjectArray();
+	}
+
+	void EntryPoint::Serialize(ISerializer& _serializer) const
+	{
+		_serializer.WriteString("name", name);
+		_serializer.WriteInt("stage", static_cast<int>(stage));
+	}
+
+	void EntryPoint::Deserialize(ISerializer& _serializer)
+	{
+		name = _serializer.ReadString("name", name);
+		stage = static_cast<cp::ShaderStages>(_serializer.ReadInt("stage", static_cast<int>(stage)));
 	}
 }

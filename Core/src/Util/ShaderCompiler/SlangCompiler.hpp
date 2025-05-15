@@ -52,9 +52,19 @@ namespace cp
 		void Deserialize(ISerializer& _serializer) override;
 	};
 
+	struct EntryPoint : public ISerializable
+	{
+		std::string name;
+		cp::ShaderStages stage;
+
+		void Serialize(ISerializer& _serializer) const override;
+		void Deserialize(ISerializer& _serializer) override;
+	};
+
 	struct ShaderReflection : public ISerializable
 	{
 		std::vector<ShaderResource> resources;
+		std::vector<EntryPoint> entryPoints;
 
 		void Serialize(ISerializer& _serializer) const override;
 		void Deserialize(ISerializer& _serializer) override;
