@@ -238,6 +238,11 @@ protected:
 			});
 
 		connect(createInstance, &QAction::triggered, [=] {
+			cp::MaterialInstance matInstance(&vulkanContext);
+			cp::JsonSerializer serializer;
+			matInstance.SetAssociatedMaterial(rcPath->toStdString());
+			matInstance.Serialize(serializer);
+			
 			QFileInfo matFileInfo(*rcPath);
 			QString instanceFileName = QString::fromStdString(matFileInfo.path().append("\\").append(matFileInfo.baseName()).toStdString() + ".matinstance");
 			QFileInfo fileInfo(instanceFileName);
@@ -253,6 +258,8 @@ protected:
 
 			std::ofstream file(instanceFileName.toStdString(), std::ios::binary);
 			file.close(); //We just create the file
+
+			serializer.Write(instanceFileName.toStdString());
 
 			QModelIndex index = fileSystemModel->index(instanceFileName);
 

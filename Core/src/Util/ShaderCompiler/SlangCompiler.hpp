@@ -14,12 +14,12 @@ namespace cp
 {
 	class Material;
 
-	enum ShaderResourceKind
+	enum class ShaderResourceKind : uint8_t
 	{
 		ConstantBuffer,
 		StructuredBuffer,
 		Sampler,
-		Texture,
+		TextureResource,
 		CombinedImageSampler,
 		PushConstant,
 		Unknown
@@ -34,6 +34,12 @@ namespace cp
 		size_t alignment;
 		size_t stride;
 		std::vector<ShaderField> fields;
+
+		std::string vectorType; // For vector types, e.g. float, int, ...
+		std::string matrixType; // For matrix types, e.g. float, int, ...
+		size_t vectorSize = 0; // Number of components in the vector
+		size_t matrixRows = 0; // Number of rows in the matrix
+		size_t matrixColumns = 0; // Number of columns in the matrix
 
 		void Serialize(ISerializer& _serializer) const override;
 		void Deserialize(ISerializer& _serializer) override;
@@ -55,7 +61,7 @@ namespace cp
 	struct EntryPoint : public ISerializable
 	{
 		std::string name;
-		cp::ShaderStages stage;
+		ShaderStages stage;
 
 		void Serialize(ISerializer& _serializer) const override;
 		void Deserialize(ISerializer& _serializer) override;
@@ -81,11 +87,11 @@ namespace cp
 
 	public:
 		SlangCompiler();
-		bool CompileMaterialSlangToSpirV(cp::Material& _material);
+		bool CompileMaterialSlangToSpirV(Material& _material);
 
 #ifdef IN_EDITOR
-		QWidget* CreateFieldWidget(const ShaderField& field, QWidget* parent);
-		QWidget* CreateResourceWidget(const ShaderResource& resource, QWidget* parent);
+		static QWidget* CreateFieldWidget(const ShaderField& field, QWidget* parent);
+		static QWidget* CreateResourceWidget(const ShaderResource& resource, QWidget* parent, const bool& _showEngineSets = false);
 #endif
 	};
 }

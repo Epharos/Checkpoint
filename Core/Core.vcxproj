@@ -105,7 +105,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;QT_WIDGETS_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;$(VULKAN_SDK)\Include;$(SolutionDir)Pre-Proc;$(SolutionDir)ECS\Include;$(SolutionDir)Dependencies\;$(SolutionDir)Dependencies\glfw\include;C:\Qt68\6.8.0\msvc2022_64\include;$(VCPKG_ROOT)\installed\x64-windows\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(VULKAN_SDK)\Include;$(SolutionDir)Pre-Proc;$(SolutionDir)EngineWidgets\Include;$(SolutionDir)Dependencies\;$(SolutionDir)Dependencies\glfw\include;C:\Qt68\6.8.0\msvc2022_64\include;$(VCPKG_ROOT)\installed\x64-windows\include</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
       <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
@@ -126,7 +126,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;$(VULKAN_SDK)\Include;$(SolutionDir)ECS\Include;$(SolutionDir)Dependencies\stb_image.h;$(SolutionDir)Dependencies\glfw\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(VULKAN_SDK)\Include;$(SolutionDir)EngineWidgets\Include;$(SolutionDir)Dependencies\stb_image.h;$(SolutionDir)Dependencies\glfw\include</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
     </ClCompile>

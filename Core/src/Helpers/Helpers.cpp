@@ -428,19 +428,19 @@ std::string Helper::Material::GetShaderStageString(const cp::ShaderStages& stage
 cp::MaterialFieldType Helper::Material::GetMaterialFieldTypeFromString(const std::string& type)
 {
 	if (type == "Boolean")
-		return cp::MaterialFieldType::BOOL;
+		return cp::MaterialFieldType::Bool;
 	else if (type == "Half")
-		return cp::MaterialFieldType::HALF;
+		return cp::MaterialFieldType::Half;
 	else if (type == "Float")
-		return cp::MaterialFieldType::FLOAT;
+		return cp::MaterialFieldType::Float;
 	else if (type == "Integer")
-		return cp::MaterialFieldType::INT;
+		return cp::MaterialFieldType::Int;
 	else if (type == "Unsigned Integer")
-		return cp::MaterialFieldType::UINT;
+		return cp::MaterialFieldType::UInt;
 	else if (type == "Vector")
-		return cp::MaterialFieldType::VECTOR;
+		return cp::MaterialFieldType::Vector;
 	else if (type == "Matrix")
-		return cp::MaterialFieldType::MATRIX;
+		return cp::MaterialFieldType::Matrix;
 	else
 		throw std::invalid_argument("Invalid material field type: " + type);
 }
@@ -449,64 +449,42 @@ std::string Helper::Material::GetMaterialFieldTypeString(const cp::MaterialField
 {
 	switch (type)
 	{
-	case cp::MaterialFieldType::BOOL:
+	case cp::MaterialFieldType::Bool:
 		return "Boolean";
-	case cp::MaterialFieldType::HALF:
+	case cp::MaterialFieldType::Half:
 		return "Half";
-	case cp::MaterialFieldType::FLOAT:
+	case cp::MaterialFieldType::Float:
 		return "Float";
-	case cp::MaterialFieldType::INT:
+	case cp::MaterialFieldType::Int:
 		return "Integer";
-	case cp::MaterialFieldType::UINT:
+	case cp::MaterialFieldType::UInt:
 		return "Unsigned Integer";
-	case cp::MaterialFieldType::VECTOR:
+	case cp::MaterialFieldType::Vector:
 		return "Vector";
-	case cp::MaterialFieldType::MATRIX:
+	case cp::MaterialFieldType::Matrix:
 		return "Matrix";
 	default:
 		throw std::invalid_argument("Invalid material field type");
 	}
 }
 
-cp::BindingType Helper::Material::GetMaterialBindingFromString(const std::string& binding)
+vk::DescriptorType Helper::Material::GetDescriptorTypeFromBindingType(const cp::ShaderResourceKind& bindingType)
 {
-	if (binding == "Uniform Buffer")
-		return cp::BindingType::UNIFORM_BUFFER;
-	else if (binding == "Storage Buffer")
-		return cp::BindingType::STORAGE_BUFFER;
-	else if (binding == "Texture")
-		return cp::BindingType::TEXTURE;
-	else
-		throw std::invalid_argument("Invalid material binding: " + binding);
-}
-
-std::string Helper::Material::GetMaterialBindingString(const cp::BindingType& binding)
-{
-	switch (binding)
+	switch (bindingType)
 	{
-	case cp::BindingType::UNIFORM_BUFFER:
-		return "Uniform Buffer";
-	case cp::BindingType::STORAGE_BUFFER:
-		return "Storage Buffer";
-	case cp::BindingType::TEXTURE:
-		return "Texture";
-	default:
-		throw std::invalid_argument("Invalid material binding");
-	}
-}
-
-vk::DescriptorType Helper::Material::GetDescriptorTypeFromBindingType(const cp::BindingType& binding)
-{
-	switch (binding)
-	{
-	case cp::BindingType::UNIFORM_BUFFER:
+	case cp::ShaderResourceKind::ConstantBuffer:
 		return vk::DescriptorType::eUniformBuffer;
-	case cp::BindingType::STORAGE_BUFFER:
+	case cp::ShaderResourceKind::StructuredBuffer:
 		return vk::DescriptorType::eStorageBuffer;
-	case cp::BindingType::TEXTURE:
+	case cp::ShaderResourceKind::CombinedImageSampler:
 		return vk::DescriptorType::eCombinedImageSampler;
+	case cp::ShaderResourceKind::TextureResource:
+		return vk::DescriptorType::eSampledImage;
+	case cp::ShaderResourceKind::Sampler:
+		return vk::DescriptorType::eSampler;
 	default:
-		throw std::invalid_argument("Invalid material binding");
+		LOG_ERROR("Invalid shader resource kind");
+		throw std::invalid_argument("Invalid shader resource kind");
 	}
 }
 
@@ -542,6 +520,29 @@ vk::ShaderStageFlags Helper::Material::GetShaderStageFlags(const uint16_t& stage
 	}
 
 	return stageFlags;
+}
+
+QWidget* Helper::Material::CreateMaterialFieldWidget(QWidget* _parent, const cp::ShaderField& field, void* dataPtr)
+{
+	if (field.typeName.compare("float") == 0) return new cp::Float(reinterpret_cast<float*>(dataPtr), field.name.c_str());
+	if (field.typeName.compare("double") == 0) return new cp::Double(reinterpret_cast<double*>(dataPtr), field.name.c_str());
+	if (field.typeName.compare("int") == 0) return new cp::Int32(reinterpret_cast<int*>(dataPtr), field.name.c_str());
+	if (field.typeName.compare("uint") == 0) return new cp::UInt32(reinterpret_cast<uint32_t*>(dataPtr), field.name.c_str());
+	if (field.typeName.compare("vector") == 0)
+	{
+		if (field.vectorType.compare("float") == 0)
+		{
+			switch (field.vectorSize)
+			{
+			case 2: return new cp::Float2(reinterpret_cast<glm::vec2*>(dataPtr), field.name.c_str());
+			case 3: return new cp::Float3(reinterpret_cast<glm::vec3*>(dataPtr), field.name.c_str());
+			case 4: return new cp::Float4(reinterpret_cast<glm::vec4*>(dataPtr), field.name.c_str());
+			}
+		}
+	}
+
+	LOG_WARNING("Unsupported material field type: " + field.typeName);
+	return nullptr;
 }
 
 void Helper::Slang::DeepnessToString(const std::string& text, uint8_t deepness, std::stringstream& ss)

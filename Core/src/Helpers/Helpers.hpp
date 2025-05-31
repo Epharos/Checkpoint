@@ -3,11 +3,16 @@
 #include "../pch.hpp"
 #include "../Util/Buffer.hpp"
 
+#ifdef IN_EDITOR
+#include <QtWidgets/qwidget.h>
+#endif
+
 namespace cp
 {
 	enum class ShaderStages : uint16_t;
 	enum class MaterialFieldType : uint8_t;
-	enum class BindingType : uint8_t;
+	enum class ShaderResourceKind : uint8_t;
+	struct ShaderField;
 }
 
 namespace slang
@@ -97,11 +102,12 @@ namespace Helper
 		cp::MaterialFieldType GetMaterialFieldTypeFromString(const std::string& type);
 		std::string GetMaterialFieldTypeString(const cp::MaterialFieldType& type);
 
-		cp::BindingType GetMaterialBindingFromString(const std::string& binding);
-		std::string GetMaterialBindingString(const cp::BindingType& binding);
-
-		vk::DescriptorType GetDescriptorTypeFromBindingType(const cp::BindingType& binding);
+		vk::DescriptorType GetDescriptorTypeFromBindingType(const cp::ShaderResourceKind& bindingType);
 		vk::ShaderStageFlags GetShaderStageFlags(const uint16_t& stages);
+
+#ifdef IN_EDITOR
+		QWidget* CreateMaterialFieldWidget(QWidget* _parent, const cp::ShaderField& field, void* dataPtr);
+#endif
 	}
 
 	namespace Slang

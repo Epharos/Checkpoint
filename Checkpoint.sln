@@ -5,6 +5,7 @@ VisualStudioVersion = 17.11.35312.102
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core", "Core\Core.vcxproj", "{367F1CE9-F9C2-4EF6-9F0D-6596DCB1F6F4}"
 	ProjectSection(ProjectDependencies) = postProject
+		{70236CE0-F452-4D9F-9375-5EBAFB03AB26} = {70236CE0-F452-4D9F-9375-5EBAFB03AB26}
 		{FFF45BE4-3B19-4035-88C1-7C3E88C316DF} = {FFF45BE4-3B19-4035-88C1-7C3E88C316DF}
 	EndProjectSection
 EndProject
@@ -17,10 +18,13 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Editor", "Editor\Editor.vcxproj", "{C3ECA388-7DEE-4ABF-85DD-F95E9B175713}"
 	ProjectSection(ProjectDependencies) = postProject
 		{367F1CE9-F9C2-4EF6-9F0D-6596DCB1F6F4} = {367F1CE9-F9C2-4EF6-9F0D-6596DCB1F6F4}
+		{70236CE0-F452-4D9F-9375-5EBAFB03AB26} = {70236CE0-F452-4D9F-9375-5EBAFB03AB26}
 		{FFF45BE4-3B19-4035-88C1-7C3E88C316DF} = {FFF45BE4-3B19-4035-88C1-7C3E88C316DF}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Pre-Proc", "Pre-Proc\Pre-Proc.vcxproj", "{FFF45BE4-3B19-4035-88C1-7C3E88C316DF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EngineWidgets", "EngineWidgets\EngineWidgets.vcxproj", "{70236CE0-F452-4D9F-9375-5EBAFB03AB26}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -62,6 +66,14 @@ Global
 		{FFF45BE4-3B19-4035-88C1-7C3E88C316DF}.Release|x64.Build.0 = Release|x64
 		{FFF45BE4-3B19-4035-88C1-7C3E88C316DF}.Release|x86.ActiveCfg = Release|Win32
 		{FFF45BE4-3B19-4035-88C1-7C3E88C316DF}.Release|x86.Build.0 = Release|Win32
+		{70236CE0-F452-4D9F-9375-5EBAFB03AB26}.Debug|x64.ActiveCfg = Debug|x64
+		{70236CE0-F452-4D9F-9375-5EBAFB03AB26}.Debug|x64.Build.0 = Debug|x64
+		{70236CE0-F452-4D9F-9375-5EBAFB03AB26}.Debug|x86.ActiveCfg = Debug|Win32
+		{70236CE0-F452-4D9F-9375-5EBAFB03AB26}.Debug|x86.Build.0 = Debug|Win32
+		{70236CE0-F452-4D9F-9375-5EBAFB03AB26}.Release|x64.ActiveCfg = Release|x64
+		{70236CE0-F452-4D9F-9375-5EBAFB03AB26}.Release|x64.Build.0 = Release|x64
+		{70236CE0-F452-4D9F-9375-5EBAFB03AB26}.Release|x86.ActiveCfg = Release|Win32
+		{70236CE0-F452-4D9F-9375-5EBAFB03AB26}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

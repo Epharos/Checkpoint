@@ -7,13 +7,13 @@
 #include "Util/Serializers/ISerializer.hpp"
 
 std::unordered_map<cp::MaterialFieldType, size_t> cp::Material::MaterialFieldSizeMap = {
-	{ cp::MaterialFieldType::BOOL, sizeof(bool) },
-	{ cp::MaterialFieldType::HALF, sizeof(float) },
-	{ cp::MaterialFieldType::FLOAT, sizeof(double) },
-	{ cp::MaterialFieldType::INT, sizeof(int) },
-	{ cp::MaterialFieldType::UINT, sizeof(unsigned int) },
-	{ cp::MaterialFieldType::VECTOR, sizeof(glm::vec4) },
-	{ cp::MaterialFieldType::MATRIX, sizeof(glm::mat4) },
+	{ cp::MaterialFieldType::Bool, sizeof(bool) },
+	{ cp::MaterialFieldType::Half, sizeof(float) },
+	{ cp::MaterialFieldType::Float, sizeof(double) },
+	{ cp::MaterialFieldType::Int, sizeof(int) },
+	{ cp::MaterialFieldType::UInt, sizeof(unsigned int) },
+	{ cp::MaterialFieldType::Vector, sizeof(glm::vec4) },
+	{ cp::MaterialFieldType::Matrix, sizeof(glm::mat4) },
 };
 
 cp::Material::Material(const cp::VulkanContext* _context) :
@@ -33,10 +33,10 @@ cp::Material::~Material()
 		if (pipelineData->pipeline) context->GetPipelinesManager()->DestroyPipeline({ this->moduleName + "_" + name }); // Unload the previous pipeline if it exists
 	}
 
-	for (auto& [name, desc] : descriptors)
-	{
-		if(desc.layout) context->GetDevice().destroyDescriptorSetLayout(desc.layout); // Destroy the descriptor set layout
-	}
+	//for (auto& [name, desc] : descriptors)
+	//{
+	//	if(desc.layout) context->GetDevice().destroyDescriptorSetLayout(desc.layout); // Destroy the descriptor set layout
+	//}
 }
 
 void cp::Material::BindMaterial(vk::CommandBuffer& _command)
@@ -51,14 +51,12 @@ void cp::Material::Reload(cp::Renderer& _renderer)
 	// Since this function in called when a material is loaded in the scene and needs to be reloaded
 	// we can generate the descriptor set layouts and pipeline layout here
 
-	for (auto& [name, desc] : descriptors)
-	{
-		desc.GenerateDescriptorSetLayout(context); //This (re)generate the descriptor set layout
-	}
+	//for (auto& [name, desc] : descriptors)
+	//{
+	//	desc.GenerateDescriptorSetLayout(context); //This (re)generate the descriptor set layout
+	//}
 
-	std::vector<vk::DescriptorSetLayout> layouts;
-	for (auto& [name, desc] : descriptors)
-		layouts.push_back(desc.layout);
+	CreateDescriptorSetLayouts(); // Create the descriptor set layouts based on the current descriptors
 
 	cp::LayoutsManager* layoutsManager = context->GetLayoutsManager();
 	cp::PipelinesManager* pipelinesManager = context->GetPipelinesManager();
@@ -86,7 +84,7 @@ void cp::Material::Reload(cp::Renderer& _renderer)
 			if (pipelineDatas[name]->pipeline) pipelinesManager->DestroyPipeline({ this->moduleName + "_" + name }); // Unload the previous pipeline if it exists
 		}
 
-		vk::PipelineLayout pipelineLayout = layoutsManager->GetOrCreateLayout(layouts, {}); // Create the new layout // TODO : Add PushConstants support
+		vk::PipelineLayout pipelineLayout = layoutsManager->GetOrCreateLayout(descriptorSetLayouts, {}); // Create the new layout // TODO : Add PushConstants support
 
 		cp::PipelineCreateData pipelineCreateData;
 		pipelineCreateData.config = { this->moduleName + "_" + name }; // Create a unique moduleName for the pipeline
@@ -103,7 +101,7 @@ void cp::Material::Reload(cp::Renderer& _renderer)
 			{ vk::ShaderStageFlagBits::eMeshEXT, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::Mesh], "Mesh_Default") },
 			{ vk::ShaderStageFlagBits::eCompute, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::Compute], "Compute_Default") }
 		};
-		pipelineCreateData.descriptorSetLayouts = layouts;
+		pipelineCreateData.descriptorSetLayouts = descriptorSetLayouts;
 
 		std::vector<vk::DynamicState> dynamicStates = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 
@@ -148,17 +146,6 @@ void cp::Material::Serialize(cp::ISerializer& _serializer) const
 	_serializer.WriteString("ShaderPath", shaderPath);
 	_serializer.WriteInt("Shader Stages", static_cast<int>(shaderStages));
 
-	/*_serializer.BeginObjectArrayWriting("Descriptors");
-
-	for (const auto& [name, desc] : descriptors)
-	{
-		_serializer.BeginObjectArrayElementWriting();
-		desc.Serialize(_serializer);
-		_serializer.EndObjectArrayElement();
-	}
-
-	_serializer.EndObjectArray();*/
-
 	_serializer.BeginObjectArrayWriting("RenderPass Requirements");
 
 	for (const auto& [name, rpr] : rpRequirements)
@@ -190,20 +177,6 @@ void cp::Material::Deserialize(ISerializer& _serializer)
 	moduleName = _serializer.ReadString("Name", "Unknown");
 	shaderPath = _serializer.ReadString("ShaderPath", "");
 	shaderStages = static_cast<uint16_t>(_serializer.ReadInt("Shader Stages", 0));
-
-	/*size_t elements = _serializer.BeginObjectArrayReading("Descriptors");
-
-	for (uint64_t i = 0; i < elements; i++)
-	{
-		_serializer.BeginObjectArrayElementReading(i);
-		MaterialDescriptor desc;
-		desc.Deserialize(_serializer);
-
-		descriptors.insert({ desc.name, desc });
-		_serializer.EndObjectArrayElement();
-	}
-
-	_serializer.EndObjectArray();*/
 
 	size_t elements = _serializer.BeginObjectArrayReading("RenderPass Requirements");
 
@@ -253,6 +226,64 @@ std::vector<std::string> cp::Material::GetUniqueEntryPoints() const
 	}
 
 	return entryPoints;
+}
+
+void cp::Material::CreateDescriptorSetLayouts()
+{
+	if (descriptorSetLayouts.size() > 0)
+	{
+		LOG_WARNING("Material already has descriptor set layouts, they will be destroyed");
+		for (auto& layout : descriptorSetLayouts)
+		{
+			context->GetDevice().destroyDescriptorSetLayout(layout); // Destroy the previous descriptor set layout
+		}
+		descriptorSetLayouts.clear();
+	}
+
+	std::sort(shaderReflection->resources.begin(), shaderReflection->resources.end(), [](const ShaderResource& a, const ShaderResource& b) {
+		return a.set < b.set && a.binding < b.binding;
+		});
+
+	size_t lastSetIndex = ~(0ull);
+
+	vk::DescriptorSetLayoutCreateInfo layoutInfo;
+	std::vector<vk::DescriptorSetLayoutBinding> bindings;
+
+	for (const auto& resource : shaderReflection->resources)
+	{
+		if (lastSetIndex != resource.set)
+		{
+			if (lastSetIndex != ~(0ull)) // If this is not the first set
+			{
+				layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size()); // Set the binding count for the layout info
+				layoutInfo.pBindings = bindings.data(); // Set the bindings for the layout info
+				descriptorSetLayouts.push_back(context->GetDevice().createDescriptorSetLayout(layoutInfo)); // Create the descriptor set layout for the previous set
+				bindings.clear(); // Clear the bindings for the next set
+			}
+
+			lastSetIndex = resource.set; // Update the last set index
+			layoutInfo = vk::DescriptorSetLayoutCreateInfo(); // Reset the layout info
+		}
+
+		vk::DescriptorSetLayoutBinding binding;
+		binding.binding = resource.binding;
+		binding.descriptorType = Helper::Material::GetDescriptorTypeFromBindingType(resource.kind);
+		binding.descriptorCount = 1; // For now we only support one descriptor per binding
+		binding.stageFlags = vk::ShaderStageFlagBits::eAllGraphics; // For now it's all graphics, we need to change it later to send binding only the stages that are used by the material
+		bindings.push_back(binding); // Add the binding to the list
+	}
+
+	if (lastSetIndex != ~(0ull)) // If there is still a set to create
+	{
+		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size()); // Set the binding count for the layout info
+		layoutInfo.pBindings = bindings.data(); // Set the bindings for the layout info
+		descriptorSetLayouts.push_back(context->GetDevice().createDescriptorSetLayout(layoutInfo)); // Create the descriptor set layout for the last set
+	}
+
+	if (descriptorSetLayouts.empty())
+	{
+		LOG_WARNING("No descriptor set layouts were created for the material, this is likely an error in the shader reflection");
+	}
 }
 
 void cp::RenderPassRequirement::Serialize(ISerializer& _serializer) const
@@ -318,140 +349,4 @@ void cp::RenderPassRequirement::Deserialize(ISerializer& _serializer)
 	}
 
 	customShaderPath = _serializer.ReadString("CustomShaderPath", "");
-}
-
-void cp::MaterialDescriptor::Serialize(ISerializer& _serializer) const
-{
-	_serializer.WriteInt("Index", index);
-	_serializer.WriteString("Name", name);
-
-	_serializer.BeginObjectArrayWriting("Bindings");
-	for (const auto& [name, binding] : bindings)
-	{
-		_serializer.BeginObjectArrayElementWriting();
-		binding.Serialize(_serializer);
-		_serializer.EndObjectArrayElement();
-	}
-	_serializer.EndObjectArray();
-}
-
-void cp::MaterialDescriptor::Deserialize(ISerializer& _serializer)
-{
-	index = _serializer.ReadInt("Index", 0);
-	name = _serializer.ReadString("Name", "Error");
-
-	size_t elements = _serializer.BeginObjectArrayReading("Bindings");
-
-	for (uint64_t i = 0; i < elements; i++)
-	{
-		_serializer.BeginObjectArrayElementReading(i);
-		MaterialBinding binding;
-		binding.Deserialize(_serializer);
-		bindings.insert({ binding.name, binding });
-		_serializer.EndObjectArrayElement();
-	}
-
-	_serializer.EndObjectArray();
-}
-
-void cp::MaterialDescriptor::GenerateDescriptorSetLayout(const cp::VulkanContext* _context)
-{
-	if (layout)
-	{
-		_context->GetDevice().destroyDescriptorSetLayout(layout);
-		layout = VK_NULL_HANDLE;
-	}
-
-	std::vector<vk::DescriptorSetLayoutBinding> bindings;
-
-	for (const auto& [name, binding] : this->bindings)
-	{
-		vk::DescriptorSetLayoutBinding layoutBinding;
-		layoutBinding.binding = binding.index;
-		layoutBinding.descriptorType = Helper::Material::GetDescriptorTypeFromBindingType(binding.type);
-		layoutBinding.descriptorCount = 1;
-		layoutBinding.stageFlags = Helper::Material::GetShaderStageFlags(binding.shaderStages);
-		bindings.push_back(layoutBinding);
-	}
-
-	vk::DescriptorSetLayoutCreateInfo layoutInfo;
-	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	layoutInfo.pBindings = bindings.data();
-
-	layout = _context->GetDevice().createDescriptorSetLayout(layoutInfo);
-}
-
-bool cp::MaterialDescriptor::RemoveBinding(const MaterialBinding& _binding)
-{
-	if (bindings.contains(_binding.name)) return bindings.erase(_binding.name);
-
-	for (auto& [name, binding] : bindings)
-	{
-		if (&binding == &_binding) return bindings.erase(name);
-	}
-
-	return false;
-}
-
-void cp::MaterialBinding::Serialize(ISerializer& _serializer) const
-{
-	_serializer.WriteInt("Type", (int)type);
-	_serializer.WriteInt("Index", index);
-	_serializer.WriteInt("ShaderStage", shaderStages);
-	_serializer.WriteString("Name", name);
-
-	_serializer.BeginObjectArrayWriting("Fields");
-	for (const auto& [name, field] : fields)
-	{
-		_serializer.BeginObjectArrayElementWriting();
-		field.Serialize(_serializer);
-		_serializer.EndObjectArrayElement();
-	}
-	_serializer.EndObjectArray();
-}
-
-void cp::MaterialBinding::Deserialize(ISerializer& _serializer)
-{
-	type = (BindingType)_serializer.ReadInt("Type", 0);
-	index = _serializer.ReadInt("Index", 0);
-	shaderStages = _serializer.ReadInt("ShaderStage", 0);
-	name = _serializer.ReadString("Name", "Error");
-
-	size_t elements = _serializer.BeginObjectArrayReading("Fields");
-	for (uint64_t i = 0; i < elements; i++)
-	{
-		_serializer.BeginObjectArrayElementReading(i);
-		MaterialField field;
-		field.Deserialize(_serializer);
-		fields.insert({ field.name, field });
-		_serializer.EndObjectArrayElement();
-	}
-
-	_serializer.EndObjectArray();
-}
-
-bool cp::MaterialBinding::RemoveField(const MaterialField& _field)
-{
-	if (fields.contains(_field.name)) return fields.erase(_field.name);
-
-	for (auto& [name, field] : fields)
-	{
-		if (&field == &_field) return fields.erase(name);
-	}
-
-	return false;
-}
-
-void cp::MaterialField::Serialize(ISerializer& _serializer) const
-{
-	_serializer.WriteInt("Type", (int)type);
-	_serializer.WriteString("Name", name);
-	_serializer.WriteInt("Offset", offset);
-}
-
-void cp::MaterialField::Deserialize(ISerializer& _serializer)
-{
-	type = (MaterialFieldType)_serializer.ReadInt("Type", 0);
-	name = _serializer.ReadString("Name", "Error");
-	offset = _serializer.ReadInt("Offset", 0);
 }

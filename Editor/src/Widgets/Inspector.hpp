@@ -3,9 +3,7 @@
 #include "../pch.hpp"
 #include "SearchList.hpp"
 
-#include "Widgets/ComponentFields/String.hpp"
 #include "Widgets/ComponentFields/FileDropLineEdit.hpp"
-#include "Widgets/ComponentFields/NumericFields.hpp"
 #include "Widgets/Collapsible.hpp"
 #include "Widgets/EnumMultiSelectDropDown.hpp"
 
@@ -52,6 +50,7 @@ public:
 		setMinimumHeight(480);
 
 		fileInspector["mat"] = [=](const std::string& _path, const QFileInfo& _fileInfo) { ShowMaterial(_path, _fileInfo); };
+		fileInspector["matinstance"] = [=](const std::string& _path, const QFileInfo& _fileInfo) { ShowMaterialInstance(_path, _fileInfo); };
 	}
 
 	void CreateAddComponentButton(cp::Entity* _entity)
@@ -162,7 +161,7 @@ public:
 		Collapsible* properties = new Collapsible("Properties", this);
 		layout->addWidget(properties);
 
-		String* nameMat = new String(mat->GetNamePtr(), "Material name", this);
+		cp::String* nameMat = new cp::String(mat->GetNamePtr(), "Material name", this);
 		properties->AddWidget(nameMat);
 
 		QLabel* shaderLabel = new QLabel("Shader path", this);
@@ -308,121 +307,6 @@ public:
 #pragma endregion
 
 #pragma region Buffers
-		auto ShowField = [](cp::MaterialField& field, Collapsible* bufferCollapsible, cp::MaterialBinding& binding)
-			{
-				QComboBox* fieldType = new QComboBox(bufferCollapsible);
-				fieldType->addItem(QString::fromStdString(Helper::Material::GetMaterialFieldTypeString(cp::MaterialFieldType::FLOAT)));
-				fieldType->addItem(QString::fromStdString(Helper::Material::GetMaterialFieldTypeString(cp::MaterialFieldType::HALF)));
-				fieldType->addItem(QString::fromStdString(Helper::Material::GetMaterialFieldTypeString(cp::MaterialFieldType::INT)));
-				fieldType->addItem(QString::fromStdString(Helper::Material::GetMaterialFieldTypeString(cp::MaterialFieldType::UINT)));
-				fieldType->addItem(QString::fromStdString(Helper::Material::GetMaterialFieldTypeString(cp::MaterialFieldType::BOOL)));
-				fieldType->addItem(QString::fromStdString(Helper::Material::GetMaterialFieldTypeString(cp::MaterialFieldType::VECTOR)));
-				fieldType->addItem(QString::fromStdString(Helper::Material::GetMaterialFieldTypeString(cp::MaterialFieldType::MATRIX)));
-				fieldType->setCurrentText(QString::fromStdString(Helper::Material::GetMaterialFieldTypeString(field.type)));
-
-				connect(fieldType, &QComboBox::currentTextChanged, [&field](const QString& _text) {
-					field.type = Helper::Material::GetMaterialFieldTypeFromString(_text.toStdString());
-					});
-
-				String* fieldName = new String(field.GetNamePtr(), "Field name", bufferCollapsible);
-				UInt64* fieldOffset = new UInt64(&field.offset, "Field offset", bufferCollapsible);
-
-				bufferCollapsible->AddWidget(fieldName);
-				bufferCollapsible->AddWidget(fieldType);
-				bufferCollapsible->AddWidget(fieldOffset);
-
-				QPushButton* removeFieldButton = new QPushButton("Remove field", bufferCollapsible);
-				bufferCollapsible->AddWidget(removeFieldButton);
-
-				connect(removeFieldButton, &QPushButton::clicked, [=, &binding, &field] {
-					if (binding.RemoveField(field))
-					{
-						fieldType->deleteLater();
-						fieldName->deleteLater();
-						fieldOffset->deleteLater();
-						removeFieldButton->deleteLater();
-					}
-					else
-					{
-						LOG_ERROR("Failed to remove field");
-					}
-					});
-			};
-		auto ShowBinding = [&ShowField, mat](cp::MaterialBinding& binding, Collapsible* descriptorCollapsible, cp::MaterialDescriptor& descriptor)
-			{
-				QComboBox* bindingType = new QComboBox(descriptorCollapsible);
-				bindingType->addItem(QString::fromStdString(Helper::Material::GetMaterialBindingString(cp::BindingType::UNIFORM_BUFFER)));
-				bindingType->addItem(QString::fromStdString(Helper::Material::GetMaterialBindingString(cp::BindingType::STORAGE_BUFFER)));
-				bindingType->addItem(QString::fromStdString(Helper::Material::GetMaterialBindingString(cp::BindingType::TEXTURE)));
-				bindingType->setCurrentText(QString::fromStdString(Helper::Material::GetMaterialBindingString(binding.type)));
-
-				connect(bindingType, &QComboBox::currentTextChanged, [&binding](const QString& _text) {
-					binding.type = Helper::Material::GetMaterialBindingFromString(_text.toStdString());
-					});
-
-				String* bindingName = new String(binding.GetNamePtr(), "Binding name", descriptorCollapsible);
-				UInt8* bindingIndex = new UInt8(&binding.index, "Binding index", descriptorCollapsible);
-				CheckableComboBox* bindingStages = new CheckableComboBox(descriptorCollapsible);
-				bindingStages->setMinimumHeight(30);
-				bindingStages->setMaximumHeight(30);
-				if (mat->HasShaderStage(cp::ShaderStages::Vertex)) bindingStages->AddCheckItem(QString::fromStdString(Helper::Material::GetShaderStageString(cp::ShaderStages::Vertex)), binding.HasShaderStage(cp::ShaderStages::Vertex) ? Qt::Checked : Qt::Unchecked);
-				if (mat->HasShaderStage(cp::ShaderStages::Fragment)) bindingStages->AddCheckItem(QString::fromStdString(Helper::Material::GetShaderStageString(cp::ShaderStages::Fragment)), binding.HasShaderStage(cp::ShaderStages::Fragment) ? Qt::Checked : Qt::Unchecked);
-				if (mat->HasShaderStage(cp::ShaderStages::Geometry)) bindingStages->AddCheckItem(QString::fromStdString(Helper::Material::GetShaderStageString(cp::ShaderStages::Geometry)), binding.HasShaderStage(cp::ShaderStages::Geometry) ? Qt::Checked : Qt::Unchecked);
-				if (mat->HasShaderStage(cp::ShaderStages::TessellationControl)) bindingStages->AddCheckItem(QString::fromStdString(Helper::Material::GetShaderStageString(cp::ShaderStages::TessellationControl)), binding.HasShaderStage(cp::ShaderStages::TessellationControl) ? Qt::Checked : Qt::Unchecked);
-				if (mat->HasShaderStage(cp::ShaderStages::TessellationEvaluation)) bindingStages->AddCheckItem(QString::fromStdString(Helper::Material::GetShaderStageString(cp::ShaderStages::TessellationEvaluation)), binding.HasShaderStage(cp::ShaderStages::TessellationEvaluation) ? Qt::Checked : Qt::Unchecked);
-				if (mat->HasShaderStage(cp::ShaderStages::Mesh)) bindingStages->AddCheckItem(QString::fromStdString(Helper::Material::GetShaderStageString(cp::ShaderStages::Mesh)), binding.HasShaderStage(cp::ShaderStages::Mesh) ? Qt::Checked : Qt::Unchecked);
-
-				descriptorCollapsible->AddWidget(bindingName);
-				descriptorCollapsible->AddWidget(bindingType);
-				descriptorCollapsible->AddWidget(bindingIndex);
-				descriptorCollapsible->AddWidget(bindingStages);
-
-				Collapsible* bufferCollapsible = new Collapsible(QString::fromStdString(binding.name), descriptorCollapsible, true, "#777");
-				bufferCollapsible->setVisible(false);
-
-				if (binding.type != cp::BindingType::TEXTURE)
-				{
-					bufferCollapsible->setVisible(true);
-					descriptorCollapsible->AddWidget(bufferCollapsible);
-
-					for (auto& [name, field] : binding.fields)
-					{
-						ShowField(field, bufferCollapsible, binding);
-					}
-
-					QPushButton* addFieldButton = new QPushButton("Add field", descriptorCollapsible);
-					bufferCollapsible->AddWidget(addFieldButton);
-
-					connect(addFieldButton, &QPushButton::clicked, [=, &binding] {
-						cp::MaterialField field;
-						field.type = cp::MaterialFieldType::FLOAT;
-						field.name = "New field";
-						field.offset = 0;
-						cp::MaterialField& mf = binding.AddField(field);
-						ShowField(mf, bufferCollapsible, binding);
-						});
-				}
-
-				QPushButton* removeBindingButton = new QPushButton("Remove binding", descriptorCollapsible);
-				descriptorCollapsible->AddWidget(removeBindingButton);
-
-				connect(removeBindingButton, &QPushButton::clicked, [=, &descriptor, &binding] {
-					if (descriptor.RemoveBinding(binding))
-					{
-						bindingType->deleteLater();
-						bindingName->deleteLater();
-						bindingIndex->deleteLater();
-						bindingStages->deleteLater();
-						bufferCollapsible->deleteLater();
-						removeBindingButton->deleteLater();
-					}
-					else
-					{
-						LOG_ERROR("Failed to remove binding");
-					}
-					});
-			};
-
 		Collapsible* buffers = new Collapsible("Buffers data", this);
 		layout->addWidget(buffers);
 
@@ -439,11 +323,9 @@ public:
 			setLabel->setStyleSheet("font-weight: bold;");
 			buffers->AddWidget(setLabel);
 
-			cp::SlangCompiler compiler; //Only use to render things there
-
 			while (it != mat->GetShaderReflection()->resources.end())
 			{
-				buffers->AddWidget(compiler.CreateResourceWidget(*it, this));
+				buffers->AddWidget(cp::SlangCompiler::CreateResourceWidget(*it, this));
 
 				auto prev = it;
 				it++;
@@ -491,6 +373,37 @@ public:
 		connect(saveButton, &QPushButton::clicked, [=] {
 			cp::JsonSerializer serializer;
 			mat->Serialize(serializer);
+			serializer.Write(_path);
+			});
+	}
+
+	void ShowMaterialInstance(const std::string& _path, const QFileInfo& _fileInfo)
+	{
+		readFile = new cp::MaterialInstance(scene->GetRenderer()->GetContext());
+		cp::MaterialInstance* matInstance = static_cast<cp::MaterialInstance*>(readFile);
+		cp::JsonSerializer serializer;
+		serializer.Read(_path);
+		matInstance->Deserialize(serializer);
+
+		LOG_DEBUG(MF("Deserialized material instance from: ", _path));
+
+		QWidget* matInstanceWidget = matInstance->CreateMaterialInstanceWidget(nullptr);
+
+		LOG_DEBUG(MF("Created material instance widget for: ", _path));
+
+		if (!matInstanceWidget)
+		{
+			LOG_ERROR("Failed to create material instance widget");
+			return;
+		}
+
+		layout->addWidget(matInstanceWidget);
+
+		QPushButton* saveButton = new QPushButton("Save", this);
+		layout->addWidget(saveButton);
+		connect(saveButton, &QPushButton::clicked, [=] {
+			cp::JsonSerializer serializer;
+			matInstance->Serialize(serializer);
 			serializer.Write(_path);
 			});
 	}

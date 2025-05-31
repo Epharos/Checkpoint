@@ -13,22 +13,18 @@ namespace cp
 
 	enum class MaterialFieldType : uint8_t
 	{
-		BOOL,
-		HALF,
-		FLOAT,
-		INT,
-		UINT,
-		VECTOR,
-		MATRIX,
-	};
+		Bool,
+		Half,
+		Float,
+		Double,
+		Int,
+		UInt,
+		Vector,
+		Matrix,
 
-	enum class BindingType : uint8_t
-	{
-		UNIFORM_BUFFER,
-		STORAGE_BUFFER,
-		TEXTURE,
-		//SAMPLER,
-		//IMAGE_SAMPLER,
+		Float2,
+		Float3,
+		Float4
 	};
 
 	struct PipelineCreationData
@@ -66,64 +62,6 @@ namespace cp
 		vk::BlendFactor srcAlphaBlendFactor = vk::BlendFactor::eOne;
 		vk::BlendFactor dstAlphaBlendFactor = vk::BlendFactor::eZero;
 		vk::BlendOp alphaBlendOp = vk::BlendOp::eAdd;
-	};
-
-	struct MaterialField : public ISerializable
-	{
-		MaterialFieldType type;
-		std::string name; // Will only be used in the editor
-		size_t offset;
-
-		void Serialize(ISerializer& _serializer) const override;
-		void Deserialize(ISerializer& _serializer) override;
-
-		std::string* GetNamePtr() { return &name; }
-	};
-
-	struct MaterialBinding : public ISerializable
-	{
-		BindingType type;
-		std::string name; // Will only be used in the editor
-		uint8_t index;
-		uint16_t shaderStages;
-		std::unordered_map<std::string, MaterialField> fields;
-
-		void Serialize(ISerializer& _serializer) const override;
-		void Deserialize(ISerializer& _serializer) override;
-
-		inline bool HasShaderStage(const ShaderStages& _stage) const { return (shaderStages & static_cast<uint16_t>(_stage)) != 0; }
-		inline void AddShaderStage(const ShaderStages& _stage) { shaderStages |= static_cast<uint16_t>(_stage); }
-		inline void RemoveShaderStage(const ShaderStages& _stage) { shaderStages &= ~static_cast<uint16_t>(_stage); }
-
-		inline MaterialField& AddField(const MaterialField& _field) { fields.insert({ _field.name, _field }); return fields.at(_field.name); }
-
-		inline std::string* GetNamePtr() { return &name; }
-
-		bool RemoveField(const MaterialField& _field);
-	};
-
-	struct MaterialDescriptor : public ISerializable
-	{
-		uint8_t index;
-		std::string name; // Will only be used in the editor
-
-		vk::DescriptorSetLayout layout;
-
-		std::unordered_map<std::string, MaterialBinding> bindings;
-
-		void Serialize(ISerializer& _serializer) const override;
-		void Deserialize(ISerializer& _serializer) override;
-
-		void GenerateDescriptorSetLayout(const cp::VulkanContext* _context);
-		inline std::string* GetNamePtr() { return &name; }
-
-		inline MaterialBinding& GetBinding(const std::string& _name) { return bindings[_name]; }
-
-		inline std::unordered_map<std::string, MaterialBinding>& GetBindings() { return bindings; }
-		inline std::unordered_map<std::string, MaterialBinding> GetBindings() const { return bindings; }
-
-		bool RemoveBinding(const MaterialBinding& _binding);
-		inline MaterialBinding& AddBinding(const MaterialBinding& _binding) { bindings.insert({ _binding.name, _binding }); return bindings.at(_binding.name); }
 	};
 
 	enum class ShaderStages : uint16_t
@@ -172,7 +110,7 @@ namespace cp
 
 		cp::ShaderReflection* shaderReflection = nullptr;
 
-		std::unordered_map<std::string, MaterialDescriptor> descriptors;
+		std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
 		PipelineCreationData pipelineCreationData;
 		std::unordered_map<std::string, RenderPassRequirement> rpRequirements;
 
@@ -207,13 +145,11 @@ namespace cp
 
 		std::vector<std::string> GetUniqueEntryPoints() const;
 
-		inline std::unordered_map<std::string, MaterialDescriptor>& GetDescriptors() { return descriptors; }
-		inline std::unordered_map<std::string, MaterialDescriptor> GetDescriptors() const { return descriptors; }
-		inline void AddDescriptor(const MaterialDescriptor& _descriptor) { descriptors.insert({ _descriptor.name, _descriptor }); }
-
 		inline uint16_t GetShaderStages() const { return shaderStages; }
 
 		inline ShaderReflection* GetShaderReflection() const { return shaderReflection; }
-		inline void SetShaderReflection(ShaderReflection* _reflection) { shaderReflection = _reflection; }
+		inline void SetShaderReflection(ShaderReflection* _reflection) { shaderReflection = _reflection; };
+
+		void CreateDescriptorSetLayouts();
 	};
 }

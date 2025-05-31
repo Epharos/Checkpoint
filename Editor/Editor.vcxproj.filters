@@ -42,12 +42,6 @@
     <ClCompile Include="src\Widgets\MOC_SearchList.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_Quat.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_Vec3.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
     <ClCompile Include="src\Widgets\Launcher\MOC_Button.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
@@ -63,9 +57,6 @@
     <ClCompile Include="src\Project.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_String.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
     <ClCompile Include="src\Widgets\ComponentFields\MOC_ResourceDropLineEdit.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
@@ -73,15 +64,6 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="src\Widgets\MOC_EnumMultiSelectDropDown.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_Int.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_ComponentField.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_NumericFields.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -122,15 +104,6 @@
     <ClInclude Include="src\Components\Transform.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Widgets\ComponentFields\Vec3.hpp">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Widgets\ComponentFields\Quat.hpp">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Widgets\ComponentFields\Field.hpp">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
     <ClInclude Include="src\Widgets\Launcher\Button.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
@@ -146,9 +119,6 @@
     <ClInclude Include="src\Project.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\Widgets\ComponentFields\String.hpp">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
     <ClInclude Include="src\Widgets\ComponentFields\ResourceDropLineEdit.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
@@ -156,18 +126,6 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Widgets\EnumMultiSelectDropDown.hpp">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Widgets\ComponentFields\Int.hpp">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Widgets\ComponentFields\Numeric.hpp">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Widgets\ComponentFields\NumericFields.hpp">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Widgets\ComponentFields\ComponentField.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>

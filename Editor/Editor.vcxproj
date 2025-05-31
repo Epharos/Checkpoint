@@ -105,14 +105,14 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);QT_WIDGETS_LIB</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;$(SolutionDir)Pre-Proc;$(SolutionDir)Core\Include;$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies\glfw\include;C:\Qt68\6.8.0\msvc2022_64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(SolutionDir)Pre-Proc;$(SolutionDir)EngineWidgets\Include;$(SolutionDir)Core\Include;$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies\glfw\include;C:\Qt68\6.8.0\msvc2022_64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\glfw\libs;$(SolutionDir)Core\$(Platform)\$(Configuration)\;$(VULKAN_SDK)\Lib;C:\Qt68\6.8.0\msvc2022_64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Qt6Widgetsd.lib;Qt6Cored.lib;Qt6Guid.lib;$(SolutionDir)$(Platform)\$(Configuration)\Core.lib;$(SolutionDir)$(Platform)\$(Configuration)\ECS.lib;vulkan-1.lib;glfw3.lib;slangd.lib;SPIRVd.lib;SPIRV-Toolsd.lib;SPIRV-Tools-linkd.lib;SPIRV-Tools-diffd.lib;SPIRV-Tools-lintd.lib;SPIRV-Tools-optd.lib;SPIRV-Tools-reduced.lib;SPIRV-Tools-sharedd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Qt6Widgetsd.lib;Qt6Cored.lib;Qt6Guid.lib;$(SolutionDir)$(Platform)\$(Configuration)\Core.lib;$(SolutionDir)$(Platform)\$(Configuration)\ECS.lib;$(SolutionDir)$(Platform)\$(Configuration)\EngineWidgets.lib;vulkan-1.lib;glfw3.lib;slangd.lib;SPIRVd.lib;SPIRV-Toolsd.lib;SPIRV-Tools-linkd.lib;SPIRV-Tools-diffd.lib;SPIRV-Tools-lintd.lib;SPIRV-Tools-optd.lib;SPIRV-Tools-reduced.lib;SPIRV-Tools-sharedd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
       <Command>moc "$(ProjectDir)src\Launcher.hpp" -o "$(ProjectDir)src\MOC_Launcher.cpp"
@@ -130,7 +130,7 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);QT_WIDGETS_LIB</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;$(SolutionDir)ECS\Include;$(SolutionDir)Core\Include;$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies\glfw\include;C:\Qt68\6.8.0\msvc2022_64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(SolutionDir)ECS\Include;$(SolutionDir)EngineWidgets\Include;$(SolutionDir)Core\Include;$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies\glfw\include;C:\Qt68\6.8.0\msvc2022_64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -139,7 +139,7 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\glfw\libs;$(SolutionDir)Core\$(Platform)\$(Configuration)\;$(VULKAN_SDK)\Lib;C:\Qt68\6.8.0\msvc2022_64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Qt6Widgets.lib;Qt6Core.lib;Qt6Gui.lib;$(SolutionDir)$(Platform)\$(Configuration)\Core.lib;$(SolutionDir)$(Platform)\$(Configuration)\ECS.lib;vulkan-1.lib;glfw3.lib;slang.lib;SPIRV-Tools.lib;SPIRV-Tools-link.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Qt6Widgets.lib;Qt6Core.lib;Qt6Gui.lib;$(SolutionDir)$(Platform)\$(Configuration)\Core.lib;$(SolutionDir)$(Platform)\$(Configuration)\ECS.lib;$(SolutionDir)$(Platform)\$(Configuration)\EngineWidgets.lib;vulkan-1.lib;glfw3.lib;slang.lib;SPIRV-Tools.lib;SPIRV-Tools-link.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -172,14 +172,8 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_ComponentField.cpp" />
     <ClCompile Include="src\Widgets\ComponentFields\MOC_FileDropLineEdit.cpp" />
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_Int.cpp" />
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_NumericFields.cpp" />
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_Quat.cpp" />
     <ClCompile Include="src\Widgets\ComponentFields\MOC_ResourceDropLineEdit.cpp" />
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_String.cpp" />
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_Vec3.cpp" />
     <ClCompile Include="src\Widgets\Launcher\MOC_Button.cpp" />
     <ClCompile Include="src\Widgets\Launcher\MOC_ProjectOverview.cpp" />
     <ClCompile Include="src\Widgets\Launcher\MOC_ProjectTableView.cpp" />
@@ -200,15 +194,7 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
     <ClInclude Include="src\Renderers\MinimalistRenderer.hpp" />
     <ClInclude Include="src\VulkanRenderer.hpp" />
     <ClInclude Include="src\Widgets\Collapsible.hpp" />
-    <ClInclude Include="src\Widgets\ComponentFields\ComponentField.hpp" />
-    <ClInclude Include="src\Widgets\ComponentFields\Field.hpp" />
-    <ClInclude Include="src\Widgets\ComponentFields\Int.hpp" />
-    <ClInclude Include="src\Widgets\ComponentFields\Numeric.hpp" />
-    <ClInclude Include="src\Widgets\ComponentFields\Quat.hpp" />
     <ClInclude Include="src\Widgets\ComponentFields\ResourceDropLineEdit.hpp" />
-    <ClInclude Include="src\Widgets\ComponentFields\String.hpp" />
-    <ClInclude Include="src\Widgets\ComponentFields\NumericFields.hpp" />
-    <ClInclude Include="src\Widgets\ComponentFields\Vec3.hpp" />
     <ClInclude Include="src\Widgets\ComponentFields\FileDropLineEdit.hpp" />
     <ClInclude Include="src\Widgets\EnumMultiSelectDropDown.hpp" />
     <ClInclude Include="src\Widgets\Inspector.hpp" />

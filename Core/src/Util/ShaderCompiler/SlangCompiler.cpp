@@ -29,7 +29,7 @@ namespace cp
 			case SlangResourceShape::SLANG_TEXTURE_2D_ARRAY:
 			case SlangResourceShape::SLANG_TEXTURE_CUBE_ARRAY:
 			case SlangResourceShape::SLANG_TEXTURE_BUFFER:
-				return ShaderResourceKind::Texture;
+				return ShaderResourceKind::TextureResource;
 			}
 			break;
 		}
@@ -61,6 +61,17 @@ namespace cp
 				field.fields.push_back(subField);
 			}
 		}
+		else if (typeLayout->getKind() == TypeReflection::Kind::Vector)
+		{
+			field.vectorType = typeLayout->getElementTypeLayout()->getName();
+			field.vectorSize = typeLayout->getElementCount();
+		}
+		else if (typeLayout->getKind() == TypeReflection::Kind::Matrix)
+		{
+			field.matrixType = typeLayout->getElementTypeLayout()->getElementTypeLayout()->getName();
+			field.matrixRows = typeLayout->getRowCount();
+			field.matrixColumns = typeLayout->getColumnCount();
+		}
 
 		return field;
 	}
@@ -81,7 +92,7 @@ namespace cp
 
 		TargetDesc targetDesc;
 		targetDesc.format = SLANG_SPIRV;
-		targetDesc.profile = globalSession->findProfile("spir-v_1_6");
+		targetDesc.profile = globalSession->findProfile("spirv_1_6");
 
 		CompilerOptionEntry compilerOptions[] = {
 			{ CompilerOptionName::VulkanUseEntryPointName, {.intValue0 = 1 } },
@@ -141,7 +152,7 @@ namespace cp
 
 		std::vector<IComponentType*> entryPointsArray(entryPointCount + 1);
 
-		entryPointsArray[0] = module; // The first entry point is null, as it is not used in the compilation process
+		entryPointsArray[0] = module;
 
 		for (uint32_t i = 1; i <= entryPointCount; i++)
 		{
@@ -287,9 +298,6 @@ namespace cp
 		for (unsigned int i = 0; i < programLayout->getEntryPointCount(); i++)
 		{
 			EntryPointReflection* entryPointLayout = programLayout->getEntryPointByIndex(i);
-			LOG_INFO(MF("Entry point name: ", entryPointLayout->getName()));
-			LOG_INFO(MF("Entry point parameter count: ", entryPointLayout->getParameterCount()));
-			LOG_INFO(MF("Entry point stage: ", EntryPointStageName(entryPointLayout->getStage())));
 
 			EntryPoint entryPoint;
 			entryPoint.name = entryPointLayout->getName();
@@ -312,14 +320,14 @@ namespace cp
 	{
 		QWidget* widget = new QWidget(parent);
 		QVBoxLayout* fieldLayout = new QVBoxLayout(widget);
-		widget->setLayout(fieldLayout);
+		//widget->setLayout(fieldLayout);
 		fieldLayout->setContentsMargins(8, 0, 0, 0);
 		fieldLayout->setSpacing(0);
 
 		if (!field.name.empty() && !field.typeName.empty())
 		{
 			QWidget* nameTypeWidget = new QWidget(widget);
-			QHBoxLayout* nameTypeLayout = new QHBoxLayout(widget);
+			QHBoxLayout* nameTypeLayout = new QHBoxLayout(nameTypeWidget);
 			nameTypeLayout->setContentsMargins(0, 0, 0, 0);
 			nameTypeLayout->setSpacing(0);
 			nameTypeWidget->setLayout(nameTypeLayout);
@@ -329,9 +337,47 @@ namespace cp
 			QLabel* typeLabel = new QLabel(QString::fromStdString(" : " + field.typeName), widget);
 			typeLabel->setStyleSheet("color : #aaa;");
 			nameTypeLayout->addWidget(typeLabel);
+			
+			if (field.typeName.compare("vector") == 0)
+			{
+				typeLabel->setText(QString::fromStdString(" : " + field.vectorType + std::to_string(field.vectorSize)));
+			}
+			else if (field.typeName.compare("matrix") == 0)
+			{
+				typeLabel->setText(QString::fromStdString(" : " + field.matrixType + std::to_string(field.matrixRows) + "x" + std::to_string(field.matrixColumns)));
+			}
+
 			nameTypeLayout->addStretch();
 
 			fieldLayout->addWidget(nameTypeWidget);
+		}
+
+		if (field.size > 0 && field.size != ~size_t(0))
+		{
+			QLabel* sizeLabel = new QLabel(QString::fromStdString("Size: " + std::to_string(field.size)), widget);
+			sizeLabel->setStyleSheet("color : #aaa;");
+			fieldLayout->addWidget(sizeLabel);
+		}
+
+		if(field.offset != -1)
+		{
+			QLabel* offsetLabel = new QLabel(QString::fromStdString("Offset: " + std::to_string(field.offset)), widget);
+			offsetLabel->setStyleSheet("color : #aaa;");
+			fieldLayout->addWidget(offsetLabel);
+		}
+
+		if (field.alignment > 0)
+		{
+			QLabel* alignmentLabel = new QLabel(QString::fromStdString("Alignment: " + std::to_string(field.alignment)), widget);
+			alignmentLabel->setStyleSheet("color : #aaa;");
+			fieldLayout->addWidget(alignmentLabel);
+		}
+			
+		if (field.stride > 0)
+		{
+			QLabel* strideLabel = new QLabel(QString::fromStdString("Stride: " + std::to_string(field.stride)), widget);
+			strideLabel->setStyleSheet("color : #aaa;");
+			fieldLayout->addWidget(strideLabel);
 		}
 
 		if (field.fields.size() > 0)
@@ -342,42 +388,17 @@ namespace cp
 				fieldLayout->addWidget(subFieldWidget);
 			}
 		}
-		else
-		{
-			if (field.size > 0 && field.size != ~size_t(0))
-			{
-				QLabel* sizeLabel = new QLabel(QString::fromStdString("Size: " + std::to_string(field.size)), widget);
-				sizeLabel->setStyleSheet("color : #aaa;");
-				fieldLayout->addWidget(sizeLabel);
-			}
-
-			if(field.offset != -1)
-			{
-				QLabel* offsetLabel = new QLabel(QString::fromStdString("Offset: " + std::to_string(field.offset)), widget);
-				offsetLabel->setStyleSheet("color : #aaa;");
-				fieldLayout->addWidget(offsetLabel);
-			}
-
-			if (field.alignment > 0)
-			{
-				QLabel* alignmentLabel = new QLabel(QString::fromStdString("Alignment: " + std::to_string(field.alignment)), widget);
-				alignmentLabel->setStyleSheet("color : #aaa;");
-				fieldLayout->addWidget(alignmentLabel);
-			}
-			
-			if (field.stride > 0)
-			{
-				QLabel* strideLabel = new QLabel(QString::fromStdString("Stride: " + std::to_string(field.stride)), widget);
-				strideLabel->setStyleSheet("color : #aaa;");
-				fieldLayout->addWidget(strideLabel);
-			}
-		}
 
 		return widget;
 	}
 
-	QWidget* SlangCompiler::CreateResourceWidget(const ShaderResource& resource, QWidget* parent)
+	QWidget* SlangCompiler::CreateResourceWidget(const ShaderResource& resource, QWidget* parent, const bool& _showEngineSets)
 	{
+		if (!_showEngineSets && resource.set <= 1)
+		{
+			return nullptr; // Skip engine sets if not requested
+		}
+
 		QWidget* widget = new QWidget(parent);
 		QVBoxLayout* layout = new QVBoxLayout(widget);
 
@@ -403,7 +424,7 @@ namespace cp
 			kindLabel->setStyleSheet("color : #aaa;");
 			layout->addWidget(kindLabel);
 		}
-		else if (resource.kind == ShaderResourceKind::Texture)
+		else if (resource.kind == ShaderResourceKind::TextureResource)
 		{
 			QLabel* kindLabel = new QLabel("Texture", widget);
 			kindLabel->setStyleSheet("color : #aaa;");
@@ -432,6 +453,19 @@ namespace cp
 			_serializer.EndObjectArrayElement();
 		}
 		_serializer.EndObjectArray();
+
+		if (!vectorType.empty())
+		{
+			_serializer.WriteString("vectorType", vectorType);
+			_serializer.WriteInt("vectorSize", vectorSize);
+		}
+
+		if (!matrixType.empty())
+		{
+			_serializer.WriteString("matrixType", matrixType);
+			_serializer.WriteInt("matrixRows", matrixRows);
+			_serializer.WriteInt("matrixColumns", matrixColumns);
+		}
 	}
 
 	void ShaderField::Deserialize(ISerializer& _serializer)
@@ -455,6 +489,12 @@ namespace cp
 			}
 		}
 		_serializer.EndObjectArray();
+
+		vectorType = _serializer.ReadString("vectorType", "");
+		vectorSize = _serializer.ReadInt("vectorSize", 0);
+		matrixType = _serializer.ReadString("matrixType", "");
+		matrixRows = _serializer.ReadInt("matrixRows", 0);
+		matrixColumns = _serializer.ReadInt("matrixColumns", 0);
 	}
 
 	void ShaderResource::Serialize(ISerializer& _serializer) const
@@ -469,6 +509,7 @@ namespace cp
 		field.Serialize(_serializer);
 		_serializer.EndObject();
 	}
+
 	void ShaderResource::Deserialize(ISerializer& _serializer)
 	{
 		name = _serializer.ReadString("name", name);

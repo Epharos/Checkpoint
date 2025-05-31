@@ -386,13 +386,24 @@ std::tuple<size_t, std::string*> cp::JsonSerializer::ReadStringArray(const std::
 
 std::tuple<size_t, uint8_t*> cp::JsonSerializer::ReadByteArray(const std::string& _name)
 {
-	size_t size = data[_name].size();
+	if (!objectStack.back()->contains(_name) || !objectStack.back()->operator[](_name).is_array())
+	{
+		LOG_ERROR(MF("Byte array ", _name, " not found or is not an array"));
+		return std::make_tuple(0, nullptr);
+	}
+
+	objectStack.push_back(&(*objectStack.back())[_name]);
+
+	size_t size = objectStack.back()->size();
 	uint8_t* array = new uint8_t[size];
 
 	for (size_t i = 0; i < size; i++)
 	{
-		array[i] = static_cast<uint8_t>(data[_name][i].get<int>());
+		array[i] = static_cast<uint8_t>(objectStack.back()->at(i).get<int>());
 	}
+
+	if (objectStack.size() > 1)
+		objectStack.pop_back();
 
 	return std::make_tuple(size, array);
 }

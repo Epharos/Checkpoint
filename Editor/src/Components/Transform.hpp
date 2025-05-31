@@ -2,8 +2,6 @@
 
 #include "../pch.hpp"
 #include "DirtyPattern.hpp"
-#include "../Widgets/ComponentFields/Vec3.hpp"
-#include "../Widgets/ComponentFields/Quat.hpp"
 
 struct Transform : public cp::IComponentBase, public DirtyPattern
 {
@@ -176,17 +174,17 @@ public:
 
 		QLabel* positionLabel = new QLabel("Position", this);
 		layout->addWidget(positionLabel);
-		Vec3* positionField = new Vec3(&component.position, LayoutDirection::Columns, this);
+		cp::Float3* positionField = new cp::Float3(&component.position, "Position", cp::LayoutDirection::Columns, this);
 		layout->addWidget(positionField);
 
 		QLabel* rotationLabel = new QLabel("Rotation", this);
 		layout->addWidget(rotationLabel);
-		Quat* rotationField = new Quat(&component.rotation, LayoutDirection::Columns, this);
+		cp::Quaternion* rotationField = new cp::Quaternion(&component.rotation, cp::LayoutDirection::Columns, this);
 		layout->addWidget(rotationField);
 
 		QLabel* scaleLabel = new QLabel("Scale", this);
 		layout->addWidget(scaleLabel);
-		Vec3* scaleField = new Vec3(&component.scale, LayoutDirection::Columns, this);
+		cp::Float3* scaleField = new cp::Float3(&component.scale, "Scale", cp::LayoutDirection::Columns, this);
 		layout->addWidget(scaleField);
 	}
 };

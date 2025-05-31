@@ -7,6 +7,7 @@
 
 #include <Core.hpp>
 #include <ECS.hpp>
+#include <Widgets.hpp>
 
 #include <QtWidgets/qapplication.h>
 #include <QtWidgets/qmainwindow.h>
