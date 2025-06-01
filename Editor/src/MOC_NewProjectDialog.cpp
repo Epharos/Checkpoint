@@ -1,3 +1,5 @@
+#include "pch.hpp"
+
 /****************************************************************************
 ** Meta object code from reading C++ file 'NewProjectDialog.hpp'
 **
@@ -5,8 +7,6 @@
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
-
-#include "pch.hpp"
 
 #include "NewProjectDialog.hpp"
 #include <QtCore/qmetatype.h>
@@ -107,7 +107,7 @@ constexpr auto qt_meta_stringdata_CLASSNewProjectDialogENDCLASS = QtMocHelpers::
     "NewProjectDialog",
     "ProjectCreated",
     "",
-    "ProjectData",
+    "cp::ProjectData",
     "projectData",
     "SelectFolder",
     "CreateProject"
@@ -130,10 +130,10 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSNewProjectDialogENDCLASS[] = {
        0,       // flags
        1,       // signalCount
 
- // signals: moduleName, argc, parameters, tag, flags, initial metatype offsets
+ // signals: name, argc, parameters, tag, flags, initial metatype offsets
        1,    1,   32,    2, 0x06,    1 /* Public */,
 
- // slots: moduleName, argc, parameters, tag, flags, initial metatype offsets
+ // slots: name, argc, parameters, tag, flags, initial metatype offsets
        5,    0,   35,    2, 0x08,    3 /* Private */,
        6,    0,   36,    2, 0x08,    4 /* Private */,
 
@@ -158,7 +158,7 @@ Q_CONSTINIT const QMetaObject NewProjectDialog::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<NewProjectDialog, std::true_type>,
         // method 'ProjectCreated'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        QtPrivate::TypeAndForceComplete<const ProjectData &, std::false_type>,
+        QtPrivate::TypeAndForceComplete<const cp::ProjectData &, std::false_type>,
         // method 'SelectFolder'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'CreateProject'
@@ -173,7 +173,7 @@ void NewProjectDialog::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int
         auto *_t = static_cast<NewProjectDialog *>(_o);
         (void)_t;
         switch (_id) {
-        case 0: _t->ProjectCreated((*reinterpret_cast< std::add_pointer_t<ProjectData>>(_a[1]))); break;
+        case 0: _t->ProjectCreated((*reinterpret_cast< std::add_pointer_t<cp::ProjectData>>(_a[1]))); break;
         case 1: _t->SelectFolder(); break;
         case 2: _t->CreateProject(); break;
         default: ;
@@ -181,7 +181,7 @@ void NewProjectDialog::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int
     } else if (_c == QMetaObject::IndexOfMethod) {
         int *result = reinterpret_cast<int *>(_a[0]);
         {
-            using _t = void (NewProjectDialog::*)(const ProjectData & );
+            using _t = void (NewProjectDialog::*)(const cp::ProjectData & );
             if (_t _q_method = &NewProjectDialog::ProjectCreated; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
                 *result = 0;
                 return;
@@ -221,7 +221,7 @@ int NewProjectDialog::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 }
 
 // SIGNAL 0
-void NewProjectDialog::ProjectCreated(const ProjectData & _t1)
+void NewProjectDialog::ProjectCreated(const cp::ProjectData & _t1)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
     QMetaObject::activate(this, &staticMetaObject, 0, _a);

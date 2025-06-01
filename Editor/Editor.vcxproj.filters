@@ -51,15 +51,6 @@
     <ClCompile Include="src\Widgets\Launcher\MOC_ProjectTableView.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_FileDropLineEdit.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Project.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_ResourceDropLineEdit.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
     <ClCompile Include="src\Widgets\MOC_Collapsible.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
@@ -111,15 +102,6 @@
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Widgets\Launcher\ProjectOverview.hpp">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Widgets\ComponentFields\FileDropLineEdit.hpp">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Project.hpp">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Widgets\ComponentFields\ResourceDropLineEdit.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="src\Widgets\Collapsible.hpp">

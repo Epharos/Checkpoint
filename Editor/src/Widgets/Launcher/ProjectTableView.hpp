@@ -47,7 +47,7 @@ public:
 		setMinimumWidth(700);
 	}
 
-	void Populate(const std::vector<ProjectData>& _items)
+	void Populate(const std::vector<cp::ProjectData>& _items)
 	{
 		if (model) delete model;
 		if (proxyModel) delete proxyModel;
@@ -75,7 +75,7 @@ public:
 
 		for (int i = 0; i < _items.size(); i++)
 		{
-			const ProjectData& data = _items[i];
+			const cp::ProjectData& data = _items[i];
 
 			QStandardItem* nameItem = new QStandardItem(data.name);
 			nameItem->setToolTip(data.path);

@@ -1,3 +1,5 @@
+#include "pch.hpp"
+
 /****************************************************************************
 ** Meta object code from reading C++ file 'FileDropLineEdit.hpp'
 **
@@ -33,9 +35,9 @@ QT_WARNING_DISABLE_GCC("-Wuseless-cast")
 namespace {
 
 #ifdef QT_MOC_HAS_STRINGDATA
-struct qt_meta_stringdata_CLASSFileDropLineEditENDCLASS_t {};
-constexpr auto qt_meta_stringdata_CLASSFileDropLineEditENDCLASS = QtMocHelpers::stringData(
-    "FileDropLineEdit",
+struct qt_meta_stringdata_CLASScpSCOPEFileDropLineEditENDCLASS_t {};
+constexpr auto qt_meta_stringdata_CLASScpSCOPEFileDropLineEditENDCLASS = QtMocHelpers::stringData(
+    "cp::FileDropLineEdit",
     "ResourcePathChanged",
     "",
     "std::string",
@@ -46,7 +48,7 @@ constexpr auto qt_meta_stringdata_CLASSFileDropLineEditENDCLASS = QtMocHelpers::
 #endif // !QT_MOC_HAS_STRINGDATA
 } // unnamed namespace
 
-Q_CONSTINIT static const uint qt_meta_data_CLASSFileDropLineEditENDCLASS[] = {
+Q_CONSTINIT static const uint qt_meta_data_CLASScpSCOPEFileDropLineEditENDCLASS[] = {
 
  // content:
       12,       // revision
@@ -59,7 +61,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSFileDropLineEditENDCLASS[] = {
        0,       // flags
        1,       // signalCount
 
- // signals: moduleName, argc, parameters, tag, flags, initial metatype offsets
+ // signals: name, argc, parameters, tag, flags, initial metatype offsets
        1,    1,   20,    2, 0x06,    1 /* Public */,
 
  // signals: parameters
@@ -68,13 +70,13 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSFileDropLineEditENDCLASS[] = {
        0        // eod
 };
 
-Q_CONSTINIT const QMetaObject FileDropLineEdit::staticMetaObject = { {
+Q_CONSTINIT const QMetaObject cp::FileDropLineEdit::staticMetaObject = { {
     QMetaObject::SuperData::link<QLineEdit::staticMetaObject>(),
-    qt_meta_stringdata_CLASSFileDropLineEditENDCLASS.offsetsAndSizes,
-    qt_meta_data_CLASSFileDropLineEditENDCLASS,
+    qt_meta_stringdata_CLASScpSCOPEFileDropLineEditENDCLASS.offsetsAndSizes,
+    qt_meta_data_CLASScpSCOPEFileDropLineEditENDCLASS,
     qt_static_metacall,
     nullptr,
-    qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASSFileDropLineEditENDCLASS_t,
+    qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASScpSCOPEFileDropLineEditENDCLASS_t,
         // Q_OBJECT / Q_GADGET
         QtPrivate::TypeAndForceComplete<FileDropLineEdit, std::true_type>,
         // method 'ResourcePathChanged'
@@ -84,7 +86,7 @@ Q_CONSTINIT const QMetaObject FileDropLineEdit::staticMetaObject = { {
     nullptr
 } };
 
-void FileDropLineEdit::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+void cp::FileDropLineEdit::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
 {
     if (_c == QMetaObject::InvokeMetaMethod) {
         auto *_t = static_cast<FileDropLineEdit *>(_o);
@@ -105,20 +107,20 @@ void FileDropLineEdit::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int
     }
 }
 
-const QMetaObject *FileDropLineEdit::metaObject() const
+const QMetaObject *cp::FileDropLineEdit::metaObject() const
 {
     return QObject::d_ptr->metaObject ? QObject::d_ptr->dynamicMetaObject() : &staticMetaObject;
 }
 
-void *FileDropLineEdit::qt_metacast(const char *_clname)
+void *cp::FileDropLineEdit::qt_metacast(const char *_clname)
 {
     if (!_clname) return nullptr;
-    if (!strcmp(_clname, qt_meta_stringdata_CLASSFileDropLineEditENDCLASS.stringdata0))
+    if (!strcmp(_clname, qt_meta_stringdata_CLASScpSCOPEFileDropLineEditENDCLASS.stringdata0))
         return static_cast<void*>(this);
     return QLineEdit::qt_metacast(_clname);
 }
 
-int FileDropLineEdit::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+int cp::FileDropLineEdit::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
     _id = QLineEdit::qt_metacall(_c, _id, _a);
     if (_id < 0)
@@ -136,7 +138,7 @@ int FileDropLineEdit::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 }
 
 // SIGNAL 0
-void FileDropLineEdit::ResourcePathChanged(const std::string & _t1)
+void cp::FileDropLineEdit::ResourcePathChanged(const std::string & _t1)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
     QMetaObject::activate(this, &staticMetaObject, 0, _a);

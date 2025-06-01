@@ -119,6 +119,16 @@ namespace Helper
 			device.destroyBuffer(buffer);
 			device.freeMemory(bufferMemory);
 		}
+
+		void DestroyBuffer(const vk::Device& device, cp::Buffer& buffer)
+		{
+			if (buffer.buffer)
+			{
+				DestroyBuffer(device, buffer.buffer, buffer.memory);
+				buffer.buffer = VK_NULL_HANDLE;
+				buffer.memory = VK_NULL_HANDLE;
+			}
+		}
 	}
 
 	namespace Format
@@ -541,7 +551,7 @@ QWidget* Helper::Material::CreateMaterialFieldWidget(QWidget* _parent, const cp:
 		}
 	}
 
-	LOG_WARNING("Unsupported material field type: " + field.typeName);
+	//LOG_WARNING("Unsupported material field type: " + field.typeName);
 	return nullptr;
 }
 

@@ -202,7 +202,7 @@ namespace cp
 
 		LOG_INFO(MF("Defined entry points: ", module->getDefinedEntryPointCount()));
 
-		for (uint32_t i = 0; i < module->getDefinedEntryPointCount(); i++)
+		for (uint32_t i = 0; i < static_cast<uint32_t>(module->getDefinedEntryPointCount()); i++)
 		{
 			ComPtr<IEntryPoint> entryPoint;
 			module->getDefinedEntryPoint(i, entryPoint.writeRef());
@@ -440,10 +440,10 @@ namespace cp
 	{
 		_serializer.WriteString("name", name);
 		_serializer.WriteString("typeName", typeName);
-		_serializer.WriteInt("size", size);
-		_serializer.WriteInt("offset", offset);
-		_serializer.WriteInt("alignment", alignment);
-		_serializer.WriteInt("stride", stride);
+		_serializer.WriteInt("size", static_cast<int>(size));
+		_serializer.WriteInt("offset", static_cast<int>(offset));
+		_serializer.WriteInt("alignment", static_cast<int>(alignment));
+		_serializer.WriteInt("stride", static_cast<int>(stride));
 
 		_serializer.BeginObjectArrayWriting("fields");
 		for (const auto& field : fields)
@@ -457,14 +457,14 @@ namespace cp
 		if (!vectorType.empty())
 		{
 			_serializer.WriteString("vectorType", vectorType);
-			_serializer.WriteInt("vectorSize", vectorSize);
+			_serializer.WriteInt("vectorSize", static_cast<int>(vectorSize));
 		}
 
 		if (!matrixType.empty())
 		{
 			_serializer.WriteString("matrixType", matrixType);
-			_serializer.WriteInt("matrixRows", matrixRows);
-			_serializer.WriteInt("matrixColumns", matrixColumns);
+			_serializer.WriteInt("matrixRows", static_cast<int>(matrixRows));
+			_serializer.WriteInt("matrixColumns", static_cast<int>(matrixColumns));
 		}
 	}
 
@@ -472,10 +472,10 @@ namespace cp
 	{
 		name = _serializer.ReadString("name", name);
 		typeName = _serializer.ReadString("typeName", typeName);
-		size = _serializer.ReadInt("size", size);
-		offset = _serializer.ReadInt("offset", offset);
-		alignment = _serializer.ReadInt("alignment", alignment);
-		stride = _serializer.ReadInt("stride", stride);
+		size = static_cast<size_t>(_serializer.ReadInt("size", 0));
+		offset = static_cast<size_t>(_serializer.ReadInt("offset", 0));
+		alignment = static_cast<size_t>(_serializer.ReadInt("alignment", 0));
+		stride = static_cast<size_t>(_serializer.ReadInt("stride", 0));
 
 		size_t fieldCount = _serializer.BeginObjectArrayReading("fields");
 		for (size_t i = 0; i < fieldCount; i++)
@@ -491,10 +491,10 @@ namespace cp
 		_serializer.EndObjectArray();
 
 		vectorType = _serializer.ReadString("vectorType", "");
-		vectorSize = _serializer.ReadInt("vectorSize", 0);
+		vectorSize = static_cast<size_t>(_serializer.ReadInt("vectorSize", 0));
 		matrixType = _serializer.ReadString("matrixType", "");
-		matrixRows = _serializer.ReadInt("matrixRows", 0);
-		matrixColumns = _serializer.ReadInt("matrixColumns", 0);
+		matrixRows = static_cast<size_t>(_serializer.ReadInt("matrixRows", 0));
+		matrixColumns = static_cast<size_t>(_serializer.ReadInt("matrixColumns", 0));
 	}
 
 	void ShaderResource::Serialize(ISerializer& _serializer) const

@@ -1,3 +1,5 @@
+#include "pch.hpp"
+
 /****************************************************************************
 ** Meta object code from reading C++ file 'ProjectOverview.hpp'
 **
@@ -5,8 +7,6 @@
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
-
-#include "pch.hpp"
 
 #include "ProjectOverview.hpp"
 #include <QtCore/qmetatype.h>
@@ -62,11 +62,11 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSProjectOverviewENDCLASS[] = {
        0,       // flags
        2,       // signalCount
 
- // signals: moduleName, argc, parameters, tag, flags, initial metatype offsets
+ // signals: name, argc, parameters, tag, flags, initial metatype offsets
        1,    1,   38,    2, 0x06,    1 /* Public */,
        5,    1,   41,    2, 0x06,    3 /* Public */,
 
- // slots: moduleName, argc, parameters, tag, flags, initial metatype offsets
+ // slots: name, argc, parameters, tag, flags, initial metatype offsets
        1,    0,   44,    2, 0x08,    5 /* Private */,
        5,    0,   45,    2, 0x08,    6 /* Private */,
 

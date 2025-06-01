@@ -1,3 +1,5 @@
+#include "pch.hpp"
+
 /****************************************************************************
 ** Meta object code from reading C++ file 'Launcher.hpp'
 **
@@ -5,8 +7,6 @@
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
-
-#include "pch.hpp"
 
 #include "Launcher.hpp"
 #include <QtCore/qmetatype.h>
@@ -45,10 +45,10 @@ constexpr auto qt_meta_stringdata_CLASSLauncherENDCLASS = QtMocHelpers::stringDa
     "ShowProjectData",
     "CreateNewProject",
     "SaveNewProject",
-    "ProjectData",
+    "cp::ProjectData",
     "projectData",
     "SaveRecentProjects",
-    "std::vector<ProjectData>",
+    "std::vector<cp::ProjectData>",
     "projects",
     "LoadRecentProjects"
 );
@@ -70,7 +70,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSLauncherENDCLASS[] = {
        0,       // flags
        0,       // signalCount
 
- // slots: moduleName, argc, parameters, tag, flags, initial metatype offsets
+ // slots: name, argc, parameters, tag, flags, initial metatype offsets
        1,    1,   50,    2, 0x08,    1 /* Private */,
        5,    1,   53,    2, 0x08,    3 /* Private */,
        6,    0,   56,    2, 0x08,    5 /* Private */,
@@ -108,12 +108,12 @@ Q_CONSTINIT const QMetaObject Launcher::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'SaveNewProject'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        QtPrivate::TypeAndForceComplete<const ProjectData &, std::false_type>,
+        QtPrivate::TypeAndForceComplete<const cp::ProjectData &, std::false_type>,
         // method 'SaveRecentProjects'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        QtPrivate::TypeAndForceComplete<const std::vector<ProjectData> &, std::false_type>,
+        QtPrivate::TypeAndForceComplete<const std::vector<cp::ProjectData> &, std::false_type>,
         // method 'LoadRecentProjects'
-        QtPrivate::TypeAndForceComplete<std::vector<ProjectData>, std::false_type>
+        QtPrivate::TypeAndForceComplete<std::vector<cp::ProjectData>, std::false_type>
     >,
     nullptr
 } };
@@ -127,10 +127,10 @@ void Launcher::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, vo
         case 0: _t->OpenProject((*reinterpret_cast< std::add_pointer_t<std::string>>(_a[1]))); break;
         case 1: _t->ShowProjectData((*reinterpret_cast< std::add_pointer_t<std::string>>(_a[1]))); break;
         case 2: _t->CreateNewProject(); break;
-        case 3: _t->SaveNewProject((*reinterpret_cast< std::add_pointer_t<ProjectData>>(_a[1]))); break;
-        case 4: _t->SaveRecentProjects((*reinterpret_cast< std::add_pointer_t<std::vector<ProjectData>>>(_a[1]))); break;
-        case 5: { std::vector<ProjectData> _r = _t->LoadRecentProjects();
-            if (_a[0]) *reinterpret_cast< std::vector<ProjectData>*>(_a[0]) = std::move(_r); }  break;
+        case 3: _t->SaveNewProject((*reinterpret_cast< std::add_pointer_t<cp::ProjectData>>(_a[1]))); break;
+        case 4: _t->SaveRecentProjects((*reinterpret_cast< std::add_pointer_t<std::vector<cp::ProjectData>>>(_a[1]))); break;
+        case 5: { std::vector<cp::ProjectData> _r = _t->LoadRecentProjects();
+            if (_a[0]) *reinterpret_cast< std::vector<cp::ProjectData>*>(_a[0]) = std::move(_r); }  break;
         default: ;
         }
     }

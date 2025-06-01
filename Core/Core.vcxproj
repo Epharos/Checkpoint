@@ -149,6 +149,9 @@
     <ClCompile Include="src\ECS\Entity\Entity.cpp" />
     <ClCompile Include="src\ECS\Entity\EntityManager.cpp" />
     <ClCompile Include="src\ECS\System\SystemManager.cpp" />
+    <ClCompile Include="src\Editor\FileDropLineEdit.cpp" />
+    <ClCompile Include="src\Editor\Project.cpp" />
+    <ClCompile Include="src\Editor\ResourceDropLineEdit.cpp" />
     <ClCompile Include="src\Helpers\Helpers.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -195,6 +198,7 @@
     <ClInclude Include="src\ECS\Entity\EntityManager.hpp" />
     <ClInclude Include="src\ECS\System\System.hpp" />
     <ClInclude Include="src\ECS\System\SystemManager.hpp" />
+    <ClInclude Include="src\Editor\Project.hpp" />
     <ClInclude Include="src\Helpers\Helpers.hpp" />
     <ClInclude Include="src\pch.hpp" />
     <ClInclude Include="src\Render\Pipeline\DescriptorSetManager.hpp" />
@@ -219,6 +223,8 @@
     <ClInclude Include="src\Util\Serializers\Serializable.hpp" />
     <ClInclude Include="src\Util\Serializers\ISerializer.hpp" />
     <ClInclude Include="src\Util\ShaderCompiler\SlangCompiler.hpp" />
+    <ClInclude Include="src\Editor\FileDropLineEdit.hpp" />
+    <ClInclude Include="src\Editor\ResourceDropLineEdit.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

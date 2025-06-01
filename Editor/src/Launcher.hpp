@@ -44,7 +44,7 @@ public:
 		layout->addLayout(buttonLayout);
 		layout->addLayout(tableViewLayout);
 
-        std::vector<ProjectData> projects = LoadRecentProjects();
+        std::vector<cp::ProjectData> projects = LoadRecentProjects();
 
         tableView->Populate(projects);
 
@@ -60,10 +60,10 @@ private slots:
 		if (!file.open(QIODevice::ReadWrite)) return;
 
 		QJsonObject projectDataObject = QJsonDocument::fromJson(file.readAll()).object();
-		ProjectData projectData = ProjectData::FromJson(projectDataObject);
+		cp::ProjectData projectData = cp::ProjectData::FromJson(projectDataObject);
 		projectData.lastOpened = QDateTime::currentDateTime();
         
-		projectDataObject = ProjectData::ToJson(projectData);
+		projectDataObject = cp::ProjectData::ToJson(projectData);
 
 		file.seek(0);
 		file.write(QJsonDocument(projectDataObject).toJson());
@@ -81,7 +81,7 @@ private slots:
 		if (!file.open(QIODevice::ReadOnly)) return;
 
 		QJsonObject projectDataObject = QJsonDocument::fromJson(file.readAll()).object();
-		ProjectData projectData = ProjectData::FromJson(projectDataObject);
+		cp::ProjectData projectData = cp::ProjectData::FromJson(projectDataObject);
 
 		projectOverview->SetProject(projectData);
 	}
@@ -95,9 +95,9 @@ private slots:
         dialog->exec();
     }
 
-    void SaveNewProject(const ProjectData& projectData) 
+    void SaveNewProject(const cp::ProjectData& projectData) 
     {
-        std::vector<ProjectData> projects = LoadRecentProjects();
+        std::vector<cp::ProjectData> projects = LoadRecentProjects();
 
 		auto it = std::find(projects.begin(), projects.end(), projectData);
         if (it != projects.end())
@@ -109,7 +109,7 @@ private slots:
 		tableView->Populate(projects);
     }
 
-    void SaveRecentProjects(const std::vector<ProjectData>& projects) 
+    void SaveRecentProjects(const std::vector<cp::ProjectData>& projects) 
     {
         QJsonArray jsonArray;
 
@@ -128,7 +128,7 @@ private slots:
         }
     }
 
-    std::vector<ProjectData> LoadRecentProjects() 
+    std::vector<cp::ProjectData> LoadRecentProjects() 
     {
         QFile file("recent_projects.json");
         if (!file.open(QIODevice::ReadOnly)) return {};
@@ -136,7 +136,7 @@ private slots:
         QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
         QJsonArray jsonArray = doc.object()["recentProjects"].toArray();
 
-        std::vector<ProjectData> projects;
+        std::vector<cp::ProjectData> projects;
 
         for (const auto& value : jsonArray)
         {
@@ -146,10 +146,10 @@ private slots:
 			QJsonDocument projectDoc = QJsonDocument::fromJson(projectDataFile.readAll());
 			QJsonObject projectObj = projectDoc.object();
 
-			projects.push_back(ProjectData::FromJson(projectObj));
+			projects.push_back(cp::ProjectData::FromJson(projectObj));
         }
 
-		std::sort(projects.begin(), projects.end(), [](const ProjectData& a, const ProjectData& b) {
+		std::sort(projects.begin(), projects.end(), [](const cp::ProjectData& a, const cp::ProjectData& b) {
 			return a.lastOpened > b.lastOpened;
 			});
 

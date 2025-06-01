@@ -48,14 +48,6 @@ void cp::Material::Reload(cp::Renderer& _renderer)
 {
 	auto ValueOrDefault = [](const std::string& str, const std::string& defaultValue) { return str.empty() ? defaultValue : str; }; // This lambda is used to check if the string is empty and return the default value if it is
 
-	// Since this function in called when a material is loaded in the scene and needs to be reloaded
-	// we can generate the descriptor set layouts and pipeline layout here
-
-	//for (auto& [name, desc] : descriptors)
-	//{
-	//	desc.GenerateDescriptorSetLayout(context); //This (re)generate the descriptor set layout
-	//}
-
 	CreateDescriptorSetLayouts(); // Create the descriptor set layouts based on the current descriptors
 
 	cp::LayoutsManager* layoutsManager = context->GetLayoutsManager();
@@ -226,6 +218,14 @@ std::vector<std::string> cp::Material::GetUniqueEntryPoints() const
 	}
 
 	return entryPoints;
+}
+
+vk::DescriptorSetLayout cp::Material::GetDescriptorSetLayout(uint32_t _setIndex) const
+{
+	if (_setIndex < descriptorSetLayouts.size())
+		return descriptorSetLayouts[_setIndex];
+
+	return VK_NULL_HANDLE;
 }
 
 void cp::Material::CreateDescriptorSetLayouts()

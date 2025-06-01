@@ -167,13 +167,10 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="src\Project.cpp" />
     <ClCompile Include="src\Renderers\MinimalistRenderer.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_FileDropLineEdit.cpp" />
-    <ClCompile Include="src\Widgets\ComponentFields\MOC_ResourceDropLineEdit.cpp" />
     <ClCompile Include="src\Widgets\Launcher\MOC_Button.cpp" />
     <ClCompile Include="src\Widgets\Launcher\MOC_ProjectOverview.cpp" />
     <ClCompile Include="src\Widgets\Launcher\MOC_ProjectTableView.cpp" />
@@ -190,12 +187,9 @@ moc "$(ProjectDir)src\MainWindow.hpp" -o "$(ProjectDir)src\MOC_MainWindow.cpp"
     <ClInclude Include="src\MainWindow.hpp" />
     <ClInclude Include="src\NewProjectDialog.hpp" />
     <ClInclude Include="src\pch.hpp" />
-    <ClInclude Include="src\Project.hpp" />
     <ClInclude Include="src\Renderers\MinimalistRenderer.hpp" />
     <ClInclude Include="src\VulkanRenderer.hpp" />
     <ClInclude Include="src\Widgets\Collapsible.hpp" />
-    <ClInclude Include="src\Widgets\ComponentFields\ResourceDropLineEdit.hpp" />
-    <ClInclude Include="src\Widgets\ComponentFields\FileDropLineEdit.hpp" />
     <ClInclude Include="src\Widgets\EnumMultiSelectDropDown.hpp" />
     <ClInclude Include="src\Widgets\Inspector.hpp" />
     <ClInclude Include="src\Widgets\Launcher\Button.hpp" />

@@ -7,62 +7,11 @@
 
 #include "../Util/ShaderCompiler/SlangCompiler.hpp"
 
+#include "Texture.hpp"
+
 namespace cp
 {
 	class Material;
-	/*struct MaterialDescriptor;
-	struct MaterialBinding;
-	struct MaterialField;
-	class Texture;
-
-	struct MaterialInstanceField : public ISerializable
-	{
-		std::string name;
-		std::vector<uint8_t> data;
-
-		void Serialize(ISerializer& _serializer) const override;
-		void Deserialize(ISerializer& _serializer) override;
-
-		MaterialField& GetAssociatedField(const MaterialBinding& _material);
-
-#ifdef IN_EDITOR
-		QWidget* CreateFieldWidget(QWidget* _parent, const MaterialBinding& _material);
-#endif
-	};
-
-	struct MaterialInstanceBinding : public ISerializable
-	{
-		std::string name;
-		std::unordered_map<std::string, MaterialInstanceField> fields;
-
-		void Serialize(ISerializer& _serializer) const override;
-		void Deserialize(ISerializer& _serializer) override;
-
-		MaterialBinding& GetAssociatedBinding(const MaterialDescriptor& _material);
-		void SynchronizeFieldsWithMaterial(const MaterialDescriptor& _material);
-
-#ifdef IN_EDITOR
-		QWidget* CreateBindingWidget(QWidget* _parent, const MaterialDescriptor& _material);
-#endif
-	};
-
-	struct MaterialInstanceDescriptor : public ISerializable
-	{
-		std::string name;
-		std::unordered_map<std::string, MaterialInstanceBinding> bindings;
-
-		vk::DescriptorSet descriptorSet;
-
-		void Serialize(ISerializer& _serializer) const;
-		void Deserialize(ISerializer& _serializer) override;
-
-		MaterialDescriptor& GetAssociatedDescriptor(const Material& _material);
-		void SynchronizeBindingsWithMaterial(const Material& _material);
-
-#ifdef IN_EDITOR
-		QWidget* CreateDescriptorWidget(QWidget* _parent, const Material& _material);
-#endif
-	};*/
 
 	struct MaterialInstanceField : public ISerializable
 	{
@@ -78,15 +27,26 @@ namespace cp
 
 	struct MaterialInstanceResource : public ISerializable
 	{
+		const VulkanContext* context;
+
 		std::string name;
 		cp::ShaderResourceKind kind = cp::ShaderResourceKind::Unknown;
 		uint32_t binding = 0;
 		uint32_t set = 0;
 
-		const cp::ShaderResource* associatedResource; // Pointer to the associated resource in the material
+		const cp::ShaderResource* associatedResource = nullptr; // Pointer to the associated resource in the material
 
 		std::vector<MaterialInstanceField> fields; // Fields that are part of this resource
 		std::vector<uint8_t> packedData;
+
+		// For constant buffers and storage buffers, we need to pack the data into a single buffer
+		cp::Buffer packedBuffer;
+
+		// For textures and samplers, we need to have access to the actual resource
+		std::string associatedTexture; // Path to the associated texture
+
+		MaterialInstanceResource(const VulkanContext* _context) : context(_context) {}
+		~MaterialInstanceResource();
 
 		void Serialize(ISerializer& _serializer) const override;
 		void Deserialize(ISerializer& _serializer) override;
@@ -94,6 +54,8 @@ namespace cp
 		void CollectFields(const ShaderField& field, const std::string& prefix, std::vector<MaterialInstanceField>& fields) const;
 
 		void Repack();
+
+		void InitBuffer();
 	};
 
 	class MaterialInstance : public ISerializable
@@ -120,10 +82,6 @@ namespace cp
 #ifdef IN_EDITOR
 		QWidget* CreateMaterialInstanceWidget(QWidget* _parent);
 #endif
-
-		/*virtual void PopulateDescriptorSet() = 0;
-
-		virtual void BindMaterialInstance(vk::CommandBuffer _command) = 0;*/
 
 		inline std::shared_ptr<Material> GetMaterial() const { return material; }
 		inline std::string GetAssociatedMaterial() const { return associatedMaterial; }

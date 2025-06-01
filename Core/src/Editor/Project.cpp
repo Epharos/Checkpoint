@@ -2,4 +2,4 @@
 
 #include "Project.hpp"
 
-ProjectData Project::data = {};
+cp::ProjectData cp::Project::data = {};
