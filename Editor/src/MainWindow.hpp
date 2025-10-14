@@ -25,7 +25,7 @@ protected:
 
 	QTreeWidget* sceneHierarchy = nullptr;
 
-	cp::ProjectData projectData;
+	ProjectData projectData;
 
 	void SetupMenuBar()
 	{
@@ -59,8 +59,8 @@ protected:
 			// Open project
 			});
 
-		connect(saveSceneAction, &QAction::triggered, [=] {
-			std::string path = cp::Project::GetResourcePath() + "/Scenes/" + sceneHierarchy->headerItem()->text(0).replace(" ", "_").toStdString() + ".scn";
+		connect(saveSceneAction, &QAction::triggered, [=] { 
+			std::string path = Project::GetResourcePath() + "/Scenes/" + sceneHierarchy->headerItem()->text(0).replace(" ", "_").toStdString() + ".scn";
 			LOG_DEBUG(MF("Saving scene to: ", path));
 			cp::JsonSerializer serializer;
 			currentScene->Serialize(serializer);
@@ -357,10 +357,10 @@ protected:
 
 
 public:
-	MainWindow(const cp::ProjectData& _projectData, QWidget* parent = nullptr)
+	MainWindow(const ProjectData& _projectData, QWidget* parent = nullptr)
 	{
-		projectData = cp::ProjectData(_projectData);
-		cp::Project::data = projectData;
+		projectData = ProjectData(_projectData);
+		Project::data = projectData;
 
 		SetupMenuBar();
 

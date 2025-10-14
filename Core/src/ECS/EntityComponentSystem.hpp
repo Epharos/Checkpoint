@@ -130,5 +130,8 @@ namespace cp
 		{
 			systemManager.Cleanup();
 		}
+
+		EntityComponentSystem() { LOG_DEBUG("ECS created"); }
+		~EntityComponentSystem() { Cleanup(); LOG_DEBUG("ECS destroyed"); }
 	};
 }

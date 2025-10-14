@@ -47,7 +47,7 @@ public:
 		setMinimumWidth(700);
 	}
 
-	void Populate(const std::vector<cp::ProjectData>& _items)
+	void Populate(const std::vector<ProjectData>& _items)
 	{
 		if (model) delete model;
 		if (proxyModel) delete proxyModel;
@@ -75,7 +75,7 @@ public:
 
 		for (int i = 0; i < _items.size(); i++)
 		{
-			const cp::ProjectData& data = _items[i];
+			const ProjectData& data = _items[i];
 
 			QStandardItem* nameItem = new QStandardItem(data.name);
 			nameItem->setToolTip(data.path);
@@ -89,8 +89,8 @@ public:
 	}
 
 signals:
-	void ItemSelected(std::string _path);
-	void ProjectOpened(std::string _path);
+	void ItemSelected(QString _path);
+	void ProjectOpened(QString _path);
 
 private slots:
 	void Search(const QString& _text)
@@ -101,16 +101,26 @@ private slots:
 	void SelectItem(const QModelIndex& _index)
 	{
 		QStandardItemModel* model = dynamic_cast<QStandardItemModel*>(dynamic_cast<FilterProxyModel*>(tableView->model())->sourceModel());
+		if (!model) return;
 		QStandardItem* item = model->item(_index.row(), 0);
+		if (!item) return;
 
-		emit ItemSelected(item->toolTip().toStdString());
+		QString tooltip = item->toolTip();
+		if (tooltip.isEmpty()) return;
+
+		emit ItemSelected(tooltip);
 	}
 
 	void OpenProject(const QModelIndex& _index)
 	{
 		QStandardItemModel* model = dynamic_cast<QStandardItemModel*>(dynamic_cast<FilterProxyModel*>(tableView->model())->sourceModel());
+		if (!model) return;
 		QStandardItem* item = model->item(_index.row(), 0);
+		if (!item) return;
 
-		emit ProjectOpened(item->toolTip().toStdString());
+		QString tooltip = item->toolTip();
+		if (tooltip.isEmpty()) return;
+
+		emit ProjectOpened(tooltip);
 	}
 };

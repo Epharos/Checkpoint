@@ -49,3 +49,8 @@ Editor/Logs
 
 recent_projects.json
 Editor/PROJECTS
+
+build/
+
+TO_INCLUDE_IN_BUILD/*.dll
+TO_INCLUDE_IN_BUILD/platforms

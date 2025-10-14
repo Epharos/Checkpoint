@@ -3,6 +3,7 @@
 #include "../pch.hpp"
 #include "SearchList.hpp"
 
+#include "Widgets/ComponentFields/FileDropLineEdit.hpp"
 #include "Widgets/Collapsible.hpp"
 #include "Widgets/EnumMultiSelectDropDown.hpp"
 
@@ -117,7 +118,7 @@ public:
 
 	void ShowFile(const std::string& _path, const QFileInfo& _fileInfo)
 	{
-		QString fileName = QString::fromStdString(cp::Project::GetResourceRelativePath(_path));
+		QString fileName = QString::fromStdString(Project::GetResourceRelativePath(_path));
 
 		titleLabel->setText(fileName);
 
@@ -164,7 +165,7 @@ public:
 		properties->AddWidget(nameMat);
 
 		QLabel* shaderLabel = new QLabel("Shader path", this);
-		cp::FileDropLineEdit* shaderPath = new cp::FileDropLineEdit(this);
+		FileDropLineEdit* shaderPath = new FileDropLineEdit(this);
 		shaderPath->SetResourcePath(mat->GetShaderPath());
 		shaderPath->SetAcceptedExtensions({ "slang", "spv" });
 		properties->AddWidget(shaderLabel);
@@ -204,7 +205,7 @@ public:
 		shaderStageComboBox->AddCheckItem(QString::fromStdString(Helper::Material::GetShaderStageString(cp::ShaderStages::Mesh)), mat->HasShaderStage(cp::ShaderStages::Mesh) ? Qt::Checked : Qt::Unchecked);
 		properties->AddWidget(shaderStageComboBox);*/
 
-		connect(shaderPath, &cp::FileDropLineEdit::ResourcePathChanged, [=](const std::string& _path) {
+		connect(shaderPath, &FileDropLineEdit::ResourcePathChanged, [=](const std::string& _path) {
 			mat->SetShaderPath(_path);
 			});
 #pragma endregion
@@ -231,7 +232,7 @@ public:
 			renderpasses->AddWidget(customShaderLabel);
 
 			QLineEdit* customShaderPath = new QLineEdit(this);
-			customShaderPath->setPlaceholderText(QString::fromStdString(shaderPath->GetResourcePathRelative()));
+			//customShaderPath->setPlaceholderText(QString::fromStdString(shaderPath->GetRelativeResourcePath()));
 			customShaderPath->setText(QString::fromStdString(mat->GetRenderPassRequirement(name).customShaderPath));
 			customShaderPath->setVisible(renderActive->isChecked() && (!useDefaultShader->isChecked() || !rp.GetDefaultPipeline().has_value()));
 			customShaderPath->setStyleSheet("margin-left: 10px;");
@@ -384,11 +385,11 @@ public:
 		serializer.Read(_path);
 		matInstance->Deserialize(serializer);
 
-		//LOG_DEBUG(MF("Deserialized material instance from: ", _path));
+		LOG_DEBUG(MF("Deserialized material instance from: ", _path));
 
 		QWidget* matInstanceWidget = matInstance->CreateMaterialInstanceWidget(nullptr);
 
-		//LOG_DEBUG(MF("Created material instance widget for: ", _path));
+		LOG_DEBUG(MF("Created material instance widget for: ", _path));
 
 		if (!matInstanceWidget)
 		{
@@ -396,7 +397,7 @@ public:
 			return;
 		}
 
-		if(matInstanceWidget) layout->addWidget(matInstanceWidget);
+		layout->addWidget(matInstanceWidget);
 
 		QPushButton* saveButton = new QPushButton("Save", this);
 		layout->addWidget(saveButton);

@@ -19,16 +19,3 @@
 
 #include "../src/Util/Serializers/JsonSerializer.hpp"
 #include "../src/Util/ShaderCompiler/SlangCompiler.hpp"
-
-#include "../src/ECS/EntityComponentSystem.hpp"
-
-#include "../src/ECS/Component/ComponentBase.hpp"
-#include "../src/ECS/Component/ComponentWidget.hpp"
-#include "../src/ECS/Component/IComponentSerializer.hpp"
-#include "../src/ECS/Component/ComponentRegistry.hpp"
-
-#ifdef IN_EDITOR
-#include "../src/Editor/ResourceDropLineEdit.hpp"
-
-#include "../src/Editor/Project.hpp"
-#endif

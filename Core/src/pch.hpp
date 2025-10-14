@@ -4,9 +4,9 @@
 #define USE_DEBUG_LAYER
 #endif
 
-#define GLM_FORCE_RADIANS
+#define IN_EDITOR
 
-#include <PreProcessor.hpp>
+#define GLM_FORCE_RADIANS
 
 #include <iostream>
 #include <string>
@@ -52,10 +52,12 @@
 #include <QtWidgets/qgroupbox.h>
 
 #include <Widgets.hpp>
-
-#include "Editor/Project.hpp"
 #endif
 
 #define VEC3_FORWARD glm::vec3(0.0f, 0.0f, 1.0f)
 #define VEC3_UP glm::vec3(0.0f, 1.0f, 0.0f)
 #define VEC3_RIGHT glm::vec3(1.0f, 0.0f, 0.0f)
+
+#define NO_COPY(T) T(const T&) = delete; T& operator=(const T&) = delete; // This is a preprocessor definition that can be used to delete the copy constructor and the copy assignment operator of a class
+#define NO_MOVE(T) T(T&&) noexcept = delete; T& operator=(T&&) noexcept = delete; // This is a preprocessor definition that can be used to delete the move constructor and the move assignment operator of a class
+#define ALLOW_MOVE(T) T(T&&) noexcept = default; T& operator=(T&&) noexcept = default; // This is a preprocessor definition that can be used to allow the move constructor and the move assignment operator of a class

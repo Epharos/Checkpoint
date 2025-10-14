@@ -150,8 +150,6 @@ namespace cp
 		inline ShaderReflection* GetShaderReflection() const { return shaderReflection; }
 		inline void SetShaderReflection(ShaderReflection* _reflection) { shaderReflection = _reflection; };
 
-		vk::DescriptorSetLayout GetDescriptorSetLayout(uint32_t _setIndex) const;
-
 		void CreateDescriptorSetLayouts();
 	};
 }

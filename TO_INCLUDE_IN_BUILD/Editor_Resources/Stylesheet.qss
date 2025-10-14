@@ -1,0 +1,41 @@
+Launcher
+{
+	background-color: #111;
+	color: #e0e1dd;
+}
+
+ProjectOverview
+{
+	background-color: #111;
+	color: #e0e1dd;
+	border-left: 2px solid #9a031e;
+}
+
+QLabel
+{
+	color: #e0e1dd;
+}
+
+QTableView
+{
+	border: none;
+	gridline-color: transparent;
+}
+
+QTableView::item
+{
+	padding: 5px;
+	border: none;
+}
+
+QTableView::item:selected
+{
+	background-color: #151515;
+	border: none;
+}
+
+QHeaderView
+{
+	background-color: #1c1c1c;
+	border: none;
+}

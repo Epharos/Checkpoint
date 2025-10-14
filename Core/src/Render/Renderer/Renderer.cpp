@@ -10,6 +10,17 @@ void cp::Renderer::CreateRenderPasses()
 
 uint32_t cp::Renderer::PrepareFrame()
 {
+	LOG_INFO(swapchain ? "Swapchain exists" : "Swapchain does not exist");
+	LOG_INFO(swapchain ? MF("Swapchain has ", swapchain->GetFrameCount(), "frames") : "");
+	LOG_INFO(swapchain ? MF("Current frame index: ", swapchain->GetCurrentFrameIndex()) : "");
+
+	if(swapchain->GetCurrentFrameIndex() >= swapchain->GetFrameCount())
+	{
+		LOG_WARNING("Current frame index is out of bounds, resetting to 0");
+		swapchain->SetCurrentFrame(0);
+		return -1;
+	}
+
 	if (context->GetDevice().waitForFences(1, &swapchain->GetCurrentFrame()->GetInFlightFence(), VK_TRUE, std::numeric_limits<uint32_t>().max()) != vk::Result::eSuccess)
 	{
 		throw std::runtime_error("Failed to wait for fence");

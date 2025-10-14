@@ -23,6 +23,8 @@ cp::Scene::Scene(cp::Renderer* _renderer) : renderer(_renderer)
 #ifdef IN_EDITOR
 	sceneName = "Untitled scene";
 #endif
+
+	LOG_DEBUG(MF("ECS adress: {}", (void*)&ecs));
 }
 
 cp::Scene::~Scene()

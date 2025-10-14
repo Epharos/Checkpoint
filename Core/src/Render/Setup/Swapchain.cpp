@@ -5,7 +5,9 @@
 #include "Frame.hpp"
 #include "Helpers/Helpers.hpp"
 
+#ifdef IN_EDITOR
 #include <QtCore/qapplicationstatic.h>
+#endif
 
 void cp::Swapchain::CreateData()
 {

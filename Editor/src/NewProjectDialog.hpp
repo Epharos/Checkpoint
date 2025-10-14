@@ -199,12 +199,12 @@ private slots:
 			qDebug() << "Failed to create project file.";
 		}
 
-        emit ProjectCreated(cp::ProjectData::FromJson(root));
+        emit ProjectCreated(ProjectData::FromJson(root));
         accept();
     }
 
 signals:
-    void ProjectCreated(const cp::ProjectData& projectData);
+    void ProjectCreated(const ProjectData& projectData);
 
 private:
 	QListWidget* templateList;

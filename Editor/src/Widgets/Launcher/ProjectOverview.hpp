@@ -10,7 +10,7 @@ class ProjectOverview : public QWidget
 protected:
 	QVBoxLayout* layout;
 public:
-	ProjectOverview(const cp::ProjectData& _data, QWidget* parent = nullptr) : QWidget(parent)
+	ProjectOverview(const ProjectData& _data, QWidget* parent = nullptr) : QWidget(parent)
 	{
 		layout = new QVBoxLayout(this);
 		
@@ -31,7 +31,7 @@ public:
 		setFixedWidth(340);
 	}
 
-	void SetProject(const cp::ProjectData& _data)
+	void SetProject(const ProjectData& _data)
 	{
 		QLayoutItem* child;
 		while ((child = layout->takeAt(0)) != nullptr)
