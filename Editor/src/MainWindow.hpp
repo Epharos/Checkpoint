@@ -9,6 +9,8 @@
 #include "Renderers/MinimalistRenderer.hpp"
 #include "VulkanRenderer.hpp"
 
+import PluginLoader;
+
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
@@ -361,6 +363,12 @@ public:
 	{
 		projectData = ProjectData(_projectData);
 		Project::data = projectData;
+
+		PluginContext ctx;
+		ctx.version = ctx.MakeVersion(1, 0, 0);
+
+		PluginLoader pluginLoader{ ctx };
+		pluginLoader.ScanPlugins();
 
 		SetupMenuBar();
 

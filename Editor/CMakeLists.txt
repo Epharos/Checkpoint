@@ -1,10 +1,33 @@
 file(GLOB_RECURSE EDITOR_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.ixx
+    # ${CMAKE_CURRENT_SOURCE_DIR}/src/*.ixx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp
 )
 
 add_executable(Editor ${EDITOR_SOURCES})
+add_library(PluginLoader SHARED)
+
+target_compile_features(Editor PUBLIC cxx_std_20)
+target_compile_features(PluginLoader PUBLIC cxx_std_20)
+target_compile_definitions(PluginLoader PRIVATE BUILDING_PLUGIN_LOADER)
+
+target_sources(Editor PRIVATE
+  FILE_SET cxx_modules
+    TYPE CXX_MODULES
+    FILES src/PluginLoader/PluginLoader.ixx
+)
+
+target_sources(PluginLoader PRIVATE
+  FILE_SET cxx_modules
+    TYPE CXX_MODULES
+    FILES src/PluginLoader/PluginLoader.ixx
+)
+
+
+if (CMAKE_VERSION VERSION_GREATER 3.12)
+  set_property(TARGET Editor PROPERTY CXX_STANDARD 20)
+  set_property(TARGET PluginLoader PROPERTY CXX_STANDARD 20)
+endif()
 
 # ---- Folders ----
 set(DIRS_TO_COPY
@@ -77,6 +100,11 @@ target_link_libraries(Editor
         nlohmann_json
         Core
         EngineWidgets                 #Temporary
+)
+
+target_link_libraries(PluginLoader
+    PUBLIC
+        Core
 )
 
 target_compile_definitions(Editor
