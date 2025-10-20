@@ -9,8 +9,6 @@
 #include "Renderers/MinimalistRenderer.hpp"
 #include "VulkanRenderer.hpp"
 
-import PluginLoader;
-
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
@@ -359,38 +357,7 @@ protected:
 
 
 public:
-	MainWindow(const ProjectData& _projectData, QWidget* parent = nullptr)
-	{
-		projectData = ProjectData(_projectData);
-		Project::data = projectData;
-
-		PluginContext ctx;
-		ctx.version = ctx.MakeVersion(1, 0, 0);
-
-		PluginLoader pluginLoader{ ctx };
-		size_t loadedPlugins = pluginLoader.ScanPlugins();
-
-		LOG_INFO(MF("Loaded ", loadedPlugins, " plugin", loadedPlugins > 1 ? "s!" : "!"));
-
-		SetupMenuBar();
-
-		instance = new QVulkanInstance;
-		instance->create();
-
-		window = new VulkanWindow(currentScene);
-		window->setVulkanInstance(instance);
-
-		QWidget* container = QWidget::createWindowContainer(window);
-		setCentralWidget(container);
-
-		resize(1824, 1026);
-
-		/*CreateSceneHierarchyDockWidget(false);
-		CreateFileExplorerDockWidget(false);
-		CreateInspectorDockWidget(false);*/
-
-		QTimer::singleShot(0, this, &MainWindow::InitializeVulkanRenderer);
-	}
+	MainWindow(const ProjectData& _projectData, QWidget* parent = nullptr);
 
 	void InitializeVulkanRenderer()
 	{

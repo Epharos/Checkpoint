@@ -1,5 +1,6 @@
 module;
 
+#include <iostream>
 #include "../macros.hpp"
 
 #include <QtWidgets/qmainwindow.h>

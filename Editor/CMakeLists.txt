@@ -15,13 +15,13 @@ target_sources(Editor PRIVATE
   FILE_SET cxx_modules
     TYPE CXX_MODULES
     FILES 
-    "src/PluginLoader/PluginLoader.ixx"  "src/EditorScripting/EditorScripting.ixx" "src/EditorScripting/EditorScripting.Util.ixx" "src/EditorScripting/EditorScripting.Window.ixx" "src/EditorScripting/EditorScripting.Core.ixx")
+    "src/PluginLoader/PluginLoader.ixx"  "src/EditorScripting/EditorScripting.ixx" "src/EditorScripting/EditorScripting.Util.ixx" "src/EditorScripting/EditorScripting.Window.ixx" "src/EditorScripting/EditorScripting.Core.ixx" "src/PluginLoader/PluginContext.ixx")
 
-target_sources(EditorAPI PRIVATE
+target_sources(EditorAPI PUBLIC
   FILE_SET cxx_modules
     TYPE CXX_MODULES
     FILES 
-    "src/PluginLoader/PluginLoader.ixx"  "src/EditorScripting/EditorScripting.ixx" "src/EditorScripting/EditorScripting.Util.ixx" "src/EditorScripting/EditorScripting.Window.ixx" "src/EditorScripting/EditorScripting.Core.ixx")
+    "src/EditorScripting/EditorScripting.ixx" "src/EditorScripting/EditorScripting.Util.ixx" "src/EditorScripting/EditorScripting.Window.ixx" "src/EditorScripting/EditorScripting.Core.ixx" "src/PluginLoader/PluginContext.ixx")
 
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
