@@ -368,7 +368,9 @@ public:
 		ctx.version = ctx.MakeVersion(1, 0, 0);
 
 		PluginLoader pluginLoader{ ctx };
-		pluginLoader.ScanPlugins();
+		size_t loadedPlugins = pluginLoader.ScanPlugins();
+
+		LOG_INFO(MF("Loaded ", loadedPlugins, " plugin", loadedPlugins > 1 ? "s!" : "!"));
 
 		SetupMenuBar();
 

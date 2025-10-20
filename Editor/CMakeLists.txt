@@ -1,32 +1,32 @@
 file(GLOB_RECURSE EDITOR_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.ixx
+    # ${CMAKE_CURRENT_SOURCE_DIR}/src/*.ixx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp
 )
 
 add_executable(Editor ${EDITOR_SOURCES})
-add_library(PluginLoader SHARED)
+add_library(EditorAPI SHARED "${CMAKE_CURRENT_SOURCE_DIR}/src/macros.hpp")
 
 target_compile_features(Editor PUBLIC cxx_std_20)
-target_compile_features(PluginLoader PUBLIC cxx_std_20)
-target_compile_definitions(PluginLoader PRIVATE BUILDING_PLUGIN_LOADER)
+target_compile_features(EditorAPI PUBLIC cxx_std_20)
+target_compile_definitions(EditorAPI PRIVATE BUILDING_PLUGIN_LOADER)
 
 target_sources(Editor PRIVATE
   FILE_SET cxx_modules
     TYPE CXX_MODULES
-    FILES src/PluginLoader/PluginLoader.ixx
-)
+    FILES 
+    "src/PluginLoader/PluginLoader.ixx"  "src/EditorScripting/EditorScripting.ixx" "src/EditorScripting/EditorScripting.Util.ixx" "src/EditorScripting/EditorScripting.Window.ixx" "src/EditorScripting/EditorScripting.Core.ixx")
 
-target_sources(PluginLoader PRIVATE
+target_sources(EditorAPI PRIVATE
   FILE_SET cxx_modules
     TYPE CXX_MODULES
-    FILES src/PluginLoader/PluginLoader.ixx
-)
+    FILES 
+    "src/PluginLoader/PluginLoader.ixx"  "src/EditorScripting/EditorScripting.ixx" "src/EditorScripting/EditorScripting.Util.ixx" "src/EditorScripting/EditorScripting.Window.ixx" "src/EditorScripting/EditorScripting.Core.ixx")
 
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET Editor PROPERTY CXX_STANDARD 20)
-  set_property(TARGET PluginLoader PROPERTY CXX_STANDARD 20)
+  set_property(TARGET EditorAPI PROPERTY CXX_STANDARD 20)
 endif()
 
 # ---- Folders ----
@@ -102,9 +102,12 @@ target_link_libraries(Editor
         EngineWidgets                 #Temporary
 )
 
-target_link_libraries(PluginLoader
+target_link_libraries(EditorAPI
     PUBLIC
         Core
+        Qt6::Widgets
+        Qt6::Gui
+        Qt6::Core
 )
 
 target_compile_definitions(Editor

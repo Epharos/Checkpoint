@@ -7,6 +7,8 @@
 #include "Components/Transform.hpp"
 #include "Components/MeshRenderer.hpp"
 
+import EditorScripting;
+
 QString LoadStyleSheet(const QString& path)
 {
 	QFile file(path);
@@ -56,6 +58,8 @@ int main(int argc, char* args[])
 
 	Launcher launcher;
 	launcher.show();
+
+	cp::QtEditorWidgetFactory factory;
 
 	return app.exec();
 }

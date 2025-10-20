@@ -3,24 +3,19 @@ module;
 #include "../pch.hpp"
 #include <iostream>
 #include <filesystem>
-
-#ifdef BUILDING_PLUGIN_LOADER
-#define PLUGIN_API __declspec(dllexport)
-#else
-#define PLUGIN_API
-#endif
+#include "../macros.hpp"
 
 export module PluginLoader;
 
 export struct PluginContext {
 	uint32_t version;
 
-	static uint32_t MakeVersion(uint8_t major, uint8_t minor, uint16_t patch) {
+	EDITOR_API static uint32_t MakeVersion(uint8_t major, uint8_t minor, uint16_t patch) {
 		return (static_cast<uint32_t>(major) << 24) | (static_cast<uint32_t>(minor) << 16) | patch;
 	}
 };
 
-export PLUGIN_API const void SayHelloFromLoader(std::string_view pluginName) {
+export EDITOR_API const void SayHelloFromLoader(std::string_view pluginName) {
 	LOG_INFO(MF("Hello from PluginLoader to ", pluginName, "!"));
 	//std::cout << "Hello from PluginLoader to " << pluginName << "!" << std::endl;
 }
@@ -32,9 +27,6 @@ private:
 public:
 	PluginLoader(PluginContext ctx) : context(ctx) {
 		
-	}
-
-	PluginLoader() : context({0}) {
 	}
 
 	size_t ScanPlugins() {

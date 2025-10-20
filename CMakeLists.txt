@@ -70,7 +70,10 @@ add_subdirectory(EngineWidgets) #Temporary
 
 if(EDITOR_BUILD)
     add_subdirectory(Editor)
-    add_compile_definitions(IN_EDITOR) #Adds an "IN_EDITOR" pre-processor when building Core for Editor
+    add_compile_definitions(Editor PRIVATE IN_EDITOR) #Adds an "IN_EDITOR" pre-processor when building Core for Editor
+    add_compile_definitions(Core PRIVATE IN_EDITOR) #Adds an "IN_EDITOR" pre-processor when building Core for Editor
+
+    add_subdirectory(EditorPluginTest)
 endif()
 
 if(EXAMPLE_BUILD)
