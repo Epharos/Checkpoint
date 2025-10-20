@@ -1,6 +1,6 @@
 module;
 
-#define PLUGIN_FOLDER "Plugin"
+#define PLUGIN_FOLDER "Plugins"
 
 #include "../pch.hpp"
 #include <iostream>
