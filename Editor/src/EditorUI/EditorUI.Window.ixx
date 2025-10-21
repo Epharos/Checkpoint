@@ -3,6 +3,9 @@ module;
 #include <iostream>
 #include "../macros.hpp"
 
+#include "QtWidgets/DraggableDock.hpp"
+#include "QtWidgets/DropMainWindow.hpp"
+
 #include <QtWidgets/qmainwindow.h>
 #include <QtWidgets/qdockwidget.h>
 #include <QtWidgets/qboxlayout.h>
@@ -10,7 +13,7 @@ module;
 //TMP
 #include <QtWidgets/qlabel.h>
 
-export module EditorScripting:Window;
+export module EditorUI:Window;
 
 import :Core;
 
@@ -30,6 +33,8 @@ export namespace cp {
 
 			EDITOR_API virtual void SetContainer(IContainer* container) noexcept = 0;
 			EDITOR_API virtual IContainer* GetContainer() const noexcept = 0;
+
+			EDITOR_API virtual void MatchSizeToContent() noexcept = 0;
 	};
 
 	class IDockableWindow : public IWindow {
@@ -45,7 +50,7 @@ export namespace cp {
 	class QtWindow : public IWindow {
 		public:
 			EDITOR_API QtWindow() {
-				mainWindow = new QMainWindow();
+				mainWindow = new DropMainWindow();
 				mainWindow->setWindowTitle(QString::fromStdString("Checkpoint editor window"));
 				mainWindow->resize(480, 360);
 			}
@@ -101,29 +106,71 @@ export namespace cp {
 			}
 
 			EDITOR_API virtual void SetContainer(IContainer* _container) noexcept {
+				if(container == _container) {
+					return;
+				}
+				
+				if (container) {
+					if (auto native = container->NativeHandle()) {
+						QWidget* widget = reinterpret_cast<QWidget*>(native);
+						widget->setParent(nullptr);
+					}
+				}
+
 				container = _container;
+
+				if (!container) {
+					mainWindow->setCentralWidget(content);
+					return;
+				}
+
+				QWidget* native = nullptr;
+				native = reinterpret_cast<QWidget*>(container->NativeHandle());
+
+				if (native) {
+					native->setParent(mainWindow);
+					mainWindow->setCentralWidget(native);
+					return;
+				}
+
+				mainWindow->setCentralWidget(content);
 			}
 
 			EDITOR_API virtual IContainer* GetContainer() const noexcept {
 				return container;
 			}
 
-			EDITOR_API QMainWindow* MainWindow() const noexcept {
+			EDITOR_API DropMainWindow* MainWindow() const noexcept {
 				return mainWindow;
 			}
 
-		private:
-			QMainWindow* mainWindow = nullptr;
+			EDITOR_API void MatchSizeToContent() noexcept override {
+				if (container) {
+					QWidget* native = reinterpret_cast<QWidget*>(container->NativeHandle());
+
+					if (native) {
+						mainWindow->resize(native->sizeHint());
+						return;
+					}
+				}
+
+				if (content)
+					mainWindow->resize(content->sizeHint());
+			}
+
+		protected:
+			DropMainWindow* mainWindow = nullptr;
+			QWidget* content = nullptr;
 			IContainer* container = nullptr;
 	};
 
 	class QtDockableWindow : public IDockableWindow {
 		public:
-			EDITOR_API QtDockableWindow(QMainWindow* initialHost = nullptr) {
+			EDITOR_API QtDockableWindow(DropMainWindow* initialHost = nullptr) {
 				host = initialHost;
 
 				if (!host) {
-					host = new QMainWindow();
+					host = new DropMainWindow();
 					host->setWindowTitle(QString::fromStdString("Checkpoint editor window"));
 					host->resize(640, 480);
 					ownsHost = true;
@@ -135,7 +182,7 @@ export namespace cp {
 				QLabel* label = new QLabel("Dockable content");
 				layout->addWidget(label);
 
-				dock = new QDockWidget("Dockable", host);
+				dock = new DraggableDockWidget("Dockable", host);
 				dock->setAllowedAreas(Qt::AllDockWidgetAreas);
 				dock->setWidget(content);
 				host->addDockWidget(Qt::RightDockWidgetArea, dock);
@@ -182,7 +229,7 @@ export namespace cp {
 				QtDockableWindow* qtTarget = dynamic_cast<QtDockableWindow*>(target);
 				if (!qtTarget) return;
 
-				QMainWindow* targetHost = qtTarget->Host();
+				DropMainWindow* targetHost = qtTarget->Host();
 				if (!targetHost) return;
 
 				if (dock->parentWidget() && dock->parentWidget() != targetHost) {
@@ -223,20 +270,61 @@ export namespace cp {
 			}
 
 			[[nodiscard]] EDITOR_API inline QWidget* ContentWidget() noexcept { return content; }
-			[[nodiscard]] EDITOR_API inline QMainWindow* Host() const noexcept { return host; }
-			[[nodiscard]] EDITOR_API inline QDockWidget* Dock() const noexcept { return dock; }
+			[[nodiscard]] EDITOR_API inline DropMainWindow* Host() const noexcept { return host; }
+			[[nodiscard]] EDITOR_API inline DraggableDockWidget* Dock() const noexcept { return dock; }
 
 			EDITOR_API virtual void SetContainer(IContainer* _container) noexcept {
+				if (container == _container) {
+					return;
+				}
+
+				if (container) {
+					if (auto native = container->NativeHandle()) {
+						QWidget* widget = reinterpret_cast<QWidget*>(native);
+						widget->setParent(nullptr);
+						dock->setWidget(nullptr);
+					}
+				}
+
 				container = _container;
+
+				if (!container) {
+					dock->setWidget(content);
+					return;
+				}
+
+				QWidget* native = nullptr;
+				native = reinterpret_cast<QWidget*>(container->NativeHandle());
+
+				if (native) {
+					dock->setWidget(native);
+					return;
+				}
+
+				dock->setWidget(content);
 			}
 
 			EDITOR_API virtual IContainer* GetContainer() const noexcept {
 				return container;
 			}
 
+			EDITOR_API void MatchSizeToContent() noexcept override {
+				if (container) {
+					QWidget* native = reinterpret_cast<QWidget*>(container->NativeHandle());
+
+					if (native) {
+						host->resize(native->sizeHint());
+						return;
+					}
+				}
+
+				if (content)
+					host->resize(content->sizeHint());
+			}
+
 		private:
-			QMainWindow* host = nullptr;
-			QDockWidget* dock = nullptr;
+			DropMainWindow* host = nullptr;
+			DraggableDockWidget* dock = nullptr;
 			QWidget* content;
 			IContainer* container = nullptr;
 

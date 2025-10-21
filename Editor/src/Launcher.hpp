@@ -15,7 +15,7 @@ class Launcher : public QWidget
 
 public:
     Launcher() {
-        setWindowTitle("Checkpoint Launcher");
+        setWindowTitle("Checkpoint - Launcher");
 		setWindowFlags(Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint);
         setWindowIcon(QIcon("Editor_Resources/template.png"));
 
@@ -69,7 +69,7 @@ private slots:
 		file.write(QJsonDocument(projectDataObject).toJson());
 
 		MainWindow* mainWindow = new MainWindow(projectData);
-		mainWindow->setWindowTitle("Checkpoint Editor - " + projectData.name);
+		mainWindow->setWindowTitle(projectData.name + " - Checkpoint");
 		mainWindow->show();
 
         close();

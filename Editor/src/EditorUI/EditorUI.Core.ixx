@@ -5,7 +5,7 @@ module;
 #include <QtWidgets/qwidget.h>
 #include <QtWidgets/qboxlayout.h>
 
-export module EditorScripting:Core;
+export module EditorUI:Core;
 
 import :Util;
 

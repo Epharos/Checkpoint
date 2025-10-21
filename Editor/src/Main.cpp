@@ -7,7 +7,7 @@
 #include "Components/Transform.hpp"
 #include "Components/MeshRenderer.hpp"
 
-import EditorScripting;
+import EditorUI;
 
 QString LoadStyleSheet(const QString& path)
 {
@@ -33,7 +33,7 @@ int main(int argc, char* args[])
 
 	app.setStyleSheet(LoadStyleSheet("Editor_Resources/Stylesheet.qss"));
 
-	int fontID = QFontDatabase::addApplicationFont("Editor_Resources/OpenSans.ttf");
+	int fontID = QFontDatabase::addApplicationFont("Editor_Resources/Montserrat.ttf");
 
 	if (fontID != -1)
 	{
@@ -59,7 +59,12 @@ int main(int argc, char* args[])
 	Launcher launcher;
 	launcher.show();
 
-	cp::QtEditorWidgetFactory factory;
+	cp::QtEditorUIFactory factory;
+	auto win = factory.CreateWindow();
+	win->Show();
+
+	auto dock = factory.CreateDockableWindow(win.get());
+	dock->Show();
 
 	return app.exec();
 }
