@@ -7,6 +7,8 @@
 #include "Components/Transform.hpp"
 #include "Components/MeshRenderer.hpp"
 
+#include "ECSWrapper.hpp"
+
 import EditorUI;
 
 QString LoadStyleSheet(const QString& path)
@@ -65,6 +67,26 @@ int main(int argc, char* args[])
 
 	auto dock = factory.CreateDockableWindow(win.get());
 	dock->Show();
+
+	auto sh = factory.CreateSceneHierarchy();
+	auto c = factory.CreateContainer();
+	c->AddChild(sh.get());
+	dock->SetContainer(c.get());
+
+	cp::SceneAsset* scene = new cp::SceneAsset();
+	scene->name = "Coucou";
+
+	cp::EntityAsset entity;
+	entity.name = "Coucou toi";
+	scene->entities.push_back(entity);
+	entity.name = "Je suis une autre entite";
+	scene->entities.push_back(entity);
+	entity.name = "Kappa";
+	scene->entities.push_back(entity);
+	entity.name = "EFT 15.11";
+	scene->entities.push_back(entity);
+
+	sh->UpdateScene(scene);
 
 	return app.exec();
 }

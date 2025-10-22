@@ -1,6 +1,7 @@
 #include "MainWindow.hpp"
 
 import PluginLoader;
+import EditorUI;
 
 MainWindow::MainWindow(const ProjectData& _projectData, QWidget* parent)
 {
