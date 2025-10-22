@@ -15,13 +15,13 @@ target_sources(Editor PRIVATE
   FILE_SET cxx_modules
     TYPE CXX_MODULES
     FILES 
-    "src/PluginLoader/PluginLoader.ixx"  "src/EditorUI/EditorUI.ixx" "src/EditorUI/EditorUI.Util.ixx" "src/EditorUI/EditorUI.Window.ixx" "src/EditorUI/EditorUI.Core.ixx" "src/PluginLoader/PluginContext.ixx" "src/ECSWrapper.ixx")
+    "src/PluginLoader/PluginLoader.ixx"  "src/EditorUI/EditorUI.ixx" "src/EditorUI/EditorUI.Util.ixx" "src/EditorUI/EditorUI.Window.ixx" "src/EditorUI/EditorUI.Core.ixx" "src/EditorUI/EditorUI.Private.ixx" "src/PluginLoader/PluginContext.ixx")
 
 target_sources(EditorAPI PUBLIC
   FILE_SET cxx_modules
     TYPE CXX_MODULES
     FILES 
-    "src/EditorUI/EditorUI.ixx" "src/EditorUI/EditorUI.Util.ixx" "src/EditorUI/EditorUI.Window.ixx" "src/EditorUI/EditorUI.Core.ixx" "src/PluginLoader/PluginContext.ixx" "src/ECSWrapper.ixx")
+    "src/EditorUI/EditorUI.ixx" "src/EditorUI/EditorUI.Util.ixx" "src/EditorUI/EditorUI.Window.ixx" "src/EditorUI/EditorUI.Core.ixx" "src/EditorUI/EditorUI.Private.ixx" "src/PluginLoader/PluginContext.ixx")
 
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
@@ -99,7 +99,7 @@ target_link_libraries(Editor
         assimp
         nlohmann_json
         Core
-        EngineWidgets                 #Temporary
+        EngineWidgets                   #Temporary
 )
 
 target_link_libraries(EditorAPI
