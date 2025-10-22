@@ -54,3 +54,4 @@ build/
 
 TO_INCLUDE_IN_BUILD/*.dll
 TO_INCLUDE_IN_BUILD/platforms
+/vc140.pdb
