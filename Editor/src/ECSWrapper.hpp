@@ -8,6 +8,10 @@ namespace cp {
 		std::vector<cp::IComponentBase*> components;
 		std::vector<EntityAsset> children;
 
+		bool locked = false;
+		bool visible = true;
+		bool favorite = false;
+
 		void Serialize(ISerializer& _serializer) const override;
 		void Deserialize(ISerializer& _serializer) override;
 	};
