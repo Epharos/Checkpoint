@@ -37,6 +37,18 @@ int main(int argc, char* args[])
 
 	int fontID = QFontDatabase::addApplicationFont("Editor_Resources/Montserrat.ttf");
 
+	fontID = QFontDatabase::addApplicationFont("Editor_Resources/CircularStd/CircularStd-Medium.ttf");
+	QFontDatabase::addApplicationFont("Editor_Resources/CircularStd/CircularStd-MediumItalic.ttf");
+	fontID = QFontDatabase::addApplicationFont("Editor_Resources/CircularStd/CircularStd-Book.ttf");
+	QFontDatabase::addApplicationFont("Editor_Resources/CircularStd/CircularStd-BookItalic.ttf");
+	QFontDatabase::addApplicationFont("Editor_Resources/CircularStd/CircularStd-Bold.ttf");
+	QFontDatabase::addApplicationFont("Editor_Resources/CircularStd/CircularStd-BoldItalic.ttf");
+	QFontDatabase::addApplicationFont("Editor_Resources/CircularStd/CircularStd-Black.ttf");
+	QFontDatabase::addApplicationFont("Editor_Resources/CircularStd/CircularStd-BlackItalic.ttf");
+
+	QStringList families = QFontDatabase::applicationFontFamilies(fontID);
+	qDebug() << families;
+
 	if (fontID != -1)
 	{
 		QStringList fontFamilies = QFontDatabase::applicationFontFamilies(fontID);
