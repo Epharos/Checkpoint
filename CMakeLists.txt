@@ -23,7 +23,7 @@ set(STB_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/stb)
 set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS 1 CACHE INTERNAL "No dev warnings")
 
 find_package(Vulkan REQUIRED)
-find_package(Qt6 6.9 COMPONENTS Widgets Gui Core REQUIRED)
+find_package(Qt6 6.9 COMPONENTS Widgets Gui Core Svg REQUIRED)
 
 FetchContent_Declare(
     glfw

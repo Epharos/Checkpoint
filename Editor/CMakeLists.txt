@@ -96,6 +96,7 @@ target_link_libraries(Editor
         Qt6::Widgets
         Qt6::Gui
         Qt6::Core
+        Qt6::Svg
         assimp
         nlohmann_json
         Core
