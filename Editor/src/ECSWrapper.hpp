@@ -18,7 +18,7 @@ namespace cp {
 
 	struct SceneAsset : public cp::ISerializable {
 		std::string name;
-		std::vector<EntityAsset> entities;
+		std::vector<EntityAsset*> entities;
 
 		void Serialize(ISerializer& _serializer) const override;
 		void Deserialize(ISerializer& _serializer) override;

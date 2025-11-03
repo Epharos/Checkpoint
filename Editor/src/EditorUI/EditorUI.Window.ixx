@@ -178,14 +178,43 @@ export namespace cp {
 
 				content = new QWidget();
 				QVBoxLayout* layout = new QVBoxLayout(content);
+				layout->setContentsMargins(0, 0, 0, 0);
+				layout->setSpacing(0);
 				content->setLayout(layout);
-				QLabel* label = new QLabel("Dockable content");
-				layout->addWidget(label);
 
 				dock = new DraggableDockWidget("Dockable", host);
 				dock->setAllowedAreas(Qt::AllDockWidgetAreas);
 				dock->setWidget(content);
+				dock->setStyleSheet(R"(
+					QDockWidget { 
+						background: #1A1F2B; 
+						padding: 0; 
+						margin: 0; 
+						border: none; 
+					} 
+
+					QWidget { 
+						background: #292A38; 
+						border: none; 
+						padding: 0; 
+						margin: 0; 
+					})");
+
 				host->addDockWidget(Qt::RightDockWidgetArea, dock);
+				host->setStyleSheet(R"(
+					QMainWindow { 
+						background: #1A1F2B; 
+						padding: 0; 
+						margin: 0; 
+						border: none; 
+					} 
+
+					QWidget { 
+						background: #1A1F2B; 
+						border: none; 
+						padding: 0; 
+						margin: 0; 
+					})");
 				dock->show();
 			}
 
@@ -199,6 +228,7 @@ export namespace cp {
 
 			EDITOR_API virtual void SetTitle(const std::string& title) noexcept override {
 				dock->setWindowTitle(QString::fromStdString(title));
+				static_cast<DragTitleBar*>(dock->titleBarWidget())->SetLabel(QString::fromStdString(title));
 			}
 
 			EDITOR_API virtual std::string GetTitle() const noexcept override {

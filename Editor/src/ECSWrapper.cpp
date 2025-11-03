@@ -20,7 +20,7 @@ void cp::SceneAsset::Serialize(ISerializer& _serializer) const
 
 	for (auto& entity : entities) {
 		_serializer.BeginObjectArrayElementWriting();
-		entity.Serialize(_serializer);
+		entity->Serialize(_serializer);
 		_serializer.EndObjectArrayElement();
 	}
 
@@ -35,8 +35,8 @@ void cp::SceneAsset::Deserialize(ISerializer& _serializer)
 		for (uint64_t index = 0; index < elements; index++) {
 			if (!_serializer.BeginObjectArrayElementReading(index)) continue;
 
-			EntityAsset entity;
-			entity.Deserialize(_serializer);
+			EntityAsset* entity = new EntityAsset();
+			entity->Deserialize(_serializer);
 			entities.push_back(std::move(entity));
 
 			_serializer.EndObjectArrayElement();

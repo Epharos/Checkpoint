@@ -66,6 +66,8 @@ namespace cp
 			{
 				return it->second(_ecs, _entity);
 			}
+
+			return false;
 		}
 
 		template<typename ComponentType>
@@ -77,6 +79,8 @@ namespace cp
 			{
 				return it->second(_ecs, _entity);
 			}
+
+			return false;
 		}
 
 		std::unique_ptr<ComponentSerializerBase> CreateSerializer(std::type_index _componentType, IComponentBase*& _component)

@@ -9,7 +9,7 @@ struct MeshRenderer : public cp::IComponentBase
 	std::shared_ptr<cp::Mesh> mesh;
 	std::shared_ptr<cp::MaterialInstance> materialInstance;
 
-	static class Helper : public cp::ComponentBaseHelper<MeshRenderer>
+	class Helper : public cp::ComponentBaseHelper<MeshRenderer>
 	{
 		void SetMesh(MeshRenderer& _component, std::shared_ptr<cp::Mesh> _mesh)
 		{

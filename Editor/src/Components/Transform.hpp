@@ -12,7 +12,7 @@ struct Transform : public cp::IComponentBase, public DirtyPattern
 	glm::mat4 matrix = glm::mat4(1.0f);
 	glm::mat3 normalMatrix = glm::mat3(1.0f);
 
-	static class Helper : public cp::ComponentBaseHelper<Transform>
+	class Helper : public cp::ComponentBaseHelper<Transform>
 	{
 		void Translate(Transform& _component, const glm::vec3& _translation)
 		{

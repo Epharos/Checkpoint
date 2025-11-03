@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <memory>
+#include <optional>
 
 #include <Core.hpp>
 #include <ECS.hpp>

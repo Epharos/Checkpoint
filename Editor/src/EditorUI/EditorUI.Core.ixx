@@ -41,6 +41,8 @@ export namespace cp {
 			EDITOR_API QtContainer() {
 				containerWidget = new QWidget();
 				layout = new QVBoxLayout(containerWidget);
+				layout->setContentsMargins(0, 0, 0, 0);
+				layout->setSpacing(0);
 				containerWidget->setLayout(layout);
 			}
 

@@ -8,6 +8,7 @@ export module EditorUI;
 
 export import :Util;
 export import :Core;
+export import :Primitive;
 export import :Window;
 export import :Private;
 
@@ -19,6 +20,10 @@ export namespace cp {
 			EDITOR_API virtual std::unique_ptr<IDockableWindow> CreateDockableWindow(IWindow* target = nullptr) noexcept = 0;
 
 			virtual std::unique_ptr<ISceneHierarchy> CreateSceneHierarchy() noexcept = 0;
+			virtual std::unique_ptr<IInspector> CreateInspector() noexcept = 0;
+
+			EDITOR_API virtual std::unique_ptr<ILabel> CreateLabel(const std::string& text = "") noexcept = 0;
+			EDITOR_API virtual std::unique_ptr<ICollapsible> CreateCollapsible() noexcept = 0;
 	};
 
 	class QtEditorUIFactory : public IEditorUIFactory {
@@ -45,6 +50,18 @@ export namespace cp {
 
 			virtual std::unique_ptr<ISceneHierarchy> CreateSceneHierarchy() noexcept {
 				return std::make_unique<QtSceneHierarchy>();
+			}
+
+			virtual std::unique_ptr<IInspector> CreateInspector() noexcept {
+				return std::make_unique<QtInspector>();
+			}
+
+			EDITOR_API virtual std::unique_ptr<ILabel> CreateLabel(const std::string& text = "") noexcept override {
+				return std::make_unique<cp::QtLabel>(text);
+			}
+
+			EDITOR_API virtual std::unique_ptr<ICollapsible> CreateCollapsible() noexcept override {
+				return std::make_unique<cp::QtCollapsible>();
 			}
 	};
 }

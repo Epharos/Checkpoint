@@ -15,13 +15,13 @@ target_sources(Editor PRIVATE
   FILE_SET cxx_modules
     TYPE CXX_MODULES
     FILES 
-    "src/PluginLoader/PluginLoader.ixx"  "src/EditorUI/EditorUI.ixx" "src/EditorUI/EditorUI.Util.ixx" "src/EditorUI/EditorUI.Window.ixx" "src/EditorUI/EditorUI.Core.ixx" "src/EditorUI/EditorUI.Private.ixx" "src/PluginLoader/PluginContext.ixx")
+    "src/PluginLoader/PluginLoader.ixx"  "src/EditorUI/EditorUI.ixx" "src/EditorUI/EditorUI.Util.ixx" "src/EditorUI/EditorUI.Window.ixx" "src/EditorUI/EditorUI.Core.ixx" "src/EditorUI/EditorUI.Private.ixx" "src/PluginLoader/PluginContext.ixx" "src/EditorUI/EditorUI.Primitive.ixx")
 
 target_sources(EditorAPI PUBLIC
   FILE_SET cxx_modules
     TYPE CXX_MODULES
     FILES 
-    "src/EditorUI/EditorUI.ixx" "src/EditorUI/EditorUI.Util.ixx" "src/EditorUI/EditorUI.Window.ixx" "src/EditorUI/EditorUI.Core.ixx" "src/EditorUI/EditorUI.Private.ixx" "src/PluginLoader/PluginContext.ixx")
+    "src/EditorUI/EditorUI.ixx" "src/EditorUI/EditorUI.Util.ixx" "src/EditorUI/EditorUI.Window.ixx" "src/EditorUI/EditorUI.Core.ixx" "src/EditorUI/EditorUI.Private.ixx" "src/PluginLoader/PluginContext.ixx" "src/EditorUI/EditorUI.Primitive.ixx")
 
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
@@ -115,4 +115,9 @@ target_compile_definitions(Editor
     PUBLIC
         $<$<CONFIG:Debug>:_DEBUG>
         $<$<CONFIG:Release>:NDEBUG>
+)
+
+target_compile_definitions(Editor
+    PRIVATE
+        USE_QT  # Define USE_QT to enable Qt-related code
 )

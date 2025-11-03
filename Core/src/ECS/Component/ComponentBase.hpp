@@ -12,6 +12,10 @@ namespace cp
 
 	class IComponentBase
 	{
-
+	protected:
+		virtual ~IComponentBase() = default;
 	};
+
+	template<class T>
+	concept ComponentBase = std::is_base_of<IComponentBase, T>::value;
 };

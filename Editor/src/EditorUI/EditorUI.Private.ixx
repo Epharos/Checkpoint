@@ -4,6 +4,7 @@ module;
 #include "../macros.hpp"
 #include "../ECSWrapper.hpp"
 #include "QtWidgets/SceneHierarchy.hpp"
+#include "QtWidgets/Inspector.hpp"
 
 export module EditorUI:Private;
 
@@ -47,5 +48,38 @@ export namespace cp {
 		}
 	protected:
 		SceneHierarchy* sceneHierarchy;
+	};
+
+	class IInspector : public IWidget {
+		public:
+		virtual void ShowEntity(EntityAsset* _entity) = 0;
+	};
+
+	class QtInspector : public IInspector {
+	public:
+		QtInspector() {
+			inspector = new cp::Inspector();
+		}
+		virtual ~QtInspector() = default;
+		virtual void  SetVisible(bool visible) noexcept {
+			inspector->setVisible(visible);
+		}
+		virtual bool IsVisible() const noexcept {
+			return inspector->isVisible();
+		}
+		virtual void SetEnabled(bool enabled) noexcept {
+			inspector->setEnabled(enabled);
+		}
+		virtual bool IsEnabled() const noexcept {
+			return inspector->isEnabled();
+		}
+		virtual void* NativeHandle() const noexcept {
+			return static_cast<void*>(inspector);
+		}
+		virtual void ShowEntity(EntityAsset* _entity) {
+			inspector->ShowEntity(_entity);
+		}
+	protected:
+		Inspector* inspector;
 	};
 }
