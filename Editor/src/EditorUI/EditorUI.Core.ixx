@@ -30,6 +30,13 @@ export namespace cp {
 			EDITOR_API virtual void AddChild(IWidget* child) noexcept = 0;
 			EDITOR_API virtual void RemoveChild(IWidget* child) noexcept = 0;
 			EDITOR_API virtual void ClearChildren() noexcept = 0;
+
+			EDITOR_API virtual void SetSpacing(int spacing) noexcept = 0;
+	};
+
+	class IHorizontalContainer : public IContainer {
+		public:
+			EDITOR_API virtual ~IHorizontalContainer() = default;
 	};
 }
 
@@ -104,9 +111,25 @@ export namespace cp {
 				return static_cast<void*>(containerWidget);
 			}
 
+			EDITOR_API virtual void SetSpacing(int spacing) noexcept override {
+				layout->setSpacing(spacing);
+			}
+
 	protected:
 		QWidget* containerWidget = nullptr;
-		QVBoxLayout* layout = nullptr;
+		QBoxLayout* layout = nullptr;
 		std::vector<IWidget*> children;
+	};
+
+	class QtHorizontalContainer : public QtContainer, public IHorizontalContainer {
+		public:
+			EDITOR_API QtHorizontalContainer() : QtContainer() {
+				delete layout;
+				layout = new QHBoxLayout(containerWidget);
+				layout->setContentsMargins(0, 0, 0, 0);
+				layout->setSpacing(0);
+				containerWidget->setLayout(layout);
+			}
+			EDITOR_API virtual ~QtHorizontalContainer() override = default;
 	};
 }

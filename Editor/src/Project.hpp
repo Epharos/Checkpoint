@@ -18,8 +18,6 @@ struct Project
 
 	static std::string GetResourceRelativePath(const std::string& _resource)
 	{
-		/*if (_resource.empty()) return _resource;
-		if (_resource.size() < Project::GetResourcePath().size()) return _resource;*/
 		return _resource.substr(Project::GetResourcePath().size());
 	}
 };

@@ -12,7 +12,42 @@
 
 #include "EditorUI/QtWidgets/SceneHierarchy.hpp"
 
+#include "Components/ComponentView.hpp"
+
 import EditorUI;
+
+class TransformView : public cp::ComponentView<Transform> {
+	public:
+	TransformView(Transform* _comp, const std::string& _name, const std::optional<std::string>& _icon = std::nullopt) : cp::ComponentView<Transform>(_comp, _name, _icon) {}
+
+	virtual cp::IContainer* Render(cp::IEditorUIFactory* factory) override {
+		auto container = factory->CreateContainer();
+		auto positionWidget = factory->CreateFloat3Field(&component->position, "Position");
+		container->AddChild(positionWidget.release());
+		auto rotationWidget = factory->CreateQuaternionField(&component->rotation, "Rotation");
+		container->AddChild(rotationWidget.release());
+		auto scaleWidget = factory->CreateFloat3Field(&component->scale, "Scale");
+		container->AddChild(scaleWidget.release());
+		container->SetSpacing(2);
+		return container.release();
+	}
+};
+
+class MeshRendererView : public cp::ComponentView<MeshRenderer> {
+	public:
+	MeshRendererView(MeshRenderer* _comp, const std::string& _name, const std::optional<std::string>& _icon = std::nullopt) : cp::ComponentView<MeshRenderer>(_comp, _name, _icon) {}
+	virtual cp::IContainer* Render(cp::IEditorUIFactory* factory) override {
+		auto container = factory->CreateContainer();
+		auto meshSelector = factory->CreateFileSelector(&meshPath, "Mesh", { ".fbx", ".obj", ".gltf" });
+		container->AddChild(meshSelector.release());
+		auto materialSelector = factory->CreateFileSelector(&materialPath, "Material", { ".mat" });
+		container->AddChild(materialSelector.release());
+		container->SetSpacing(2);
+		return container.release();
+	}
+protected:
+	std::string meshPath, materialPath;
+};
 
 QString LoadStyleSheet(const QString& path)
 {
@@ -35,6 +70,9 @@ int main(int argc, char* args[])
 
 	cp::ComponentRegistry::GetInstance().Register<Transform, TransformWidget, TransformSerializer>("Transform");
 	cp::ComponentRegistry::GetInstance().Register<MeshRenderer, MeshRendererWidget, MeshRendererSerializer>("Mesh Renderer");
+
+	cp::ComponentViewRegistry::GetInstance().Register<Transform, TransformView>("Transform");
+	cp::ComponentViewRegistry::GetInstance().Register<MeshRenderer, MeshRendererView>("Mesh Renderer");
 
 	app.setStyleSheet(LoadStyleSheet("Editor_Resources/Stylesheet.qss"));
 
