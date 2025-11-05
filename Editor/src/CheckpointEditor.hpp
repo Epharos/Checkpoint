@@ -81,8 +81,6 @@ namespace cp {
 		static bool IsProjectUpToDate(const Project& project) {
 			return project.engineVersion >= CurrentVersion;
 		}
-
-
 	};
 }
 

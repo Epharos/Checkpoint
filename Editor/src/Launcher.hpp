@@ -3,7 +3,7 @@
 #include "pch.hpp"
 
 #include "NewProjectDialog.hpp"
-#include "MainWindow.hpp"
+//#include "MainWindow.hpp"
 
 #include "Widgets/Launcher/Button.hpp"
 #include "Widgets/Launcher/ProjectTableView.hpp"
@@ -68,9 +68,9 @@ private slots:
 		file.seek(0);
 		file.write(QJsonDocument(projectDataObject).toJson());
 
-		MainWindow* mainWindow = new MainWindow(projectData);
-		mainWindow->setWindowTitle(projectData.name + " - Checkpoint");
-		mainWindow->show();
+		//MainWindow* mainWindow = new MainWindow(projectData);
+		//mainWindow->setWindowTitle(projectData.name + " - Checkpoint");
+		//mainWindow->show();
 
         close();
     }

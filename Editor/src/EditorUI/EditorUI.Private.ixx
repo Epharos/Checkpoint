@@ -5,6 +5,7 @@ module;
 #include "../ECSWrapper.hpp"
 #include "QtWidgets/SceneHierarchy.hpp"
 #include "QtWidgets/Inspector.hpp"
+#include "QtWidgets/VulkanRendererWidget.hpp"
 
 export module EditorUI:Private;
 
@@ -81,5 +82,46 @@ export namespace cp {
 		}
 	protected:
 		Inspector* inspector;
+	};
+
+	class IViewport : public IWidget {
+	public:
+		virtual void SetScene(SceneAsset* _scene) = 0;
+	};
+
+	class QtViewport : public IViewport {
+		public:
+		QtViewport(cp::Renderer _renderer, cp::SceneAsset* _scene = nullptr) {
+			viewport = new cp::VulkanRendererWidget(_renderer);
+			SetScene(_scene);
+		}
+
+		virtual ~QtViewport() = default;
+
+		virtual void  SetVisible(bool visible) noexcept {
+			viewport->setVisible(visible);
+		}
+
+		virtual bool IsVisible() const noexcept {
+			return viewport->isVisible();
+		}
+
+		virtual void SetEnabled(bool enabled) noexcept {
+			viewport->setEnabled(enabled);
+		}
+
+		virtual bool IsEnabled() const noexcept {
+			return viewport->isEnabled();
+		}
+
+		virtual void* NativeHandle() const noexcept {
+			return static_cast<void*>(viewport);
+		}
+
+		virtual void SetScene(SceneAsset* _scene) {
+			viewport->SetScene(_scene);
+		}
+	protected:
+		VulkanRendererWidget* viewport;
 	};
 }

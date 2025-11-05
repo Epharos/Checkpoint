@@ -7,7 +7,6 @@
 #include <QtWidgets/qheaderview.h>
 
 #include "Renderers/MinimalistRenderer.hpp"
-#include "VulkanRenderer.hpp"
 
 class MainWindow : public QMainWindow
 {
