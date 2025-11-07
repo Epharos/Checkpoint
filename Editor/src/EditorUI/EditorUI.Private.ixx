@@ -91,9 +91,8 @@ export namespace cp {
 
 	class QtViewport : public IViewport {
 		public:
-		QtViewport(cp::Renderer _renderer, cp::SceneAsset* _scene = nullptr) {
-			viewport = new cp::VulkanRendererWidget(_renderer);
-			SetScene(_scene);
+		QtViewport(cp::Renderer* _renderer, cp::SceneAsset* _scene = nullptr) {
+			viewport = new cp::VulkanRendererWidget(_renderer, _scene);
 		}
 
 		virtual ~QtViewport() = default;
@@ -107,11 +106,11 @@ export namespace cp {
 		}
 
 		virtual void SetEnabled(bool enabled) noexcept {
-			viewport->setEnabled(enabled);
+			LOG_WARNING("Viewport enable/disable not implemented");
 		}
 
 		virtual bool IsEnabled() const noexcept {
-			return viewport->isEnabled();
+			return true;
 		}
 
 		virtual void* NativeHandle() const noexcept {

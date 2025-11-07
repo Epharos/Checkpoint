@@ -40,7 +40,7 @@ namespace cp
 		std::vector<std::shared_ptr<RenderTargetAttachment>> attachments;
 
 		vk::Framebuffer framebuffer;
-		vk::RenderPass renderPass;
+		vk::RenderPass& renderPass; // The render target does not own the render pass, but can reference it (as it is used to build the framebuffer)
 
 		vk::Extent2D extent;
 

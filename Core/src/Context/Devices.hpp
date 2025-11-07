@@ -8,10 +8,31 @@ namespace cp
 	{
 		std::optional<uint32_t> graphicsFamily;
 		std::optional<uint32_t> presentFamily;
+		std::optional<uint32_t> computeFamily;
 
-		constexpr bool IsComplete() const
+		inline constexpr bool IsFullComplete() const
 		{
-			return graphicsFamily.has_value() && presentFamily.has_value();
+			return IsGraphicsComplete() && IsComputeComplete() && IsPresentComplete();
+		}
+
+		inline constexpr bool IsGeneralComplete() const
+		{
+			return IsGraphicsComplete() && IsPresentComplete();
+		}
+
+		inline constexpr bool IsGraphicsComplete() const
+		{
+			return graphicsFamily.has_value();
+		}
+
+		inline constexpr bool IsComputeComplete() const
+		{
+			return computeFamily.has_value();
+		}
+
+		inline constexpr bool IsPresentComplete() const
+		{
+			return presentFamily.has_value();
 		}
 	};
 

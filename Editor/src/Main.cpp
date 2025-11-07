@@ -14,6 +14,8 @@
 
 #include "Components/ComponentView.hpp"
 
+#include "Renderers/BasicRenderer.hpp"
+
 import EditorUI;
 
 class TransformView : public cp::ComponentView<Transform> {
@@ -169,6 +171,8 @@ int main(int argc, char* args[])
 	auto containerInspector = factory.CreateContainer().release();
 	containerInspector->AddChild(inspector.get());
 	dockInspector->SetContainer(containerInspector);
+
+	auto viewport = factory.CreateViewport(new cp::BasicRenderer(), scene);
 
 	QObject::connect((cp::SceneHierarchy*)sh->NativeHandle(), &cp::SceneHierarchy::EntitySelected, [&](cp::EntityAsset* _entity) {
 		if (_entity) {

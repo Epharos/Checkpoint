@@ -15,14 +15,20 @@ namespace cp
 			if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics)
 			{
 				indices.graphicsFamily = i;
+				indices.presentFamily = i; // We can assume that graphics family can also present
 			}
 
-			if (_device.getSurfaceSupportKHR(i, _surface))
+			/*if (_device.getSurfaceSupportKHR(i, _surface))
 			{
 				indices.presentFamily = i;
+			}*/
+
+			if (queueFamily.queueFlags & vk::QueueFlagBits::eCompute)
+			{
+				indices.computeFamily = i;
 			}
 
-			if (indices.IsComplete())
+			if (indices.IsFullComplete())
 			{
 				return indices;
 			}

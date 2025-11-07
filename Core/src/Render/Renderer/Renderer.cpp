@@ -3,6 +3,34 @@
 
 #include "../Setup/Frame.hpp"
 
+void cp::Renderer::SetupSurface(Platform* _platform)
+{
+	VkSurfaceKHR surfaceHandle = VK_NULL_HANDLE;
+	VkResult vr = VkResult::VK_RESULT_MAX_ENUM; // Just to silence uninitialized variable warning
+
+	switch (_platform->GetType())
+	{
+	case PlatformType::GLFW:
+		vr = glfwCreateWindowSurface(context->GetInstance(), (GLFWwindow*)_platform->GetNativeWindowHandle(), nullptr, &surfaceHandle);
+
+		if (vr != VK_SUCCESS)
+		{
+			LOG_FATAL("Failed to create window surface " + vr);
+			return;
+		}
+		break;
+	case PlatformType::QT:
+		break;
+	default:
+		LOG_FATAL("Unsupported platform type for surface creation");
+		return;
+	}
+
+	LOG_DEBUG("Created window surface");
+	surface = surfaceHandle;
+	platform = _platform;
+}
+
 void cp::Renderer::CreateRenderPasses()
 {
 

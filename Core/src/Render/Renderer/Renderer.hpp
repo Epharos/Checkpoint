@@ -38,6 +38,8 @@ namespace cp
 	{
 	protected:
 		cp::VulkanContext* context = nullptr;
+		Platform* platform;
+		vk::SurfaceKHR surface = VK_NULL_HANDLE;
 		Swapchain* swapchain = nullptr;
 
 		vk::RenderPass mainRenderPass = VK_NULL_HANDLE;
@@ -45,6 +47,7 @@ namespace cp
 
 		std::unordered_map<std::string, Renderpass> renderPasses;
 
+		void SetupSurface(Platform* _platform);
 		virtual void SetupPipelines() = 0;
 
 		virtual void CreateMainRenderPass() = 0;

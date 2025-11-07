@@ -23,6 +23,11 @@ namespace cp {
                 renderTimer.start();
             }
 
+            void SetScene(cp::SceneAsset* _scene)
+            {
+                scene = _scene;
+			}
+
             void exposeEvent(QExposeEvent* _event) override
             {
                 Q_UNUSED(_event);

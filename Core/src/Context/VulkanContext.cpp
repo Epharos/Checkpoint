@@ -13,8 +13,6 @@ void cp::VulkanContext::Initialize(VulkanContextInfo& _contextInfo)
 
 	LOG_TRACE("Vulkan version: " + VersionToString(vulkanVersion));
 
-	platform = _contextInfo.platform;
-
 	uint32 glfwExtensionCount = 0;
 	const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
@@ -28,7 +26,6 @@ void cp::VulkanContext::Initialize(VulkanContextInfo& _contextInfo)
 
 #ifdef IN_EDITOR
 	instance = _contextInfo.instance;
-	surface = _contextInfo.surface;
 #endif
 
 #ifndef IN_EDITOR
@@ -171,20 +168,7 @@ void cp::VulkanContext::CreateLogicalDevice()
 
 void cp::VulkanContext::CreateSurface()
 {
-	if (platform->GetType() == PlatformType::GLFW)
-	{
-		VkSurfaceKHR surfaceHandle;
-		VkResult vr = glfwCreateWindowSurface(instance, (GLFWwindow*)platform->GetNativeWindowHandle(), nullptr, &surfaceHandle);
-
-		if (vr != VK_SUCCESS)
-		{
-			LOG_FATAL("Failed to create window surface " + vr);
-			return;
-		}
-
-		LOG_DEBUG("Created window surface");
-		surface = surfaceHandle;
-	}
+	
 }
 
 void cp::VulkanContext::CreateDebugMessenger()

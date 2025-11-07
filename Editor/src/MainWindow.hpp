@@ -16,7 +16,7 @@ protected:
 	cp::Renderer* activeRenderer = nullptr;
 	cp::Scene* currentScene = nullptr;
 
-	VulkanWindow* window = nullptr;
+	QWindow* window = nullptr;
 	QVulkanInstance* instance = nullptr;
 
 	QTreeView* fileExplorer = nullptr;
@@ -81,7 +81,7 @@ protected:
 		connect(createNewSceneAction, &QAction::triggered, [=] {
 			// TODO : Save current scene
 			currentScene = new cp::Scene(activeRenderer);
-			window->SetScene(currentScene);
+			//window->SetScene(currentScene);
 			});
 
 		connect(openSceneHierarchyAction, &QAction::triggered, [=] {
@@ -360,7 +360,7 @@ public:
 
 	void InitializeVulkanRenderer()
 	{
-		cp::VulkanContextInfo contextInfo =
+		/*cp::VulkanContextInfo contextInfo =
 		{
 			.appName = "App Example",
 			.appVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
@@ -390,6 +390,6 @@ public:
 
 		CreateFileExplorerDockWidget(false);
 		CreateSceneHierarchyDockWidget(false);
-		CreateInspectorDockWidget(false);
+		CreateInspectorDockWidget(false);*/
 	}
 };
