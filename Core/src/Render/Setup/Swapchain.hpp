@@ -11,6 +11,8 @@ namespace cp
 	{
 	private:
 		cp::VulkanContext* context;
+		vk::SurfaceKHR& surface;
+		cp::Platform* platform;
 
 		vk::SurfaceCapabilitiesKHR surfaceCapabilities;
 		std::vector<vk::SurfaceFormatKHR> surfaceFormats;
@@ -36,7 +38,7 @@ namespace cp
 		vk::Extent2D SelectExtent(const vk::SurfaceCapabilitiesKHR& _capabilities, const uint32& _width, const uint32& _height);
 
 	public:
-		Swapchain(cp::VulkanContext* _context);
+		Swapchain(cp::VulkanContext* _context, vk::SurfaceKHR& _surface, cp::Platform* _platform);
 		~Swapchain();
 
 		void Setup();

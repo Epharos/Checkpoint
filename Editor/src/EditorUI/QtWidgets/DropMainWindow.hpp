@@ -1,4 +1,6 @@
 #pragma once
+#include "../../pch.hpp"
+
 #include <QMainWindow>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -8,6 +10,8 @@
 #include <QtWidgets/qdockwidget.h>
 #include <QtGui/qevent.h>
 #include <QtCore/qmimedata.h>
+
+#include "VulkanRendererWidget.hpp"
 
 class DropMainWindow : public QMainWindow {
 #ifndef BUILDING_PLUGIN_LOADER
@@ -54,5 +58,40 @@ protected:
         dock->show();
 
         event->acceptProposedAction();
+    }
+
+    void closeEvent(QCloseEvent* event) override {
+        for (auto dock : findChildren<QDockWidget*>())
+        {
+            QWidget* vp = FindWidgetWithProperty(dock, "viewportHandle"); // TODO: Should definitely think of something else, but it will do for now
+
+            if (vp)
+            {
+                LOG_DEBUG("FOUND IT !");
+                auto viewport = static_cast<cp::VulkanRendererWidget*>(vp->property("viewportHandle").value<void*>());
+                if (viewport) viewport->Cleanup();
+            }
+
+            dock->close();
+            dock->deleteLater();
+        }
+
+        QMainWindow::closeEvent(event);
+	}
+
+    QWidget* FindWidgetWithProperty(QWidget* parent, const char* property)
+    {
+        if (parent->property(property).isValid()) return parent;
+
+        for (auto child : parent->children())
+        {
+            if (auto widgetChild = qobject_cast<QWidget*>(child))
+            {
+                QWidget* found = FindWidgetWithProperty(widgetChild, property);
+                if (found) return found;
+            }
+        }
+
+        return nullptr;
     }
 };

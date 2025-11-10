@@ -76,8 +76,14 @@ namespace cp
 		Renderpass& RegisterRenderPass(const std::string& _name);
 		Renderpass& GetRenderPass(const std::string& _name);
 		std::vector<std::string> GetRenderPassNames();
+		Platform* GetPlatform() const { return platform; }
+		vk::SurfaceKHR GetSurface() const { return surface; }
 
 		inline std::unordered_map<std::string, Renderpass>& GetRenderPasses() { return renderPasses; }
-		
+
+		void SetPlatform(Platform* _platform);
+		void SetSurface(vk::SurfaceKHR _surface) { surface = _surface; }
+
+		void TriggerSwapchainRecreation() { if(swapchain) swapchain->Recreate(); }
 	};
 }

@@ -14,7 +14,7 @@ void cp::Swapchain::CreateData()
 	uint32_t imageCount = std::min(surfaceCapabilities.minImageCount + 1, surfaceCapabilities.maxImageCount);
 
 	vk::SwapchainCreateInfoKHR createInfo;
-	createInfo.surface = context->GetSurface();
+	createInfo.surface = surface;
 	createInfo.minImageCount = imageCount;
 	createInfo.imageFormat = surfaceFormat.format;
 	createInfo.imageColorSpace = surfaceFormat.colorSpace;
@@ -56,13 +56,13 @@ void cp::Swapchain::CreateData()
 	for (auto image : images)
 	{
 		Frame* frame = new Frame(context);
-		RenderTarget* rt = new RenderTarget(*context, extent);
+		RenderTarget* rt = new RenderTarget(*context, extent, mainRenderPass);
 		frame->AddRenderTarget(rt);
 		auto colorRTA = std::make_shared<RenderTargetAttachment>(context, image, surfaceFormat.format, vk::ImageAspectFlagBits::eColor);
 		colorRTA->isSwapchain = true;
 		rt->AddAttachment(depthRTA);
 		rt->AddAttachment(colorRTA);
-		rt->Build(mainRenderPass);
+		rt->Build();
 		
 		frames.push_back(frame);
 	}
@@ -72,9 +72,9 @@ void cp::Swapchain::QuerySupport()
 {
 	auto physicalDevice = context->GetPhysicalDevice();
 
-	surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(context->GetSurface());
-	surfaceFormats = physicalDevice.getSurfaceFormatsKHR(context->GetSurface());
-	presentModes = physicalDevice.getSurfacePresentModesKHR(context->GetSurface());
+	surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
+	surfaceFormats = physicalDevice.getSurfaceFormatsKHR(surface);
+	presentModes = physicalDevice.getSurfacePresentModesKHR(surface);
 }
 
 vk::SurfaceFormatKHR cp::Swapchain::SelectSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& _formats, vk::Format _format, vk::ColorSpaceKHR _colorSpace)
@@ -118,9 +118,10 @@ vk::Extent2D cp::Swapchain::SelectExtent(const vk::SurfaceCapabilitiesKHR& _capa
 	return actualExtent;
 }
 
-cp::Swapchain::Swapchain(cp::VulkanContext* _context)
+cp::Swapchain::Swapchain(cp::VulkanContext* _context, vk::SurfaceKHR& _surface, cp::Platform* _platform) : surface(_surface)
 {
 	context = _context;
+	platform = _platform;
 	Setup();
 }
 
@@ -135,7 +136,7 @@ void cp::Swapchain::Setup()
 
 	auto newSurfaceFormat = SelectSurfaceFormat(surfaceFormats);
 	auto newPresentMode = SelectPresentMode(presentModes);
-	auto windowExtent = context->GetPlatform()->GetExtent();
+	auto windowExtent = platform->GetExtent();
 
 	extent = SelectExtent(surfaceCapabilities, windowExtent.width, windowExtent.height);
 	surfaceFormat = newSurfaceFormat;
@@ -147,16 +148,17 @@ void cp::Swapchain::Create(vk::RenderPass _mainRenderPass)
 	if(!mainRenderPass) mainRenderPass = _mainRenderPass;
 	CreateData();
 	maxFramesInFlight = static_cast<uint32>(frames.size());
+	currentFrame = 0;
 }
 
 void cp::Swapchain::Recreate()
 {
-	auto windowExtent = context->GetPlatform()->GetExtent();
+	auto windowExtent = platform->GetExtent();
 
 	while (windowExtent.width == 0 || windowExtent.height == 0)
 	{
 		extent = windowExtent;
-		switch (context->GetPlatform()->GetType())
+		switch (platform->GetType())
 		{
 		case cp::PlatformType::GLFW:
 			glfwWaitEvents();

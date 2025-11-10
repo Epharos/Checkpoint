@@ -93,6 +93,8 @@ export namespace cp {
 		public:
 		QtViewport(cp::Renderer* _renderer, cp::SceneAsset* _scene = nullptr) {
 			viewport = new cp::VulkanRendererWidget(_renderer, _scene);
+			viewportContainer = QWidget::createWindowContainer(viewport);
+			viewportContainer->setProperty("viewportHandle", QVariant::fromValue<void*>(static_cast<void*>(viewport)));
 		}
 
 		virtual ~QtViewport() = default;
@@ -114,7 +116,7 @@ export namespace cp {
 		}
 
 		virtual void* NativeHandle() const noexcept {
-			return static_cast<void*>(viewport);
+			return static_cast<void*>(viewportContainer);
 		}
 
 		virtual void SetScene(SceneAsset* _scene) {
@@ -122,5 +124,6 @@ export namespace cp {
 		}
 	protected:
 		VulkanRendererWidget* viewport;
+		QWidget* viewportContainer;
 	};
 }

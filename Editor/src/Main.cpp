@@ -1,4 +1,5 @@
 #include "pch.hpp"
+#include "CheckpointEditor.hpp"
 
 #include <QtCore/qobject.h>
 #include <QtGui/qfontdatabase.h>
@@ -13,8 +14,7 @@
 #include "EditorUI/QtWidgets/SceneHierarchy.hpp"
 
 #include "Components/ComponentView.hpp"
-
-#include "Renderers/BasicRenderer.hpp"
+#include "Renderers/EditorRenderer.hpp"
 
 import EditorUI;
 
@@ -113,6 +113,8 @@ int main(int argc, char* args[])
 		std::cerr << "Failed to load font." << std::endl;
 	}
 
+	cp::CheckpointEditor::SetupVulkanContext();
+
 	Launcher launcher;
 	launcher.show();
 
@@ -142,37 +144,46 @@ int main(int argc, char* args[])
 
 	cp::EntityAsset* entity = new cp::EntityAsset();
 	entity->name = "Coucou toi";
-	entity->components.push_back(new Transform());
-	entity->components.push_back(new MeshRenderer());
-
+	entity->AddComponent(new Transform());
+	entity->AddComponent(new MeshRenderer());
 	scene->entities.push_back(entity);
 	entity = new cp::EntityAsset();
 	entity->name = "Je suis une autre entite";
-	entity->components.push_back(new Transform());
+	entity->AddComponent(new Transform());
+	entity->AddComponent(new MeshRenderer());
 	scene->entities.push_back(entity);
 	entity = new cp::EntityAsset();
 	entity->name = "Kappa";
-	entity->components.push_back(new Transform());
+	entity->AddComponent(new Transform());
+	entity->AddComponent(new MeshRenderer());
 	scene->entities.push_back(entity);
 	entity = new cp::EntityAsset();
 	entity->name = "EFT 15.11";
-	entity->components.push_back(new MeshRenderer());
+	entity->AddComponent(new Transform());
+	entity->AddComponent(new MeshRenderer());
 	scene->entities.push_back(entity);
 
 	sh->UpdateScene(scene);
-	dock->MatchSizeToContent();
+
+	auto dockViewport = factory.CreateDockableWindow(nullptr);
+	dockViewport->SetTitle("Viewport");
+	dockViewport->DockTo(dock.get(), cp::DockArea::Left);
+	dockViewport->Show();
+
+	auto viewport = factory.CreateViewport(new cp::EditorRenderer(&cp::CheckpointEditor::VulkanCtx), scene);
+	auto containerViewport = factory.CreateContainer().release();
+	containerViewport->AddChild(viewport.get());
+	dockViewport->SetContainer(containerViewport);
 
 	auto dockInspector = factory.CreateDockableWindow(nullptr);
 	dockInspector->SetTitle("Inspector");
-	dockInspector->DockTo(dock.get(), cp::DockArea::Left);
+	dockInspector->DockTo(dockViewport.get(), cp::DockArea::Left);
 	dockInspector->Show();
 
 	auto inspector = factory.CreateInspector();
 	auto containerInspector = factory.CreateContainer().release();
 	containerInspector->AddChild(inspector.get());
 	dockInspector->SetContainer(containerInspector);
-
-	auto viewport = factory.CreateViewport(new cp::BasicRenderer(), scene);
 
 	QObject::connect((cp::SceneHierarchy*)sh->NativeHandle(), &cp::SceneHierarchy::EntitySelected, [&](cp::EntityAsset* _entity) {
 		if (_entity) {

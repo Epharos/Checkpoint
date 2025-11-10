@@ -1,11 +1,13 @@
 #include "pch.hpp"
 #include "Camera.hpp"
+#include "Renderer.hpp"
 
 namespace cp
 {
-	Camera::Camera(cp::VulkanContext* _context)
+	Camera::Camera(cp::VulkanContext* _context, cp::Renderer* _renderer)
 	{
 		context = _context;
+		renderer = _renderer;
 
 		position = glm::vec3(0.0f); // Default position
 		rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f); // Default rotation
@@ -15,7 +17,7 @@ namespace cp
 
 		uboBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(CameraUBO), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, uboBufferMemory);
 
-		SetPerspective(70.f, context->GetPlatform()->GetAspectRatio(), 0.1f, 300.f);
+		SetPerspective(70.f, _renderer->GetPlatform()->GetAspectRatio(), 0.1f, 300.f);
 
 		dirty = true;
 		UpdateUniformBuffer();

@@ -41,14 +41,14 @@ void cp::Inspector::ShowEntity(cp::EntityAsset* _entity)
 
 	cp::QtEditorUIFactory factory;
 
-	for (size_t i = 0; i < _entity->components.size(); ++i) {
-		auto view = cp::ComponentViewRegistry::GetInstance().CreateView(_entity->components[i]);
+	for (size_t i = 0; i < _entity->GetComponents().size(); ++i) {
+		auto view = cp::ComponentViewRegistry::GetInstance().CreateView(_entity->GetComponents()[i]);
 		auto collapsible = factory.CreateCollapsible().release();
 		collapsible->SetTitle(view->GetName());
 		collapsible->SetContent(view->Render(&factory));
 		layout->addWidget(static_cast<QWidget*>(collapsible->NativeHandle()));
 
-		if (i != _entity->components.size() - 1) {
+		if (i != _entity->GetComponents().size() - 1) {
 			QFrame* line = new QFrame(this);
 			line->setFrameShape(QFrame::HLine);
 			line->setFrameShadow(QFrame::Sunken);

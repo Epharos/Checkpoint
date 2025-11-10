@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include "pch.hpp"
 #include <nlohmann/json.hpp>
 
 namespace cp {
@@ -11,18 +11,25 @@ namespace cp {
 		Release = 3
 	};
 
-	struct EditorVersion : uint32_t {
+	struct EditorVersion {
 		EditorVersionType type : 2;
 		uint8_t major : 8;
 		uint8_t minor : 8;
 		uint16_t patch : 14;
 
+		constexpr EditorVersion() : type(EditorVersionType::Alpha), major(0), minor(0), patch(0) {
+		}
+
 		constexpr EditorVersion(EditorVersionType type, uint8_t major, uint8_t minor, uint16_t patch)
 			: type(type), major(major), minor(minor), patch(patch) {
 		}
 
-		constexpr operator uint32_t() const {
-			return MAKE_EDITOR_VERSION(static_cast<uint32_t>(type), major, minor, patch);
+		constexpr uint32_t ToUint32() const {
+			return (static_cast<uint32_t>(type) << 30) | (static_cast<uint32_t>(major) << 22) | (static_cast<uint32_t>(minor) << 14) | static_cast<uint32_t>(patch);
+		}
+
+		constexpr bool operator>=(const EditorVersion& other) const {
+			return ToUint32() >= other.ToUint32();
 		}
 	};
 
@@ -34,7 +41,7 @@ namespace cp {
 		EditorVersion engineVersion;
 
 		std::string GetProjectPath() {
-			return Project::data.path.toStdString();
+			return path;
 		}
 
 		std::string GetResourcePath() {
@@ -75,13 +82,29 @@ namespace cp {
 	};
 
 	struct CheckpointEditor {
-		static constexpr EditorVersion CurrentVersion = EditorVersion(EditorVersionType::Alpha, 0, 1, 0);
+		static cp::VulkanContext VulkanCtx;
+		static constexpr EditorVersion CurrentVersion{ EditorVersionType::Alpha, 0, 1, 0 };
 		static Project CurrentProject;
 
 		static bool IsProjectUpToDate(const Project& project) {
 			return project.engineVersion >= CurrentVersion;
 		}
+
+		static void SetupVulkanContext() {
+			cp::VulkanContextInfo contextInfo;
+			contextInfo.appName = "Checkpoint Editor"; // Application name
+			contextInfo.appVersion = VK_MAKE_API_VERSION(0, 1, 0, 0); // Application version
+			contextInfo.extensions.instanceExtensions = {
+				VK_KHR_SURFACE_EXTENSION_NAME,
+				#ifdef _WIN32
+				"VK_KHR_win32_surface",
+				#endif
+				#ifdef __linux__
+				"VK_KHR_xcb_surface",
+				#endif
+			};
+
+			cp::CheckpointEditor::VulkanCtx.Initialize(contextInfo);
+		}
 	};
 }
-
-cp::Project cp::CheckpointEditor::CurrentProject = {};

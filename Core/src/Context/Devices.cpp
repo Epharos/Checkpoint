@@ -3,7 +3,7 @@
 
 namespace cp
 {
-	QueueFamilyIndices FindQueueFamilies(const vk::PhysicalDevice& _device, const vk::SurfaceKHR& _surface)
+	QueueFamilyIndices FindQueueFamilies(const vk::PhysicalDevice& _device)
 	{
 		QueueFamilyIndices indices;
 

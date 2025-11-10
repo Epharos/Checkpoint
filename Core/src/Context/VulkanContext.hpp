@@ -1,7 +1,5 @@
 #pragma once
 
-#define PRINT_VULKAN_SPECS
-
 #define ENGINE_VERSION VK_MAKE_API_VERSION(0, 1, 0, 0)
 
 #include "../pch.hpp"
@@ -30,10 +28,6 @@ namespace cp
 		uint32 appVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
 
 		VulkanExtensions extensions = {};
-
-#ifdef IN_EDITOR
-		vk::Instance instance = nullptr;
-#endif
 	};
 
 	struct QueueFamilyIndices;

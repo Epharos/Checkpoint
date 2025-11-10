@@ -13,30 +13,22 @@ void cp::VulkanContext::Initialize(VulkanContextInfo& _contextInfo)
 
 	LOG_TRACE("Vulkan version: " + VersionToString(vulkanVersion));
 
-	uint32 glfwExtensionCount = 0;
+	/*uint32 glfwExtensionCount = 0;
 	const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
 	for (uint32 i = 0; i < glfwExtensionCount; i++)
-		_contextInfo.extensions.instanceExtensions.push_back(glfwExtensions[i]);
+		_contextInfo.extensions.instanceExtensions.push_back(glfwExtensions[i]);*/
+
+	// ^ GLFW specific, we should query required extensions for glfw only when using GLFW
 
 	#ifdef USE_DEBUG_LAYER
 	_contextInfo.extensions.instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	_contextInfo.extensions.instanceLayers.push_back("VK_LAYER_KHRONOS_validation");
 	#endif
 
-#ifdef IN_EDITOR
-	instance = _contextInfo.instance;
-#endif
-
-#ifndef IN_EDITOR
 	CreateInstance(vulkanVersion, _contextInfo.appName, _contextInfo.appVersion, _contextInfo.extensions);
-#endif
 	CreateDebugMessenger();
 	PickPhysicalDevice();
-
-#ifndef IN_EDITOR
-	CreateSurface();
-#endif
 
 	CreateLogicalDevice();
 	CreateCommandPool();
@@ -59,7 +51,6 @@ void cp::VulkanContext::Shutdown()
 	descriptorSetManager->Cleanup();
 
 	device.destroy();
-	instance.destroySurfaceKHR(surface);
 
 	#ifdef USE_DEBUG_LAYER
 	instance.destroyDebugUtilsMessengerEXT(debugMessenger, nullptr, dynamicLoader);
@@ -112,21 +103,11 @@ void cp::VulkanContext::PickPhysicalDevice()
 			break;
 		}
 	}
-
-#ifdef PRINT_VULKAN_SPECS
-
-	vk::PhysicalDeviceProperties properties = physicalDevice.getProperties();
-
-	LOG_DEBUG(MF(	"PHYSICAL DEVICE PROPERTIES\n",
-					"Min Buffer Offset Alignment (Uniform): ", properties.limits.minUniformBufferOffsetAlignment, "\n",
-					"Min Buffer Offset Alignment (Storage): ", properties.limits.minStorageBufferOffsetAlignment));
-
-#endif
 }
 
 void cp::VulkanContext::CreateLogicalDevice()
 {
-	queueFamilyIndices = FindQueueFamilies(physicalDevice, surface);
+	queueFamilyIndices = FindQueueFamilies(physicalDevice);
 
 	std::vector<uint32> uniqueQueueFamilies = { queueFamilyIndices.graphicsFamily.value() };
 	if (queueFamilyIndices.graphicsFamily.value() != queueFamilyIndices.presentFamily.value())
@@ -164,11 +145,6 @@ void cp::VulkanContext::CreateLogicalDevice()
 		nullptr, &features2);
 
 	device = physicalDevice.createDevice(deviceInfo);
-}
-
-void cp::VulkanContext::CreateSurface()
-{
-	
 }
 
 void cp::VulkanContext::CreateDebugMessenger()
@@ -223,7 +199,7 @@ void cp::VulkanContext::ValidateExtensions(const VulkanExtensions& _extensions) 
 		}
 	}
 
-	LOG_INFO("Validated " + std::to_string(validatedCount) + "/" + std::to_string(_extensions.instanceExtensions.size()) + " extensions");
+	LOG_INFO("Validated " + std::to_string(validatedCount) + " of " + std::to_string(_extensions.instanceExtensions.size()) + " extensions");
 
 	auto availableLayers = vk::enumerateInstanceLayerProperties();
 
@@ -248,7 +224,7 @@ void cp::VulkanContext::ValidateExtensions(const VulkanExtensions& _extensions) 
 		}
 	}
 
-	LOG_INFO("Validated " + std::to_string(validatedCount) + "/" + std::to_string(_extensions.instanceLayers.size()) + " layers");
+	LOG_INFO("Validated " + std::to_string(validatedCount) + " of " + std::to_string(_extensions.instanceLayers.size()) + " layers");
 }
 
 VKAPI_ATTR vk::Bool32 VKAPI_PTR DebugLayerCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT _messageSeverity, vk::DebugUtilsMessageTypeFlagsEXT _messageType, const vk::DebugUtilsMessengerCallbackDataEXT* _callbackData, void* _userData)

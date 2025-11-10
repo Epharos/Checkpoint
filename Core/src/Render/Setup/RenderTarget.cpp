@@ -4,7 +4,7 @@
 
 namespace cp
 {
-	RenderTarget::RenderTarget(cp::VulkanContext& _context, const vk::Extent2D& _extent) : context(&_context), extent(_extent)
+	RenderTarget::RenderTarget(cp::VulkanContext& _context, const vk::Extent2D& _extent, vk::RenderPass& _renderPass) : context(&_context), extent(_extent), renderPass(_renderPass)
 	{
 
 	}
@@ -43,7 +43,7 @@ namespace cp
 		this->attachments.push_back(_attachment);
 	}
 
-	void RenderTarget::Build(const vk::RenderPass& _renderPass, const uint32_t& _layerCount)
+	void RenderTarget::Build(const uint32_t& _layerCount)
 	{
 		std::vector<vk::ImageView> attachmentViews;
 
@@ -53,7 +53,7 @@ namespace cp
 		}
 
 		vk::FramebufferCreateInfo framebufferInfo;
-		framebufferInfo.renderPass = _renderPass;
+		framebufferInfo.renderPass = renderPass;
 		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachmentViews.size());
 		framebufferInfo.pAttachments = attachmentViews.data();
 		framebufferInfo.width = extent.width;
@@ -61,7 +61,6 @@ namespace cp
 		framebufferInfo.layers = _layerCount;
 
 		framebuffer = context->GetDevice().createFramebuffer(framebufferInfo);
-		renderPass = _renderPass;
 	}
 
 	void RenderTarget::Cleanup()

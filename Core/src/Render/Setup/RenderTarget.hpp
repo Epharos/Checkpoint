@@ -47,14 +47,14 @@ namespace cp
 		cp::VulkanContext* context;
 
 	public:
-		RenderTarget(cp::VulkanContext& _context, const vk::Extent2D& _extent);
+		RenderTarget(cp::VulkanContext& _context, const vk::Extent2D& _extent, vk::RenderPass& _renderPass);
 		~RenderTarget();
 
 		void AddAttachment(const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const uint32_t _layerCount = 1);
 		void AddAttachment(const vk::Image& _image, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags);
 		void AddAttachment(std::shared_ptr<RenderTargetAttachment>& _attachment);
 
-		void Build(const vk::RenderPass& _renderPass, const uint32_t& _layerCount = 1);
+		void Build(const uint32_t& _layerCount = 1);
 
 		void Cleanup();
 

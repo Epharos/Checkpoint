@@ -5,7 +5,7 @@
 
 void cp::PlatformQt::Initialize(VulkanContextInfo _context, vk::Extent2D _extent)
 {
-	throw std::runtime_error("Initialize(VulkanContextInfo, vk::Extent2D) is deprecated with Qt usage. Use Initialize(QVulkanWindow*) instead");
+	throw std::runtime_error("Initialize(VulkanContextInfo, vk::Extent2D) is illegal with Qt usage. Use Initialize(QWindow*) instead");
 }
 
 void cp::PlatformQt::Initialize(QWindow* _window)

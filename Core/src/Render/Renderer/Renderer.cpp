@@ -18,15 +18,17 @@ void cp::Renderer::SetupSurface(Platform* _platform)
 			LOG_FATAL("Failed to create window surface " + vr);
 			return;
 		}
+
+		LOG_INFO("Successfully created GLFW window surface");
 		break;
 	case PlatformType::QT:
+		LOG_WARNING("Qt platform surface is handled externally, skipping surface creation. Use SetSurface(VkSurfaceKHR) once it's set up.");
 		break;
 	default:
 		LOG_FATAL("Unsupported platform type for surface creation");
 		return;
 	}
 
-	LOG_DEBUG("Created window surface");
 	surface = surfaceHandle;
 	platform = _platform;
 }
@@ -38,9 +40,11 @@ void cp::Renderer::CreateRenderPasses()
 
 uint32_t cp::Renderer::PrepareFrame()
 {
-	LOG_INFO(swapchain ? "Swapchain exists" : "Swapchain does not exist");
-	LOG_INFO(swapchain ? MF("Swapchain has ", swapchain->GetFrameCount(), "frames") : "");
-	LOG_INFO(swapchain ? MF("Current frame index: ", swapchain->GetCurrentFrameIndex()) : "");
+	if (!swapchain)
+	{
+		LOG_ERROR("Swapchain is not initialized, cannot prepare frame");
+		return ~0u;
+	}
 
 	if(swapchain->GetCurrentFrameIndex() >= swapchain->GetFrameCount())
 	{
@@ -150,7 +154,6 @@ cp::Renderpass& cp::Renderer::RegisterRenderPass(const std::string& _name)
 	if (renderPasses.find(_name) == renderPasses.end())
 	{
 		renderPasses.insert({ _name, cp::Renderpass(context, _name) });
-		//renderPasses[_name] = cp::Renderpass(context, _name);
 	}
 
 	return renderPasses.at(_name);
@@ -159,6 +162,12 @@ cp::Renderpass& cp::Renderer::RegisterRenderPass(const std::string& _name)
 cp::Renderpass& cp::Renderer::GetRenderPass(const std::string& _name)
 {
 	return renderPasses.at(_name);
+}
+
+void cp::Renderer::SetPlatform(Platform* _platform)
+{
+	platform = _platform;
+	SetupSurface(_platform);
 }
 
 std::vector<std::string> cp::Renderer::GetRenderPassNames()
@@ -175,7 +184,7 @@ std::vector<std::string> cp::Renderer::GetRenderPassNames()
 
 void cp::Renderer::Build()
 {
-	swapchain = new Swapchain(context);
+	swapchain = new Swapchain(context, surface, platform);
 	CreateMainRenderPass();
 	CreateRenderPasses();
 	swapchain->Create(mainRenderPass);
@@ -197,6 +206,7 @@ void cp::Renderer::Cleanup()
 {
 	delete swapchain;
 	context->GetDevice().destroyRenderPass(mainRenderPass);
+	context->GetInstance().destroySurfaceKHR(surface);
 }
 
 void cp::Renderer::Render(const std::vector<InstanceGroup>& _instanceGroups)
