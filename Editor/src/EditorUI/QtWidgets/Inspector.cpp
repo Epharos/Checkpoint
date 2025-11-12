@@ -61,6 +61,8 @@ void cp::Inspector::ShowEntity(cp::EntityAsset* _entity)
 			layout->addWidget(line);
 		}
 	}
+
+	layout->addStretch(1);
 }
 
 void cp::Inspector::ShowFile(const std::string& _path)
@@ -80,6 +82,7 @@ void cp::Inspector::ShowFile(const std::string& _path)
 	} else {
 		QLabel* label = new QLabel("No inspector available for this file type", this);
 		layout->addWidget(label);
+		layout->addStretch(1);
 	}
 }
 
@@ -90,12 +93,14 @@ void cp::Inspector::ShowMaterial(const std::string& _path) {
 	serializer.Read(_path);
 	mat->Deserialize(serializer);
 
-	QWidget* matWidget = new QWidget(this);
-	QVBoxLayout* matLayout = new QVBoxLayout(matWidget);
-	matWidget->setLayout(matLayout);
-	layout->addWidget(matWidget);
+	QVBoxLayout* matLayout = new QVBoxLayout();
+	matLayout->setContentsMargins(0, 0, 0, 0);
+	matLayout->setSpacing(8);
+	matLayout->setAlignment(Qt::AlignTop);
+	matLayout->setSizeConstraint(QLayout::SetFixedSize);
 
-	cp::StringField* materialNameField = new cp::StringField(mat->GetNamePtr(), "Material Name");
+#pragma region Material Properties
+	cp::StringField* materialNameField = new cp::StringField(mat->GetNamePtr(), "Name");
 	matLayout->addWidget(materialNameField);
 
 	cp::FileDropPreviewWidget* shaderPathField = new cp::FileDropPreviewWidget(
@@ -104,5 +109,61 @@ void cp::Inspector::ShowMaterial(const std::string& _path) {
 		{ "slang" },
 		QString::fromStdString(cp::CheckpointEditor::CurrentProject.GetResourcePath())
 	);
+
 	matLayout->addWidget(shaderPathField);
+#pragma endregion
+
+	QFrame* line = new QFrame(this);
+	line->setFrameShape(QFrame::HLine);
+	line->setFrameShadow(QFrame::Sunken);
+	line->setStyleSheet("background-color: #3E465A; margin-top: 4px; margin-bottom: 4px; min-height: 1px; max-height: 1px;");
+	matLayout->addWidget(line);
+
+	cp::QtEditorUIFactory factory;
+
+#pragma region Debug Collapse
+
+	{
+		auto collapsible = factory.CreateCollapsible().release();
+		collapsible->SetTitle("Debug");
+		auto container = factory.CreateContainer().release();
+		QWidget* containerWidget = static_cast<QWidget*>(container->NativeHandle());
+
+		std::set<cp::ShaderStages> uniqueShaderStages;
+
+		for (const auto& [_, stage] : mat->GetShaderReflection()->entryPoints)
+		{
+			uniqueShaderStages.insert(stage);
+		}
+
+		if (uniqueShaderStages.size() >= 1)
+		{
+			QLabel* entryPointsLabel = new QLabel("Shader stages", this);
+			containerWidget->layout()->addWidget(entryPointsLabel);
+
+			for (const auto& stage : uniqueShaderStages)
+			{
+				QLabel* shaderStage = new QLabel(this);
+				shaderStage->setText(QString::fromStdString(Helper::Material::GetShaderStageString(stage)));
+				shaderStage->setStyleSheet("color : #aaa;");
+				containerWidget->layout()->addWidget(shaderStage);
+			}
+		}
+
+		collapsible->SetContent(container);
+		matLayout->addWidget(static_cast<QWidget*>(collapsible->NativeHandle()));
+	}
+
+#pragma endregion
+
+
+
+
+	QWidget* matWidget = new QWidget(this);
+	matWidget->setLayout(matLayout);
+	matWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+
+	layout->addWidget(matWidget);
+
+	layout->addStretch(1);
 }

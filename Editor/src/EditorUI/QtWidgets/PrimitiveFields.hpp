@@ -13,14 +13,14 @@ namespace cp {
 			StringField(std::string* _value, const std::string& _fieldName, QWidget* parent = nullptr)
 				: QWidget(parent), valuePtr(_value)
 			{
-				widget = new QWidget(this);
-				QHBoxLayout* layout = new QHBoxLayout(widget);
-				label = new QLabel(QString::fromStdString(_fieldName), widget);
-				lineEdit = new QLineEdit(QString::fromStdString(*valuePtr), widget);
+				QHBoxLayout* layout = new QHBoxLayout(this);
+				layout->setContentsMargins(0, 0, 0, 0);
+				label = new QLabel(QString::fromStdString(_fieldName), this);
+				lineEdit = new QLineEdit(QString::fromStdString(*valuePtr), this);
 				lineEdit->setStyleSheet("QLineEdit { padding: 2px 4px; background-color: #1A1F2B; }");
 				layout->addWidget(label);
 				layout->addWidget(lineEdit);
-				widget->setLayout(layout);
+				setLayout(layout);
 				QObject::connect(lineEdit, &QLineEdit::textChanged, this, &StringField::OnTextChanged);
 			}
 
@@ -29,11 +29,11 @@ namespace cp {
 			}
 
 			virtual ~StringField() {
-				delete widget;
+				delete label;
+				delete lineEdit;
 			}
 	
 		protected:
-			QWidget* widget = nullptr;
 			QLabel* label = nullptr;
 			QLineEdit* lineEdit = nullptr;
 			std::string* valuePtr = nullptr;

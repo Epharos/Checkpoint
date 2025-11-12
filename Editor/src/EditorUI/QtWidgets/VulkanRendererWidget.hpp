@@ -45,6 +45,7 @@ namespace cp {
                 renderer->Cleanup();
 				delete editorCamera;
                 delete renderer;
+                renderer = nullptr;
             }
 
             void SetScene(cp::SceneAsset* _scene)

@@ -219,11 +219,11 @@ export namespace cp {
 			}
 
 			EDITOR_API virtual ~QtDockableWindow() override {
-				if (ownsHost) {
+				/*if (ownsHost) {
 					delete host;
 				} else {
 					host->removeDockWidget(dock);
-				}
+				}*/
 			}
 
 			EDITOR_API virtual void SetTitle(const std::string& title) noexcept override {
@@ -275,6 +275,11 @@ export namespace cp {
 					Qt::Orientation orientation = (area == DockArea::Left || area == DockArea::Right) ? Qt::Orientation::Horizontal : Qt::Orientation::Vertical;
 					targetHost->addDockWidget(ToQtDockArea(area), dock, orientation);
 					dock->show();
+				}
+
+				if (host != targetHost && ownsHost) {
+					delete host;
+					ownsHost = false;
 				}
 
 				host = targetHost;
