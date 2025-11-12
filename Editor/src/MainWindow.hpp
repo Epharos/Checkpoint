@@ -6,8 +6,6 @@
 #include "Widgets/Inspector.hpp"
 #include <QtWidgets/qheaderview.h>
 
-#include "Renderers/MinimalistRenderer.hpp"
-
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT

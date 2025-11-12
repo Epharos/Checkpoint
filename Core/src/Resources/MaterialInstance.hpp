@@ -10,59 +10,6 @@
 namespace cp
 {
 	class Material;
-	/*struct MaterialDescriptor;
-	struct MaterialBinding;
-	struct MaterialField;
-	class Texture;
-
-	struct MaterialInstanceField : public ISerializable
-	{
-		std::string name;
-		std::vector<uint8_t> data;
-
-		void Serialize(ISerializer& _serializer) const override;
-		void Deserialize(ISerializer& _serializer) override;
-
-		MaterialField& GetAssociatedField(const MaterialBinding& _material);
-
-#ifdef IN_EDITOR
-		QWidget* CreateFieldWidget(QWidget* _parent, const MaterialBinding& _material);
-#endif
-	};
-
-	struct MaterialInstanceBinding : public ISerializable
-	{
-		std::string name;
-		std::unordered_map<std::string, MaterialInstanceField> fields;
-
-		void Serialize(ISerializer& _serializer) const override;
-		void Deserialize(ISerializer& _serializer) override;
-
-		MaterialBinding& GetAssociatedBinding(const MaterialDescriptor& _material);
-		void SynchronizeFieldsWithMaterial(const MaterialDescriptor& _material);
-
-#ifdef IN_EDITOR
-		QWidget* CreateBindingWidget(QWidget* _parent, const MaterialDescriptor& _material);
-#endif
-	};
-
-	struct MaterialInstanceDescriptor : public ISerializable
-	{
-		std::string name;
-		std::unordered_map<std::string, MaterialInstanceBinding> bindings;
-
-		vk::DescriptorSet descriptorSet;
-
-		void Serialize(ISerializer& _serializer) const;
-		void Deserialize(ISerializer& _serializer) override;
-
-		MaterialDescriptor& GetAssociatedDescriptor(const Material& _material);
-		void SynchronizeBindingsWithMaterial(const Material& _material);
-
-#ifdef IN_EDITOR
-		QWidget* CreateDescriptorWidget(QWidget* _parent, const Material& _material);
-#endif
-	};*/
 
 	struct MaterialInstanceField : public ISerializable
 	{

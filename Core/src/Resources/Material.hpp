@@ -137,6 +137,7 @@ namespace cp
 		std::string* GetNamePtr() { return &moduleName; }
 
 		const std::string& GetShaderPath() const { return shaderPath; }
+		std::string* GetShaderPathPtr() { return &shaderPath; }
 		void SetShaderPath(const std::string& _path) { shaderPath = _path; }
 
 		inline RenderPassRequirement& GetRenderPassRequirement(const std::string& _rpName) { return rpRequirements[_rpName]; }

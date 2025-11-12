@@ -94,8 +94,11 @@ void cp::EditorRenderer::RenderFrame(const std::vector<cp::InstanceGroup>& _inst
 	commandBuffer.setViewport(0, vp);
 	commandBuffer.setScissor(0, scissor);
 
+	std::string currentPassName = "Main";
+	vk::RenderPass currentPass = renderPasses.at(currentPassName).GetRenderPass();
+
 	vk::RenderPassBeginInfo rpInfo = {};
-	rpInfo.renderPass = mainRenderPass;
+	rpInfo.renderPass = currentPass;
 	rpInfo.framebuffer = swapchain->GetCurrentFrame()->GetMainRenderTarget()->GetFramebuffer();
 	rpInfo.renderArea.offset = vk::Offset2D{ 0, 0 };
 	rpInfo.renderArea.extent = swapchain->GetExtent();

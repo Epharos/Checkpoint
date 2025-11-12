@@ -47,7 +47,7 @@ namespace cp
 		inline void SetDefaultPipeline(cp::PipelineData& _pipeline) { defaultPipeline = &_pipeline; }
 		inline void SetDepthOnly(bool _depthOnly) { depthOnly = _depthOnly; }
 
-		Renderpass(cp::VulkanContext* _context, const std::string& _name);
+		Renderpass(cp::VulkanContext* _context, const std::string& _name, vk::RenderPass _renderPass);
 
 		inline vk::RenderPass GetRenderPass() { return renderPass; }
 		inline const std::vector<Subpass>& GetSubpasses() const { return subpasses; }

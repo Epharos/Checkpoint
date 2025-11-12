@@ -56,21 +56,23 @@ public:
 private slots:
     void OpenProject(const QString& _path) 
     {
-		QFile file(_path + "/project.data");
-		if (!file.open(QIODevice::ReadWrite)) return;
+		cp::CheckpointEditor::LoadProject(_path.toStdString());
 
-		QJsonObject projectDataObject = QJsonDocument::fromJson(file.readAll()).object();
-		ProjectData projectData = ProjectData::FromJson(projectDataObject);
-		projectData.lastOpened = QDateTime::currentDateTime();
-        
-		projectDataObject = ProjectData::ToJson(projectData);
+		//QFile file(_path + "/project.data");
+		//if (!file.open(QIODevice::ReadWrite)) return;
 
-		file.seek(0);
-		file.write(QJsonDocument(projectDataObject).toJson());
+		//QJsonObject projectDataObject = QJsonDocument::fromJson(file.readAll()).object();
+		//ProjectData projectData = ProjectData::FromJson(projectDataObject);
+		//projectData.lastOpened = QDateTime::currentDateTime();
+  //      
+		//projectDataObject = ProjectData::ToJson(projectData);
 
-		//MainWindow* mainWindow = new MainWindow(projectData);
-		//mainWindow->setWindowTitle(projectData.name + " - Checkpoint");
-		//mainWindow->show();
+		//file.seek(0);
+		//file.write(QJsonDocument(projectDataObject).toJson());
+
+		////MainWindow* mainWindow = new MainWindow(projectData);
+		////mainWindow->setWindowTitle(projectData.name + " - Checkpoint");
+		////mainWindow->show();
 
         close();
     }

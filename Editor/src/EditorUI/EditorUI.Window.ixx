@@ -272,7 +272,8 @@ export namespace cp {
 					dock->show();
 				}
 				else {
-					targetHost->addDockWidget(ToQtDockArea(area), dock);
+					Qt::Orientation orientation = (area == DockArea::Left || area == DockArea::Right) ? Qt::Orientation::Horizontal : Qt::Orientation::Vertical;
+					targetHost->addDockWidget(ToQtDockArea(area), dock, orientation);
 					dock->show();
 				}
 

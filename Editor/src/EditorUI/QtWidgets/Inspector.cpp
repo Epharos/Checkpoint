@@ -1,6 +1,9 @@
 #include "Inspector.hpp"
 #include "../../Components/ComponentView.hpp"
 #include "../../Components/Transform.hpp"
+#include "../../CheckpointEditor.hpp"
+#include "PrimitiveFields.hpp"
+#include "FileDropPreviewWidget.hpp"
 
 import EditorUI;
 
@@ -12,6 +15,8 @@ cp::Inspector::Inspector(QWidget* _parent)
 	titleLabel = new QLabel("Select an entity", this);
 	layout->addWidget(titleLabel);
 	layout->setAlignment(Qt::AlignTop);
+
+	fileInspector["mat"] = [=](const std::string& _path) { ShowMaterial(_path); };
 }
 
 void cp::Inspector::Clear()
@@ -56,4 +61,48 @@ void cp::Inspector::ShowEntity(cp::EntityAsset* _entity)
 			layout->addWidget(line);
 		}
 	}
+}
+
+void cp::Inspector::ShowFile(const std::string& _path)
+{
+	Clear();
+
+	titleLabel->setText(QString::fromStdString("File: " + cp::CheckpointEditor::CurrentProject.GetResourceRelativePath(_path)));
+
+	if (readFile) {
+		delete readFile;
+		readFile = nullptr;
+	}
+
+	std::string extension = _path.substr(_path.find_last_of('.') + 1);
+	if (fileInspector.find(extension) != fileInspector.end()) {
+		fileInspector[extension](_path);
+	} else {
+		QLabel* label = new QLabel("No inspector available for this file type", this);
+		layout->addWidget(label);
+	}
+}
+
+void cp::Inspector::ShowMaterial(const std::string& _path) {
+	readFile = new cp::Material(&cp::CheckpointEditor::VulkanCtx);
+	cp::Material* mat = static_cast<cp::Material*>(readFile);
+	cp::JsonSerializer serializer;
+	serializer.Read(_path);
+	mat->Deserialize(serializer);
+
+	QWidget* matWidget = new QWidget(this);
+	QVBoxLayout* matLayout = new QVBoxLayout(matWidget);
+	matWidget->setLayout(matLayout);
+	layout->addWidget(matWidget);
+
+	cp::StringField* materialNameField = new cp::StringField(mat->GetNamePtr(), "Material Name");
+	matLayout->addWidget(materialNameField);
+
+	cp::FileDropPreviewWidget* shaderPathField = new cp::FileDropPreviewWidget(
+		mat->GetShaderPathPtr(),
+		"Shader Path",
+		{ "slang" },
+		QString::fromStdString(cp::CheckpointEditor::CurrentProject.GetResourcePath())
+	);
+	matLayout->addWidget(shaderPathField);
 }

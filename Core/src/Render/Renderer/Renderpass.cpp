@@ -36,8 +36,9 @@ void cp::Renderpass::Cleanup()
 	context->GetDevice().destroyRenderPass(renderPass);
 }
 
-cp::Renderpass::Renderpass(cp::VulkanContext* _context, const std::string& _name)
+cp::Renderpass::Renderpass(cp::VulkanContext* _context, const std::string& _name, vk::RenderPass _renderPass)
 {
 	context = _context;
 	name = _name;
+	renderPass = _renderPass;
 }

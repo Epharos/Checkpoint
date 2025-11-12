@@ -5,6 +5,7 @@ module;
 #include "../ECSWrapper.hpp"
 #include "QtWidgets/SceneHierarchy.hpp"
 #include "QtWidgets/Inspector.hpp"
+#include "QtWidgets/AssetBrowser.hpp"
 #include "QtWidgets/VulkanRendererWidget.hpp"
 
 export module EditorUI:Private;
@@ -54,6 +55,7 @@ export namespace cp {
 	class IInspector : public IWidget {
 		public:
 		virtual void ShowEntity(EntityAsset* _entity) = 0;
+		virtual void ShowFile(const std::string& _path) = 0;
 	};
 
 	class QtInspector : public IInspector {
@@ -79,6 +81,9 @@ export namespace cp {
 		}
 		virtual void ShowEntity(EntityAsset* _entity) {
 			inspector->ShowEntity(_entity);
+		}
+		virtual void ShowFile(const std::string& _path) {
+			inspector->ShowFile(_path);
 		}
 	protected:
 		Inspector* inspector;
@@ -125,5 +130,40 @@ export namespace cp {
 	protected:
 		VulkanRendererWidget* viewport;
 		QWidget* viewportContainer;
+	};
+
+	class IAssetBrowser : public IWidget {
+		public:
+			virtual void LinkToInspector(IInspector* inspector) = 0;
+	};
+
+	class QtAssetBrowser : public IAssetBrowser {
+		public:
+			QtAssetBrowser(const std::string& _root) {
+				assetBrowser = new cp::AssetBrowserWidget(QString::fromStdString(_root));
+			}
+			virtual ~QtAssetBrowser() = default;
+			virtual void  SetVisible(bool visible) noexcept {
+				assetBrowser->setVisible(visible);
+			}
+			virtual bool IsVisible() const noexcept {
+				return assetBrowser->isVisible();
+			}
+			virtual void SetEnabled(bool enabled) noexcept {
+				assetBrowser->setEnabled(enabled);
+			}
+			virtual bool IsEnabled() const noexcept {
+				return assetBrowser->isEnabled();
+			}
+			virtual void* NativeHandle() const noexcept {
+				return static_cast<void*>(assetBrowser);
+			}
+
+			virtual void LinkToInspector(IInspector* inspector) {
+				cp::Inspector* insp = reinterpret_cast<cp::Inspector*>(inspector->NativeHandle());
+				assetBrowser->LinkToInspector(insp);
+			}
+		protected:
+			cp::AssetBrowserWidget* assetBrowser;
 	};
 }

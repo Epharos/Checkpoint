@@ -149,11 +149,11 @@ void cp::Renderer::EndFrame()
 	swapchain->SetCurrentFrame((swapchain->GetCurrentFrameIndex() + 1) % swapchain->GetFrameCount());
 }
 
-cp::Renderpass& cp::Renderer::RegisterRenderPass(const std::string& _name)
+cp::Renderpass& cp::Renderer::RegisterRenderPass(const std::string& _name, vk::RenderPass _rp)
 {
 	if (renderPasses.find(_name) == renderPasses.end())
 	{
-		renderPasses.insert({ _name, cp::Renderpass(context, _name) });
+		renderPasses.insert({ _name, cp::Renderpass(context, _name, _rp) });
 	}
 
 	return renderPasses.at(_name);
@@ -186,6 +186,7 @@ void cp::Renderer::Build()
 {
 	swapchain = new Swapchain(context, surface, platform);
 	CreateMainRenderPass();
+	RegisterRenderPass("Main", mainRenderPass);
 	CreateRenderPasses();
 	swapchain->Create(mainRenderPass);
 
@@ -194,7 +195,7 @@ void cp::Renderer::Build()
 
 cp::Renderer::Renderer(cp::VulkanContext* _context) : context(_context)
 {
-	RegisterRenderPass("Main");
+	
 }
 
 cp::Renderer::~Renderer()

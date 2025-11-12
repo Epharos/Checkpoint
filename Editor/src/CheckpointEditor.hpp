@@ -72,10 +72,10 @@ namespace cp {
 			obj["creationDate"] = creationDate;
 			obj["lastOpened"] = lastOpened;
 			obj["engineVersion"] = {
-				{"type", static_cast<uint8_t>(engineVersion.type)},
-				{"major", engineVersion.major},
-				{"minor", engineVersion.minor},
-				{"patch", engineVersion.patch}
+				{"type", static_cast<uint32_t>(engineVersion.type)},
+				{"major", static_cast<uint32_t>(engineVersion.major)},
+				{"minor", static_cast<uint32_t>(engineVersion.minor)},
+				{"patch", static_cast<uint32_t>(engineVersion.patch)}
 			};
 			return obj;
 		}
@@ -105,6 +105,32 @@ namespace cp {
 			};
 
 			cp::CheckpointEditor::VulkanCtx.Initialize(contextInfo);
+		}
+
+		static void LoadProject(const std::string& projectPath) {
+			std::ifstream file(projectPath + "/project.data");
+
+			if (!file.is_open()) {
+				throw std::runtime_error("Failed to open project file: " + projectPath + "/project.data");
+			}
+
+			nlohmann::json projectJson;
+			file >> projectJson;
+
+			CurrentProject.FromJson(projectJson);
+
+			file.close();
+
+			CurrentProject.lastOpened = static_cast<uint64_t>(std::time(nullptr));
+
+			std::ofstream outFile(projectPath + "/project.data");
+
+			if (!outFile.is_open()) {
+				throw std::runtime_error("Failed to open project file for writing: " + projectPath + "/project.data");
+			}
+
+			outFile << CurrentProject.ToJson().dump(4);
+			outFile.close();
 		}
 	};
 }

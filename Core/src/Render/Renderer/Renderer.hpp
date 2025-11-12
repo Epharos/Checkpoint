@@ -73,7 +73,7 @@ namespace cp
 		inline constexpr const uint32_t GetSubpassCount() const { return subpassCount; }
 		inline constexpr cp::VulkanContext* GetContext() { return context; }
 
-		Renderpass& RegisterRenderPass(const std::string& _name);
+		Renderpass& RegisterRenderPass(const std::string& _name, vk::RenderPass _rp);
 		Renderpass& GetRenderPass(const std::string& _name);
 		std::vector<std::string> GetRenderPassNames();
 		Platform* GetPlatform() const { return platform; }

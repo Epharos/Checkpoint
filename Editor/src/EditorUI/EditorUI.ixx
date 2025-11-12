@@ -25,6 +25,7 @@ export namespace cp {
 			virtual std::unique_ptr<ISceneHierarchy> CreateSceneHierarchy() noexcept = 0;
 			virtual std::unique_ptr<IInspector> CreateInspector() noexcept = 0;
 			virtual std::unique_ptr<IViewport> CreateViewport(cp::Renderer* renderer, cp::SceneAsset* scene = nullptr) noexcept = 0;
+			virtual std::unique_ptr<IAssetBrowser> CreateAssetBrowser(const std::string& rootPath) noexcept = 0;
 
 			EDITOR_API virtual std::unique_ptr<ILabel> CreateLabel(const std::string& text = "") noexcept = 0;
 			EDITOR_API virtual std::unique_ptr<ICollapsible> CreateCollapsible() noexcept = 0;
@@ -36,6 +37,9 @@ export namespace cp {
 			EDITOR_API virtual std::unique_ptr<IVectorField<float, 4>> CreateQuaternionField(void* data, const std::string& labelName) noexcept = 0;
 
 			EDITOR_API virtual std::unique_ptr<IFileSelector> CreateFileSelector(std::string* value, const std::string& label, const std::vector<std::string>& extensions) noexcept = 0;
+			EDITOR_API virtual std::unique_ptr<IMeshSelector> CreateMeshSelector(std::shared_ptr<cp::Mesh>* value, const std::string& label) noexcept = 0;
+			EDITOR_API virtual std::unique_ptr<ITextureSelector> CreateTextureSelector(std::shared_ptr<cp::Texture>* value, const std::string& label) noexcept = 0;
+			EDITOR_API virtual std::unique_ptr<IMaterialInstanceSelector> CreateMaterialInstanceSelector(std::shared_ptr<cp::MaterialInstance>* value, const std::string& label) noexcept = 0;
 	};
 
 	class QtEditorUIFactory : public IEditorUIFactory {
@@ -70,6 +74,10 @@ export namespace cp {
 
 			virtual std::unique_ptr<IViewport> CreateViewport(cp::Renderer* renderer, cp::SceneAsset* scene = nullptr) noexcept {
 				return std::make_unique<QtViewport>(renderer, scene);
+			}
+
+			virtual std::unique_ptr<IAssetBrowser> CreateAssetBrowser(const std::string& rootPath) noexcept {
+				return std::make_unique<QtAssetBrowser>(rootPath);
 			}
 
 			EDITOR_API virtual std::unique_ptr<ILabel> CreateLabel(const std::string& text = "") noexcept override {
@@ -114,6 +122,18 @@ export namespace cp {
 
 			EDITOR_API virtual std::unique_ptr<IFileSelector> CreateFileSelector(std::string* value, const std::string& label, const std::vector<std::string>& extensions) noexcept override {
 				return std::make_unique<cp::QtFileSelector>(label, value, extensions);
+			}
+
+			EDITOR_API virtual std::unique_ptr<IMeshSelector> CreateMeshSelector(std::shared_ptr<cp::Mesh>* value, const std::string& label) noexcept override {
+				return std::make_unique<cp::QtMeshSelector>(label, value);
+			}
+
+			EDITOR_API virtual std::unique_ptr<ITextureSelector> CreateTextureSelector(std::shared_ptr<cp::Texture>* value, const std::string& label) noexcept override {
+				return std::make_unique<cp::QtTextureSelector>(label, value);
+			}
+
+			EDITOR_API virtual std::unique_ptr<IMaterialInstanceSelector> CreateMaterialInstanceSelector(std::shared_ptr<cp::MaterialInstance>* value, const std::string& label) noexcept override {
+				return std::make_unique<cp::QtMaterialInstanceSelector>(label, value);
 			}
 	};
 }

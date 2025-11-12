@@ -18,9 +18,15 @@ namespace cp {
 		QVBoxLayout* layout;
 		QLabel* titleLabel;
 
+		std::unordered_map<std::string, std::function<void(const std::string&)>> fileInspector;
+		void* readFile = nullptr;
+
+		void ShowMaterial(const std::string& _path);
+
 	public:
 		explicit Inspector(QWidget* _parent = nullptr);
 		void Clear();
 		void ShowEntity(cp::EntityAsset* _entity);
+		void ShowFile(const std::string& _path);
 	};
 }

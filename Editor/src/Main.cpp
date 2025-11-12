@@ -40,9 +40,9 @@ class MeshRendererView : public cp::ComponentView<MeshRenderer> {
 	MeshRendererView(MeshRenderer* _comp, const std::string& _name, const std::optional<std::string>& _icon = std::nullopt) : cp::ComponentView<MeshRenderer>(_comp, _name, _icon) {}
 	virtual cp::IContainer* Render(cp::IEditorUIFactory* factory) override {
 		auto container = factory->CreateContainer();
-		auto meshSelector = factory->CreateFileSelector(&meshPath, "Mesh", { ".fbx", ".obj", ".gltf" });
+		auto meshSelector = factory->CreateMeshSelector(&component->mesh, "Mesh");
 		container->AddChild(meshSelector.release());
-		auto materialSelector = factory->CreateFileSelector(&materialPath, "Material", { ".mat" });
+		auto materialSelector = factory->CreateMaterialInstanceSelector(&component->materialInstance, "Material Instance");
 		container->AddChild(materialSelector.release());
 		container->SetSpacing(2);
 		return container.release();
@@ -115,6 +115,14 @@ int main(int argc, char* args[])
 
 	cp::CheckpointEditor::SetupVulkanContext();
 
+	cp::ResourceManager::Create(cp::CheckpointEditor::VulkanCtx);
+	cp::ResourceManager::Get()->RegisterResourceType<cp::Mesh>();
+	cp::ResourceManager::Get()->GetResourceType<cp::Mesh>()->SetLoader(std::bind(&cp::Mesh::LoadMesh, std::placeholders::_1, std::placeholders::_2));
+	cp::ResourceManager::Get()->RegisterResourceType<cp::Texture>();
+	cp::ResourceManager::Get()->GetResourceType<cp::Texture>()->SetLoader(std::bind(&cp::Texture::LoadTexture, std::placeholders::_1, std::placeholders::_2));
+	cp::ResourceManager::Get()->RegisterResourceType<cp::Material>();
+	cp::ResourceManager::Get()->RegisterResourceType<cp::MaterialInstance>();
+
 	Launcher launcher;
 	launcher.show();
 
@@ -167,7 +175,7 @@ int main(int argc, char* args[])
 
 	auto dockViewport = factory.CreateDockableWindow(nullptr);
 	dockViewport->SetTitle("Viewport");
-	dockViewport->DockTo(dock.get(), cp::DockArea::Left);
+	dockViewport->DockTo(dock.get(), cp::DockArea::Right);
 	dockViewport->Show();
 
 	auto viewport = factory.CreateViewport(new cp::EditorRenderer(&cp::CheckpointEditor::VulkanCtx), scene);
@@ -177,13 +185,24 @@ int main(int argc, char* args[])
 
 	auto dockInspector = factory.CreateDockableWindow(nullptr);
 	dockInspector->SetTitle("Inspector");
-	dockInspector->DockTo(dockViewport.get(), cp::DockArea::Left);
+	dockInspector->DockTo(dockViewport.get(), cp::DockArea::Right);
 	dockInspector->Show();
 
 	auto inspector = factory.CreateInspector();
 	auto containerInspector = factory.CreateContainer().release();
 	containerInspector->AddChild(inspector.get());
 	dockInspector->SetContainer(containerInspector);
+
+	auto dockAssetBrowser = factory.CreateDockableWindow(nullptr);
+	dockAssetBrowser->SetTitle("Asset Browser");
+	dockAssetBrowser->DockTo(dock.get(), cp::DockArea::Bottom);
+	dockAssetBrowser->Show();
+
+	auto assetBrowser = factory.CreateAssetBrowser(cp::CheckpointEditor::CurrentProject.GetResourcePath());
+	assetBrowser->LinkToInspector(inspector.get());
+	auto containerAssetBrowser = factory.CreateContainer().release();
+	containerAssetBrowser->AddChild(assetBrowser.get());
+	dockAssetBrowser->SetContainer(containerAssetBrowser);
 
 	QObject::connect((cp::SceneHierarchy*)sh->NativeHandle(), &cp::SceneHierarchy::EntitySelected, [&](cp::EntityAsset* _entity) {
 		if (_entity) {

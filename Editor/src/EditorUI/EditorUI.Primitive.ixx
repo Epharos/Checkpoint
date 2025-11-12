@@ -14,6 +14,8 @@ module;
 
 #include "QtWidgets/FileDropPreviewWidget.hpp"
 
+#include "../CheckpointEditor.hpp"
+
 export module EditorUI:Primitive;
 
 import :Core;
@@ -65,7 +67,22 @@ export namespace cp {
 			EDITOR_API virtual void SetRange(const std::array<T, N>& minValue, const std::array<T, N>& maxValue) noexcept = 0;
 	};
 
+	class IStringField : public IWidget {
+		public:
+			EDITOR_API virtual void SetText(const std::string& text) noexcept = 0;
+			EDITOR_API virtual std::string GetText() const noexcept = 0;
+	};
+
 	class IFileSelector : public IWidget {
+	};
+
+	class IMeshSelector : public IWidget {
+	};
+
+	class ITextureSelector : public IWidget {
+	};
+
+	class IMaterialInstanceSelector : public IWidget {
 	};
 }
 
@@ -433,6 +450,57 @@ export namespace cp {
 		std::array<QtNumericField<ValueType>*, N> fields;
 	};
 
+	class QtStringField : public IStringField {
+		public:
+			EDITOR_API QtStringField(std::string* valuePtr, const std::string& labelContent)
+				: valuePtr(valuePtr)
+			{
+				widget = new QWidget();
+				auto layout = new QHBoxLayout(widget);
+				layout->setContentsMargins(0, 0, 0, 0);
+				label = new QLabel(QString::fromStdString(labelContent), widget);
+				layout->addWidget(label);
+				lineEdit = new QLineEdit(widget);
+				lineEdit->setText(QString::fromStdString(*valuePtr));
+				lineEdit->setStyleSheet("QLineEdit { padding: 2px 4px; background-color: #1A1F2B; }");
+				layout->addWidget(lineEdit);
+				widget->setLayout(layout);
+				QObject::connect(lineEdit, &QLineEdit::editingFinished, [&]() {
+					*valuePtr = lineEdit->text().toStdString();
+					});
+			}
+			EDITOR_API virtual ~QtStringField() override {
+				delete widget;
+			}
+			EDITOR_API virtual void SetVisible(bool visible) noexcept override {
+				widget->setVisible(visible);
+			}
+			EDITOR_API virtual bool IsVisible() const noexcept override {
+				return widget->isVisible();
+			}
+			EDITOR_API virtual void SetEnabled(bool enabled) noexcept override {
+				widget->setEnabled(enabled);
+			}
+			EDITOR_API virtual bool IsEnabled() const noexcept override {
+				return widget->isEnabled();
+			}
+			EDITOR_API virtual void* NativeHandle() const noexcept override {
+				return widget;
+			}
+			EDITOR_API virtual void SetText(const std::string& text) noexcept override {
+				*valuePtr = text;
+				lineEdit->setText(QString::fromStdString(text));
+			}
+			EDITOR_API virtual std::string GetText() const noexcept override {
+				return *valuePtr;
+			}
+		protected:
+			QWidget* widget = nullptr;
+			QLabel* label = nullptr;
+			QLineEdit* lineEdit = nullptr;
+			std::string* valuePtr = nullptr;
+	};
+
 	class QtFileSelector : public IFileSelector {
 		public:
 			EDITOR_API QtFileSelector(const std::string& label, std::string* valuePtr, const std::vector<std::string>& allowedExtensions)
@@ -447,7 +515,7 @@ export namespace cp {
 					valuePtr,
 					QString::fromStdString(label),
 					extList,
-					QString::fromStdString(Project::GetResourcePath()),
+					QString::fromStdString(cp::CheckpointEditor::CurrentProject.GetResourcePath()),
 					nullptr
 				);
 			}
@@ -470,7 +538,111 @@ export namespace cp {
 			EDITOR_API virtual void* NativeHandle() const noexcept override {
 				return static_cast<void*>(widget);
 			}
-	protected:
-		FileDropPreviewWidget* widget = nullptr;
+
+		protected:
+			FileDropPreviewWidget* widget = nullptr;
+	};
+
+	class QtMeshSelector : public IMeshSelector {
+		public:
+			EDITOR_API QtMeshSelector(const std::string& label, std::shared_ptr<cp::Mesh>* valuePtr) {
+				widget = new MeshDropPreviewWidget(
+					valuePtr,
+					QString::fromStdString(label),
+					QString::fromStdString(cp::CheckpointEditor::CurrentProject.GetResourcePath()),
+					nullptr
+				);
+			}
+
+			EDITOR_API virtual ~QtMeshSelector() override {
+				delete widget;
+			}
+
+			EDITOR_API virtual void SetVisible(bool visible) noexcept override {
+				widget->setVisible(visible);
+			}
+
+			EDITOR_API virtual bool IsVisible() const noexcept override {
+				return widget->isVisible();
+			}
+
+			EDITOR_API virtual void SetEnabled(bool enabled) noexcept override {
+				widget->setEnabled(enabled);
+			}
+
+			EDITOR_API virtual bool IsEnabled() const noexcept override {
+				return widget->isEnabled();
+			}
+
+			EDITOR_API virtual void* NativeHandle() const noexcept override {
+				return static_cast<void*>(widget);
+			}
+
+		protected:
+			MeshDropPreviewWidget* widget = nullptr;
+	};
+
+	class QtTextureSelector : public ITextureSelector {
+		public:
+			EDITOR_API QtTextureSelector(const std::string& label, std::shared_ptr<cp::Texture>* valuePtr) {
+				widget = new TextureDropPreviewWidget(
+					valuePtr,
+					QString::fromStdString(label),
+					QString::fromStdString(cp::CheckpointEditor::CurrentProject.GetResourcePath()),
+					nullptr
+				);
+			}
+			EDITOR_API virtual ~QtTextureSelector() override {
+				delete widget;
+			}
+			EDITOR_API virtual void SetVisible(bool visible) noexcept override {
+				widget->setVisible(visible);
+			}
+			EDITOR_API virtual bool IsVisible() const noexcept override {
+				return widget->isVisible();
+			}
+			EDITOR_API virtual void SetEnabled(bool enabled) noexcept override {
+				widget->setEnabled(enabled);
+			}
+			EDITOR_API virtual bool IsEnabled() const noexcept override {
+				return widget->isEnabled();
+			}
+			EDITOR_API virtual void* NativeHandle() const noexcept override {
+				return static_cast<void*>(widget);
+			}
+		protected:
+			TextureDropPreviewWidget* widget = nullptr;
+	};
+
+	class QtMaterialInstanceSelector : public IMaterialInstanceSelector {
+		public:
+			EDITOR_API QtMaterialInstanceSelector(const std::string& label, std::shared_ptr<cp::MaterialInstance>* valuePtr) {
+				widget = new MaterialInstanceDropPreviewWidget(
+					valuePtr,
+					QString::fromStdString(label),
+					QString::fromStdString(cp::CheckpointEditor::CurrentProject.GetResourcePath()),
+					nullptr
+				);
+			}
+			EDITOR_API virtual ~QtMaterialInstanceSelector() override {
+				delete widget;
+			}
+			EDITOR_API virtual void SetVisible(bool visible) noexcept override {
+				widget->setVisible(visible);
+			}
+			EDITOR_API virtual bool IsVisible() const noexcept override {
+				return widget->isVisible();
+			}
+			EDITOR_API virtual void SetEnabled(bool enabled) noexcept override {
+				widget->setEnabled(enabled);
+			}
+			EDITOR_API virtual bool IsEnabled() const noexcept override {
+				return widget->isEnabled();
+			}
+			EDITOR_API virtual void* NativeHandle() const noexcept override {
+				return static_cast<void*>(widget);
+			}
+		protected:
+			MaterialInstanceDropPreviewWidget* widget = nullptr;
 	};
 }
