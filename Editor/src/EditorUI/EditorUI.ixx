@@ -72,8 +72,8 @@ export namespace cp {
 				return std::make_unique<QtInspector>();
 			}
 
-			virtual std::unique_ptr<IViewport> CreateViewport(cp::Renderer* renderer, cp::SceneAsset* scene = nullptr) noexcept {
-				return std::make_unique<QtViewport>(renderer, scene);
+			virtual std::unique_ptr<IViewport> CreateViewport(cp::SceneAsset* scene = nullptr) noexcept {
+				return std::make_unique<QtViewport>(scene);
 			}
 
 			virtual std::unique_ptr<IAssetBrowser> CreateAssetBrowser(const std::string& rootPath) noexcept {

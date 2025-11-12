@@ -62,7 +62,7 @@ void cp::Inspector::ShowEntity(cp::EntityAsset* _entity)
 		}
 	}
 
-	layout->addStretch(1);
+	layout->addStretch();
 }
 
 void cp::Inspector::ShowFile(const std::string& _path)
@@ -82,7 +82,7 @@ void cp::Inspector::ShowFile(const std::string& _path)
 	} else {
 		QLabel* label = new QLabel("No inspector available for this file type", this);
 		layout->addWidget(label);
-		layout->addStretch(1);
+		layout->addStretch();
 	}
 }
 
@@ -161,9 +161,11 @@ void cp::Inspector::ShowMaterial(const std::string& _path) {
 
 	QWidget* matWidget = new QWidget(this);
 	matWidget->setLayout(matLayout);
-	matWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+	matWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+	matLayout->setSizeConstraint(QLayout::SetDefaultConstraint);
+	layout->setSizeConstraint(QLayout::SetDefaultConstraint);
 
 	layout->addWidget(matWidget);
 
-	layout->addStretch(1);
+	layout->addStretch();
 }

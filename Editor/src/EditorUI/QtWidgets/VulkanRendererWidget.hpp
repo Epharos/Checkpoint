@@ -23,7 +23,7 @@ namespace cp {
 			bool surfaceExposed = false;
 
         public:
-            VulkanRendererWidget(cp::Renderer* _renderer, cp::SceneAsset* _scene = nullptr) : QWindow(), renderer(_renderer), scene(_scene)
+            VulkanRendererWidget(cp::SceneAsset* _scene = nullptr) : QWindow(), scene(_scene)
             {
                 setSurfaceType(QSurface::VulkanSurface);
 				platformQt.Initialize(this);

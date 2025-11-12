@@ -44,6 +44,8 @@ namespace cp {
 		std::string name;
 		std::vector<EntityAsset*> entities;
 
+		cp::Renderer* renderer = nullptr;
+
 		void Serialize(ISerializer& _serializer) const override;
 		void Deserialize(ISerializer& _serializer) override;
 	};

@@ -149,6 +149,7 @@ int main(int argc, char* args[])
 
 	cp::SceneAsset* scene = new cp::SceneAsset();
 	scene->name = "Coucou";
+	scene->renderer = new cp::EditorRenderer(&cp::CheckpointEditor::VulkanCtx);
 
 	cp::EntityAsset* entity = new cp::EntityAsset();
 	entity->name = "Coucou toi";
@@ -178,7 +179,7 @@ int main(int argc, char* args[])
 	dockViewport->DockTo(dock.get(), cp::DockArea::Right);
 	dockViewport->Show();
 
-	auto viewport = factory.CreateViewport(new cp::EditorRenderer(&cp::CheckpointEditor::VulkanCtx), scene);
+	auto viewport = factory.CreateViewport(scene);
 	auto containerViewport = factory.CreateContainer().release();
 	containerViewport->AddChild(viewport.get());
 	dockViewport->SetContainer(containerViewport);
