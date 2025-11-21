@@ -1,21 +1,9 @@
 #include "pch.hpp"
 #include "EditorRenderer.hpp"
 
-cp::EditorRenderer::EditorRenderer(cp::VulkanContext * _context) : cp::Renderer(_context)
+cp::EditorRenderer::EditorRenderer(cp::VulkanContext * _context) : cp::RendererPrototype(_context)
 {
 	LOG_DEBUG("Constructing EditorRenderer");
-}
-
-void cp::EditorRenderer::Cleanup()
-{
-	context->GetDevice().waitIdle();
-	context->GetDevice().destroyRenderPass(mainRenderPass);
-	delete swapchain;
-}
-
-void cp::EditorRenderer::SetupPipelines()
-{
-
 }
 
 void cp::EditorRenderer::CreateMainRenderPass()
@@ -57,7 +45,7 @@ void cp::EditorRenderer::CreateMainRenderPass()
 	std::vector<vk::AttachmentDescription> attachments = { depthAttachment, colorAttachment };
 	std::vector<vk::SubpassDescription> subpasses = { colorizeSubpass };
 
-	subpassCount = static_cast<uint32_t>(subpasses.size());
+	//subpassCount = static_cast<uint32_t>(subpasses.size());
 
 	vk::SubpassDependency dependency = {};
 	dependency.srcSubpass = 0;

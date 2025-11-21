@@ -1,7 +1,7 @@
 #include "pch.hpp"
 
 #include "Material.hpp"
-#include "Render/Renderer/Renderer.hpp"
+#include "Render/Renderer/RendererPrototype.hpp"
 #include "MaterialInstance.hpp"
 
 #include "Util/Serializers/ISerializer.hpp"
@@ -44,7 +44,7 @@ void cp::Material::BindMaterial(vk::CommandBuffer& _command)
 	//_command.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineData->pipeline);
 }
 
-void cp::Material::Reload(cp::Renderer& _renderer)
+void cp::Material::Reload(cp::RendererPrototype& _renderer)
 {
 	auto ValueOrDefault = [](const std::string& str, const std::string& defaultValue) { return str.empty() ? defaultValue : str; }; // This lambda is used to check if the string is empty and return the default value if it is
 

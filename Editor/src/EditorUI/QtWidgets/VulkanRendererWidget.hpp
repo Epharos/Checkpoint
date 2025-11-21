@@ -10,7 +10,7 @@ namespace cp {
         Q_OBJECT
 #endif
         protected:
-            cp::Renderer* renderer = nullptr;
+            cp::RendererInstance* renderer = nullptr;
 			cp::SceneAsset* scene = nullptr;
 			cp::PlatformQt platformQt;
 
@@ -23,26 +23,25 @@ namespace cp {
 			bool surfaceExposed = false;
 
         public:
-            VulkanRendererWidget(cp::SceneAsset* _scene = nullptr) : QWindow(), scene(_scene)
+            VulkanRendererWidget(cp::SceneAsset* _scene) : QWindow(), scene(_scene)
             {
                 setSurfaceType(QSurface::VulkanSurface);
 				platformQt.Initialize(this);
-				renderer->SetPlatform(&platformQt);
+				renderer = new cp::RendererInstance(&CheckpointEditor::VulkanCtx, &platformQt, scene->renderer);
 
-                cpVulkanInstance.setVkInstance(renderer->GetContext()->GetInstance());
+                cpVulkanInstance.setVkInstance(CheckpointEditor::VulkanCtx.GetInstance());
 				cpVulkanInstance.create();
 				setVulkanInstance(&cpVulkanInstance);
 
 				setMinimumSize(QSize(400, 400));
 
-				editorCamera = new cp::Camera(renderer->GetContext(), renderer);
+				editorCamera = new cp::Camera(&CheckpointEditor::VulkanCtx, renderer);
             }
 
             void Cleanup()
             {
                 LOG_DEBUG("Cleaning up Vulkan Render Widget");
                 renderTimer.stop();
-                renderer->Cleanup();
 				delete editorCamera;
                 delete renderer;
                 renderer = nullptr;
@@ -82,7 +81,7 @@ namespace cp {
                 }
 
                 renderer->SetSurface(QVulkanInstance::surfaceForWindow(this));
-                renderer->Build();
+				renderer->ResetSwapchain();
 
                 renderTimer.setInterval(16);
                 connect(&renderTimer, &QTimer::timeout, this, &VulkanRendererWidget::UpdateRender);

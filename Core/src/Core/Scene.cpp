@@ -9,7 +9,7 @@
 #include "../Resources/Material.hpp"
 #include "../Resources/MaterialInstance.hpp"
 
-cp::Scene::Scene(cp::Renderer* _renderer) : renderer(_renderer)
+cp::Scene::Scene(cp::RendererPrototype* _renderer) : renderer(_renderer)
 {
 	LOG_INFO("Scene created");
 

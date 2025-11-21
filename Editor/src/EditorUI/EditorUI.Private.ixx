@@ -96,8 +96,8 @@ export namespace cp {
 
 	class QtViewport : public IViewport {
 		public:
-		QtViewport(cp::Renderer* _renderer, cp::SceneAsset* _scene = nullptr) {
-			viewport = new cp::VulkanRendererWidget(_renderer, _scene);
+		QtViewport(cp::SceneAsset* _scene = nullptr) {
+			viewport = new cp::VulkanRendererWidget(_scene);
 			viewportContainer = QWidget::createWindowContainer(viewport);
 			viewportContainer->setProperty("viewportHandle", QVariant::fromValue<void*>(static_cast<void*>(viewport)));
 		}

@@ -24,7 +24,7 @@ export namespace cp {
 
 			virtual std::unique_ptr<ISceneHierarchy> CreateSceneHierarchy() noexcept = 0;
 			virtual std::unique_ptr<IInspector> CreateInspector() noexcept = 0;
-			virtual std::unique_ptr<IViewport> CreateViewport(cp::Renderer* renderer, cp::SceneAsset* scene = nullptr) noexcept = 0;
+			virtual std::unique_ptr<IViewport> CreateViewport(cp::SceneAsset* scene = nullptr) noexcept = 0;
 			virtual std::unique_ptr<IAssetBrowser> CreateAssetBrowser(const std::string& rootPath) noexcept = 0;
 
 			EDITOR_API virtual std::unique_ptr<ILabel> CreateLabel(const std::string& text = "") noexcept = 0;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../pch.hpp"
-#include "../Render/Renderer/Renderer.hpp"
+#include "../Render/Renderer/RendererPrototype.hpp"
 #include "../ECS/EntityComponentSystem.hpp"
 
 #include "../Util/Serializers/Serializable.hpp"
@@ -13,13 +13,13 @@ namespace cp
 	{
 	protected:
 		cp::EntityComponentSystem ecs;
-		cp::Renderer* renderer;
+		cp::RendererPrototype* renderer;
 
 #ifdef IN_EDITOR
 		std::string sceneName;
 #endif
 	public:
-		Scene(cp::Renderer* _renderer);
+		Scene(cp::RendererPrototype* _renderer);
 		~Scene();
 
 		void Cleanup();
@@ -30,7 +30,7 @@ namespace cp
 		void Deserialize(cp::ISerializer& _serializer) override;
 
 		inline constexpr cp::EntityComponentSystem& GetECS() { return ecs; }
-		inline constexpr cp::Renderer* GetRenderer() { return renderer; }
+		inline constexpr cp::RendererPrototype* GetRenderer() { return renderer; }
 
 #ifdef IN_EDITOR
 		inline void SetName(const std::string& name) { sceneName = name; }

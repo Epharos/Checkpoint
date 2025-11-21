@@ -11,7 +11,7 @@ class MainWindow : public QMainWindow
 	Q_OBJECT
 protected:
 	cp::VulkanContext vulkanContext;
-	cp::Renderer* activeRenderer = nullptr;
+	cp::RendererPrototype* activeRenderer = nullptr;
 	cp::Scene* currentScene = nullptr;
 
 	QWindow* window = nullptr;

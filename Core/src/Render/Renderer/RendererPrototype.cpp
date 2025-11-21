@@ -1,7 +1,9 @@
 #include "pch.hpp"
 #include "RendererPrototype.hpp"
 
-void cp::RendererPrototype::CreateFixedPipeline() {}
+#include "../Setup/Frame.hpp"
+
+void cp::RendererPrototype::CreateFixedPipelines() {}
 void cp::RendererPrototype::CreateRenderPasses() {}
 
 uint32_t cp::RendererPrototype::PrepareFrame(cp::Swapchain* _swapchain)
@@ -140,4 +142,18 @@ std::vector<std::string> cp::RendererPrototype::GetRenderPassNames()
 	}
 
 	return names;
+}
+
+cp::RendererPrototype::RendererPrototype(cp::VulkanContext* _context)
+	: context(_context)
+{
+	CreateFixedPipelines();
+	CreateMainRenderPass();
+	RegisterRenderPass("Main", mainRenderPass);
+	CreateRenderPasses();
+}
+
+cp::RendererPrototype::~RendererPrototype()
+{
+	context->GetDevice().destroyRenderPass(mainRenderPass);
 }

@@ -1,10 +1,10 @@
 #include "pch.hpp"
 #include "Camera.hpp"
-#include "Renderer.hpp"
+#include "RendererInstance.hpp"
 
 namespace cp
 {
-	Camera::Camera(cp::VulkanContext* _context, cp::Renderer* _renderer)
+	Camera::Camera(cp::VulkanContext* _context, cp::RendererInstance* _renderer)
 	{
 		context = _context;
 		renderer = _renderer;

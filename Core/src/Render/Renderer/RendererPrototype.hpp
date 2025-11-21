@@ -9,6 +9,8 @@
 #include "../../Resources/MaterialInstance.hpp"
 #include "../../Resources/Mesh.hpp"
 
+#include "../Setup/Swapchain.hpp"
+
 namespace cp
 {
 	struct TransformData
@@ -44,11 +46,9 @@ namespace cp
 			virtual void RenderFrame(const std::vector<InstanceGroup>& _instanceGroups) = 0;
 
 		public:
-			RendererPrototype(cp::VulkanContext* _context) : context(_context) {}
-			virtual ~RendererPrototype() = default;
+			RendererPrototype(cp::VulkanContext* _context);
+			virtual ~RendererPrototype();
 
-			virtual void BuildRenderer();
-			virtual void CleanupRenderer();
 
 			virtual void Render(const std::vector<InstanceGroup>& _instanceGroups) = 0;
 

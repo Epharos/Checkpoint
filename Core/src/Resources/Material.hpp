@@ -9,7 +9,7 @@
 
 namespace cp
 {
-	class Renderer;
+	class RendererPrototype;
 
 	enum class MaterialFieldType : uint8_t
 	{
@@ -128,7 +128,7 @@ namespace cp
 		inline void AddShaderStage(const ShaderStages& _stage) { shaderStages |= static_cast<uint16_t>(_stage); }
 		inline void RemoveShaderStage(const ShaderStages& _stage) { shaderStages &= ~static_cast<uint16_t>(_stage); }
 
-		virtual void Reload(cp::Renderer& _renderer);
+		virtual void Reload(cp::RendererPrototype& _renderer);
 
 		virtual void Serialize(ISerializer& _serializer) const override;
 		virtual void Deserialize(ISerializer& _serializer) override;

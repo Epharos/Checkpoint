@@ -5,7 +5,7 @@
 
 namespace cp
 {
-	class Renderer; // Forward declaration
+	class RendererInstance; // Forward declaration
 
 	struct CameraUBO
 	{
@@ -15,7 +15,7 @@ namespace cp
 	class Camera
 	{
 	public:
-		Camera(cp::VulkanContext* _context, cp::Renderer* _renderer);
+		Camera(cp::VulkanContext* _context, cp::RendererInstance* _renderer);
 		~Camera();
 
 		void SetPosition(const glm::vec3& _position);
@@ -49,7 +49,7 @@ namespace cp
 
 	private:
 		cp::VulkanContext* context;
-		cp::Renderer* renderer;
+		cp::RendererInstance* renderer;
 
 		glm::vec3 position;
 		glm::quat rotation;

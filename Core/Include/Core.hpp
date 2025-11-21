@@ -6,7 +6,9 @@
 
 #include "../src/Core/Scene.hpp"
 
-#include "../src/Render/Renderer/Renderer.hpp"
+#include "../src/Render/Renderer/RendererPrototype.hpp"
+#include "../src/Render/Renderer/RendererInstance.hpp"
+#include "../src/Render/Renderer/Camera.hpp"
 #include "../src/Render/Setup/Frame.hpp"
 
 #include "../src/Resources/Material.hpp"

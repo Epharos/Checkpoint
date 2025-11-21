@@ -5,14 +5,13 @@
 
 namespace cp 
 {
-	class EditorRenderer : public cp::Renderer 
+	class EditorRenderer : public cp::RendererPrototype
 	{
 		public:
 			EditorRenderer(cp::VulkanContext* _context);
-			virtual void Cleanup() override;
+			virtual ~EditorRenderer();
 
 		protected:
-			virtual void SetupPipelines() override;
 			virtual void CreateMainRenderPass() override;
 			virtual void RenderFrame(const std::vector<InstanceGroup>& _instanceGroups) override;
 	};
