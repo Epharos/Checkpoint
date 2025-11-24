@@ -13,6 +13,8 @@
 
 namespace cp
 {
+	class RendererInstance;
+
 	struct TransformData
 	{
 		glm::mat4 modelMatrix;
@@ -32,31 +34,26 @@ namespace cp
 	{
 		protected:
 			cp::VulkanContext* context = nullptr;
-			vk::RenderPass mainRenderPass = VK_NULL_HANDLE;
-			std::unordered_map<std::string, Renderpass> renderPasses;
 
-			virtual void CreateFixedPipelines();
-			virtual void CreateMainRenderPass() = 0;
-			virtual void CreateRenderPasses();
+			virtual void CreateFixedPipelines(RendererInstance& _instance);
+			virtual void CreateMainRenderPass(RendererInstance& _instance) = 0;
+			virtual void CreateRenderPasses(RendererInstance& _instance);
 			virtual uint32_t PrepareFrame(cp::Swapchain* _swapchain);
 			virtual void SubmitFrame(cp::Swapchain* _swapchain);
 			virtual void PresentFrame(cp::Swapchain* _swapchain, uint32_t _index);
 			virtual void EndFrame(cp::Swapchain* _swapchain);
 
-			virtual void RenderFrame(const std::vector<InstanceGroup>& _instanceGroups) = 0;
+			virtual void RenderFrame(const RendererInstance& _instance, const std::vector<InstanceGroup>& _instanceGroups) = 0;
 
 		public:
 			RendererPrototype(cp::VulkanContext* _context);
 			virtual ~RendererPrototype();
 
+			virtual void BuildForInstance(RendererInstance& _instance);
 
-			virtual void Render(const std::vector<InstanceGroup>& _instanceGroups) = 0;
+			virtual void Render(RendererInstance& _instance, const std::vector<InstanceGroup>& _instanceGroups) = 0;
 
-			inline std::unordered_map<std::string, Renderpass>& GetRenderPasses() { return renderPasses; }
 			inline constexpr cp::VulkanContext* GetContext() { return context; }
 
-			Renderpass& RegisterRenderPass(const std::string& _name, vk::RenderPass _rp);
-			Renderpass& GetRenderPass(const std::string& _name);
-			std::vector<std::string> GetRenderPassNames();
 	};
 }

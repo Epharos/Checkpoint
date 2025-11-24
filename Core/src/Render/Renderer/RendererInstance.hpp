@@ -17,6 +17,9 @@ namespace cp {
 
 		RendererPrototype* prototype = nullptr;
 
+		vk::RenderPass mainRenderPass = VK_NULL_HANDLE;
+		std::unordered_map<std::string, Renderpass> renderPasses;
+
 	public:
 		RendererInstance(cp::VulkanContext* _context, Platform* _platform, RendererPrototype* _prototype);
 		~RendererInstance();
@@ -33,5 +36,10 @@ namespace cp {
 
 		void SetSurface(vk::SurfaceKHR _surface);
 		void ResetSwapchain();
+
+		inline std::unordered_map<std::string, Renderpass>& GetRenderPasses() { return renderPasses; }
+		Renderpass& RegisterRenderPass(const std::string& _name, vk::RenderPass _rp);
+		Renderpass& GetRenderPass(const std::string& _name);
+		std::vector<std::string> GetRenderPassNames();
 	};
 }

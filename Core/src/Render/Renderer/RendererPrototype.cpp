@@ -1,10 +1,12 @@
 #include "pch.hpp"
 #include "RendererPrototype.hpp"
 
+#include "RendererInstance.hpp"
+
 #include "../Setup/Frame.hpp"
 
-void cp::RendererPrototype::CreateFixedPipelines() {}
-void cp::RendererPrototype::CreateRenderPasses() {}
+void cp::RendererPrototype::CreateFixedPipelines(RendererInstance& _instance) {}
+void cp::RendererPrototype::CreateRenderPasses(RendererInstance& _instance) {}
 
 uint32_t cp::RendererPrototype::PrepareFrame(cp::Swapchain* _swapchain)
 {
@@ -117,43 +119,13 @@ void cp::RendererPrototype::EndFrame(cp::Swapchain* _swapchain)
 	_swapchain->SetCurrentFrame((_swapchain->GetCurrentFrameIndex() + 1) % _swapchain->GetFrameCount());
 }
 
-cp::Renderpass& cp::RendererPrototype::RegisterRenderPass(const std::string& _name, vk::RenderPass _rp)
+cp::RendererPrototype::RendererPrototype(cp::VulkanContext* _context) : context(_context) {}
+
+cp::RendererPrototype::~RendererPrototype() {}
+
+void cp::RendererPrototype::BuildForInstance(RendererInstance& _instance)
 {
-	if (renderPasses.find(_name) == renderPasses.end())
-	{
-		renderPasses.insert({ _name, cp::Renderpass(context, _name, _rp) });
-	}
-
-	return renderPasses.at(_name);
-}
-
-cp::Renderpass& cp::RendererPrototype::GetRenderPass(const std::string& _name)
-{
-	return renderPasses.at(_name);
-}
-
-std::vector<std::string> cp::RendererPrototype::GetRenderPassNames()
-{
-	std::vector<std::string> names;
-
-	for (auto& [name, _] : renderPasses)
-	{
-		names.push_back(name);
-	}
-
-	return names;
-}
-
-cp::RendererPrototype::RendererPrototype(cp::VulkanContext* _context)
-	: context(_context)
-{
-	CreateFixedPipelines();
-	CreateMainRenderPass();
-	RegisterRenderPass("Main", mainRenderPass);
-	CreateRenderPasses();
-}
-
-cp::RendererPrototype::~RendererPrototype()
-{
-	context->GetDevice().destroyRenderPass(mainRenderPass);
+	CreateFixedPipelines(_instance);
+	CreateMainRenderPass(_instance);
+	CreateRenderPasses(_instance);
 }

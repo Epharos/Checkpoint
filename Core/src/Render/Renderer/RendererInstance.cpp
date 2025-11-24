@@ -82,3 +82,30 @@ void cp::RendererInstance::ResetSwapchain()
 		swapchain->Create(prototype->GetRenderPasses().at("Main").GetRenderPass()); // Use the prototype's main render pass
 	}
 }
+
+cp::Renderpass& cp::RendererInstance::RegisterRenderPass(const std::string& _name, vk::RenderPass _rp)
+{
+	if (renderPasses.find(_name) == renderPasses.end())
+	{
+		renderPasses.insert({ _name, cp::Renderpass(context, _name, _rp) });
+	}
+
+	return renderPasses.at(_name);
+}
+
+cp::Renderpass& cp::RendererInstance::GetRenderPass(const std::string& _name)
+{
+	return renderPasses.at(_name);
+}
+
+std::vector<std::string> cp::RendererInstance::GetRenderPassNames()
+{
+	std::vector<std::string> names;
+
+	for (auto& [name, _] : renderPasses)
+	{
+		names.push_back(name);
+	}
+
+	return names;
+}
