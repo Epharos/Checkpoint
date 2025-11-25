@@ -11,7 +11,7 @@ cp::Subpass::Subpass(vk::PipelineBindPoint _bindPoint, std::vector<vk::Attachmen
 	subpassDescription.pDepthStencilAttachment = &_depthAttachment;
 }
 
-void cp::Renderpass::Build()
+vk::RenderPass cp::RenderpassDescription::Build()
 {
 	std::vector<vk::SubpassDescription> subpasses;
 
@@ -28,17 +28,21 @@ void cp::Renderpass::Build()
 	renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
 	renderPassInfo.pDependencies = dependencies.data();
 	
-	renderPass = context->GetDevice().createRenderPass(renderPassInfo);
+	return context->GetDevice().createRenderPass(renderPassInfo);
 }
 
-void cp::Renderpass::Cleanup()
-{
-	context->GetDevice().destroyRenderPass(renderPass);
-}
-
-cp::Renderpass::Renderpass(cp::VulkanContext* _context, const std::string& _name, vk::RenderPass _renderPass)
+cp::RenderpassDescription::RenderpassDescription(cp::VulkanContext* _context, const std::string& _name)
 {
 	context = _context;
 	name = _name;
-	renderPass = _renderPass;
+}
+
+cp::Renderpass::Renderpass(cp::VulkanContext* _context, const RenderpassDescription& _description) : context(_context), description(_description)
+{
+	renderPass = description.Build();
+}
+
+cp::Renderpass::~Renderpass()
+{
+	context->GetDevice().destroyRenderPass(renderPass);
 }

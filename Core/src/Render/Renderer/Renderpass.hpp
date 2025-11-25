@@ -20,7 +20,7 @@ namespace cp
 		inline constexpr bool IsDepthOnly() { return depthOnly; }
 	};
 
-	class Renderpass
+	class RenderpassDescription
 	{
 	protected:
 		bool depthOnly = false;
@@ -32,13 +32,11 @@ namespace cp
 		std::optional<cp::PipelineData*> defaultPipeline{ std::nullopt };
 
 		cp::VulkanContext* context;
-		vk::RenderPass renderPass;
 
 		std::string name;
 
 	public:
-		void Build();
-		void Cleanup();
+		vk::RenderPass Build();
 
 		inline void AddSubpass(const Subpass& _subpass) { subpasses.push_back(_subpass); }
 		inline void AddAttachment(const vk::AttachmentDescription& _attachment) { attachments.push_back(_attachment); }
@@ -47,13 +45,24 @@ namespace cp
 		inline void SetDefaultPipeline(cp::PipelineData& _pipeline) { defaultPipeline = &_pipeline; }
 		inline void SetDepthOnly(bool _depthOnly) { depthOnly = _depthOnly; }
 
-		Renderpass(cp::VulkanContext* _context, const std::string& _name, vk::RenderPass _renderPass);
+		RenderpassDescription(cp::VulkanContext* _context, const std::string& _name);
 
-		inline vk::RenderPass GetRenderPass() { return renderPass; }
 		inline const std::vector<Subpass>& GetSubpasses() const { return subpasses; }
 		inline const std::string& GetName() const { return name; }
 		inline const std::optional<cp::PipelineData*>& GetDefaultPipeline() const { return defaultPipeline; }
 
 		inline constexpr bool IsDepthOnly() { return depthOnly; }
+	};
+
+	class Renderpass 
+	{
+	protected:
+		cp::VulkanContext* context;
+		RenderpassDescription description;
+		vk::RenderPass renderPass;
+
+	public:
+		Renderpass(cp::VulkanContext* _context, const RenderpassDescription& _description);
+		~Renderpass();
 	};
 }
