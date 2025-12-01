@@ -37,6 +37,11 @@ cp::RenderpassDescription::RenderpassDescription(cp::VulkanContext* _context, co
 	name = _name;
 }
 
+bool cp::RenderpassDescription::operator==(const RenderpassDescription& other) const
+{
+	return name == other.name;
+}
+
 cp::Renderpass::Renderpass(cp::VulkanContext* _context, const RenderpassDescription& _description) : context(_context), description(_description)
 {
 	renderPass = description.Build();

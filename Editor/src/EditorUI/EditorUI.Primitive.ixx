@@ -1,7 +1,6 @@
 module;
 
 #include "../macros.hpp"
-#include "../Project.hpp"
 #include "QtWidgets/Helper.hpp"
 
 #include <QtWidgets/qlabel.h>

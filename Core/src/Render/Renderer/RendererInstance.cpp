@@ -40,7 +40,7 @@ cp::RendererInstance::RendererInstance(cp::VulkanContext* _context, Platform* _p
 	surface = surfaceHandle;
 
 	swapchain = new Swapchain(context, surface, platform);
-	swapchain->Create(prototype->GetRenderPasses().at("Main").GetRenderPass()); // Use the prototype's main render pass
+	swapchain->Create(GetRenderPass(prototype->GetRenderPassDescription("Main")).GetRenderPass()); // Use the prototype's main render pass
 }
 
 cp::RendererInstance::~RendererInstance()
@@ -60,7 +60,7 @@ void cp::RendererInstance::TriggerSwapchainRecreation()
 
 void cp::RendererInstance::Render(const std::vector<InstanceGroup>& _instanceGroups)
 {
-	if (prototype) prototype->Render(_instanceGroups);
+	if (prototype) prototype->Render(this, _instanceGroups);
 }
 
 void cp::RendererInstance::SetSurface(vk::SurfaceKHR _surface)
@@ -79,28 +79,28 @@ void cp::RendererInstance::ResetSwapchain()
 	{
 		delete swapchain;
 		swapchain = new Swapchain(context, surface, platform);
-		swapchain->Create(prototype->GetRenderPasses().at("Main").GetRenderPass()); // Use the prototype's main render pass
+		swapchain->Create(GetRenderPass(prototype->GetRenderPassDescription("Main")).GetRenderPass()); // Use the prototype's main render pass
 	}
 }
 
-cp::Renderpass& cp::RendererInstance::RegisterRenderPass(const std::string& _name, vk::RenderPass _rp)
+cp::Renderpass& cp::RendererInstance::RegisterRenderPass(const cp::RenderpassDescription& _desc, vk::RenderPass _rp)
 {
-	if (renderPasses.find(_name) == renderPasses.end())
+	if (renderPasses.find(_desc) == renderPasses.end())
 	{
-		renderPasses.insert({ _name, cp::Renderpass(context, _name, _rp) });
+		renderPasses.insert({ _desc, cp::Renderpass(context, _desc)});
 	}
 
-	return renderPasses.at(_name);
+	return renderPasses.at(_desc);
 }
 
-cp::Renderpass& cp::RendererInstance::GetRenderPass(const std::string& _name)
+cp::Renderpass& cp::RendererInstance::GetRenderPass(const cp::RenderpassDescription& _desc)
 {
-	return renderPasses.at(_name);
+	return renderPasses.at(_desc);
 }
 
-std::vector<std::string> cp::RendererInstance::GetRenderPassNames()
+std::vector<cp::RenderpassDescription> cp::RendererInstance::GetRenderPassDescriptions()
 {
-	std::vector<std::string> names;
+	std::vector<cp::RenderpassDescription> names;
 
 	for (auto& [name, _] : renderPasses)
 	{

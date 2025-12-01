@@ -159,32 +159,3 @@ public:
 		component.scale = _serializer.ReadVector3("scale", glm::vec3(1.0f));
 	}
 };
-
-class TransformWidget : public cp::ComponentWidget<Transform>
-{
-public:
-	TransformWidget(Transform& _component, QWidget* _parent = nullptr) : ComponentWidget(_component, "Transform", _parent)
-	{
-		
-	}
-
-	void Initialize() override
-	{
-		layout->addSpacing(3);
-
-		QLabel* positionLabel = new QLabel("Position", this);
-		layout->addWidget(positionLabel);
-		cp::Float3* positionField = new cp::Float3(&component.position, "Position", cp::LayoutDirection::Columns, this);
-		layout->addWidget(positionField);
-
-		QLabel* rotationLabel = new QLabel("Rotation", this);
-		layout->addWidget(rotationLabel);
-		cp::Quaternion* rotationField = new cp::Quaternion(&component.rotation, cp::LayoutDirection::Columns, this);
-		layout->addWidget(rotationField);
-
-		QLabel* scaleLabel = new QLabel("Scale", this);
-		layout->addWidget(scaleLabel);
-		cp::Float3* scaleField = new cp::Float3(&component.scale, "Scale", cp::LayoutDirection::Columns, this);
-		layout->addWidget(scaleField);
-	}
-};

@@ -96,6 +96,7 @@ namespace cp {
 			contextInfo.appVersion = VK_MAKE_API_VERSION(0, 1, 0, 0); // Application version
 			contextInfo.extensions.instanceExtensions = {
 				VK_KHR_SURFACE_EXTENSION_NAME,
+				VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, // Dynamic Rendering
 				#ifdef _WIN32
 				"VK_KHR_win32_surface",
 				#endif

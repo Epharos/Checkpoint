@@ -3,8 +3,6 @@
 
 #include <QtCore/qobject.h>
 #include <QtGui/qfontdatabase.h>
-#include "MainWindow.hpp"
-#include "Launcher.hpp"
 
 #include "Components/Transform.hpp"
 #include "Components/MeshRenderer.hpp"
@@ -122,9 +120,6 @@ int main(int argc, char* args[])
 	cp::ResourceManager::Get()->GetResourceType<cp::Texture>()->SetLoader(std::bind(&cp::Texture::LoadTexture, std::placeholders::_1, std::placeholders::_2));
 	cp::ResourceManager::Get()->RegisterResourceType<cp::Material>();
 	cp::ResourceManager::Get()->RegisterResourceType<cp::MaterialInstance>();
-
-	Launcher launcher;
-	launcher.show();
 
 	cp::QtEditorUIFactory factory;
 	auto win = factory.CreateWindow();

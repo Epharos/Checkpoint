@@ -35,6 +35,8 @@ namespace cp
 		protected:
 			cp::VulkanContext* context = nullptr;
 
+			std::unordered_map<std::string, cp::RenderpassDescription> renderPassDescriptions;
+
 			virtual void CreateFixedPipelines(RendererInstance& _instance);
 			virtual void CreateMainRenderPass(RendererInstance& _instance) = 0;
 			virtual void CreateRenderPasses(RendererInstance& _instance);
@@ -51,9 +53,10 @@ namespace cp
 
 			virtual void BuildForInstance(RendererInstance& _instance);
 
-			virtual void Render(RendererInstance& _instance, const std::vector<InstanceGroup>& _instanceGroups) = 0;
+			virtual void Render(RendererInstance* _instance, const std::vector<InstanceGroup>& _instanceGroups) = 0;
 
 			inline constexpr cp::VulkanContext* GetContext() { return context; }
 
+			inline cp::RenderpassDescription& GetRenderPassDescription(const std::string& _name) { return renderPassDescriptions.at(_name); }
 	};
 }

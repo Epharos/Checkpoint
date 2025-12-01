@@ -6,6 +6,16 @@
 
 #include "RendererPrototype.hpp"
 
+template<>
+class std::hash<cp::RenderpassDescription>
+{
+	public:
+	size_t operator()(const cp::RenderpassDescription& _desc) const
+	{
+		return std::hash<std::string>()(_desc.GetName());
+	}
+};
+
 namespace cp {
 	class RendererInstance
 	{
@@ -18,7 +28,7 @@ namespace cp {
 		RendererPrototype* prototype = nullptr;
 
 		vk::RenderPass mainRenderPass = VK_NULL_HANDLE;
-		std::unordered_map<std::string, Renderpass> renderPasses;
+		std::unordered_map<RenderpassDescription, Renderpass> renderPasses;
 
 	public:
 		RendererInstance(cp::VulkanContext* _context, Platform* _platform, RendererPrototype* _prototype);
@@ -37,9 +47,9 @@ namespace cp {
 		void SetSurface(vk::SurfaceKHR _surface);
 		void ResetSwapchain();
 
-		inline std::unordered_map<std::string, Renderpass>& GetRenderPasses() { return renderPasses; }
-		Renderpass& RegisterRenderPass(const std::string& _name, vk::RenderPass _rp);
-		Renderpass& GetRenderPass(const std::string& _name);
-		std::vector<std::string> GetRenderPassNames();
+		inline std::unordered_map<RenderpassDescription, Renderpass>& GetRenderPasses() { return renderPasses; }
+		Renderpass& RegisterRenderPass(const RenderpassDescription& _name, vk::RenderPass _rp);
+		Renderpass& GetRenderPass(const RenderpassDescription& _name);
+		std::vector<RenderpassDescription> GetRenderPassDescriptions();
 	};
 }

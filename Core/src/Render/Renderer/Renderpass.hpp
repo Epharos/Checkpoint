@@ -52,6 +52,8 @@ namespace cp
 		inline const std::optional<cp::PipelineData*>& GetDefaultPipeline() const { return defaultPipeline; }
 
 		inline constexpr bool IsDepthOnly() { return depthOnly; }
+
+		bool operator==(const RenderpassDescription& other) const;
 	};
 
 	class Renderpass 
@@ -64,5 +66,7 @@ namespace cp
 	public:
 		Renderpass(cp::VulkanContext* _context, const RenderpassDescription& _description);
 		~Renderpass();
+
+		inline vk::RenderPass GetRenderPass() const { return renderPass; }
 	};
 }

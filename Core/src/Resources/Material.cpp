@@ -65,9 +65,9 @@ void cp::Material::Reload(cp::RendererPrototype& _renderer)
 	{
 		if (!rpRequirement.renderToPass) continue; // Skip if the material is not rendered in the renderpass
 		// TODO : For now it's okay but we should check if pipelineDatas[moduleName] exists, we should unload the previous data if it now doesn't render to the pass
-		if (rpRequirement.useDefaultShader && _renderer.GetRenderPass(name).GetDefaultPipeline().has_value())
+		if (rpRequirement.useDefaultShader && _renderer.GetRenderPassDescription(name).GetDefaultPipeline().has_value())
 		{
-			pipelineDatas.insert({ name, _renderer.GetRenderPass(name).GetDefaultPipeline().value() }); // Store the renderpass default pipeline if it's the one being used by the Material for that pass
+			pipelineDatas.insert({ name, _renderer.GetRenderPassDescription(name).GetDefaultPipeline().value() }); // Store the renderpass default pipeline if it's the one being used by the Material for that pass
 			continue; // Skip if the material is using the default shader
 		}
 
@@ -86,10 +86,22 @@ void cp::Material::Reload(cp::RendererPrototype& _renderer)
 
 		vk::PipelineLayout pipelineLayout = layoutsManager->GetOrCreateLayout(descriptorSetLayouts, {}); // Create the new layout // TODO : Add PushConstants support
 
+		vk::PipelineRenderingCreateInfoKHR pipelineRenderingCreateInfo;
+		pipelineRenderingCreateInfo.sType = vk::StructureType::ePipelineRenderingCreateInfoKHR;
+		std::vector<vk::Format> colorAttachmentFormats{ vk::Format::eR16G16B16A16Sfloat }; // Default color format is 16-bit float RGBA (for HDR rendering)
+		vk::Format depthAttachmentFormat = vk::Format::eD32Sfloat; // Default depth format is 32-bit float depth
+		//TODO : Get the formats from the RenderPassDescription
+
+		pipelineRenderingCreateInfo.colorAttachmentCount = static_cast<uint32_t>(colorAttachmentFormats.size());
+		pipelineRenderingCreateInfo.pColorAttachmentFormats = colorAttachmentFormats.data();
+		pipelineRenderingCreateInfo.depthAttachmentFormat = depthAttachmentFormat;
+		pipelineRenderingCreateInfo.stencilAttachmentFormat = depthAttachmentFormat;
+
 		cp::PipelineCreateData pipelineCreateData;
 		pipelineCreateData.config = { this->moduleName + "_" + name }; // Create a unique moduleName for the pipeline
 		pipelineCreateData.createInfo.layout = pipelineLayout;
-		pipelineCreateData.createInfo.renderPass = _renderer.GetRenderPass(name).GetRenderPass();
+		pipelineCreateData.createInfo.renderPass = VK_NULL_HANDLE;
+		pipelineCreateData.createInfo.pNext = &pipelineRenderingCreateInfo;
 		pipelineCreateData.shaderFile = rpRequirement.customShaderPath;
 		
 		pipelineCreateData.mains = { 
