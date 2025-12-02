@@ -52,11 +52,51 @@ uint32_t cp::RendererPrototype::PrepareFrame(cp::Swapchain* _swapchain)
 	vk::CommandBufferBeginInfo beginInfo = {};
 	_swapchain->GetCurrentFrame()->GetCommandBuffer().begin(beginInfo);
 
+	vk::ImageMemoryBarrier imageBarrier{};
+	imageBarrier.oldLayout = vk::ImageLayout::eUndefined;
+	imageBarrier.newLayout = vk::ImageLayout::eAttachmentOptimal;
+	imageBarrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+	imageBarrier.image = _swapchain->GetCurrentFrame()->GetMainRenderTarget()->GetAttachment(1)->GetImage();
+	imageBarrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+	imageBarrier.subresourceRange.baseMipLevel = 0;
+	imageBarrier.subresourceRange.levelCount = 1;
+	imageBarrier.subresourceRange.baseArrayLayer = 0;
+	imageBarrier.subresourceRange.layerCount = 1;
+
+	_swapchain->GetCurrentFrame()->GetCommandBuffer().pipelineBarrier(
+		vk::PipelineStageFlagBits::eTopOfPipe,
+		vk::PipelineStageFlagBits::eColorAttachmentOutput,
+		{},
+		0, nullptr,
+		0, nullptr,
+		1, &imageBarrier
+	);
+
 	return imageIndex;
 }
 
 void cp::RendererPrototype::SubmitFrame(cp::Swapchain* _swapchain)
 {
+	vk::ImageMemoryBarrier imageBarrier{};
+	imageBarrier.oldLayout = vk::ImageLayout::eAttachmentOptimal;
+	imageBarrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
+	imageBarrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+	imageBarrier.image = _swapchain->GetCurrentFrame()->GetMainRenderTarget()->GetAttachment(1)->GetImage();
+	imageBarrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+	imageBarrier.subresourceRange.baseMipLevel = 0;
+	imageBarrier.subresourceRange.levelCount = 1;
+	imageBarrier.subresourceRange.baseArrayLayer = 0;
+	imageBarrier.subresourceRange.layerCount = 1;
+
+	_swapchain->GetCurrentFrame()->GetCommandBuffer().pipelineBarrier(
+		vk::PipelineStageFlagBits::eColorAttachmentOutput,
+		vk::PipelineStageFlagBits::eBottomOfPipe,
+		{},
+		0, nullptr,
+		0, nullptr,
+		1, &imageBarrier
+	);
+	
 	_swapchain->GetCurrentFrame()->GetCommandBuffer().end();
 
 	vk::SubmitInfo submitInfo = {};

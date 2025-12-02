@@ -68,8 +68,8 @@ int main(int argc, char* args[])
 {
 	QApplication app(argc, args);
 
-	cp::ComponentRegistry::GetInstance().Register<Transform, TransformWidget, TransformSerializer>("Transform");
-	cp::ComponentRegistry::GetInstance().Register<MeshRenderer, MeshRendererWidget, MeshRendererSerializer>("Mesh Renderer");
+	cp::ComponentRegistry::GetInstance().Register<Transform, TransformSerializer>("Transform");
+	cp::ComponentRegistry::GetInstance().Register<MeshRenderer, MeshRendererSerializer>("Mesh Renderer");
 
 	cp::ComponentViewRegistry::GetInstance().Register<Transform, TransformView>("Transform");
 	cp::ComponentViewRegistry::GetInstance().Register<MeshRenderer, MeshRendererView>("Mesh Renderer");

@@ -39,8 +39,14 @@ cp::RendererInstance::RendererInstance(cp::VulkanContext* _context, Platform* _p
 
 	surface = surfaceHandle;
 
+	if (!surface)
+	{
+		LOG_WARNING("Surface is null after creation in RendererInstance constructor");
+		return;
+	}
+
 	swapchain = new Swapchain(context, surface, platform);
-	swapchain->Create(GetRenderPass(prototype->GetRenderPassDescription("Main")).GetRenderPass()); // Use the prototype's main render pass
+	swapchain->Create(); // Use the prototype's main render pass
 }
 
 cp::RendererInstance::~RendererInstance()
@@ -71,6 +77,8 @@ void cp::RendererInstance::SetSurface(vk::SurfaceKHR _surface)
 	}
 
 	surface = _surface;
+	swapchain = new Swapchain(context, surface, platform);
+	swapchain->Create();
 }
 
 void cp::RendererInstance::ResetSwapchain()
@@ -79,7 +87,7 @@ void cp::RendererInstance::ResetSwapchain()
 	{
 		delete swapchain;
 		swapchain = new Swapchain(context, surface, platform);
-		swapchain->Create(GetRenderPass(prototype->GetRenderPassDescription("Main")).GetRenderPass()); // Use the prototype's main render pass
+		swapchain->Create(); // Use the prototype's main render pass
 	}
 }
 

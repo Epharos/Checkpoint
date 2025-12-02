@@ -122,15 +122,23 @@ void cp::VulkanContext::CreateLogicalDevice()
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
-	std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+	std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME };
 	std::vector<const char*> deviceLayers = {};
 
 	#if _DEBUG
 	deviceLayers.push_back("VK_LAYER_KHRONOS_validation");
 	#endif
 
+	vk::PhysicalDeviceSynchronization2Features sync2Feature;
+	sync2Feature.synchronization2 = VK_TRUE;
+
+	vk::PhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeature;
+	dynamicRenderingFeature.dynamicRendering = VK_TRUE;
+	dynamicRenderingFeature.pNext = &sync2Feature;
+
 	vk::PhysicalDeviceVulkan12Features v12features;
 	v12features.shaderOutputLayer = VK_TRUE;
+	v12features.pNext = &dynamicRenderingFeature;
 
 	vk::PhysicalDeviceFeatures2 features2;
 	features2.features.samplerAnisotropy = VK_TRUE;

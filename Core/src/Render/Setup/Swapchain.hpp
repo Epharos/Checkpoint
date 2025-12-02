@@ -24,7 +24,6 @@ namespace cp
 		vk::Extent2D extent;
 
 		std::vector<Frame*> frames;
-		vk::RenderPass mainRenderPass;
 
 		uint32 currentFrame;
 		uint32 maxFramesInFlight;
@@ -43,7 +42,7 @@ namespace cp
 
 		void Setup();
 
-		void Create(vk::RenderPass _mainRenderPass);
+		void Create();
 		void Recreate();
 		void Cleanup();
 
@@ -60,7 +59,6 @@ namespace cp
 		inline constexpr vk::SurfaceCapabilitiesKHR& GetSurfaceCapabilities() { return surfaceCapabilities; }
 		inline constexpr std::vector<vk::SurfaceFormatKHR>& GetSurfaceFormats() { return surfaceFormats; }
 		inline constexpr std::vector<vk::PresentModeKHR>& GetPresentModes() { return presentModes; }
-		inline constexpr vk::RenderPass& GetMainRenderPass() { return mainRenderPass; }
 
 		inline constexpr void SetCurrentFrame(uint32 _currentFrame) { currentFrame = _currentFrame; }
 	};

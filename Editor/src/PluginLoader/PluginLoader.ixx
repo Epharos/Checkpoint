@@ -8,6 +8,7 @@ module;
 #include <format>
 #include <windows.h> // For Windows only, TODO: change it so it works on other platforms too
 #include "../macros.hpp"
+#include "../CheckpointEditor.hpp"
 
 export module PluginLoader;
 export import PluginContext;
@@ -24,7 +25,7 @@ export namespace cp {
 		}
 
 		size_t ScanPlugins() {
-			std::filesystem::path pluginFolder = std::format("{}/{}", Project::data.path.toStdString(), PLUGIN_FOLDER);
+			std::filesystem::path pluginFolder = std::format("{}/{}", cp::CheckpointEditor::CurrentProject.path, PLUGIN_FOLDER);
 
 			if (!std::filesystem::exists(pluginFolder)) {
 				std::filesystem::create_directory(pluginFolder);

@@ -56,13 +56,12 @@ void cp::Swapchain::CreateData()
 	for (auto image : images)
 	{
 		Frame* frame = new Frame(context);
-		RenderTarget* rt = new RenderTarget(*context, extent, mainRenderPass);
+		RenderTarget* rt = new RenderTarget(*context, extent);
 		frame->AddRenderTarget(rt);
 		auto colorRTA = std::make_shared<RenderTargetAttachment>(context, image, surfaceFormat.format, vk::ImageAspectFlagBits::eColor);
 		colorRTA->isSwapchain = true;
 		rt->AddAttachment(depthRTA);
 		rt->AddAttachment(colorRTA);
-		rt->Build();
 		
 		frames.push_back(frame);
 	}
@@ -143,9 +142,8 @@ void cp::Swapchain::Setup()
 	presentMode = newPresentMode;
 }
 
-void cp::Swapchain::Create(vk::RenderPass _mainRenderPass)
+void cp::Swapchain::Create()
 {
-	if(!mainRenderPass) mainRenderPass = _mainRenderPass;
 	CreateData();
 	maxFramesInFlight = static_cast<uint32>(frames.size());
 	currentFrame = 0;
@@ -175,7 +173,7 @@ void cp::Swapchain::Recreate()
 
 	Cleanup();
 	Setup();
-	Create(mainRenderPass);
+	Create();
 }
 
 void cp::Swapchain::Cleanup()

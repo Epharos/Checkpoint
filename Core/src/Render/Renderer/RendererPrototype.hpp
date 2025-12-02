@@ -45,7 +45,7 @@ namespace cp
 			virtual void PresentFrame(cp::Swapchain* _swapchain, uint32_t _index);
 			virtual void EndFrame(cp::Swapchain* _swapchain);
 
-			virtual void RenderFrame(const RendererInstance& _instance, const std::vector<InstanceGroup>& _instanceGroups) = 0;
+			virtual void RenderFrame(RendererInstance* _instance, const std::vector<InstanceGroup>& _instanceGroups) = 0;
 
 		public:
 			RendererPrototype(cp::VulkanContext* _context);

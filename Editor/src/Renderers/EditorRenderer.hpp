@@ -9,10 +9,11 @@ namespace cp
 	{
 		public:
 			EditorRenderer(cp::VulkanContext* _context);
-			virtual ~EditorRenderer();
+
+			void Render(RendererInstance* _instance, const std::vector<InstanceGroup>& _instanceGroups) override;
 
 		protected:
-			virtual void CreateMainRenderPass() override;
-			virtual void RenderFrame(const std::vector<InstanceGroup>& _instanceGroups) override;
+			void CreateMainRenderPass(RendererInstance& _instance) override;
+			void RenderFrame(RendererInstance* _instance, const std::vector<InstanceGroup>& _instanceGroups) override;
 	};
 }

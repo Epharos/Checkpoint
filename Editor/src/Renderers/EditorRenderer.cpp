@@ -6,126 +6,116 @@ cp::EditorRenderer::EditorRenderer(cp::VulkanContext * _context) : cp::RendererP
 	LOG_DEBUG("Constructing EditorRenderer");
 }
 
-void cp::EditorRenderer::CreateMainRenderPass()
+void cp::EditorRenderer::Render(RendererInstance* _instance, const std::vector<InstanceGroup>& _instanceGroups)
 {
-	vk::AttachmentDescription depthAttachment = {};
-	depthAttachment.format = Helper::Format::FindDepthFormat(context->GetPhysicalDevice());
-	depthAttachment.samples = vk::SampleCountFlagBits::e1;
-	depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
-	depthAttachment.storeOp = vk::AttachmentStoreOp::eStore;
-	depthAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
-	depthAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-	depthAttachment.initialLayout = vk::ImageLayout::eUndefined;
-	depthAttachment.finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+	uint32 index = PrepareFrame(_instance->GetSwapchain());
 
-	vk::AttachmentDescription colorAttachment = {};
-	colorAttachment.format = swapchain->GetFormat();
-	colorAttachment.samples = vk::SampleCountFlagBits::e1;
-	colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
-	colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
-	colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
-	colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-	colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
-	colorAttachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
+	RenderFrame(_instance, _instanceGroups);
 
-	vk::AttachmentReference colorAttachmentRef = {};
-	colorAttachmentRef.attachment = 1;
-	colorAttachmentRef.layout = vk::ImageLayout::eColorAttachmentOptimal;
+	SubmitFrame(_instance->GetSwapchain());
+	PresentFrame(_instance->GetSwapchain(), index);
 
-	vk::AttachmentReference depthAttachmentRef = {};
-	depthAttachmentRef.attachment = 0;
-	depthAttachmentRef.layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-
-	vk::SubpassDescription colorizeSubpass = {};
-	colorizeSubpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
-	colorizeSubpass.colorAttachmentCount = 1;
-	colorizeSubpass.pColorAttachments = &colorAttachmentRef;
-	colorizeSubpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-	std::vector<vk::AttachmentDescription> attachments = { depthAttachment, colorAttachment };
-	std::vector<vk::SubpassDescription> subpasses = { colorizeSubpass };
-
-	//subpassCount = static_cast<uint32_t>(subpasses.size());
-
-	vk::SubpassDependency dependency = {};
-	dependency.srcSubpass = 0;
-	dependency.dstSubpass = 1;
-	dependency.srcStageMask = vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
-	dependency.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-	dependency.dstStageMask = vk::PipelineStageFlagBits::eFragmentShader;
-	dependency.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eShaderRead;
-	dependency.dependencyFlags = vk::DependencyFlagBits::eByRegion;
-
-	vk::RenderPassCreateInfo renderPassInfo = {};
-	renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-	renderPassInfo.pAttachments = attachments.data();
-	renderPassInfo.subpassCount = static_cast<uint32_t>(subpasses.size());
-	renderPassInfo.pSubpasses = subpasses.data();
-	renderPassInfo.dependencyCount = 0;
-	renderPassInfo.pDependencies = &dependency;
-
-	mainRenderPass = context->GetDevice().createRenderPass(renderPassInfo);
+	EndFrame(_instance->GetSwapchain());
 }
 
-void cp::EditorRenderer::RenderFrame(const std::vector<cp::InstanceGroup>& _instanceGroups)
+void cp::EditorRenderer::CreateMainRenderPass(RendererInstance& _instance)
 {
-	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4> { 0.2f, 0.2f, 0.2f, 1.0f });
+	LOG_DEBUG("No more renderpass creation needed");
+}
+
+void cp::EditorRenderer::RenderFrame(RendererInstance* _instance, const std::vector<InstanceGroup>& _instanceGroups)
+{
+	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4> { 0.8f, 0.2f, 0.2f, 1.0f });
 	vk::ClearDepthStencilValue clearDepth = vk::ClearDepthStencilValue(1.0f, 0);
 
-	vk::CommandBuffer commandBuffer = swapchain->GetCurrentFrame()->GetCommandBuffer();
+	vk::CommandBuffer commandBuffer = _instance->GetSwapchain()->GetCurrentFrame()->GetCommandBuffer();
 
-	std::vector<vk::ClearValue> rpClearValues = { clearDepth, clearColor };
+	vk::RenderingAttachmentInfoKHR colorAttachmentInfo;
+	colorAttachmentInfo.imageView = _instance->GetSwapchain()->GetCurrentFrame()->GetMainRenderTarget()->GetAttachment(1)->GetImageView();
+	colorAttachmentInfo.imageLayout = vk::ImageLayout::eAttachmentOptimalKHR;
+	colorAttachmentInfo.clearValue = clearColor;
+	colorAttachmentInfo.loadOp = vk::AttachmentLoadOp::eClear;
+	colorAttachmentInfo.storeOp = vk::AttachmentStoreOp::eStore;
 
-	vk::Viewport vp = vk::Viewport(0, 0, swapchain->GetExtent().width, swapchain->GetExtent().height, 0, 1);
-	vk::Rect2D scissor = vk::Rect2D(vk::Offset2D(0, 0), swapchain->GetExtent());
+	vk::RenderingAttachmentInfoKHR depthAttachmentInfo;
+	depthAttachmentInfo.imageView = _instance->GetSwapchain()->GetCurrentFrame()->GetMainRenderTarget()->GetAttachment(0)->GetImageView();
+	depthAttachmentInfo.imageLayout = vk::ImageLayout::eAttachmentOptimalKHR;
+	depthAttachmentInfo.clearValue = clearDepth;
+	depthAttachmentInfo.loadOp = vk::AttachmentLoadOp::eClear;
+	depthAttachmentInfo.storeOp = vk::AttachmentStoreOp::eStore;
 
-	commandBuffer.setViewport(0, vp);
-	commandBuffer.setScissor(0, scissor);
+	vk::RenderingInfo renderingInfo;
+	renderingInfo.colorAttachmentCount = 1;
+	renderingInfo.pColorAttachments = &colorAttachmentInfo;
+	renderingInfo.pDepthAttachment = &depthAttachmentInfo;
+	//renderingInfo.pStencilAttachment = &depthAttachmentInfo;
+	renderingInfo.layerCount = 1;
+	renderingInfo.renderArea = vk::Rect2D{ vk::Offset2D{}, _instance->GetSwapchain()->GetExtent() };
 
-	std::string currentPassName = "Main";
-	vk::RenderPass currentPass = renderPasses.at(currentPassName).GetRenderPass();
+	commandBuffer.beginRenderingKHR(renderingInfo, context->GetDynamicLoader());
 
-	vk::RenderPassBeginInfo rpInfo = {};
-	rpInfo.renderPass = currentPass;
-	rpInfo.framebuffer = swapchain->GetCurrentFrame()->GetMainRenderTarget()->GetFramebuffer();
-	rpInfo.renderArea.offset = vk::Offset2D{ 0, 0 };
-	rpInfo.renderArea.extent = swapchain->GetExtent();
-	rpInfo.clearValueCount = static_cast<uint32_t>(rpClearValues.size());
-	rpInfo.pClearValues = rpClearValues.data();
-
-	commandBuffer.beginRenderPass(rpInfo, vk::SubpassContents::eInline);
-
-	cp::Mesh* currentMesh = nullptr;
-	cp::Material* currentMaterial = nullptr;
-	cp::MaterialInstance* currentMaterialInstance = nullptr;
-
-	/*for (const auto& instanceGroup : _instanceGroups)
-	{
-		vk::DeviceSize offset(0);
-
-		if (currentMaterial != instanceGroup.material)
-		{
-			currentMaterial = instanceGroup.material;
-			currentMaterial->BindMaterial(commandBuffer);
-			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentMaterial->GetPipelineLayout(), 0, context->GetDescriptorSetManager()->GetDescriptorSet("Render Camera"), nullptr);
-			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentMaterial->GetPipelineLayout(), 1, context->GetDescriptorSetManager()->GetDescriptorSet("Instance Model"), nullptr);
-		}
-
-		if (currentMaterialInstance != instanceGroup.materialInstance)
-		{
-			currentMaterialInstance = instanceGroup.materialInstance;
-			currentMaterialInstance->BindMaterialInstance(commandBuffer);
-		}
-
-		if (currentMesh != instanceGroup.mesh)
-		{
-			currentMesh = instanceGroup.mesh;
-			commandBuffer.bindVertexBuffers(0, 1, &currentMesh->GetVertexBuffer(), &offset);
-			commandBuffer.bindIndexBuffer(currentMesh->GetIndexBuffer(), 0, vk::IndexType::eUint32);
-		}
-
-		commandBuffer.drawIndexed(instanceGroup.mesh->GetIndexCount(), instanceGroup.transforms.size(), 0, 0, instanceGroup.instanceOffset);
-	}*/
-
-	commandBuffer.endRenderPass();
+	commandBuffer.endRenderingKHR(context->GetDynamicLoader());
 }
+
+//void cp::EditorRenderer::RenderFrame(const std::vector<cp::InstanceGroup>& _instanceGroups)
+//{
+//	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4> { 0.2f, 0.2f, 0.2f, 1.0f });
+//	vk::ClearDepthStencilValue clearDepth = vk::ClearDepthStencilValue(1.0f, 0);
+//
+//	vk::CommandBuffer commandBuffer = swapchain->GetCurrentFrame()->GetCommandBuffer();
+//
+//	std::vector<vk::ClearValue> rpClearValues = { clearDepth, clearColor };
+//
+//	vk::Viewport vp = vk::Viewport(0, 0, swapchain->GetExtent().width, swapchain->GetExtent().height, 0, 1);
+//	vk::Rect2D scissor = vk::Rect2D(vk::Offset2D(0, 0), swapchain->GetExtent());
+//
+//	commandBuffer.setViewport(0, vp);
+//	commandBuffer.setScissor(0, scissor);
+//
+//	std::string currentPassName = "Main";
+//	vk::RenderPass currentPass = renderPasses.at(currentPassName).GetRenderPass();
+//
+//	vk::RenderPassBeginInfo rpInfo = {};
+//	rpInfo.renderPass = currentPass;
+//	rpInfo.framebuffer = swapchain->GetCurrentFrame()->GetMainRenderTarget()->GetFramebuffer();
+//	rpInfo.renderArea.offset = vk::Offset2D{ 0, 0 };
+//	rpInfo.renderArea.extent = swapchain->GetExtent();
+//	rpInfo.clearValueCount = static_cast<uint32_t>(rpClearValues.size());
+//	rpInfo.pClearValues = rpClearValues.data();
+//
+//	commandBuffer.beginRenderPass(rpInfo, vk::SubpassContents::eInline);
+//
+//	cp::Mesh* currentMesh = nullptr;
+//	cp::Material* currentMaterial = nullptr;
+//	cp::MaterialInstance* currentMaterialInstance = nullptr;
+//
+//	/*for (const auto& instanceGroup : _instanceGroups)
+//	{
+//		vk::DeviceSize offset(0);
+//
+//		if (currentMaterial != instanceGroup.material)
+//		{
+//			currentMaterial = instanceGroup.material;
+//			currentMaterial->BindMaterial(commandBuffer);
+//			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentMaterial->GetPipelineLayout(), 0, context->GetDescriptorSetManager()->GetDescriptorSet("Render Camera"), nullptr);
+//			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentMaterial->GetPipelineLayout(), 1, context->GetDescriptorSetManager()->GetDescriptorSet("Instance Model"), nullptr);
+//		}
+//
+//		if (currentMaterialInstance != instanceGroup.materialInstance)
+//		{
+//			currentMaterialInstance = instanceGroup.materialInstance;
+//			currentMaterialInstance->BindMaterialInstance(commandBuffer);
+//		}
+//
+//		if (currentMesh != instanceGroup.mesh)
+//		{
+//			currentMesh = instanceGroup.mesh;
+//			commandBuffer.bindVertexBuffers(0, 1, &currentMesh->GetVertexBuffer(), &offset);
+//			commandBuffer.bindIndexBuffer(currentMesh->GetIndexBuffer(), 0, vk::IndexType::eUint32);
+//		}
+//
+//		commandBuffer.drawIndexed(instanceGroup.mesh->GetIndexCount(), instanceGroup.transforms.size(), 0, 0, instanceGroup.instanceOffset);
+//	}*/
+//
+//	commandBuffer.endRenderPass();
+//}

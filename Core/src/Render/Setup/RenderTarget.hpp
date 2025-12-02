@@ -40,25 +40,21 @@ namespace cp
 		std::vector<std::shared_ptr<RenderTargetAttachment>> attachments;
 
 		vk::Framebuffer framebuffer;
-		vk::RenderPass& renderPass; // The render target does not own the render pass, but can reference it (as it is used to build the framebuffer)
 
 		vk::Extent2D extent;
 
 		cp::VulkanContext* context;
 
 	public:
-		RenderTarget(cp::VulkanContext& _context, const vk::Extent2D& _extent, vk::RenderPass& _renderPass);
+		RenderTarget(cp::VulkanContext& _context, const vk::Extent2D& _extent);
 		~RenderTarget();
 
 		void AddAttachment(const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const uint32_t _layerCount = 1);
 		void AddAttachment(const vk::Image& _image, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags);
 		void AddAttachment(std::shared_ptr<RenderTargetAttachment>& _attachment);
 
-		void Build(const uint32_t& _layerCount = 1);
-
 		void Cleanup();
 
-		inline constexpr const vk::RenderPass& GetRenderPass() const { return renderPass; }
 		inline constexpr const std::vector<std::shared_ptr<RenderTargetAttachment>>& GetAttachments() const { return attachments; }
 		inline constexpr const std::shared_ptr<RenderTargetAttachment>& GetAttachment(const uint32_t& index) const { return attachments[index]; }
 		inline constexpr const vk::Framebuffer& GetFramebuffer() const { return framebuffer; }

@@ -4,7 +4,7 @@
 
 namespace cp
 {
-	RenderTarget::RenderTarget(cp::VulkanContext& _context, const vk::Extent2D& _extent, vk::RenderPass& _renderPass) : context(&_context), extent(_extent), renderPass(_renderPass)
+	RenderTarget::RenderTarget(cp::VulkanContext& _context, const vk::Extent2D& _extent) : context(&_context), extent(_extent)
 	{
 
 	}
@@ -43,29 +43,9 @@ namespace cp
 		this->attachments.push_back(_attachment);
 	}
 
-	void RenderTarget::Build(const uint32_t& _layerCount)
-	{
-		std::vector<vk::ImageView> attachmentViews;
-
-		for (const auto& attachment : attachments)
-		{
-			attachmentViews.push_back(attachment->GetImageView());
-		}
-
-		vk::FramebufferCreateInfo framebufferInfo;
-		framebufferInfo.renderPass = renderPass;
-		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachmentViews.size());
-		framebufferInfo.pAttachments = attachmentViews.data();
-		framebufferInfo.width = extent.width;
-		framebufferInfo.height = extent.height;
-		framebufferInfo.layers = _layerCount;
-
-		framebuffer = context->GetDevice().createFramebuffer(framebufferInfo);
-	}
-
 	void RenderTarget::Cleanup()
 	{
-		context->GetDevice().destroyFramebuffer(framebuffer);
+		
 	}
 
 	RenderTargetAttachment::RenderTargetAttachment(cp::VulkanContext* _context, const vk::Extent2D& _extent, const vk::Format& _format, const vk::ImageUsageFlags _usage, const vk::ImageAspectFlags& _aspectFlags, const bool& _shouldCreateSampler, const uint32_t& _layerCount)
