@@ -37,13 +37,30 @@ export namespace cp {
 				return children;
 			}
 
+			EDITOR_API virtual size_t ChildCount() const noexcept {
+				return children.size();
+			}
+
+			EDITOR_API virtual void SetOrientation(ContainerOrientation orient) noexcept {
+				orientation = orient;
+			}
+
+			EDITOR_API ContainerOrientation GetOrientation() const noexcept {
+				return orientation;
+			}
+
+			EDITOR_API virtual void SetVertical() noexcept {
+				SetOrientation(ContainerOrientation::Vertical);
+			}
+
+			EDITOR_API virtual void SetHorizontal() noexcept {
+				SetOrientation(ContainerOrientation::Horizontal);
+			}
+
 		protected:
 			std::vector<IWidget*> children;
-	};
 
-	class IHorizontalContainer : public IContainer {
-		public:
-			EDITOR_API virtual ~IHorizontalContainer() = default;
+			ContainerOrientation orientation;
 	};
 }
 
@@ -52,9 +69,18 @@ export namespace cp {
 export namespace cp {
 	class QtContainer : public IContainer {
 		public:
-			EDITOR_API QtContainer() {
+			EDITOR_API QtContainer(ContainerOrientation orientation = ContainerOrientation::Vertical) {
 				containerWidget = new QWidget();
-				layout = new QVBoxLayout(containerWidget);
+				
+				switch (orientation) {
+				case ContainerOrientation::Vertical:
+					layout = new QVBoxLayout(containerWidget);
+					break;
+				case ContainerOrientation::Horizontal:
+					layout = new QHBoxLayout(containerWidget);
+					break;
+				}
+
 				layout->setContentsMargins(0, 0, 0, 0);
 				layout->setSpacing(0);
 				containerWidget->setLayout(layout);
@@ -114,6 +140,32 @@ export namespace cp {
 				children.clear();
 			}
 
+			EDITOR_API virtual void SetOrientation(ContainerOrientation orient) noexcept {
+				IContainer::SetOrientation(orient);
+
+				delete layout;
+
+				switch(orientation) {
+					case ContainerOrientation::Vertical:
+						layout = new QVBoxLayout(containerWidget);
+						break;
+					case ContainerOrientation::Horizontal:
+						layout = new QHBoxLayout(containerWidget);
+						break;
+				}
+
+				layout->setContentsMargins(0, 0, 0, 0);
+				layout->setSpacing(0);
+				containerWidget->setLayout(layout);
+
+				for (auto child : children) {
+					if (void* native = child->NativeHandle()) {
+						QWidget* childWidget = reinterpret_cast<QWidget*>(native);
+						layout->addWidget(childWidget);
+					}
+				}
+			}
+
 			EDITOR_API virtual void* NativeHandle() const noexcept override {
 				return static_cast<void*>(containerWidget);
 			}
@@ -125,17 +177,5 @@ export namespace cp {
 	protected:
 		QWidget* containerWidget = nullptr;
 		QBoxLayout* layout = nullptr;
-	};
-
-	class QtHorizontalContainer : public QtContainer, public IHorizontalContainer {
-		public:
-			EDITOR_API QtHorizontalContainer() : QtContainer() {
-				delete layout;
-				layout = new QHBoxLayout(containerWidget);
-				layout->setContentsMargins(0, 0, 0, 0);
-				layout->setSpacing(0);
-				containerWidget->setLayout(layout);
-			}
-			EDITOR_API virtual ~QtHorizontalContainer() override = default;
 	};
 }

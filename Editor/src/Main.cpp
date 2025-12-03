@@ -9,6 +9,7 @@
 #include "ECSWrapper.hpp"
 
 #include "EditorUI/EditorWindow.hpp"
+#include "EditorUI/Launcher.hpp"
 
 #include "Components/ComponentView.hpp"
 #include "Renderers/EditorRenderer.hpp"
@@ -120,6 +121,7 @@ int main(int argc, char* args[])
 	cp::ResourceManager::Get()->RegisterResourceType<cp::Material>();
 	cp::ResourceManager::Get()->RegisterResourceType<cp::MaterialInstance>();
 
+	cp::Launcher launcher;
 	cp::EditorWindow editorWindow{ cp::CheckpointEditor::CurrentProject };
 
 	//auto win = factory.CreateWindow();

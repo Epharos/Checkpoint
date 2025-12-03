@@ -31,6 +31,19 @@ namespace cp {
 		constexpr bool operator>=(const EditorVersion& other) const {
 			return ToUint32() >= other.ToUint32();
 		}
+
+		std::string ToString() const {
+			std::string typeStr;
+
+			switch (type) {
+			case EditorVersionType::Alpha: typeStr = "Alpha"; break;
+			case EditorVersionType::Beta: typeStr = "Beta"; break;
+			case EditorVersionType::ReleaseCandidate: typeStr = "RC"; break;
+			case EditorVersionType::Release: typeStr = ""; break;
+			}
+
+			return std::format("{} {}.{}.{}", typeStr, major, minor, patch);
+		}
 	};
 
 	struct Project {
@@ -50,6 +63,20 @@ namespace cp {
 
 		std::string GetResourceRelativePath(const std::string& _resource) {
 			return _resource.substr(Project::GetResourcePath().size());
+		}
+
+		std::string FormatLastOpened() const {
+			std::time_t lastOpenedTime = static_cast<std::time_t>(lastOpened);
+			char buffer[100];
+			std::strftime(buffer, sizeof(buffer), "%Y/%m/%d %H:%M", std::localtime(&lastOpenedTime));
+			return std::string(buffer);
+		}
+
+		std::string FormatCreationDate() const {
+			std::time_t creationTime = static_cast<std::time_t>(creationDate);
+			char buffer[100];
+			std::strftime(buffer, sizeof(buffer), "%Y/%m/%d %H:%M", std::localtime(&creationTime));
+			return std::string(buffer);
 		}
 
 		void FromJson(const nlohmann::json& obj) {
@@ -131,6 +158,24 @@ namespace cp {
 
 			outFile << CurrentProject.ToJson().dump(4);
 			outFile.close();
+		}
+
+		static Project LoadProjectData(const std::string& projectPath) {
+			std::ifstream file(projectPath + "/project.data");
+
+			if (!file.is_open()) {
+				throw std::runtime_error("Failed to open project file: " + projectPath + "/project.data");
+			}
+
+			nlohmann::json projectJson;
+			file >> projectJson;
+
+			Project project;
+			project.FromJson(projectJson);
+
+			file.close();
+
+			return project;
 		}
 	};
 }

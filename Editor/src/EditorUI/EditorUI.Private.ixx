@@ -7,6 +7,7 @@ module;
 #include "QtWidgets/Inspector.hpp"
 #include "QtWidgets/AssetBrowser.hpp"
 #include "QtWidgets/VulkanRendererWidget.hpp"
+#include "QtWidgets/LauncherProjectList.hpp"
 
 export module EditorUI:Private;
 
@@ -165,5 +166,38 @@ export namespace cp {
 			}
 		protected:
 			cp::AssetBrowserWidget* assetBrowser;
+	};
+
+	class IProjectList : public IWidget {
+		public:
+			virtual void PopulateProjectList(const std::vector<cp::Project>& _projects) = 0;
+	};
+
+	class QtProjectList : public IProjectList {
+		public:
+			QtProjectList() {
+				projectList = new cp::ProjectList();
+			}
+			virtual ~QtProjectList() = default;
+			virtual void  SetVisible(bool visible) noexcept {
+				projectList->setVisible(visible);
+			}
+			virtual bool IsVisible() const noexcept {
+				return projectList->isVisible();
+			}
+			virtual void SetEnabled(bool enabled) noexcept {
+				projectList->setEnabled(enabled);
+			}
+			virtual bool IsEnabled() const noexcept {
+				return projectList->isEnabled();
+			}
+			virtual void* NativeHandle() const noexcept {
+				return static_cast<void*>(projectList);
+			}
+			virtual void PopulateProjectList(const std::vector<cp::Project>& _projects) {
+				projectList->PopulateProjectList(_projects);
+			}
+		protected:
+			cp::ProjectList* projectList;
 	};
 }

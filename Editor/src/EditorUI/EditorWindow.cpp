@@ -1,12 +1,9 @@
 #include "EditorWindow.hpp"
 
-#include "CheckpointEditor.hpp"
 #include "ECSWrapper.hpp"
 #include "EditorUI/QtWidgets/SceneHierarchy.hpp"
 #include "Renderers/EditorRenderer.hpp"
 #include <QObject>
-
-import EditorUI;
 
 cp::EditorWindow::EditorWindow(cp::Project _project)
 {

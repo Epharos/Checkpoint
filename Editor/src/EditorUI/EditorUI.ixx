@@ -2,6 +2,7 @@ module;
 
 #include "../macros.hpp"
 #include "QtWidgets/DropMainWindow.hpp"
+#include <nlohmann/json.hpp>
 #include <iostream>
 
 #include <glm/glm.hpp>
@@ -18,7 +19,7 @@ export import :Private;
 export namespace cp {
 	class IEditorUIFactory {
 		public:
-			EDITOR_API virtual std::unique_ptr<IContainer> CreateContainer() noexcept = 0;
+			EDITOR_API virtual std::unique_ptr<IContainer> CreateContainer(ContainerOrientation orientation = ContainerOrientation::Vertical) noexcept = 0;
 			EDITOR_API virtual std::unique_ptr<IWindow> CreateWindow() noexcept = 0;
 			EDITOR_API virtual std::unique_ptr<IDockableWindow> CreateDockableWindow(IWindow* target = nullptr) noexcept = 0;
 
@@ -26,6 +27,7 @@ export namespace cp {
 			virtual std::unique_ptr<IInspector> CreateInspector() noexcept = 0;
 			virtual std::unique_ptr<IViewport> CreateViewport(cp::SceneAsset* scene = nullptr) noexcept = 0;
 			virtual std::unique_ptr<IAssetBrowser> CreateAssetBrowser(const std::string& rootPath) noexcept = 0;
+			virtual std::unique_ptr<IProjectList> CreateProjectList() noexcept = 0;
 
 			EDITOR_API virtual std::unique_ptr<ILabel> CreateLabel(const std::string& text = "") noexcept = 0;
 			EDITOR_API virtual std::unique_ptr<ICollapsible> CreateCollapsible() noexcept = 0;
@@ -44,8 +46,8 @@ export namespace cp {
 
 	class QtEditorUIFactory : public IEditorUIFactory {
 		public:
-			EDITOR_API virtual std::unique_ptr<IContainer> CreateContainer() noexcept override {
-				return std::make_unique<cp::QtContainer>();
+			EDITOR_API virtual std::unique_ptr<IContainer> CreateContainer(ContainerOrientation orientation = ContainerOrientation::Vertical) noexcept override {
+				return std::make_unique<cp::QtContainer>(orientation);
 			}
 
 			EDITOR_API virtual std::unique_ptr<IWindow> CreateWindow() noexcept override {
@@ -78,6 +80,32 @@ export namespace cp {
 
 			virtual std::unique_ptr<IAssetBrowser> CreateAssetBrowser(const std::string& rootPath) noexcept {
 				return std::make_unique<QtAssetBrowser>(rootPath);
+			}
+
+			virtual std::unique_ptr<IProjectList> CreateProjectList() noexcept {
+				auto projectList = std::make_unique<QtProjectList>();
+
+				nlohmann::json projectsJson;
+				std::ifstream projectsFile("recent_projects.json");
+				if (projectsFile.is_open()) {
+					projectsFile >> projectsJson;
+					projectsFile.close();
+				}
+
+				std::vector<cp::Project> recentProjects;
+
+				if (projectsJson.contains("recentProjects") && projectsJson["recentProjects"].is_array()) {
+					for (const auto& projJson : projectsJson["recentProjects"]) {
+						if (!projJson.is_string()) continue;
+
+						cp::Project proj = cp::CheckpointEditor::LoadProjectData(projJson.get<std::string>());
+						recentProjects.push_back(proj);
+					}
+				}
+
+				projectList->PopulateProjectList(recentProjects);
+
+				return projectList;
 			}
 
 			EDITOR_API virtual std::unique_ptr<ILabel> CreateLabel(const std::string& text = "") noexcept override {
