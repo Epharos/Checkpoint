@@ -32,6 +32,13 @@ export namespace cp {
 			EDITOR_API virtual void ClearChildren() noexcept = 0;
 
 			EDITOR_API virtual void SetSpacing(int spacing) noexcept = 0;
+
+			EDITOR_API virtual const std::vector<IWidget*>& GetChildren() const noexcept {
+				return children;
+			}
+
+		protected:
+			std::vector<IWidget*> children;
 	};
 
 	class IHorizontalContainer : public IContainer {
@@ -118,7 +125,6 @@ export namespace cp {
 	protected:
 		QWidget* containerWidget = nullptr;
 		QBoxLayout* layout = nullptr;
-		std::vector<IWidget*> children;
 	};
 
 	class QtHorizontalContainer : public QtContainer, public IHorizontalContainer {

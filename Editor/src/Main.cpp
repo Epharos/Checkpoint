@@ -1,7 +1,6 @@
 #include "pch.hpp"
 #include "CheckpointEditor.hpp"
 
-#include <QtCore/qobject.h>
 #include <QtGui/qfontdatabase.h>
 
 #include "Components/Transform.hpp"
@@ -9,7 +8,7 @@
 
 #include "ECSWrapper.hpp"
 
-#include "EditorUI/QtWidgets/SceneHierarchy.hpp"
+#include "EditorUI/EditorWindow.hpp"
 
 #include "Components/ComponentView.hpp"
 #include "Renderers/EditorRenderer.hpp"
@@ -121,92 +120,93 @@ int main(int argc, char* args[])
 	cp::ResourceManager::Get()->RegisterResourceType<cp::Material>();
 	cp::ResourceManager::Get()->RegisterResourceType<cp::MaterialInstance>();
 
-	cp::QtEditorUIFactory factory;
-	auto win = factory.CreateWindow();
-	win->Show();
+	cp::EditorWindow editorWindow{ cp::CheckpointEditor::CurrentProject };
 
-	auto dock = factory.CreateDockableWindow(win.get());
-	dock->SetTitle("Scene Hierarchy");
-	dock->Show();
+	//auto win = factory.CreateWindow();
+	//win->Show();
 
-	auto sh = factory.CreateSceneHierarchy();
-	auto c = factory.CreateContainer().release();
-	c->AddChild(sh.get());
-	dock->SetContainer(c);
+	//auto dock = factory.CreateDockableWindow(win.get());
+	//dock->SetTitle("Scene Hierarchy");
+	//dock->Show();
 
-	QObject::connect((cp::SceneHierarchy*)sh->NativeHandle(), &cp::SceneHierarchy::SceneUpdated, [&](const cp::SceneAsset* _scene) {
-		if (_scene) {
-			LOG_INFO(MF("Scene updated: ", _scene->name));
-		}
+	//auto sh = factory.CreateSceneHierarchy();
+	//auto c = factory.CreateContainer().release();
+	//c->AddChild(sh.get());
+	//dock->SetContainer(c);
 
-		dock->SetTitle("Scene Hierarchy: " + _scene->name);
-		});
+	//QObject::connect((cp::SceneHierarchy*)sh->NativeHandle(), &cp::SceneHierarchy::SceneUpdated, [&](const cp::SceneAsset* _scene) {
+	//	if (_scene) {
+	//		LOG_INFO(MF("Scene updated: ", _scene->name));
+	//	}
 
-	cp::SceneAsset* scene = new cp::SceneAsset();
-	scene->name = "Coucou";
-	scene->renderer = new cp::EditorRenderer(&cp::CheckpointEditor::VulkanCtx);
+	//	dock->SetTitle("Scene Hierarchy: " + _scene->name);
+	//	});
 
-	cp::EntityAsset* entity = new cp::EntityAsset();
-	entity->name = "Coucou toi";
-	entity->AddComponent(new Transform());
-	entity->AddComponent(new MeshRenderer());
-	scene->entities.push_back(entity);
-	entity = new cp::EntityAsset();
-	entity->name = "Je suis une autre entite";
-	entity->AddComponent(new Transform());
-	entity->AddComponent(new MeshRenderer());
-	scene->entities.push_back(entity);
-	entity = new cp::EntityAsset();
-	entity->name = "Kappa";
-	entity->AddComponent(new Transform());
-	entity->AddComponent(new MeshRenderer());
-	scene->entities.push_back(entity);
-	entity = new cp::EntityAsset();
-	entity->name = "EFT 15.11";
-	entity->AddComponent(new Transform());
-	entity->AddComponent(new MeshRenderer());
-	scene->entities.push_back(entity);
+	//cp::SceneAsset* scene = new cp::SceneAsset();
+	//scene->name = "Coucou";
+	//scene->renderer = new cp::EditorRenderer(&cp::CheckpointEditor::VulkanCtx);
 
-	sh->UpdateScene(scene);
+	//cp::EntityAsset* entity = new cp::EntityAsset();
+	//entity->name = "Coucou toi";
+	//entity->AddComponent(new Transform());
+	//entity->AddComponent(new MeshRenderer());
+	//scene->entities.push_back(entity);
+	//entity = new cp::EntityAsset();
+	//entity->name = "Je suis une autre entite";
+	//entity->AddComponent(new Transform());
+	//entity->AddComponent(new MeshRenderer());
+	//scene->entities.push_back(entity);
+	//entity = new cp::EntityAsset();
+	//entity->name = "Kappa";
+	//entity->AddComponent(new Transform());
+	//entity->AddComponent(new MeshRenderer());
+	//scene->entities.push_back(entity);
+	//entity = new cp::EntityAsset();
+	//entity->name = "EFT 15.11";
+	//entity->AddComponent(new Transform());
+	//entity->AddComponent(new MeshRenderer());
+	//scene->entities.push_back(entity);
 
-	auto dockViewport = factory.CreateDockableWindow(nullptr);
-	dockViewport->SetTitle("Viewport");
-	dockViewport->DockTo(dock.get(), cp::DockArea::Right);
-	dockViewport->Show();
+	//sh->UpdateScene(scene);
 
-	auto viewport = factory.CreateViewport(scene);
-	auto containerViewport = factory.CreateContainer().release();
-	containerViewport->AddChild(viewport.get());
-	dockViewport->SetContainer(containerViewport);
+	//auto dockViewport = factory.CreateDockableWindow(nullptr);
+	//dockViewport->SetTitle("Viewport");
+	//dockViewport->DockTo(dock.get(), cp::DockArea::Right);
+	//dockViewport->Show();
 
-	auto dockInspector = factory.CreateDockableWindow(nullptr);
-	dockInspector->SetTitle("Inspector");
-	dockInspector->DockTo(dockViewport.get(), cp::DockArea::Right);
-	dockInspector->Show();
+	//auto viewport = factory.CreateViewport(scene);
+	//auto containerViewport = factory.CreateContainer().release();
+	//containerViewport->AddChild(viewport.get());
+	//dockViewport->SetContainer(containerViewport);
 
-	auto inspector = factory.CreateInspector();
-	auto containerInspector = factory.CreateContainer().release();
-	containerInspector->AddChild(inspector.get());
-	dockInspector->SetContainer(containerInspector);
+	//auto dockInspector = factory.CreateDockableWindow(nullptr);
+	//dockInspector->SetTitle("Inspector");
+	//dockInspector->DockTo(dockViewport.get(), cp::DockArea::Right);
+	//dockInspector->Show();
 
-	auto dockAssetBrowser = factory.CreateDockableWindow(nullptr);
-	dockAssetBrowser->SetTitle("Asset Browser");
-	dockAssetBrowser->DockTo(dock.get(), cp::DockArea::Bottom);
-	dockAssetBrowser->Show();
+	//auto inspector = factory.CreateInspector();
+	//auto containerInspector = factory.CreateContainer().release();
+	//containerInspector->AddChild(inspector.get());
+	//dockInspector->SetContainer(containerInspector);
 
-	auto assetBrowser = factory.CreateAssetBrowser(cp::CheckpointEditor::CurrentProject.GetResourcePath());
-	assetBrowser->LinkToInspector(inspector.get());
-	auto containerAssetBrowser = factory.CreateContainer().release();
-	containerAssetBrowser->AddChild(assetBrowser.get());
-	dockAssetBrowser->SetContainer(containerAssetBrowser);
+	//auto dockAssetBrowser = factory.CreateDockableWindow(nullptr);
+	//dockAssetBrowser->SetTitle("Asset Browser");
+	//dockAssetBrowser->DockTo(dock.get(), cp::DockArea::Bottom);
+	//dockAssetBrowser->Show();
 
-	QObject::connect((cp::SceneHierarchy*)sh->NativeHandle(), &cp::SceneHierarchy::EntitySelected, [&](cp::EntityAsset* _entity) {
-		if (_entity) {
-			LOG_INFO(MF("Entity selected: ", _entity->name));
-		}
+	//auto assetBrowser = factory.CreateAssetBrowser(cp::CheckpointEditor::CurrentProject.GetResourcePath());
+	//assetBrowser->LinkToInspector(inspector.get());
+	//auto containerAssetBrowser = factory.CreateContainer().release();
+	//containerAssetBrowser->AddChild(assetBrowser.get());
+	//dockAssetBrowser->SetContainer(containerAssetBrowser);
 
-		inspector->ShowEntity(_entity);
-	});
+	//QObject::connect((cp::SceneHierarchy*)sh->NativeHandle(), &cp::SceneHierarchy::EntitySelected, [&](cp::EntityAsset* _entity) {
+	//	if (_entity) {
+	//		LOG_INFO(MF("Entity selected: ", _entity->name));
+	//	}
+
+	//	inspector->ShowEntity(_entity);
+	//});
 
 	return app.exec();
 }
