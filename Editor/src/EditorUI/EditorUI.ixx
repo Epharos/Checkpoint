@@ -30,6 +30,8 @@ export namespace cp {
 			virtual std::unique_ptr<IProjectList> CreateProjectList() noexcept = 0;
 
 			EDITOR_API virtual std::unique_ptr<ILabel> CreateLabel(const std::string& text = "") noexcept = 0;
+			EDITOR_API virtual std::unique_ptr<IButton> CreateButton(const std::string& text = "") noexcept = 0;
+			EDITOR_API virtual std::unique_ptr<IFlatButton> CreateFlatButton(const std::string& text = "") noexcept = 0;
 			EDITOR_API virtual std::unique_ptr<ICollapsible> CreateCollapsible() noexcept = 0;
 
 			EDITOR_API virtual std::unique_ptr<INumericField<int>> CreateIntField(int* value) noexcept = 0;
@@ -110,6 +112,14 @@ export namespace cp {
 
 			EDITOR_API virtual std::unique_ptr<ILabel> CreateLabel(const std::string& text = "") noexcept override {
 				return std::make_unique<cp::QtLabel>(text);
+			}
+
+			EDITOR_API virtual std::unique_ptr<IButton> CreateButton(const std::string& text = "") noexcept override {
+				return std::make_unique<cp::QtButton>(text);
+			}
+
+			EDITOR_API virtual std::unique_ptr<IFlatButton> CreateFlatButton(const std::string& text = "") noexcept override {
+				return std::make_unique<cp::QtFlatButton>(text);
 			}
 
 			EDITOR_API virtual std::unique_ptr<ICollapsible> CreateCollapsible() noexcept override {

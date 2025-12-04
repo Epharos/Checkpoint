@@ -25,6 +25,9 @@ export namespace cp {
 
 	class IContainer : public IWidget {
 		public:
+			EDITOR_API IContainer(ContainerOrientation orient = ContainerOrientation::Vertical)
+				: orientation(orient) {
+			}
 			EDITOR_API virtual ~IContainer() = default;
 
 			EDITOR_API virtual void AddChild(IWidget* child) noexcept = 0;
@@ -32,6 +35,7 @@ export namespace cp {
 			EDITOR_API virtual void ClearChildren() noexcept = 0;
 
 			EDITOR_API virtual void SetSpacing(int spacing) noexcept = 0;
+			EDITOR_API virtual void SetMargins(int left, int top, int right, int bottom) noexcept = 0;
 
 			EDITOR_API virtual const std::vector<IWidget*>& GetChildren() const noexcept {
 				return children;
@@ -69,7 +73,7 @@ export namespace cp {
 export namespace cp {
 	class QtContainer : public IContainer {
 		public:
-			EDITOR_API QtContainer(ContainerOrientation orientation = ContainerOrientation::Vertical) {
+			EDITOR_API QtContainer(ContainerOrientation orientation = ContainerOrientation::Vertical) : IContainer(orientation) {
 				containerWidget = new QWidget();
 				
 				switch (orientation) {
@@ -81,8 +85,8 @@ export namespace cp {
 					break;
 				}
 
-				layout->setContentsMargins(0, 0, 0, 0);
-				layout->setSpacing(0);
+				layout->setContentsMargins(margins[0], margins[1], margins[2], margins[3]);
+				layout->setSpacing(spacing);
 				containerWidget->setLayout(layout);
 			}
 
@@ -154,8 +158,8 @@ export namespace cp {
 						break;
 				}
 
-				layout->setContentsMargins(0, 0, 0, 0);
-				layout->setSpacing(0);
+				layout->setContentsMargins(margins[0], margins[1], margins[2], margins[3]);
+				layout->setSpacing(spacing);
 				containerWidget->setLayout(layout);
 
 				for (auto child : children) {
@@ -172,10 +176,21 @@ export namespace cp {
 
 			EDITOR_API virtual void SetSpacing(int spacing) noexcept override {
 				layout->setSpacing(spacing);
+				this->spacing = spacing;
+			}
+
+			EDITOR_API virtual void SetMargins(int left, int top, int right, int bottom) noexcept override {
+				layout->setContentsMargins(left, top, right, bottom);
+				margins[0] = left;
+				margins[1] = top;
+				margins[2] = right;
+				margins[3] = bottom;
 			}
 
 	protected:
 		QWidget* containerWidget = nullptr;
 		QBoxLayout* layout = nullptr;
+		int margins[4] = { 0, 0, 0, 0 };
+		int spacing = 0;
 	};
 }

@@ -8,6 +8,9 @@
 #include <QVBoxLayout>
 #include <QHeaderView>
 #include <QRegularExpression>
+#include <QStyledItemDelegate>
+#include <QPainter>
+#include <QMouseEvent>
 #include <vector>
 #include <functional>
 
@@ -24,6 +27,33 @@ namespace cp {
 		}
 	};
 
+	class ProjectListItemDelegate : public QStyledItemDelegate
+	{
+#ifndef BUILDING_PLUGIN_LOADER
+		Q_OBJECT
+#endif
+	public:
+		explicit ProjectListItemDelegate(QObject* parent = nullptr) : QStyledItemDelegate(parent) {}
+
+		void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override
+		{
+			painter->save();
+			bool isSelected = option.state & QStyle::State_Selected;
+			bool isHovered = option.state & QStyle::State_MouseOver;
+			QColor bgColor = QColor("#B987FF");
+			bgColor.setAlpha(isSelected ? 10 : 0);
+			QString text = index.data(Qt::DisplayRole).toString();
+			// Draw background
+			painter->fillRect(option.rect, bgColor);
+			// Draw text
+			QPen textPen(QColor("#D0D3DC"));
+			painter->setPen(textPen);
+			painter->drawText(option.rect.adjusted(8, 0, -8, 0), Qt::AlignVCenter | Qt::AlignLeft, text);
+			painter->restore();
+		}
+	};
+
+
 	class ProjectListTreeWidget : public QTableView
 	{
 #ifndef BUILDING_PLUGIN_LOADER
@@ -33,22 +63,22 @@ namespace cp {
 			explicit ProjectListTreeWidget(QWidget* _parent = nullptr) : QTableView(_parent)
 			{
 				setStyleSheet(R"(
-					QTreeWidget
+					QTableView
 					{
 						background-color: #1A1F2B;
-						border: 1px solid #3E465A;
 						border-radius: 2px;
 						outline: none;
 						padding: 8px 0px;
 						margin: 0px;
 					}
-					QTreeWidget::item
+					QTableView::item
 					{
 						border: none;
 						outline: none;
 						background-color: transparent;
 					}
 				)");
+				setItemDelegate(new ProjectListItemDelegate(this));
 			}
 	};
 

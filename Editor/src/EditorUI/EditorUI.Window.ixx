@@ -27,6 +27,10 @@ export namespace cp {
 
 			EDITOR_API virtual void SetSize(const unsigned int width, const unsigned int height) noexcept = 0;
 			EDITOR_API virtual void GetSize(unsigned int& width, unsigned int& height) const noexcept = 0;
+			EDITOR_API virtual void SetMinSize(const unsigned int width, const unsigned int height) noexcept = 0;
+			EDITOR_API virtual void GetMinSize(unsigned int& width, unsigned int& height) const noexcept = 0;
+			EDITOR_API virtual void SetMaxSize(const unsigned int width, const unsigned int height) noexcept = 0;
+			EDITOR_API virtual void GetMaxSize(unsigned int& width, unsigned int& height) const noexcept = 0;
 
 			EDITOR_API virtual void Show() noexcept = 0;
 			EDITOR_API virtual void Close() noexcept = 0;
@@ -87,6 +91,26 @@ export namespace cp {
 
 			EDITOR_API virtual void GetSize(unsigned int& _width, unsigned int& _height) const noexcept override {
 				QSize size = mainWindow->size();
+				_width = size.width();
+				_height = size.height();
+			}
+
+			EDITOR_API virtual void SetMinSize(const unsigned int _width, const unsigned int _height) noexcept override {
+				mainWindow->setMinimumSize(_width, _height);
+			}
+
+			EDITOR_API virtual void GetMinSize(unsigned int& _width, unsigned int& _height) const noexcept override {
+				QSize size = mainWindow->minimumSize();
+				_width = size.width();
+				_height = size.height();
+			}
+
+			EDITOR_API virtual void SetMaxSize(const unsigned int _width, const unsigned int _height) noexcept override {
+				mainWindow->setMaximumSize(_width, _height);
+			}
+
+			EDITOR_API virtual void GetMaxSize(unsigned int& _width, unsigned int& _height) const noexcept override {
+				QSize size = mainWindow->maximumSize();
 				_width = size.width();
 				_height = size.height();
 			}
@@ -255,6 +279,26 @@ export namespace cp {
 
 			EDITOR_API virtual void GetSize(unsigned int& width, unsigned int& height) const noexcept override {
 				QSize size = dock->window()->size();
+				width = size.width();
+				height = size.height();
+			}
+
+			EDITOR_API virtual void SetMinSize(const unsigned int width, const unsigned int height) noexcept override {
+				dock->setMinimumSize(width, height);
+			}
+
+			EDITOR_API virtual void GetMinSize(unsigned int& width, unsigned int& height) const noexcept override {
+				QSize size = dock->minimumSize();
+				width = size.width();
+				height = size.height();
+			}
+
+			EDITOR_API virtual void SetMaxSize(const unsigned int width, const unsigned int height) noexcept override {
+				dock->setMaximumSize(width, height);
+			}
+
+			EDITOR_API virtual void GetMaxSize(unsigned int& width, unsigned int& height) const noexcept override {
+				QSize size = dock->maximumSize();
 				width = size.width();
 				height = size.height();
 			}

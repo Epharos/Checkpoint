@@ -1,6 +1,6 @@
 export module EditorUI:Util;
 
-namespace cp {
+export namespace cp {
 	enum class ContainerOrientation {
 		Vertical,
 		Horizontal

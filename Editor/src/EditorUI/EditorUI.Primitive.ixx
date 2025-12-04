@@ -25,6 +25,12 @@ export namespace cp {
 		public:
 			EDITOR_API virtual void SetText(const std::string& text) noexcept = 0;
 			EDITOR_API virtual std::string GetText() const noexcept = 0;
+
+			EDITOR_API virtual void SetTextSize(uint32 size) noexcept = 0;
+			EDITOR_API virtual void SetBold(bool bold) noexcept = 0;
+			EDITOR_API virtual void SetItalic(bool italic) noexcept = 0;
+			EDITOR_API virtual void SetUnderline(bool underline) noexcept = 0;
+			EDITOR_API virtual void SetColor(const uint32_t& color) noexcept = 0;
 	};
 
 	class ICollapsible : public IWidget {
@@ -83,6 +89,21 @@ export namespace cp {
 
 	class IMaterialInstanceSelector : public IWidget {
 	};
+
+	class IButton : public IWidget {
+		public:
+			EDITOR_API virtual void SetText(const std::string& text) noexcept = 0;
+			EDITOR_API virtual std::string GetText() const noexcept = 0;
+			EDITOR_API virtual void SetTextColor(const uint32_t& color) noexcept = 0;
+			EDITOR_API virtual void SetTextSize(uint32 size) noexcept = 0;
+
+			EDITOR_API virtual void SetSize(uint32 width, uint32 height) noexcept = 0;
+
+			EDITOR_API virtual void SetOnClickListener(const std::function<void()>& listener) noexcept = 0;
+	};
+
+	class IFlatButton : public IButton {
+	};
 }
 
 // -- QT -- //
@@ -124,6 +145,37 @@ export namespace cp {
 
 			EDITOR_API virtual std::string GetText() const noexcept override {
 				return labelWidget->text().toStdString();
+			}
+
+			EDITOR_API virtual void SetTextSize(uint32 size) noexcept override {
+				QFont font = labelWidget->font();
+				font.setPointSize(size);
+				labelWidget->setFont(font);
+			}
+
+			EDITOR_API virtual void SetBold(bool bold) noexcept override {
+				QFont font = labelWidget->font();
+				font.setBold(bold);
+				labelWidget->setFont(font);
+			}
+
+			EDITOR_API virtual void SetItalic(bool italic) noexcept override {
+				QFont font = labelWidget->font();
+				font.setItalic(italic);
+				labelWidget->setFont(font);
+			}
+
+			EDITOR_API virtual void SetUnderline(bool underline) noexcept override {
+				QFont font = labelWidget->font();
+				font.setUnderline(underline);
+				labelWidget->setFont(font);
+			}
+
+			EDITOR_API virtual void SetColor(const uint32_t& color) noexcept override {
+				QPalette palette = labelWidget->palette();
+				QColor qcolor((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF);
+				palette.setColor(QPalette::WindowText, qcolor);
+				labelWidget->setPalette(palette);
 			}
 		protected:
 			QLabel* labelWidget;
@@ -223,6 +275,7 @@ export namespace cp {
 			QVBoxLayout* contentLayout;
 	};
 
+#pragma region Fields
 	template<typename T>
 	class QtNumericField : public INumericField<T> {
 		public:
@@ -499,7 +552,9 @@ export namespace cp {
 			QLineEdit* lineEdit = nullptr;
 			std::string* valuePtr = nullptr;
 	};
+#pragma endregion
 
+#pragma region Selectors
 	class QtFileSelector : public IFileSelector {
 		public:
 			EDITOR_API QtFileSelector(const std::string& label, std::string* valuePtr, const std::vector<std::string>& allowedExtensions)
@@ -643,5 +698,109 @@ export namespace cp {
 			}
 		protected:
 			MaterialInstanceDropPreviewWidget* widget = nullptr;
+	};
+#pragma endregion
+
+	class QtButton : public IButton {
+		public:
+			EDITOR_API QtButton(const std::string& text = "") {
+				buttonWidget = new QPushButton(QString::fromStdString(text));
+			}
+			EDITOR_API virtual ~QtButton() override {
+				delete buttonWidget;
+			}
+			EDITOR_API virtual void SetVisible(bool visible) noexcept override {
+				buttonWidget->setVisible(visible);
+			}
+			EDITOR_API virtual bool IsVisible() const noexcept override {
+				return buttonWidget->isVisible();
+			}
+			EDITOR_API virtual void SetEnabled(bool enabled) noexcept override {
+				buttonWidget->setEnabled(enabled);
+			}
+			EDITOR_API virtual bool IsEnabled() const noexcept override {
+				return buttonWidget->isEnabled();
+			}
+			EDITOR_API virtual void* NativeHandle() const noexcept override {
+				return static_cast<void*>(buttonWidget);
+			}
+			EDITOR_API virtual void SetText(const std::string& text) noexcept override {
+				buttonWidget->setText(QString::fromStdString(text));
+			}
+			EDITOR_API virtual std::string GetText() const noexcept override {
+				return buttonWidget->text().toStdString();
+			}
+			EDITOR_API virtual void SetOnClickListener(const std::function<void()>& listener) noexcept override {
+				QObject::connect(buttonWidget, &QPushButton::clicked, listener);
+			}
+			EDITOR_API virtual void SetTextColor(const uint32_t& color) noexcept override {
+				QString style = QString("QPushButton { color: #%1; }")
+					.arg(QString::number(color, 16).rightJustified(6, '0'));
+				buttonWidget->setStyleSheet(style);
+			}
+			EDITOR_API virtual void SetTextSize(uint32 size) noexcept override {
+				QFont font = buttonWidget->font();
+				font.setPointSize(size);
+				buttonWidget->setFont(font);
+			}
+			EDITOR_API virtual void SetSize(uint32 width, uint32 height) noexcept override {
+				buttonWidget->setFixedSize(width, height);
+			}
+		protected:
+			QPushButton* buttonWidget;
+	};
+
+	class QtFlatButton : public IFlatButton {
+		public:
+			EDITOR_API QtFlatButton(const std::string& text = "") {
+				buttonWidget = new QPushButton(QString::fromStdString(text));
+				buttonWidget->setCursor(Qt::PointingHandCursor);
+				buttonWidget->setFlat(true);
+				buttonWidget->setStyleSheet("QPushButton { border: none; background: transparent; color: #D0D3DC; font-weight: bold; padding: 4px 0; }"
+					"QPushButton:hover { color: #A66BFF; }");
+			}
+			EDITOR_API virtual ~QtFlatButton() override {
+				delete buttonWidget;
+			}
+			EDITOR_API virtual void SetVisible(bool visible) noexcept override {
+				buttonWidget->setVisible(visible);
+			}
+			EDITOR_API virtual bool IsVisible() const noexcept override {
+				return buttonWidget->isVisible();
+			}
+			EDITOR_API virtual void SetEnabled(bool enabled) noexcept override {
+				buttonWidget->setEnabled(enabled);
+			}
+			EDITOR_API virtual bool IsEnabled() const noexcept override {
+				return buttonWidget->isEnabled();
+			}
+			EDITOR_API virtual void* NativeHandle() const noexcept override {
+				return static_cast<void*>(buttonWidget);
+			}
+			EDITOR_API virtual void SetText(const std::string& text) noexcept override {
+				buttonWidget->setText(QString::fromStdString(text));
+			}
+			EDITOR_API virtual std::string GetText() const noexcept override {
+				return buttonWidget->text().toStdString();
+			}
+			EDITOR_API virtual void SetOnClickListener(const std::function<void()>& listener) noexcept override {
+				QObject::connect(buttonWidget, &QPushButton::clicked, listener);
+			}
+			EDITOR_API virtual void SetTextColor(const uint32_t& color) noexcept override {
+				QString style = QString("QPushButton { color: #%1; }")
+					.arg(QString::number(color, 16).rightJustified(6, '0'));
+				buttonWidget->setStyleSheet(buttonWidget->styleSheet() + style);
+			}
+			EDITOR_API virtual void SetTextSize(uint32 size) noexcept override {
+				QFont font = buttonWidget->font();
+				font.setPointSize(size);
+				buttonWidget->setFont(font);
+			}
+			EDITOR_API virtual void SetSize(uint32 width, uint32 height) noexcept override {
+				buttonWidget->setFixedSize(width, height);
+			}
+			
+		protected:
+			QPushButton* buttonWidget;
 	};
 }

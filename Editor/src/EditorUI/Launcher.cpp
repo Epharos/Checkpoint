@@ -5,42 +5,37 @@ cp::Launcher::Launcher()
 	cp::QtEditorUIFactory* factory = new cp::QtEditorUIFactory();
 
 	window = factory->CreateWindow();
+	window->SetMinSize(800, 600);
+	window->SetSize(800, 600);
+	window->SetTitle("Checkpoint Launcher");
 	window->Show();
 
-	auto globalContainer = factory->CreateContainer();
-	globalContainer->SetVertical();
+	auto globalContainer = factory->CreateContainer(cp::ContainerOrientation::Vertical);
+	auto topContainer = factory->CreateContainer(cp::ContainerOrientation::Horizontal);
+	globalContainer->SetMargins(8, 8, 8, 8);
+	globalContainer->SetSpacing(12);
 
-	auto columnContainer = factory->CreateContainer();
-	columnContainer->SetHorizontal();
+	auto recentProjectLabel = factory->CreateLabel("Projects");
+	recentProjectLabel->SetBold(true);
+	recentProjectLabel->SetTextSize(18);
+	topContainer->AddChild(recentProjectLabel.release());
 
-	auto recentProjectLabel = factory->CreateLabel("Recent Projects");
-	globalContainer->AddChild(recentProjectLabel.release());
+	auto addProjectButton = factory->CreateFlatButton("+ Add Project");
+	addProjectButton->SetTextSize(11);
+	addProjectButton->SetSize(120, 24);
+	topContainer->AddChild(addProjectButton.release());
 
-	//auto projectOverview = new IProjectOverview(factory);
 	auto projectList = factory->CreateProjectList();
-
-	//auto OnProjectFocused = [projectOverview](const std::string& _path) -> void {
-	//	cp::Project proj = cp::CheckpointEditor::LoadProjectData(_path);
-	//	projectOverview->SetProject(proj);
-	//};
 
 	auto OnProjectOpened = [this](const std::string& _path) -> void {
 		cp::CheckpointEditor::LoadProject(_path);
 		window->Close();
 	};
 
-	//projectList->AddProjectFocusedListener(OnProjectFocused);
 	projectList->AddProjectOpenedListener(OnProjectOpened);
 
-	columnContainer->AddChild(projectList.release());
-
-	//auto overviewContainer = factory->CreateContainer();
-	//overviewContainer->SetVertical();
-	//overviewContainer->AddChild(projectOverview);
-
-	//columnContainer->AddChild(overviewContainer.release());
-
-	globalContainer->AddChild(columnContainer.release());
+	globalContainer->AddChild(topContainer.release());
+	globalContainer->AddChild(projectList.release());
 	window->SetContainer(globalContainer.release());
 
 	delete factory;
