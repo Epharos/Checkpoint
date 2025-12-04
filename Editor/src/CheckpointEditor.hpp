@@ -161,6 +161,7 @@ namespace cp {
 		}
 
 		static Project LoadProjectData(const std::string& projectPath) {
+			LOG_DEBUG(projectPath);
 			std::ifstream file(projectPath + "/project.data");
 
 			if (!file.is_open()) {

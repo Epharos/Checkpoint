@@ -82,6 +82,16 @@ void cp::ProjectList::AddProject(const size_t _index, const cp::Project& _projec
 	model->setItem(_index, 2, versionItem);
 }
 
+void cp::ProjectList::AddProjectFocusedListener(std::function<void(const std::string&)> callback)
+{
+	connect(this, &ProjectList::ProjectFocused, [=](const std::string& _projectPath) { callback(_projectPath); });
+}
+
+void cp::ProjectList::AddProjectOpenedListener(std::function<void(const std::string&)> callback)
+{
+	connect(this, &ProjectList::ProjectOpened, [=](const std::string& _projectPath) { callback(_projectPath); });
+}
+
 void cp::ProjectList::SelectProject(const QModelIndex& index)
 {
 	QModelIndex sourceIndex = proxyModel->mapToSource(index);

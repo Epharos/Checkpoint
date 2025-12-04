@@ -19,12 +19,53 @@ namespace cp
 
 		std::unique_ptr<ILabel> projectVersionLabel;
 
+		std::unique_ptr<ILabel> titleLabel;
 		std::unique_ptr<ILabel> noSelectLabel;
 
 		std::unique_ptr<IContainer> mainContainer;
 
 	public:
-		virtual void SetProject(const cp::Project& project) = 0;
+		IProjectOverview(IEditorUIFactory* factory)
+		{
+			mainContainer = factory->CreateContainer();
+			titleLabel = factory->CreateLabel("Project Overview");
+			noSelectLabel = factory->CreateLabel("No project selected.");
+
+			projectNameLabel = factory->CreateLabel();
+			projectNameLabel->SetVisible(false);
+			projectPathLabel = factory->CreateLabel();
+			projectPathLabel->SetVisible(false);
+			projectCreatedLabel = factory->CreateLabel();
+			projectCreatedLabel->SetVisible(false);
+			projectLastOpenedLabel = factory->CreateLabel();
+			projectLastOpenedLabel->SetVisible(false);
+			projectVersionLabel = factory->CreateLabel();
+			projectVersionLabel->SetVisible(false);
+
+			mainContainer->AddChild(titleLabel.get());
+			mainContainer->AddChild(noSelectLabel.get());
+			mainContainer->AddChild(projectNameLabel.get());
+			mainContainer->AddChild(projectPathLabel.get());
+			mainContainer->AddChild(projectCreatedLabel.get());
+			mainContainer->AddChild(projectLastOpenedLabel.get());
+			mainContainer->AddChild(projectVersionLabel.get());
+		}
+
+		void SetProject(const cp::Project& project)
+		{
+			projectNameLabel->SetText(project.name);
+			projectPathLabel->SetText(project.path);
+			projectCreatedLabel->SetText("Created: " + project.FormatCreationDate());
+			projectLastOpenedLabel->SetText("Last Opened: " + project.FormatLastOpened());
+			projectVersionLabel->SetText("Version: " + project.engineVersion.ToString());
+
+			noSelectLabel->SetVisible(false);
+			projectNameLabel->SetVisible(true);
+			projectPathLabel->SetVisible(true);
+			projectCreatedLabel->SetVisible(true);
+			projectLastOpenedLabel->SetVisible(true);
+			projectVersionLabel->SetVisible(true);
+		}
 
 		void SetVisible(bool visible) noexcept 
 		{
@@ -46,7 +87,10 @@ namespace cp
 			return mainContainer->IsEnabled();
 		}
 
-		void* NativeHandle() const noexcept = 0;
+		void* NativeHandle() const noexcept override
+		{
+			return mainContainer->NativeHandle();
+		}
 	};
 
 	class Launcher

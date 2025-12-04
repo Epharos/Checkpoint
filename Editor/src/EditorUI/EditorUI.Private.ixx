@@ -1,6 +1,7 @@
 module;
 
 #include <iostream>
+#include <functional>
 #include "../macros.hpp"
 #include "../ECSWrapper.hpp"
 #include "QtWidgets/SceneHierarchy.hpp"
@@ -171,6 +172,8 @@ export namespace cp {
 	class IProjectList : public IWidget {
 		public:
 			virtual void PopulateProjectList(const std::vector<cp::Project>& _projects) = 0;
+			virtual void AddProjectFocusedListener(std::function<void(const std::string&)> _method) = 0;
+			virtual void AddProjectOpenedListener(std::function<void(const std::string&)> _callback) = 0;
 	};
 
 	class QtProjectList : public IProjectList {
@@ -194,8 +197,14 @@ export namespace cp {
 			virtual void* NativeHandle() const noexcept {
 				return static_cast<void*>(projectList);
 			}
-			virtual void PopulateProjectList(const std::vector<cp::Project>& _projects) {
+			virtual void PopulateProjectList(const std::vector<cp::Project>& _projects) override {
 				projectList->PopulateProjectList(_projects);
+			}
+			virtual void AddProjectFocusedListener(std::function<void(const std::string&)> _method) override {
+				projectList->AddProjectFocusedListener(_method);
+			}
+			virtual void AddProjectOpenedListener(std::function<void(const std::string&)> _callback) override {
+				projectList->AddProjectOpenedListener(_callback);
 			}
 		protected:
 			cp::ProjectList* projectList;

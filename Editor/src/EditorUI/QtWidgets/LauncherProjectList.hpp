@@ -9,6 +9,7 @@
 #include <QHeaderView>
 #include <QRegularExpression>
 #include <vector>
+#include <functional>
 
 namespace cp {
 	struct Project;
@@ -68,6 +69,9 @@ namespace cp {
 		ProjectList(QWidget* _parent = nullptr);
 		void PopulateProjectList(const std::vector<cp::Project>& _projects);
 		void AddProject(const size_t _index, const cp::Project& _project);
+
+		void AddProjectFocusedListener(std::function<void(const std::string&)> _callback);
+		void AddProjectOpenedListener(std::function<void(const std::string&)> _callback);
 
 	signals:
 		void ProjectFocused(const std::string& _projectPath);

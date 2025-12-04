@@ -53,6 +53,20 @@ export namespace cp {
 				mainWindow = new DropMainWindow();
 				mainWindow->setWindowTitle(QString::fromStdString("Checkpoint editor window"));
 				mainWindow->resize(480, 360);
+				mainWindow->setStyleSheet(R"(
+					QMainWindow { 
+						background: #1A1F2B; 
+						padding: 0; 
+						margin: 0; 
+						border: none; 
+					} 
+
+					QWidget { 
+						background: #1A1F2B; 
+						border: none; 
+						padding: 0; 
+						margin: 0; 
+					})");
 			}
 
 			EDITOR_API virtual ~QtWindow() {
