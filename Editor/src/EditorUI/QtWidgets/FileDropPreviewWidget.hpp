@@ -94,7 +94,7 @@ namespace cp {
 
         void mousePressEvent(QMouseEvent* event) override {
             if (event->button() == Qt::LeftButton) {
-                // Ouvre la popup de sélection
+                // Ouvre la popup de selection
                 QString selected = OpenFilePopup();
                 if (!selected.isEmpty()) {
                     SetFile(selected);

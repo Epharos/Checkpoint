@@ -58,30 +58,31 @@ void cp::ProjectList::PopulateProjectList(const std::vector<cp::Project>& projec
 	projectListWidget->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Fixed);
 	projectListWidget->verticalHeader()->setVisible(false);
 	projectListWidget->setShowGrid(false);
-	projectListWidget->setAlternatingRowColors(true);
 	projectListWidget->setStyleSheet(R"(
 		QTableView {
 			background-color: #1A1F2B;
-			border-radius: 2px;
 			outline: none;
 			padding: 8px 0px;
 			margin: 0px;
 		}
+
 		QTableView::item {
 			border: none;
 			outline: none;
 			background-color: transparent;
 			margin: 2px;
 		}
+
+		QTableView::item:selected {
+			background-color: transparent;
+			color: #FFFFFF;
+		}
+
 		QHeaderView::section {
 			background-color: #23283A;
 			color: #D0D3DC;
 			border: none;
 			padding: 4px 8px;
-		}
-		QTableView::item:selected {
-			background-color: #3E465A;
-			color: #FFFFFF;
 		}
 	)");
 

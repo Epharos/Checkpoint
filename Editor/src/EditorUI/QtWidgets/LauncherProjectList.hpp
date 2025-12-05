@@ -10,6 +10,7 @@
 #include <QRegularExpression>
 #include <QStyledItemDelegate>
 #include <QPainter>
+#include <QProxyStyle>
 #include <QMouseEvent>
 #include <vector>
 #include <functional>
@@ -27,6 +28,36 @@ namespace cp {
 		}
 	};
 
+
+	class NoFocusFrameStyle : public QProxyStyle
+	{
+	public:
+		using QProxyStyle::QProxyStyle;
+
+		void drawPrimitive(PrimitiveElement element,
+			const QStyleOption* option,
+			QPainter* painter,
+			const QWidget* widget = nullptr) const override
+		{
+			switch (element)
+			{
+			case PE_PanelItemViewRow:
+			case PE_PanelItemViewItem:
+				// NE RIEN PEINDRE → supprime fond bleu/gris
+				return;
+
+			case PE_FrameFocusRect:
+				// supprime le cadre de focus bleu
+				return;
+
+			default:
+				break;
+			}
+
+			QProxyStyle::drawPrimitive(element, option, painter, widget);
+		}
+	};
+
 	class ProjectListItemDelegate : public QStyledItemDelegate
 	{
 #ifndef BUILDING_PLUGIN_LOADER
@@ -37,19 +68,73 @@ namespace cp {
 
 		void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override
 		{
-			painter->save();
+			const QWidget* widget = option.widget;
+			const QAbstractItemView* view =
+				qobject_cast<const QAbstractItemView*>(widget);
+
 			bool isSelected = option.state & QStyle::State_Selected;
 			bool isHovered = option.state & QStyle::State_MouseOver;
-			QColor bgColor = QColor("#B987FF");
-			bgColor.setAlpha(isSelected ? 10 : 0);
-			QString text = index.data(Qt::DisplayRole).toString();
-			// Draw background
-			painter->fillRect(option.rect, bgColor);
-			// Draw text
-			QPen textPen(QColor("#D0D3DC"));
-			painter->setPen(textPen);
-			painter->drawText(option.rect.adjusted(8, 0, -8, 0), Qt::AlignVCenter | Qt::AlignLeft, text);
+
+			QStyleOptionViewItem opt(option);
+			opt.backgroundBrush = Qt::NoBrush;          // IMPORTANT !
+			opt.state &= ~QStyle::State_Selected;       // empêche background bleu
+			opt.state &= ~QStyle::State_MouseOver;      // empêche hover par cellule
+			opt.state &= ~QStyle::State_HasFocus;
+
+			opt.features &= ~QStyleOptionViewItem::HasDisplay;
+			opt.features &= ~QStyleOptionViewItem::Alternate;
+			opt.features &= ~QStyleOptionViewItem::HasCheckIndicator;
+			opt.features &= ~QStyleOptionViewItem::HasDecoration;
+
+			painter->save();
+
+			int radius = 6;
+
+			//----------------------------------------
+			// 1) DESSIN DE LA LIGNE COMPLETE (colonne 0)
+			//----------------------------------------
+			if (index.column() == 0 && view && isSelected)
+			{
+				QRect rowRect(0, option.rect.top(),
+					view->viewport()->width(),
+					option.rect.height());
+
+				painter->setRenderHint(QPainter::Antialiasing);
+				painter->setBrush(QColor(0, 0, 255));
+				painter->setPen(Qt::NoPen);
+
+				painter->drawRoundedRect(rowRect.adjusted(2, 1, -2, -1), radius, radius);
+			}
+
 			painter->restore();
+
+			//----------------------------------------
+			// 2) DESSIN NORMAL DU TEXTE DE CHAQUE CELL
+			//----------------------------------------
+			QStyledItemDelegate::paint(painter, opt, index);
+
+			//----------------------------------------
+			// 3) AJOUT DU SOUS-TEXTE (TOOLTIP) dans la 1�re colonne
+			//----------------------------------------
+			//if (index.column() == 0 && isSelected)
+			//{
+			//	QString tooltip = index.data(Qt::ToolTipRole).toString();
+			//	if (!tooltip.isEmpty())
+			//	{
+			//		painter->save();
+			//		painter->setPen(QColor(80, 80, 80));
+
+			//		QRect textRect = option.rect.adjusted(4, 18, -4, -2);
+
+			//		QFont small = option.font;
+			//		small.setPointSize(small.pointSize() - 2);
+			//		painter->setFont(small);
+
+			//		painter->drawText(textRect, Qt::AlignLeft | Qt::AlignTop, tooltip);
+
+			//		painter->restore();
+			//	}
+			//}
 		}
 	};
 
@@ -62,23 +147,8 @@ namespace cp {
 		public:
 			explicit ProjectListTreeWidget(QWidget* _parent = nullptr) : QTableView(_parent)
 			{
-				setStyleSheet(R"(
-					QTableView
-					{
-						background-color: #1A1F2B;
-						border-radius: 2px;
-						outline: none;
-						padding: 8px 0px;
-						margin: 0px;
-					}
-					QTableView::item
-					{
-						border: none;
-						outline: none;
-						background-color: transparent;
-					}
-				)");
 				setItemDelegate(new ProjectListItemDelegate(this));
+				setStyle(new NoFocusFrameStyle(style()));
 			}
 	};
 
