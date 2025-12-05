@@ -37,6 +37,17 @@ export namespace cp {
 			EDITOR_API virtual void SetSpacing(int spacing) noexcept = 0;
 			EDITOR_API virtual void SetMargins(int left, int top, int right, int bottom) noexcept = 0;
 
+			EDITOR_API virtual void SetFixedWidth(int width) noexcept = 0;
+			EDITOR_API virtual void SetFixedHeight(int height) noexcept = 0;
+			EDITOR_API virtual void SetFixedSize(int width, int height) noexcept = 0;
+
+			EDITOR_API virtual void SetMinimumWidth(int width) noexcept = 0;
+			EDITOR_API virtual void SetMinimumHeight(int height) noexcept = 0;
+			EDITOR_API virtual void SetMinimumSize(int width, int height) noexcept = 0;
+			EDITOR_API virtual void SetMaximumWidth(int width) noexcept = 0;
+			EDITOR_API virtual void SetMaximumHeight(int height) noexcept = 0;
+			EDITOR_API virtual void SetMaximumSize(int width, int height) noexcept = 0;
+
 			EDITOR_API virtual const std::vector<IWidget*>& GetChildren() const noexcept {
 				return children;
 			}
@@ -185,6 +196,66 @@ export namespace cp {
 				margins[1] = top;
 				margins[2] = right;
 				margins[3] = bottom;
+			}
+
+			EDITOR_API virtual void SetFixedWidth(int width) noexcept override
+			{
+				if (width < 0)
+				{
+					containerWidget->setSizePolicy(QSizePolicy::Expanding, containerWidget->sizePolicy().verticalPolicy());
+					return;
+				}
+
+				containerWidget->setFixedWidth(width);
+			}
+
+			EDITOR_API virtual void SetFixedHeight(int height) noexcept override
+			{
+				if (height < 0)
+				{
+					containerWidget->setSizePolicy(containerWidget->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
+					return;
+				}
+
+				containerWidget->setFixedHeight(height);
+			}
+
+			EDITOR_API virtual void SetFixedSize(int width, int height) noexcept override
+			{
+				SetFixedWidth(width);
+				SetFixedHeight(height);
+			}
+
+			EDITOR_API virtual void SetMinimumWidth(int width) noexcept override
+			{
+				containerWidget->setMinimumWidth(width);
+			}
+
+			EDITOR_API virtual void SetMinimumHeight(int height) noexcept override
+			{
+				containerWidget->setMinimumHeight(height);
+			}
+
+			EDITOR_API virtual void SetMinimumSize(int width, int height) noexcept override
+			{
+				SetMinimumWidth(width);
+				SetMinimumHeight(height);
+			}
+
+			EDITOR_API virtual void SetMaximumWidth(int width) noexcept override
+			{
+				containerWidget->setMaximumWidth(width);
+			}
+
+			EDITOR_API virtual void SetMaximumHeight(int height) noexcept override
+			{
+				containerWidget->setMaximumHeight(height);
+			}
+
+			EDITOR_API virtual void SetMaximumSize(int width, int height) noexcept override
+			{
+				SetMaximumWidth(width);
+				SetMaximumHeight(height);
 			}
 
 	protected:

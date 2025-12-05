@@ -54,10 +54,6 @@ cp::EditorWindow::EditorWindow(cp::Project _project)
 	dockInspector->SetContainer(containerInspector);
 
 	QObject::connect((cp::SceneHierarchy*)sceneHierarchy->NativeHandle(), &cp::SceneHierarchy::EntitySelected, [&](cp::EntityAsset* _entity) {
-		if (_entity) {
-			LOG_INFO(MF("Entity selected: ", _entity->name));
-		}
-
 		inspector->ShowEntity(_entity);
 		});
 

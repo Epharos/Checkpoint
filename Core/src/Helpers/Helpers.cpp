@@ -1051,3 +1051,56 @@ std::string Helper::Slang::SingleElementContainerTypeToString(slang::TypeReflect
 
 	return ss.str();
 }
+
+std::string Helper::Time::FormatTime(uint64_t _timeInSeconds, const std::string& _dateFormat)
+{
+	std::time_t lastOpenedTime = static_cast<std::time_t>(_timeInSeconds);
+	char buffer[100];
+	std::strftime(buffer, sizeof(buffer), _dateFormat.c_str(), std::localtime(&lastOpenedTime));
+	return std::string(buffer);
+}
+
+std::string Helper::Time::FormatTimeSince(uint64_t _firstTime, uint64_t _lastTime)
+{
+	uint64_t timeDiff = _lastTime - _firstTime;
+	uint64_t hours = timeDiff / 3600;
+	timeDiff %= 3600;
+	uint64_t minutes = timeDiff / 60;
+	timeDiff %= 60;
+	uint64_t seconds = timeDiff;
+	std::stringstream ss;
+
+	if(hours >= 168) return FormatTime(_firstTime);
+
+	if (hours >= 48)
+	{
+		int days = hours / 24;
+		ss << days << " days ago";
+		return ss.str();
+	}
+
+	if (hours >= 24)
+	{
+		ss << "Yesterday";
+		return ss.str();
+	}
+
+	if (hours > 0)
+	{
+		ss << hours << " hours ago";
+		return ss.str();
+	}
+
+	if (minutes > 0 && hours <= 0)
+	{
+		ss << minutes << " minutes ago";
+		return ss.str();
+	}
+
+	if (hours <= 0 && minutes <= 0)
+	{
+		ss << "Just now";
+	}
+
+	return ss.str();
+}

@@ -134,4 +134,10 @@ namespace Helper
 		std::string ResourceTypeToString(slang::TypeReflection* type, uint8_t deepness = 0);
 		std::string SingleElementContainerTypeToString(slang::TypeReflection* type, uint8_t deepness = 0);
 	}
+
+	namespace Time
+	{
+		std::string FormatTime(uint64_t _timeInSeconds, const std::string& _dateFormat = "%Y/%m/%d %H:%M");
+		std::string FormatTimeSince(uint64_t _firstTime, uint64_t _lastTime);
+	}
 }

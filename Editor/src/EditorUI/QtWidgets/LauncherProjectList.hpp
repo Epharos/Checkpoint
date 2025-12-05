@@ -1,19 +1,23 @@
 #pragma once
 
-#include <QWidget>
-#include <QTableView>
-#include <QSortFilterProxyModel>
-#include <QStandardItemModel>
-#include <QLineEdit>
-#include <QVBoxLayout>
-#include <QHeaderView>
-#include <QRegularExpression>
-#include <QStyledItemDelegate>
-#include <QPainter>
-#include <QProxyStyle>
-#include <QMouseEvent>
+#include "../../pch.hpp"
+
+#include "../../CheckpointEditor.hpp"
+
 #include <vector>
 #include <functional>
+
+#include <QSortFilterProxyModel>
+#include <QStyledItemDelegate>
+
+#ifdef USE_QT
+Q_DECLARE_METATYPE(cp::Project*)
+#endif
+
+class QAbstractListModel;
+class QListView;
+class QLineEdit;
+class QStandardItemModel;
 
 namespace cp {
 	struct Project;
@@ -21,41 +25,26 @@ namespace cp {
 	class FilterProxyModel : public QSortFilterProxyModel
 	{
 	protected:
-		bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override
-		{
-			QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
-			return sourceModel()->data(index).toString().contains(filterRegularExpression());
-		}
+		bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override;
 	};
 
-
-	class NoFocusFrameStyle : public QProxyStyle
+	class ProjectListModel : public QAbstractListModel
 	{
+#ifndef BUILDING_PLUGIN_LOADER
+		Q_OBJECT
+#endif
+
 	public:
-		using QProxyStyle::QProxyStyle;
+		explicit ProjectListModel(QObject* parent = nullptr);
 
-		void drawPrimitive(PrimitiveElement element,
-			const QStyleOption* option,
-			QPainter* painter,
-			const QWidget* widget = nullptr) const override
-		{
-			switch (element)
-			{
-			case PE_PanelItemViewRow:
-			case PE_PanelItemViewItem:
-				// NE RIEN PEINDRE → supprime fond bleu/gris
-				return;
+		int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+		QVariant data(const QModelIndex& index, int role) const override;
 
-			case PE_FrameFocusRect:
-				// supprime le cadre de focus bleu
-				return;
+		void setProjects(const std::vector<Project>& projects);
+		const Project& getProject(int row) const;
 
-			default:
-				break;
-			}
-
-			QProxyStyle::drawPrimitive(element, option, painter, widget);
-		}
+	private:
+		std::vector<Project> m_projects;
 	};
 
 	class ProjectListItemDelegate : public QStyledItemDelegate
@@ -66,92 +55,19 @@ namespace cp {
 	public:
 		explicit ProjectListItemDelegate(QObject* parent = nullptr) : QStyledItemDelegate(parent) {}
 
-		void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override
-		{
-			const QWidget* widget = option.widget;
-			const QAbstractItemView* view =
-				qobject_cast<const QAbstractItemView*>(widget);
+		void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
-			bool isSelected = option.state & QStyle::State_Selected;
-			bool isHovered = option.state & QStyle::State_MouseOver;
-
-			QStyleOptionViewItem opt(option);
-			opt.backgroundBrush = Qt::NoBrush;          // IMPORTANT !
-			opt.state &= ~QStyle::State_Selected;       // empêche background bleu
-			opt.state &= ~QStyle::State_MouseOver;      // empêche hover par cellule
-			opt.state &= ~QStyle::State_HasFocus;
-
-			opt.features &= ~QStyleOptionViewItem::HasDisplay;
-			opt.features &= ~QStyleOptionViewItem::Alternate;
-			opt.features &= ~QStyleOptionViewItem::HasCheckIndicator;
-			opt.features &= ~QStyleOptionViewItem::HasDecoration;
-
-			painter->save();
-
-			int radius = 6;
-
-			//----------------------------------------
-			// 1) DESSIN DE LA LIGNE COMPLETE (colonne 0)
-			//----------------------------------------
-			if (index.column() == 0 && view && isSelected)
-			{
-				QRect rowRect(0, option.rect.top(),
-					view->viewport()->width(),
-					option.rect.height());
-
-				painter->setRenderHint(QPainter::Antialiasing);
-				painter->setBrush(QColor(0, 0, 255));
-				painter->setPen(Qt::NoPen);
-
-				painter->drawRoundedRect(rowRect.adjusted(2, 1, -2, -1), radius, radius);
-			}
-
-			painter->restore();
-
-			//----------------------------------------
-			// 2) DESSIN NORMAL DU TEXTE DE CHAQUE CELL
-			//----------------------------------------
-			QStyledItemDelegate::paint(painter, opt, index);
-
-			//----------------------------------------
-			// 3) AJOUT DU SOUS-TEXTE (TOOLTIP) dans la 1�re colonne
-			//----------------------------------------
-			//if (index.column() == 0 && isSelected)
-			//{
-			//	QString tooltip = index.data(Qt::ToolTipRole).toString();
-			//	if (!tooltip.isEmpty())
-			//	{
-			//		painter->save();
-			//		painter->setPen(QColor(80, 80, 80));
-
-			//		QRect textRect = option.rect.adjusted(4, 18, -4, -2);
-
-			//		QFont small = option.font;
-			//		small.setPointSize(small.pointSize() - 2);
-			//		painter->setFont(small);
-
-			//		painter->drawText(textRect, Qt::AlignLeft | Qt::AlignTop, tooltip);
-
-			//		painter->restore();
-			//	}
-			//}
-		}
+		QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 	};
 
-
-	class ProjectListTreeWidget : public QTableView
+	class ProjectListTreeWidget : public QListView
 	{
 #ifndef BUILDING_PLUGIN_LOADER
 		Q_OBJECT
 #endif
 		public:
-			explicit ProjectListTreeWidget(QWidget* _parent = nullptr) : QTableView(_parent)
-			{
-				setItemDelegate(new ProjectListItemDelegate(this));
-				setStyle(new NoFocusFrameStyle(style()));
-			}
+			explicit ProjectListTreeWidget(QWidget* _parent = nullptr);
 	};
-
 
 	class ProjectList : public QWidget
 	{
@@ -159,8 +75,8 @@ namespace cp {
 		Q_OBJECT
 #endif
 	protected:
-		ProjectListTreeWidget* projectListWidget;
-		QStandardItemModel* model;
+		ProjectListTreeWidget* projectListView;
+		ProjectListModel* projectModel;
 		FilterProxyModel* proxyModel;
 
 		QLineEdit* searchBox;
@@ -168,7 +84,7 @@ namespace cp {
 	public:
 		ProjectList(QWidget* _parent = nullptr);
 		void PopulateProjectList(const std::vector<cp::Project>& _projects);
-		void AddProject(const size_t _index, const cp::Project& _project);
+		void AddProject(const cp::Project& _project);
 
 		void AddProjectFocusedListener(std::function<void(const std::string&)> _callback);
 		void AddProjectOpenedListener(std::function<void(const std::string&)> _callback);

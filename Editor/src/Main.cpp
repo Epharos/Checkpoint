@@ -122,7 +122,7 @@ int main(int argc, char* args[])
 	cp::ResourceManager::Get()->RegisterResourceType<cp::MaterialInstance>();
 
 	cp::Launcher launcher;
-	cp::EditorWindow editorWindow{ cp::CheckpointEditor::CurrentProject };
+	//cp::EditorWindow editorWindow{ cp::CheckpointEditor::CurrentProject };
 
 	//auto win = factory.CreateWindow();
 	//win->Show();

@@ -1,13 +1,146 @@
+#include "pch.hpp"
+
 #include "LauncherProjectList.hpp"
 
-#include "CheckpointEditor.hpp"
 #include "EditorUI/QtWidgets/Helper.hpp"
+
+#include <QWidget>
+#include <QTableView>
+#include <QSortFilterProxyModel>
+#include <QStandardItemModel>
+#include <QLineEdit>
+#include <QVBoxLayout>
+#include <QHeaderView>
+#include <QRegularExpression>
+#include <QStyledItemDelegate>
+#include <QPainter>
+#include <QProxyStyle>
+#include <QMouseEvent>
+#include <QItemSelectionModel>
+#include <QVariant>
+
+bool cp::FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const
+{
+	QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
+	return sourceModel()->data(index).toString().contains(filterRegularExpression());
+}
+
+cp::ProjectListModel::ProjectListModel(QObject* parent)
+	: QAbstractListModel(parent)
+{
+}
+
+int cp::ProjectListModel::rowCount(const QModelIndex&) const
+{
+	return static_cast<int>(m_projects.size());
+}
+
+QVariant cp::ProjectListModel::data(const QModelIndex& index, int role) const
+{
+	if (!index.isValid() || index.row() >= m_projects.size())
+		return {};
+
+	const auto& project = m_projects[index.row()];
+
+	switch (role)
+	{
+	case Qt::DisplayRole:
+		return QString::fromStdString(project.name);
+
+	case Qt::ToolTipRole:
+		return QString::fromStdString(project.path);
+
+	case Qt::UserRole:
+		return QVariant::fromValue(&project);
+	}
+	return {};
+}
+
+void cp::ProjectListModel::setProjects(const std::vector<Project>& projects)
+{
+	beginResetModel();
+	m_projects = projects;
+	endResetModel();
+}
+
+const cp::Project& cp::ProjectListModel::getProject(int row) const
+{
+	return m_projects[row];
+}
+
+void cp::ProjectListItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+	bool isSelected = option.state & QStyle::State_Selected;
+	bool isHovered = option.state & QStyle::State_MouseOver;
+
+	QVariant projectVariant = index.data(Qt::UserRole);
+	const cp::Project* project = projectVariant.value<const cp::Project*>();
+
+	painter->save();
+
+	QRect r = option.rect;
+	painter->fillRect(r, QColor("#1A1F2B"));
+
+	QRect borderLeftRect = r.adjusted(0, 0, 3 - r.width(), 0);
+	painter->fillRect(borderLeftRect, isSelected ? QColor("#A66BFF") : QColor("#333"));
+
+	QRect versionRect = r.adjusted(r.width() - 95, r.height() / 2 - 7, -25, -r.height() / 2 + 7);
+	painter->setPen(QColor("#D0D3DC"));
+	QFont versionFont = option.font;
+	versionFont.setPointSize(10);
+	painter->setFont(versionFont);
+	painter->drawText(versionRect, QString::fromStdString(project->engineVersion.ToString()));
+
+	QRect modifiedRect = r.adjusted(r.width() - 220, r.height() / 2 - 7, -105, -r.height() / 2 + 7);
+	painter->setPen(QColor("#D0D3DC"));
+	QFont modifiedFont = option.font;
+	modifiedFont.setPointSize(10);
+	painter->setFont(modifiedFont);
+	std::string modifiedText = Helper::Time::FormatTimeSince(project->lastOpened, static_cast<uint64_t>(std::time(nullptr)));
+	painter->drawText(modifiedRect, QString::fromStdString(modifiedText));
+
+	QString title = QString::fromStdString(project->name);
+	painter->setPen(isSelected ? QColor("#A66BFF") : Qt::white);
+	QFont titleFont = option.font;
+	titleFont.setPointSize(16);
+	titleFont.setBold(true);
+	painter->setFont(titleFont);
+
+	if(isSelected || isHovered)
+		painter->drawText(r.adjusted(20, 8, -200, -r.height() + 30), title);
+	else
+		painter->drawText(r.adjusted(20, r.height() / 2 - 12, -200, -r.height() / 2 + 12), title);
+
+	if(isSelected || isHovered)
+	{
+		QString path = QString::fromStdString(project->path);
+		painter->setPen(QColor("#A66BFF").darker(180));
+		QFont pathFont = option.font;
+		pathFont.setPointSize(10);
+		painter->setFont(pathFont);
+		painter->drawText(r.adjusted(20, r.height() / 2 + 5, -100, -5), path);
+	}
+
+	painter->restore();
+}
+
+QSize cp::ProjectListItemDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+	return QSize(option.rect.width(), 60);
+}
+
+cp::ProjectListTreeWidget::ProjectListTreeWidget(QWidget* parent) : QListView(parent)
+{
+	setItemDelegate(new ProjectListItemDelegate(this));
+}
 
 cp::ProjectList::ProjectList(QWidget* parent) : QWidget(parent)
 {
-	projectListWidget = new ProjectListTreeWidget(this);
-	model = new QStandardItemModel(0, 4, this);
+	projectListView = new ProjectListTreeWidget(this);
+	projectModel = new ProjectListModel(this);
 	proxyModel = new cp::FilterProxyModel();
+	proxyModel->setSourceModel(projectModel);
+	proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
 
 	searchBox = new QLineEdit(this);
 	searchBox->setPlaceholderText("Search Projects...");
@@ -25,89 +158,49 @@ cp::ProjectList::ProjectList(QWidget* parent) : QWidget(parent)
 	QAction* searchAction = new QAction(QIcon(searchIcon), "", searchBox);
 	searchBox->addAction(searchAction, QLineEdit::LeadingPosition);
 
+	projectListView->setModel(proxyModel);
+	projectListView->setSelectionMode(QAbstractItemView::SingleSelection);
+	projectListView->setViewMode(QListView::ListMode);
+	projectListView->setUniformItemSizes(false);
+	projectListView->setSpacing(8);
+	projectListView->setStyleSheet(R"(
+		QListView {
+			background-color: #3E465A;
+			outline: none;
+			padding: 8px 0px;
+		}
+
+		QListView::item {
+			background-color: transparent;
+			border-left: 2px solid #333;
+			margin: 2px;
+		}
+
+		QListView::item:selected {
+			background-color: transparent;
+			border-left: 2px solid #5A96FF;
+			color: white;
+		}
+	)");
+
 	QVBoxLayout* layout = new QVBoxLayout(this);
 	layout->addWidget(searchBox);
-	layout->addWidget(projectListWidget);
+	layout->addWidget(projectListView);
 	layout->setContentsMargins(0, 0, 0, 0);
 
 	setLayout(layout);
 
 	connect(searchBox, &QLineEdit::textChanged, this, [this](const QString& text) {
 		proxyModel->setFilterRegularExpression(QRegularExpression(text, QRegularExpression::CaseInsensitiveOption));
-		});
+	});
 
-	connect(projectListWidget, &QTableView::clicked, this, &cp::ProjectList::SelectProject);
-	connect(projectListWidget, &QTableView::doubleClicked, this, &cp::ProjectList::OpenProject);
+	connect(projectListView, &QListView::clicked, this, &cp::ProjectList::SelectProject);
+	connect(projectListView, &QListView::doubleClicked, this, &cp::ProjectList::OpenProject);
 }
 
 void cp::ProjectList::PopulateProjectList(const std::vector<cp::Project>& projects)
 {
-	if (model) delete model;
-	if (proxyModel) delete proxyModel;
-
-	model = new QStandardItemModel(projects.size(), 3, this);
-	proxyModel = new cp::FilterProxyModel();
-
-	model->setHorizontalHeaderLabels({ "Name", "Modified", "Version" });
-	proxyModel->setSourceModel(model);
-	projectListWidget->setModel(proxyModel);
-
-	projectListWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-	projectListWidget->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-	projectListWidget->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Fixed);
-	projectListWidget->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Fixed);
-	projectListWidget->verticalHeader()->setVisible(false);
-	projectListWidget->setShowGrid(false);
-	projectListWidget->setStyleSheet(R"(
-		QTableView {
-			background-color: #1A1F2B;
-			outline: none;
-			padding: 8px 0px;
-			margin: 0px;
-		}
-
-		QTableView::item {
-			border: none;
-			outline: none;
-			background-color: transparent;
-			margin: 2px;
-		}
-
-		QTableView::item:selected {
-			background-color: transparent;
-			color: #FFFFFF;
-		}
-
-		QHeaderView::section {
-			background-color: #23283A;
-			color: #D0D3DC;
-			border: none;
-			padding: 4px 8px;
-		}
-	)");
-
-	projectListWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
-	projectListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
-	projectListWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-
-	projectListWidget->setColumnWidth(1, 140);
-	projectListWidget->setColumnWidth(2, 105);
-
-	for (size_t i = 0; i < projects.size(); i++)
-	{
-		AddProject(i, projects[i]);
-	}
-}
-
-void cp::ProjectList::AddProject(const size_t _index, const cp::Project& _project)
-{
-	QStandardItem* item = new QStandardItem(QString::fromStdString(_project.name));
-	item->setToolTip(QString::fromStdString(_project.path));
-	model->setItem(_index, 0, item);
-	QStandardItem* lastOpenedItem = new QStandardItem(QString::fromStdString(_project.FormatLastOpened()));
-	model->setItem(_index, 1, lastOpenedItem);
-	QStandardItem* versionItem = new QStandardItem(QString::fromStdString(_project.engineVersion.ToString()));
-	model->setItem(_index, 2, versionItem);
+	projectModel->setProjects(projects);
 }
 
 void cp::ProjectList::AddProjectFocusedListener(std::function<void(const std::string&)> callback)
@@ -122,24 +215,16 @@ void cp::ProjectList::AddProjectOpenedListener(std::function<void(const std::str
 
 void cp::ProjectList::SelectProject(const QModelIndex& index)
 {
-	QModelIndex sourceIndex = proxyModel->mapToSource(index);
-	QStandardItem* item = model->item(sourceIndex.row(), 0);
+	QModelIndex source = proxyModel->mapToSource(index);
+	const auto& project = projectModel->getProject(source.row());
 
-	if (item)
-	{
-		QString projectPath = item->toolTip();
-		emit ProjectFocused(projectPath.toStdString());
-	}
+	emit ProjectFocused(project.path);
 }
 
 void cp::ProjectList::OpenProject(const QModelIndex& index)
 {
-	QModelIndex sourceIndex = proxyModel->mapToSource(index);
-	QStandardItem* item = model->item(sourceIndex.row(), 0);
+	QModelIndex source = proxyModel->mapToSource(index);
+	const auto& project = projectModel->getProject(source.row());
 
-	if (item)
-	{
-		QString projectPath = item->toolTip();
-		emit ProjectOpened(projectPath.toStdString());
-	}
+	emit ProjectOpened(project.path);
 }
