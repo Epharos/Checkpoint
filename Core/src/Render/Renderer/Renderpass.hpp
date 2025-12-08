@@ -51,7 +51,7 @@ namespace cp
 		inline const std::string& GetName() const { return name; }
 		inline const std::optional<cp::PipelineData*>& GetDefaultPipeline() const { return defaultPipeline; }
 
-		inline constexpr bool IsDepthOnly() { return depthOnly; }
+		inline constexpr bool IsDepthOnly() const { return depthOnly; }
 
 		bool operator==(const RenderpassDescription& other) const;
 	};

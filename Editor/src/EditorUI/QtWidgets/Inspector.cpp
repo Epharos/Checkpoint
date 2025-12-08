@@ -156,6 +156,12 @@ void cp::Inspector::ShowMaterial(const std::string& _path) {
 
 #pragma endregion
 
+	line = new QFrame(this);
+	line->setFrameShape(QFrame::HLine);
+	line->setFrameShadow(QFrame::Sunken);
+	line->setStyleSheet("background-color: #3E465A; margin-top: 4px; margin-bottom: 4px; min-height: 1px; max-height: 1px;");
+	matLayout->addWidget(line);
+
 #pragma region Renderpasses
 
 	{
@@ -192,23 +198,75 @@ void cp::Inspector::ShowMaterial(const std::string& _path) {
 		{
 			auto rpReq = mat->GetRenderPassRequirement(rpName);
 
-			auto renderActive = factory.CreateCheckBox(rpName);
+			auto renderActive = factory.CreateCheckBox(rpName).release();
 			renderActive->SetChecked(rpReq.renderToPass);
 
-			auto useDefaultShader = factory.CreateCheckBox("Use default shader");
+			auto useDefaultShader = factory.CreateCheckBox("Use default shader").release();
 			useDefaultShader->SetChecked(rpReq.useDefaultShader);
 			useDefaultShader->SetVisible(renderActive->IsChecked() && rpDesc.GetDefaultPipeline().has_value());
 
-			auto orLabel = factory.CreateLabel("or");
-			orLabel->SetVisible(renderActive->IsChecked() && !useDefaultShader->IsChecked());
+			auto orLabel = factory.CreateLabel("or").release();
+			orLabel->SetVisible(renderActive->IsChecked() && (!useDefaultShader->IsChecked() && rpDesc.GetDefaultPipeline().has_value()));
 
-			auto customShaderPath = factory.CreateTextBox(rpReq.customShaderPath);
+			auto customShaderPath = factory.CreateTextBox(rpReq.customShaderPath).release();
 			customShaderPath->SetVisible(renderActive->IsChecked() && (!useDefaultShader->IsChecked() || !rpDesc.GetDefaultPipeline().has_value()));
 
-			container->AddChild(renderActive.release());
-			container->AddChild(useDefaultShader.release());
-			container->AddChild(orLabel.release());
-			container->AddChild(customShaderPath.release());
+			auto entryPointCollapsible = factory.CreateCollapsible().release();
+			entryPointCollapsible->SetTitle("Entry Points");
+			auto entryPointsContainer = factory.CreateContainer().release();
+
+			if (auto ep = CreateEntryPointOverrideCombobox(*mat, cp::ShaderStages::Vertex, "Vertex_Default", rpName))
+			{
+				entryPointsContainer->AddChild(ep);
+			}
+
+			if(!rpDesc.IsDepthOnly())
+			{
+				if (auto ep = CreateEntryPointOverrideCombobox(*mat, cp::ShaderStages::Fragment, "Fragment_Default", rpName))
+				{
+					entryPointsContainer->AddChild(ep);
+				}
+			}
+
+			if(auto ep = CreateEntryPointOverrideCombobox(*mat, cp::ShaderStages::Geometry, "Geometry_Default", rpName))
+			{
+				entryPointsContainer->AddChild(ep);
+			}
+
+			if (auto ep = CreateEntryPointOverrideCombobox(*mat, cp::ShaderStages::TessellationControl, "TessellationControl_Default", rpName))
+			{
+				entryPointsContainer->AddChild(ep);
+			}
+
+			if (auto ep = CreateEntryPointOverrideCombobox(*mat, cp::ShaderStages::TessellationEvaluation, "TessellationEvaluation_Default", rpName))
+			{
+				entryPointsContainer->AddChild(ep);
+			}
+
+			if (auto ep = CreateEntryPointOverrideCombobox(*mat, cp::ShaderStages::Mesh, "Mesh_Default", rpName))
+			{
+				entryPointsContainer->AddChild(ep);
+			}
+
+			entryPointCollapsible->SetContent(entryPointsContainer);
+			entryPointCollapsible->SetVisible(renderActive->IsChecked() && (!useDefaultShader->IsChecked() || !rpDesc.GetDefaultPipeline().has_value()));
+			
+
+			renderActive->SetOnCheckedChangedListener([=](bool checked) {
+				useDefaultShader->SetVisible(checked && rpDesc.GetDefaultPipeline().has_value());
+				orLabel->SetVisible(checked && (!useDefaultShader->IsChecked() && rpDesc.GetDefaultPipeline().has_value()));
+				customShaderPath->SetVisible(checked && (!useDefaultShader->IsChecked() || !rpDesc.GetDefaultPipeline().has_value()));
+				entryPointCollapsible->SetVisible(checked && (!useDefaultShader->IsChecked() || !rpDesc.GetDefaultPipeline().has_value()));
+			});
+
+			container->AddChild(renderActive);
+			container->AddChild(useDefaultShader);
+			container->AddChild(orLabel);
+			container->AddChild(customShaderPath);
+			container->AddChild(entryPointCollapsible);
+
+			auto separator = factory.CreateHorizontalSeparator().release();
+			container->AddChild(separator);
 		}
 
 		collapsible->SetContent(container);

@@ -37,6 +37,8 @@ export namespace cp {
 			EDITOR_API virtual std::unique_ptr<ITextBox> CreateTextBox(const std::string& text = "") noexcept = 0;
 			EDITOR_API virtual std::unique_ptr<ICollapsible> CreateCollapsible() noexcept = 0;
 
+			EDITOR_API virtual std::unique_ptr<IHorizontalSeparator> CreateHorizontalSeparator() noexcept = 0;
+
 			EDITOR_API virtual std::unique_ptr<INumericField<int>> CreateIntField(int* value) noexcept = 0;
 			EDITOR_API virtual std::unique_ptr<INumericField<float>> CreateFloatField(float* value) noexcept = 0;
 			EDITOR_API virtual std::unique_ptr<IVectorField<float, 2>> CreateFloat2Field(void* data, const std::string& labelName) noexcept = 0;
@@ -139,6 +141,10 @@ export namespace cp {
 
 			EDITOR_API virtual std::unique_ptr<ICollapsible> CreateCollapsible() noexcept override {
 				return std::make_unique<cp::QtCollapsible>();
+			}
+
+			EDITOR_API virtual std::unique_ptr<IHorizontalSeparator> CreateHorizontalSeparator() noexcept override {
+				return std::make_unique<cp::QtHorizontalSeparator>();
 			}
 
 			EDITOR_API virtual std::unique_ptr<INumericField<int>> CreateIntField(int* value) noexcept override {

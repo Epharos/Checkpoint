@@ -16,6 +16,8 @@ module;
 #include <QComboBox>
 #include <QCheckBox>
 
+#include "QtWidgets/PrimitiveFields.hpp"
+
 #include "../CheckpointEditor.hpp"
 
 export module EditorUI:Primitive;
@@ -140,6 +142,9 @@ export namespace cp {
 			EDITOR_API virtual bool IsReadOnly() const noexcept = 0;
 			EDITOR_API virtual void SetOnTextChangedListener(const std::function<void(const std::string&)>& listener) noexcept = 0;
 	};
+
+	class IHorizontalSeparator : public IWidget {
+	};
 }
 
 // -- QT -- //
@@ -238,6 +243,7 @@ export namespace cp {
 				contentArea = new QFrame(collapsibleWidget);
 				contentArea->setFrameShape(QFrame::NoFrame);
 				contentArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+				contentArea->setStyleSheet("padding: 1px 3px;");
 
 				contentLayout = new QVBoxLayout(contentArea);
 				contentLayout->setContentsMargins(8, 4, 8, 4);
@@ -843,7 +849,7 @@ export namespace cp {
 	class QtComboBox : public IComboBox {
 		public:
 			EDITOR_API QtComboBox() {
-				comboBoxWidget = new QComboBox();
+				comboBoxWidget = new cp::ModernComboBoxWidget();
 			}
 			EDITOR_API virtual ~QtComboBox() override {
 				delete comboBoxWidget;
@@ -864,55 +870,43 @@ export namespace cp {
 				return static_cast<void*>(comboBoxWidget);
 			}
 			EDITOR_API virtual void SetItems(const std::vector<std::string>& items) noexcept override {
-				comboBoxWidget->clear();
-				for (const auto& item : items) {
-					comboBoxWidget->addItem(QString::fromStdString(item));
-				}
+				comboBoxWidget->SetItems(items);
 			}
 			EDITOR_API virtual void AddItem(const std::string& item) noexcept override {
-				comboBoxWidget->addItem(QString::fromStdString(item));
+				comboBoxWidget->AddItem(item);
 			}
 			EDITOR_API virtual std::vector<std::string> GetItems() const noexcept override {
-				std::vector<std::string> items;
-				for (int i = 0; i < comboBoxWidget->count(); ++i) {
-					items.push_back(comboBoxWidget->itemText(i).toStdString());
-				}
-				return items;
+				return comboBoxWidget->GetItems();
 			}
 			EDITOR_API virtual void SetSelectedIndex(int index) noexcept override {
-				comboBoxWidget->setCurrentIndex(index);
+				comboBoxWidget->SetSelectedIndex(index);
 			}
 			EDITOR_API virtual void SetSelectedItem(const std::string& item) noexcept override {
-				int index = comboBoxWidget->findText(QString::fromStdString(item));
-				if (index != -1) {
-					comboBoxWidget->setCurrentIndex(index);
-				}
+				return comboBoxWidget->SetSelectedItem(item);
 			}
 			EDITOR_API virtual int GetSelectedIndex() const noexcept override {
-				return comboBoxWidget->currentIndex();
+				return comboBoxWidget->GetSelectedIndex();
 			}
 			EDITOR_API virtual std::string GetSelectedItem() const noexcept override {
-				return comboBoxWidget->currentText().toStdString();
+				return comboBoxWidget->GetSelectedItem();
 			}
 			EDITOR_API virtual void SetPlaceholderText(const std::string& text) noexcept override {
-				comboBoxWidget->setPlaceholderText(QString::fromStdString(text));
+				comboBoxWidget->SetPlaceholderText(text);
 			}
 			EDITOR_API virtual void SetOnSelectionChangedListener(const std::function<void(int)>& listener) noexcept override {
-				QObject::connect(comboBoxWidget, QOverload<int>::of(&QComboBox::currentIndexChanged), listener);
+				comboBoxWidget->SetOnSelectionChangedListener(listener);
 			}
 			EDITOR_API virtual void SetOnSelectionChangedListener(const std::function<void(const std::string&)>& listener) noexcept override {
-				QObject::connect(comboBoxWidget, &QComboBox::currentTextChanged, [listener](const QString& text) {
-					listener(text.toStdString());
-					});
+				comboBoxWidget->SetOnSelectionChangedListener(listener);
 			}
 		protected:
-			QComboBox* comboBoxWidget;
+			cp::ModernComboBoxWidget* comboBoxWidget;
 	};
 
 	class QtCheckBox : public ICheckBox {
 		public:
 			EDITOR_API QtCheckBox(const std::string& text = "") {
-				checkBoxWidget = new QCheckBox(QString::fromStdString(text));
+				checkBoxWidget = new cp::ModernCheckBoxWidget(QString::fromStdString(text));
 			}
 			EDITOR_API virtual ~QtCheckBox() override {
 				delete checkBoxWidget;
@@ -933,22 +927,22 @@ export namespace cp {
 				return static_cast<void*>(checkBoxWidget);
 			}
 			EDITOR_API virtual void SetChecked(bool checked) noexcept override {
-				checkBoxWidget->setChecked(checked);
+				checkBoxWidget->SetChecked(checked);
 			}
 			EDITOR_API virtual bool IsChecked() const noexcept override {
-				return checkBoxWidget->isChecked();
+				return checkBoxWidget->IsChecked();
 			}
 			EDITOR_API virtual void SetText(const std::string& text) noexcept override {
-				checkBoxWidget->setText(QString::fromStdString(text));
+				checkBoxWidget->SetText(text);
 			}
 			EDITOR_API virtual std::string GetText() const noexcept override {
-				return checkBoxWidget->text().toStdString();
+				return checkBoxWidget->GetText();
 			}
 			EDITOR_API virtual void SetOnCheckedChangedListener(const std::function<void(bool)>& listener) noexcept override {
-				QObject::connect(checkBoxWidget, &QCheckBox::toggled, listener);
+				checkBoxWidget->SetOnCheckedChangedListener(listener);
 			}
 		protected:
-			QCheckBox* checkBoxWidget;
+			cp::ModernCheckBoxWidget* checkBoxWidget;
 	};
 
 	class QtTextBox : public ITextBox {
@@ -997,5 +991,35 @@ export namespace cp {
 			}
 		protected:
 			QLineEdit* textEditWidget;
+	};
+
+	class QtHorizontalSeparator : public IHorizontalSeparator {
+		public:
+			EDITOR_API QtHorizontalSeparator() {
+				separatorWidget = new QFrame();
+				separatorWidget->setFrameShape(QFrame::HLine);
+				separatorWidget->setFrameShadow(QFrame::Sunken);
+				separatorWidget->setStyleSheet("background-color: #3E465A; margin-top: 4px; margin-bottom: 4px; min-height: 1px; max-height: 1px;");
+			}
+			EDITOR_API virtual ~QtHorizontalSeparator() override {
+				delete separatorWidget;
+			}
+			EDITOR_API virtual void SetVisible(bool visible) noexcept override {
+				separatorWidget->setVisible(visible);
+			}
+			EDITOR_API virtual bool IsVisible() const noexcept override {
+				return separatorWidget->isVisible();
+			}
+			EDITOR_API virtual void SetEnabled(bool enabled) noexcept override {
+				separatorWidget->setEnabled(enabled);
+			}
+			EDITOR_API virtual bool IsEnabled() const noexcept override {
+				return separatorWidget->isEnabled();
+			}
+			EDITOR_API virtual void* NativeHandle() const noexcept override {
+				return static_cast<void*>(separatorWidget);
+			}
+		protected:
+			QFrame* separatorWidget;
 	};
 }
