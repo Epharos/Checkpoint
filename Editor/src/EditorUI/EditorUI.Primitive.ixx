@@ -13,6 +13,9 @@ module;
 
 #include "QtWidgets/FileDropPreviewWidget.hpp"
 
+#include <QComboBox>
+#include <QCheckBox>
+
 #include "../CheckpointEditor.hpp"
 
 export module EditorUI:Primitive;
@@ -103,6 +106,39 @@ export namespace cp {
 	};
 
 	class IFlatButton : public IButton {
+	};
+
+	class IComboBox : public IWidget {
+		public:
+			EDITOR_API virtual void SetItems(const std::vector<std::string>& items) noexcept = 0;
+			EDITOR_API virtual void AddItem(const std::string& item) noexcept = 0;
+			EDITOR_API virtual std::vector<std::string> GetItems() const noexcept = 0;
+			EDITOR_API virtual void SetSelectedIndex(int index) noexcept = 0;
+			EDITOR_API virtual void SetSelectedItem(const std::string& item) noexcept = 0;
+			EDITOR_API virtual int GetSelectedIndex() const noexcept = 0;
+			EDITOR_API virtual std::string GetSelectedItem() const noexcept = 0;
+			EDITOR_API virtual void SetPlaceholderText(const std::string& text) noexcept = 0;
+			EDITOR_API virtual void SetOnSelectionChangedListener(const std::function<void(int)>& listener) noexcept = 0;
+			EDITOR_API virtual void SetOnSelectionChangedListener(const std::function<void(const std::string&)>& listener) noexcept = 0;
+	};
+
+	class ICheckBox : public IWidget {
+		public:
+			EDITOR_API virtual void SetChecked(bool checked) noexcept = 0;
+			EDITOR_API virtual bool IsChecked() const noexcept = 0;
+			EDITOR_API virtual void SetText(const std::string& text) noexcept = 0;
+			EDITOR_API virtual std::string GetText() const noexcept = 0;
+			EDITOR_API virtual void SetOnCheckedChangedListener(const std::function<void(bool)>& listener) noexcept = 0;
+	};
+
+	class ITextBox : public IWidget {
+		public:
+			EDITOR_API virtual void SetText(const std::string& text) noexcept = 0;
+			EDITOR_API virtual std::string GetText() const noexcept = 0;
+			EDITOR_API virtual void SetPlaceholderText(const std::string& text) noexcept = 0;
+			EDITOR_API virtual void SetReadOnly(bool readOnly) noexcept = 0;
+			EDITOR_API virtual bool IsReadOnly() const noexcept = 0;
+			EDITOR_API virtual void SetOnTextChangedListener(const std::function<void(const std::string&)>& listener) noexcept = 0;
 	};
 }
 
@@ -802,5 +838,164 @@ export namespace cp {
 			
 		protected:
 			QPushButton* buttonWidget;
+	};
+
+	class QtComboBox : public IComboBox {
+		public:
+			EDITOR_API QtComboBox() {
+				comboBoxWidget = new QComboBox();
+			}
+			EDITOR_API virtual ~QtComboBox() override {
+				delete comboBoxWidget;
+			}
+			EDITOR_API virtual void SetVisible(bool visible) noexcept override {
+				comboBoxWidget->setVisible(visible);
+			}
+			EDITOR_API virtual bool IsVisible() const noexcept override {
+				return comboBoxWidget->isVisible();
+			}
+			EDITOR_API virtual void SetEnabled(bool enabled) noexcept override {
+				comboBoxWidget->setEnabled(enabled);
+			}
+			EDITOR_API virtual bool IsEnabled() const noexcept override {
+				return comboBoxWidget->isEnabled();
+			}
+			EDITOR_API virtual void* NativeHandle() const noexcept override {
+				return static_cast<void*>(comboBoxWidget);
+			}
+			EDITOR_API virtual void SetItems(const std::vector<std::string>& items) noexcept override {
+				comboBoxWidget->clear();
+				for (const auto& item : items) {
+					comboBoxWidget->addItem(QString::fromStdString(item));
+				}
+			}
+			EDITOR_API virtual void AddItem(const std::string& item) noexcept override {
+				comboBoxWidget->addItem(QString::fromStdString(item));
+			}
+			EDITOR_API virtual std::vector<std::string> GetItems() const noexcept override {
+				std::vector<std::string> items;
+				for (int i = 0; i < comboBoxWidget->count(); ++i) {
+					items.push_back(comboBoxWidget->itemText(i).toStdString());
+				}
+				return items;
+			}
+			EDITOR_API virtual void SetSelectedIndex(int index) noexcept override {
+				comboBoxWidget->setCurrentIndex(index);
+			}
+			EDITOR_API virtual void SetSelectedItem(const std::string& item) noexcept override {
+				int index = comboBoxWidget->findText(QString::fromStdString(item));
+				if (index != -1) {
+					comboBoxWidget->setCurrentIndex(index);
+				}
+			}
+			EDITOR_API virtual int GetSelectedIndex() const noexcept override {
+				return comboBoxWidget->currentIndex();
+			}
+			EDITOR_API virtual std::string GetSelectedItem() const noexcept override {
+				return comboBoxWidget->currentText().toStdString();
+			}
+			EDITOR_API virtual void SetPlaceholderText(const std::string& text) noexcept override {
+				comboBoxWidget->setPlaceholderText(QString::fromStdString(text));
+			}
+			EDITOR_API virtual void SetOnSelectionChangedListener(const std::function<void(int)>& listener) noexcept override {
+				QObject::connect(comboBoxWidget, QOverload<int>::of(&QComboBox::currentIndexChanged), listener);
+			}
+			EDITOR_API virtual void SetOnSelectionChangedListener(const std::function<void(const std::string&)>& listener) noexcept override {
+				QObject::connect(comboBoxWidget, &QComboBox::currentTextChanged, [listener](const QString& text) {
+					listener(text.toStdString());
+					});
+			}
+		protected:
+			QComboBox* comboBoxWidget;
+	};
+
+	class QtCheckBox : public ICheckBox {
+		public:
+			EDITOR_API QtCheckBox(const std::string& text = "") {
+				checkBoxWidget = new QCheckBox(QString::fromStdString(text));
+			}
+			EDITOR_API virtual ~QtCheckBox() override {
+				delete checkBoxWidget;
+			}
+			EDITOR_API virtual void SetVisible(bool visible) noexcept override {
+				checkBoxWidget->setVisible(visible);
+			}
+			EDITOR_API virtual bool IsVisible() const noexcept override {
+				return checkBoxWidget->isVisible();
+			}
+			EDITOR_API virtual void SetEnabled(bool enabled) noexcept override {
+				checkBoxWidget->setEnabled(enabled);
+			}
+			EDITOR_API virtual bool IsEnabled() const noexcept override {
+				return checkBoxWidget->isEnabled();
+			}
+			EDITOR_API virtual void* NativeHandle() const noexcept override {
+				return static_cast<void*>(checkBoxWidget);
+			}
+			EDITOR_API virtual void SetChecked(bool checked) noexcept override {
+				checkBoxWidget->setChecked(checked);
+			}
+			EDITOR_API virtual bool IsChecked() const noexcept override {
+				return checkBoxWidget->isChecked();
+			}
+			EDITOR_API virtual void SetText(const std::string& text) noexcept override {
+				checkBoxWidget->setText(QString::fromStdString(text));
+			}
+			EDITOR_API virtual std::string GetText() const noexcept override {
+				return checkBoxWidget->text().toStdString();
+			}
+			EDITOR_API virtual void SetOnCheckedChangedListener(const std::function<void(bool)>& listener) noexcept override {
+				QObject::connect(checkBoxWidget, &QCheckBox::toggled, listener);
+			}
+		protected:
+			QCheckBox* checkBoxWidget;
+	};
+
+	class QtTextBox : public ITextBox {
+		public:
+			EDITOR_API QtTextBox(const std::string& _defaultValue) {
+				textEditWidget = new QLineEdit();
+				textEditWidget->setText(QString::fromStdString(_defaultValue));
+			}
+			EDITOR_API virtual ~QtTextBox() override {
+				delete textEditWidget;
+			}
+			EDITOR_API virtual void SetVisible(bool visible) noexcept override {
+				textEditWidget->setVisible(visible);
+			}
+			EDITOR_API virtual bool IsVisible() const noexcept override {
+				return textEditWidget->isVisible();
+			}
+			EDITOR_API virtual void SetEnabled(bool enabled) noexcept override {
+				textEditWidget->setEnabled(enabled);
+			}
+			EDITOR_API virtual bool IsEnabled() const noexcept override {
+				return textEditWidget->isEnabled();
+			}
+			EDITOR_API virtual void* NativeHandle() const noexcept override {
+				return static_cast<void*>(textEditWidget);
+			}
+			EDITOR_API virtual void SetText(const std::string& text) noexcept override {
+				textEditWidget->setText(QString::fromStdString(text));
+			}
+			EDITOR_API virtual std::string GetText() const noexcept override {
+				return textEditWidget->text().toStdString();
+			}
+			EDITOR_API virtual void SetPlaceholderText(const std::string& text) noexcept override {
+				textEditWidget->setPlaceholderText(QString::fromStdString(text));
+			}
+			EDITOR_API virtual void SetReadOnly(bool readOnly) noexcept override {
+				textEditWidget->setReadOnly(readOnly);
+			}
+			EDITOR_API virtual bool IsReadOnly() const noexcept override {
+				return textEditWidget->isReadOnly();
+			}
+			EDITOR_API virtual void SetOnTextChangedListener(const std::function<void(const std::string&)>& listener) noexcept override {
+				QObject::connect(textEditWidget, &QLineEdit::textChanged, [listener](const QString& text) {
+					listener(text.toStdString());
+					});
+			}
+		protected:
+			QLineEdit* textEditWidget;
 	};
 }

@@ -1,7 +1,8 @@
 #pragma once
 
 #include "../pch.hpp"
-#include "../CheckpointEditor.hpp"
+
+struct CheckpointEditor;
 
 struct MeshRenderer : public cp::IComponentBase
 {
@@ -27,18 +28,7 @@ class MeshRendererSerializer : public cp::IComponentSerializer
 public:
 	MeshRendererSerializer(cp::IComponentBase& _component) : IComponentSerializer(_component) {}
 
-	void Serialize(cp::ISerializer& _serializer) const override
-	{
-		MeshRenderer& component = static_cast<MeshRenderer&>(this->component);
-		
-		std::string meshRelativePath = cp::CheckpointEditor::CurrentProject.GetResourceRelativePath(cp::ResourceManager::Get()->GetResourceType<cp::Mesh>()->GetResourcePath(component.mesh));
-		_serializer.WriteString("mesh", meshRelativePath);
-	}
+	void Serialize(cp::ISerializer& _serializer) const override;
 
-	void Deserialize(cp::ISerializer& _serializer) override
-	{
-		MeshRenderer& component = static_cast<MeshRenderer&>(this->component);
-		std::string fullMeshPath = cp::CheckpointEditor::CurrentProject.GetResourcePath() + "/" + _serializer.ReadString("mesh", "");
-		if(!fullMeshPath.empty()) component.mesh = cp::ResourceManager::Get()->GetOrLoad<cp::Mesh>(fullMeshPath);
-	}
+	void Deserialize(cp::ISerializer& _serializer) override;
 };

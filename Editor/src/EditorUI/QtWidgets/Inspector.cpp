@@ -138,15 +138,15 @@ void cp::Inspector::ShowMaterial(const std::string& _path) {
 
 		if (uniqueShaderStages.size() >= 1)
 		{
-			QLabel* entryPointsLabel = new QLabel("Shader stages", this);
-			containerWidget->layout()->addWidget(entryPointsLabel);
+			
+			auto entryPointsLabel = factory.CreateLabel("Shader Stages");
+			container->AddChild(entryPointsLabel.release());
 
 			for (const auto& stage : uniqueShaderStages)
 			{
-				QLabel* shaderStage = new QLabel(this);
-				shaderStage->setText(QString::fromStdString(Helper::Material::GetShaderStageString(stage)));
-				shaderStage->setStyleSheet("color : #aaa;");
-				containerWidget->layout()->addWidget(shaderStage);
+				auto shaderStageLabel = factory.CreateLabel(Helper::Material::GetShaderStageString(stage));
+				shaderStageLabel->SetColor(cp::HexColorToUInt32("#aaaaaa"));
+				container->AddChild(shaderStageLabel.release());
 			}
 		}
 
@@ -156,7 +156,66 @@ void cp::Inspector::ShowMaterial(const std::string& _path) {
 
 #pragma endregion
 
+#pragma region Renderpasses
 
+	{
+		auto collapsible = factory.CreateCollapsible().release();
+		collapsible->SetTitle("Render passes");
+		auto container = factory.CreateContainer().release();
+
+		auto CreateEntryPointOverrideCombobox = [&](cp::Material& _mat, const cp::ShaderStages& _stage, const std::string& _placeholder, const std::string& _renderpass) -> cp::IComboBox*
+		{
+			if (!_mat.HasShaderStage(_stage)) return nullptr;
+
+			auto entryPoints = factory.CreateComboBox();
+			entryPoints->SetPlaceholderText(_placeholder);
+
+			for (auto& [name, ep] : _mat.GetShaderReflection()->entryPoints)
+			{
+				if (ep == _stage) entryPoints->AddItem(name);
+			}
+
+			if (_mat.GetRenderPassRequirement(_renderpass).customEntryPoints.contains(_stage))
+			{
+				entryPoints->SetSelectedItem(_mat.GetRenderPassRequirement(_renderpass).customEntryPoints.at(_stage));
+			}
+
+			if (entryPoints->GetSelectedItem().empty())
+			{
+				entryPoints->SetSelectedIndex(0);
+			}
+
+			return entryPoints.release();
+		};
+
+		for (const auto& [rpName, rpDesc] : cp::CheckpointEditor::CurrentScene->renderer->GetRenderPassDescriptions())
+		{
+			auto rpReq = mat->GetRenderPassRequirement(rpName);
+
+			auto renderActive = factory.CreateCheckBox(rpName);
+			renderActive->SetChecked(rpReq.renderToPass);
+
+			auto useDefaultShader = factory.CreateCheckBox("Use default shader");
+			useDefaultShader->SetChecked(rpReq.useDefaultShader);
+			useDefaultShader->SetVisible(renderActive->IsChecked() && rpDesc.GetDefaultPipeline().has_value());
+
+			auto orLabel = factory.CreateLabel("or");
+			orLabel->SetVisible(renderActive->IsChecked() && !useDefaultShader->IsChecked());
+
+			auto customShaderPath = factory.CreateTextBox(rpReq.customShaderPath);
+			customShaderPath->SetVisible(renderActive->IsChecked() && (!useDefaultShader->IsChecked() || !rpDesc.GetDefaultPipeline().has_value()));
+
+			container->AddChild(renderActive.release());
+			container->AddChild(useDefaultShader.release());
+			container->AddChild(orLabel.release());
+			container->AddChild(customShaderPath.release());
+		}
+
+		collapsible->SetContent(container);
+		matLayout->addWidget(static_cast<QWidget*>(collapsible->NativeHandle()));
+	}
+
+#pragma endregion
 
 
 	QWidget* matWidget = new QWidget(this);

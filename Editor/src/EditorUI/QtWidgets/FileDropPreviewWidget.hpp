@@ -20,6 +20,8 @@
 
 #include <string>
 
+#include "../../CheckpointEditor.hpp"
+
 namespace cp {
     class FileDropPreviewWidget : public QWidget {
     #ifndef BUILDING_PLUGIN_LOADER
@@ -131,7 +133,7 @@ namespace cp {
             QObject::connect(&okBtn, &QPushButton::clicked, &dialog, &QDialog::accept);
             QObject::connect(&list, &QListWidget::itemDoubleClicked, &dialog, &QDialog::accept);
             if (dialog.exec() == QDialog::Accepted && list.currentItem()) {
-                return list.currentItem()->text();
+                return QString::fromStdString(cp::CheckpointEditor::CurrentProject.GetResourcePath()).append(list.currentItem()->text());
             }
             return "";
         }
@@ -149,7 +151,7 @@ namespace cp {
             while (it.hasNext())
             {
 			    std::string fullPath = it.next().toStdString();
-			    //fullPath = Project::GetResourceRelativePath(fullPath);
+			    fullPath = cp::CheckpointEditor::CurrentProject.GetResourceRelativePath(fullPath);
 			    result << QString::fromStdString(fullPath);
             }
 

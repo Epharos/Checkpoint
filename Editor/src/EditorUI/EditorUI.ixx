@@ -32,6 +32,9 @@ export namespace cp {
 			EDITOR_API virtual std::unique_ptr<ILabel> CreateLabel(const std::string& text = "") noexcept = 0;
 			EDITOR_API virtual std::unique_ptr<IButton> CreateButton(const std::string& text = "") noexcept = 0;
 			EDITOR_API virtual std::unique_ptr<IFlatButton> CreateFlatButton(const std::string& text = "") noexcept = 0;
+			EDITOR_API virtual std::unique_ptr<IComboBox> CreateComboBox() noexcept = 0;
+			EDITOR_API virtual std::unique_ptr<ICheckBox> CreateCheckBox(const std::string& text = "") noexcept = 0;
+			EDITOR_API virtual std::unique_ptr<ITextBox> CreateTextBox(const std::string& text = "") noexcept = 0;
 			EDITOR_API virtual std::unique_ptr<ICollapsible> CreateCollapsible() noexcept = 0;
 
 			EDITOR_API virtual std::unique_ptr<INumericField<int>> CreateIntField(int* value) noexcept = 0;
@@ -120,6 +123,18 @@ export namespace cp {
 
 			EDITOR_API virtual std::unique_ptr<IFlatButton> CreateFlatButton(const std::string& text = "") noexcept override {
 				return std::make_unique<cp::QtFlatButton>(text);
+			}
+
+			EDITOR_API virtual std::unique_ptr<IComboBox> CreateComboBox() noexcept override {
+				return std::make_unique<cp::QtComboBox>();
+			}
+
+			EDITOR_API virtual std::unique_ptr<ICheckBox> CreateCheckBox(const std::string& text = "") noexcept override {
+				return std::make_unique<cp::QtCheckBox>(text);
+			}
+
+			EDITOR_API virtual std::unique_ptr<ITextBox> CreateTextBox(const std::string& text = "") noexcept override {
+				return std::make_unique<cp::QtTextBox>(text);
 			}
 
 			EDITOR_API virtual std::unique_ptr<ICollapsible> CreateCollapsible() noexcept override {

@@ -58,5 +58,6 @@ namespace cp
 			inline constexpr cp::VulkanContext* GetContext() { return context; }
 
 			inline cp::RenderpassDescription& GetRenderPassDescription(const std::string& _name) { return renderPassDescriptions.at(_name); }
+			inline std::unordered_map<std::string, cp::RenderpassDescription>& GetRenderPassDescriptions() { return renderPassDescriptions; }
 	};
 }

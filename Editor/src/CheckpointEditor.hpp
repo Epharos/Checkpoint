@@ -3,6 +3,8 @@
 #include "pch.hpp"
 #include <nlohmann/json.hpp>
 
+#include "ECSWrapper.hpp"
+
 namespace cp {
 	enum class EditorVersionType : uint8_t {
 		Alpha = 0,
@@ -110,8 +112,9 @@ namespace cp {
 
 	struct CheckpointEditor {
 		static cp::VulkanContext VulkanCtx;
-		static constexpr EditorVersion CurrentVersion{ EditorVersionType::Alpha, 0, 1, 0 };
+		static constexpr EditorVersion CurrentVersion{ EditorVersionType::Alpha, 1, 0, 0 };
 		static Project CurrentProject;
+		static cp::SceneAsset* CurrentScene;
 
 		static bool IsProjectUpToDate(const Project& project) {
 			return project.engineVersion >= CurrentVersion;

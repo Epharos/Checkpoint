@@ -1,5 +1,7 @@
 #include "Launcher.hpp"
 
+#include "EditorUI/EditorWindow.hpp"
+
 cp::Launcher::Launcher()
 {
 	cp::QtEditorUIFactory* factory = new cp::QtEditorUIFactory();
@@ -29,6 +31,7 @@ cp::Launcher::Launcher()
 
 	auto OnProjectOpened = [this](const std::string& _path) -> void {
 		cp::CheckpointEditor::LoadProject(_path);
+		new cp::EditorWindow(cp::CheckpointEditor::CurrentProject);
 		window->Close();
 	};
 

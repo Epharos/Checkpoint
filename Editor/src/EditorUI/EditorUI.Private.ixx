@@ -22,8 +22,8 @@ export namespace cp {
 
 	class QtSceneHierarchy : public ISceneHierarchy {
 	public:
-		QtSceneHierarchy(cp::SceneAsset* _scene = nullptr) {
-			sceneHierarchy = new cp::SceneHierarchy(_scene);
+		QtSceneHierarchy() {
+			sceneHierarchy = new cp::SceneHierarchy();
 		}
 
 		virtual ~QtSceneHierarchy() = default;

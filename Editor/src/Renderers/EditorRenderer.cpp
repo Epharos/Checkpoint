@@ -4,6 +4,16 @@
 cp::EditorRenderer::EditorRenderer(cp::VulkanContext * _context) : cp::RendererPrototype(_context)
 {
 	LOG_DEBUG("Constructing EditorRenderer");
+
+	cp::RenderpassDescription colorRenderpassDesc(_context, "Color Pass");
+	renderPassDescriptions.emplace("Color Pass", colorRenderpassDesc);
+
+	cp::RenderpassDescription zPrepassDesc(_context, "Z Pre-Pass");
+	zPrepassDesc.SetDepthOnly(true);
+	renderPassDescriptions.emplace("Z Pre-Pass", zPrepassDesc);
+
+	cp::RenderpassDescription gBufferPassDesc(_context, "G-Buffer Pass");
+	renderPassDescriptions.emplace("G-Buffer Pass", gBufferPassDesc);
 }
 
 void cp::EditorRenderer::Render(RendererInstance* _instance, const std::vector<InstanceGroup>& _instanceGroups)

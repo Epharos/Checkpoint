@@ -9,6 +9,7 @@
 #include "Helper.hpp"
 #include "ColoredIconButton.hpp"
 #include <format>
+#include "../../CheckpointEditor.hpp"
 
 #define SCENE_HIERARCHY_ITEM_MARGIN 8
 #define SCENE_HIERARCHY_ITEM_ICON_SIZE 14
@@ -208,7 +209,6 @@ namespace cp {
 		void EntitySelected(cp::EntityAsset* _entity);
 
 	protected:
-		cp::SceneAsset* sceneAsset;
 		QPushButton* addEntityButton;
 		QLineEdit* searchBar;
 		ColoredIconButton* filterButton;
@@ -217,7 +217,7 @@ namespace cp {
 
 		QVBoxLayout* globalLayout;
 	public:
-		SceneHierarchy(cp::SceneAsset* _sceneAsset = nullptr, QWidget* _parent = nullptr) {
+		SceneHierarchy(QWidget* _parent = nullptr) {
 			globalLayout = new QVBoxLayout(this);
 			globalLayout->setContentsMargins(0, 8, 0, 0);
 			globalLayout->setSpacing(0);
@@ -263,10 +263,10 @@ namespace cp {
 			treeWidget = new SceneTreeWidget();
 			globalLayout->addWidget(treeWidget);
 
-			InitTree(_sceneAsset);
+			InitTree(cp::CheckpointEditor::CurrentScene);
 
 			connect(addEntityButton, &QPushButton::clicked, this, [&]() {
-				if (!sceneAsset) return;
+				if (!cp::CheckpointEditor::CurrentScene) return;
 
 				AddEntityToTree(); // For some obscure reason, creating the EntityAsset* or TreeEntityItem* directly causes a compile error (C1001) on MSVC
 
@@ -274,7 +274,7 @@ namespace cp {
 			});
 
 			connect(refreshButton, &QPushButton::clicked, this, [&]() {
-				InitTree(sceneAsset);
+				InitTree(cp::CheckpointEditor::CurrentScene);
 			});
 
 			connect(treeWidget, &QTreeWidget::itemClicked, this, [&](QTreeWidgetItem* item, int column) {
@@ -290,8 +290,6 @@ namespace cp {
 		void InitTree(cp::SceneAsset* _sceneAsset) {
 			treeWidget->clear();
 
-			sceneAsset = _sceneAsset;
-
 			if (_sceneAsset) {
 				emit SceneUpdated(_sceneAsset);
 
@@ -305,8 +303,8 @@ namespace cp {
 		void AddEntityToTree() {
 			cp::EntityAsset* newEntity = new cp::EntityAsset();
 			newEntity->name = "New Entity";
-			sceneAsset->entities.push_back(newEntity);
-			auto& entityRef = sceneAsset->entities.back();
+			cp::CheckpointEditor::CurrentScene->entities.push_back(newEntity);
+			auto& entityRef = cp::CheckpointEditor::CurrentScene->entities.back();
 
 			TreeEntityItem* item = new TreeEntityItem(entityRef, treeWidget);
 			treeWidget->scrollToItem(item);

@@ -38,7 +38,9 @@ cp::EditorWindow::EditorWindow(cp::Project _project)
 	newScene->renderer = new cp::EditorRenderer(&cp::CheckpointEditor::VulkanCtx);
 	newScene->name = "Newly created scene";
 
-	auto viewport = factory->CreateViewport(newScene);
+	cp::CheckpointEditor::CurrentScene = newScene;
+
+	auto viewport = factory->CreateViewport(cp::CheckpointEditor::CurrentScene);
 	auto containerViewport = factory->CreateContainer().release();
 	containerViewport->AddChild(viewport.get());
 	dockViewport->SetContainer(containerViewport);
