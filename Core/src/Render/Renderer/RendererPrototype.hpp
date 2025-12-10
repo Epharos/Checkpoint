@@ -27,7 +27,7 @@ namespace cp
 		cp::MaterialInstance* materialInstance;
 		cp::Mesh* mesh;
 		std::vector<TransformData> transforms;
-		//uint32_t instanceOffset = 0;
+		uint32_t instanceOffset = 0;
 	};
 
 	class RendererPrototype

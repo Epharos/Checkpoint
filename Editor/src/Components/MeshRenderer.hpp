@@ -11,12 +11,13 @@ struct MeshRenderer : public cp::IComponentBase
 
 	class Helper : public cp::ComponentBaseHelper<MeshRenderer>
 	{
-		void SetMesh(MeshRenderer& _component, std::shared_ptr<cp::Mesh> _mesh)
+	public:
+		static void SetMesh(MeshRenderer& _component, std::shared_ptr<cp::Mesh> _mesh)
 		{
 			_component.mesh = _mesh;
 		}
 
-		void SetMaterialInstance(MeshRenderer& _component, std::shared_ptr<cp::MaterialInstance> _materialInstance)
+		static void SetMaterialInstance(MeshRenderer& _component, std::shared_ptr<cp::MaterialInstance> _materialInstance)
 		{
 			_component.materialInstance = _materialInstance;
 		}

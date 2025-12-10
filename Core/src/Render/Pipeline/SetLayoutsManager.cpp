@@ -81,6 +81,7 @@ void cp::DescriptorSetLayoutsManager::DestroyDescriptorSetLayout(const vk::Descr
 	{
 		if (layout.second == _layout)
 		{
+			LOG_INFO(MF("Destroying descriptor set layout (", layout.first, ")"));
 			device.destroyDescriptorSetLayout(layout.second);
 			layouts.erase(layout.first);
 			return;

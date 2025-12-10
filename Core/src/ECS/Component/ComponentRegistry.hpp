@@ -38,7 +38,56 @@ namespace cp
 				};
 		}
 
-		bool CreateComponent(cp::EntityComponentSystem& _ecs, Entity& _entity, const std::string& _componentName)
+		void* CreateComponentInstance(const std::string& _componentName)
+		{
+			auto it = componentFactory.find(_componentName);
+			if (it != componentFactory.end())
+			{
+				// This is a bit of a hack to create a component instance without adding it to an entity
+				cp::EntityComponentSystem tempECS;
+				cp::Entity tempEntity = tempECS.CreateEntity();
+				if (it->second(tempECS, tempEntity))
+				{
+					return tempECS.GetComponent(tempEntity, _componentName);
+				}
+			}
+			return nullptr;
+		}
+
+		void* CreateComponentInstance(const std::type_index& _typeIndex)
+		{
+			auto it = componentFactory.find(typeIndexMap[_typeIndex]);
+			if (it != componentFactory.end())
+			{
+				// This is a bit of a hack to create a component instance without adding it to an entity
+				cp::EntityComponentSystem tempECS;
+				cp::Entity tempEntity = tempECS.CreateEntity();
+				if (it->second(tempECS, tempEntity))
+				{
+					return tempECS.GetComponent(tempEntity, _typeIndex);
+				}
+			}
+			return nullptr;
+		}
+
+		template<typename ComponentType>
+		ComponentType* CreateComponentInstance()
+		{
+			auto it = componentFactory.find(typeIndexMap[std::type_index(typeid(ComponentType))]);
+			if (it != componentFactory.end())
+			{
+				// This is a bit of a hack to create a component instance without adding it to an entity
+				cp::EntityComponentSystem tempECS;
+				cp::Entity tempEntity = tempECS.CreateEntity();
+				if (it->second(tempECS, tempEntity))
+				{
+					return &tempECS.GetComponent<ComponentType>(tempEntity);
+				}
+			}
+			return nullptr;
+		}
+
+		bool CreateAndAddComponent(cp::EntityComponentSystem& _ecs, Entity& _entity, const std::string& _componentName)
 		{
 			auto it = componentFactory.find(_componentName);
 
@@ -50,7 +99,7 @@ namespace cp
 			return false;
 		}
 
-		bool CreateComponent(cp::EntityComponentSystem& _ecs, Entity& _entity, const std::type_index& _typeIndex)
+		bool CreateAndAddComponent(cp::EntityComponentSystem& _ecs, Entity& _entity, const std::type_index& _typeIndex)
 		{
 			auto it = componentFactory.find(typeIndexMap[_typeIndex]);
 
@@ -63,7 +112,7 @@ namespace cp
 		}
 
 		template<typename ComponentType>
-		bool CreateComponent(cp::EntityComponentSystem& _ecs, Entity& _entity)
+		bool CreateAndAddComponent(cp::EntityComponentSystem& _ecs, Entity& _entity)
 		{
 			auto it = componentFactory.find(typeIndexMap[std::type_index(typeid(ComponentType))]);
 

@@ -50,12 +50,12 @@ cp::EditorWindow::EditorWindow(cp::Project _project)
 	dockInspector->DockTo(dockViewport.get(), cp::DockArea::Right);
 	dockInspector->Show();
 
-	auto inspector = factory->CreateInspector();
+	auto inspector = factory->CreateInspector().release();
 	auto containerInspector = factory->CreateContainer().release();
-	containerInspector->AddChild(inspector.get());
+	containerInspector->AddChild(inspector);
 	dockInspector->SetContainer(containerInspector);
 
-	QObject::connect((cp::SceneHierarchy*)sceneHierarchy->NativeHandle(), &cp::SceneHierarchy::EntitySelected, [&](cp::EntityAsset* _entity) {
+	QObject::connect((cp::SceneHierarchy*)sceneHierarchy->NativeHandle(), &cp::SceneHierarchy::EntitySelected, [inspector](cp::EntityAsset* _entity) {
 		inspector->ShowEntity(_entity);
 		});
 
@@ -65,7 +65,7 @@ cp::EditorWindow::EditorWindow(cp::Project _project)
 	dockAssetBrowser->Show();
 
 	auto assetBrowser = factory->CreateAssetBrowser(cp::CheckpointEditor::CurrentProject.GetResourcePath());
-	assetBrowser->LinkToInspector(inspector.get());
+	assetBrowser->LinkToInspector(inspector);
 	auto containerAssetBrowser = factory->CreateContainer().release();
 	containerAssetBrowser->AddChild(assetBrowser.get());
 	dockAssetBrowser->SetContainer(containerAssetBrowser);

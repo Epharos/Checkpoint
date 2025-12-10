@@ -43,7 +43,7 @@ void cp::Entity::Deserialize(Entity& _entity, EntityComponentSystem& _ecs, ISeri
 
 			std::string componentTypeStr = _serializer.ReadString("Type", "No String");
 
-			if (!ComponentRegistry::GetInstance().CreateComponent(_ecs, _entity, componentTypeStr))
+			if (!ComponentRegistry::GetInstance().CreateAndAddComponent(_ecs, _entity, componentTypeStr))
 			{
 				throw std::runtime_error("Couldn't deserialize component");
 			}

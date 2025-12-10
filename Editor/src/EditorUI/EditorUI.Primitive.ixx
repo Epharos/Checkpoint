@@ -999,7 +999,7 @@ export namespace cp {
 				separatorWidget = new QFrame();
 				separatorWidget->setFrameShape(QFrame::HLine);
 				separatorWidget->setFrameShadow(QFrame::Sunken);
-				separatorWidget->setStyleSheet("background-color: #3E465A; margin-top: 4px; margin-bottom: 4px; min-height: 1px; max-height: 1px;");
+				separatorWidget->setStyleSheet("background-color: #3E465A; margin-top: 4px; margin-bottom: 4px; min-height: 1px; max-height: 1px; height:1px;");
 			}
 			EDITOR_API virtual ~QtHorizontalSeparator() override {
 				delete separatorWidget;

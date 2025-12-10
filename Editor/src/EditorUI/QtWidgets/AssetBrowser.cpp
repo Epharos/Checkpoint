@@ -6,6 +6,7 @@
 #include <QDebug>
 
 #include "Inspector.hpp"
+#include "CheckpointEditor.hpp"
 
 cp::AssetBrowserWidget::AssetBrowserWidget(const QString& rootPath, QWidget* parent)
     : QWidget(parent)
@@ -49,6 +50,7 @@ void cp::AssetBrowserWidget::SetupUI()
     treeView = new QTreeView(this);
     treeView->setModel(model);
     treeView->setRootIndex(model->index(rootPath));
+    treeView->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
     treeView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     listView = new QListView(this);
@@ -82,6 +84,100 @@ void cp::AssetBrowserWidget::SetupUI()
 
     layout->addWidget(stack);
     setLayout(layout);
+
+    // TMP CONTEXT MENU
+
+    QMenu* contextMenuFolder = new QMenu(treeView);
+    QAction* createMaterial = new QAction("Create Material", treeView);
+    contextMenuFolder->addAction(createMaterial);
+
+    QMenu* contextMenuMaterial = new QMenu(treeView);
+    QAction* createInstance = new QAction("Create Instance", treeView);
+    contextMenuMaterial->addAction(createInstance);
+
+    QString* rcPath = new QString();
+
+    connect(createMaterial, &QAction::triggered, [=] {
+        cp::Material mat(&cp::CheckpointEditor::VulkanCtx);
+        cp::JsonSerializer serializer;
+        mat.Serialize(serializer);
+
+        QString matFileName = QString::fromStdString(rcPath->toStdString() + "\\New_Material.mat");
+        QFileInfo fileInfo(matFileName);
+
+        uint16_t tryIndex = 0;
+
+        while (fileInfo.exists())
+        {
+            matFileName = QString::fromStdString(rcPath->toStdString() + "\\New_Material_" + std::to_string(tryIndex) + ".mat");
+            tryIndex++;
+            fileInfo = QFileInfo(matFileName);
+        }
+
+        serializer.Write(matFileName.toStdString());
+
+        QModelIndex index = model->index(matFileName);
+
+        if (index.isValid())
+        {
+            treeView->edit(index);
+        }
+        });
+
+    connect(createInstance, &QAction::triggered, [=] {
+        cp::MaterialInstance matInstance(&cp::CheckpointEditor::VulkanCtx);
+        cp::JsonSerializer serializer;
+        matInstance.SetAssociatedMaterial(rcPath->toStdString());
+        matInstance.Serialize(serializer);
+
+        QFileInfo matFileInfo(*rcPath);
+        QString instanceFileName = QString::fromStdString(matFileInfo.path().append("\\").append(matFileInfo.baseName()).toStdString() + ".matinstance");
+        QFileInfo fileInfo(instanceFileName);
+
+        uint16_t tryIndex = 0;
+
+        while (fileInfo.exists())
+        {
+            instanceFileName = QString::fromStdString(matFileInfo.path().append("\\").append(matFileInfo.baseName().toStdString() + "_" + std::to_string(tryIndex)).toStdString() + ".matinstance");
+            tryIndex++;
+            fileInfo = QFileInfo(instanceFileName);
+        }
+
+        std::ofstream file(instanceFileName.toStdString(), std::ios::binary);
+        file.close(); //We just create the file
+
+        serializer.Write(instanceFileName.toStdString());
+
+        QModelIndex index = model->index(instanceFileName);
+
+        if (index.isValid())
+        {
+            treeView->edit(index);
+        }
+        });
+
+    connect(treeView, &QTreeView::customContextMenuRequested, [=](QPoint _point)
+        {
+            QModelIndex index = treeView->indexAt(_point);
+
+            *rcPath = model->filePath(index);
+            QFileInfo fileInfo(*rcPath);
+
+            if (fileInfo.isDir())
+            {
+                contextMenuFolder->popup(treeView->viewport()->mapToGlobal(_point));
+            }
+
+            if (fileInfo.isFile())
+            {
+                if (fileInfo.suffix().endsWith("mat"))
+                {
+                    contextMenuMaterial->popup(treeView->viewport()->mapToGlobal(_point));
+                }
+            }
+        });
+
+    // END TMP
 }
 
 void cp::AssetBrowserWidget::SetupConnections()

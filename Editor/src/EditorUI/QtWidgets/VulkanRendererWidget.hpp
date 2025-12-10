@@ -92,9 +92,49 @@ namespace cp {
 
             void UpdateRender()
             {
+                // Creating groups
+
+                std::vector<cp::InstanceGroup> groups;
+
+                std::unordered_map<std::tuple<cp::Material*, cp::Mesh*, cp::MaterialInstance*>,
+                    std::vector<cp::TransformData>,
+                    Helper::Hash::TupleHash<cp::Material*, cp::Mesh*, cp::MaterialInstance*>> data;
+
+				for (auto& entity : cp::CheckpointEditor::CurrentScene->entities)
+                {
+                    if (!entity->transform || !entity->meshRenderer) continue;
+
+                    glm::mat4 modelMatrix = Transform::Helper::GetModelMatrix(*entity->transform);
+                    glm::mat4 normalMatrix = glm::mat4(Transform::Helper::GetNormalMatrix(*entity->transform));
+
+					if (entity->meshRenderer->materialInstance == nullptr || entity->meshRenderer->mesh == nullptr)
+                    {
+                        LOG_WARNING(MF("Entity '", entity->name, "' is missing a material instance or mesh, skipping rendering for this entity."));
+                        continue;
+                    }
+
+                    data[std::make_tuple(entity->meshRenderer->materialInstance->GetMaterial().get(), entity->meshRenderer->mesh.get(), entity->meshRenderer->materialInstance.get())].push_back({modelMatrix, normalMatrix});
+                }
+
+                uint32_t instanceOffset = 0;
+
+                for (auto& [tuple, tdata] : data)
+                {
+                    auto [material, mesh, materialInstance] = tuple;
+
+                    groups.push_back({ material, materialInstance, mesh, tdata, instanceOffset });
+
+                    instanceOffset += tdata.size();
+                }
+
+                std::sort(groups.begin(), groups.end(), [](const cp::InstanceGroup& a, const cp::InstanceGroup& b)
+                    {
+                        return a.material < b.material && a.mesh < b.mesh && a.materialInstance < b.materialInstance;
+                    });
+
                 if (renderer)
                 {
-                    renderer->Render({});
+                    renderer->Render(groups);
                 }
 
                 renderTimer.start();

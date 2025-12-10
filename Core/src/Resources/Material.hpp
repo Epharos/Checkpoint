@@ -122,7 +122,8 @@ namespace cp
 		Material(const cp::VulkanContext* _context);
 		virtual ~Material();
 
-		virtual void BindMaterial(vk::CommandBuffer& _command);
+		virtual void BindMaterial(vk::CommandBuffer& _command, const std::string& _renderpass);
+		vk::PipelineLayout GetPipelineLayout(const std::string& _renderpass) const;
 
 		inline bool HasShaderStage(const ShaderStages& _stage) const { return (shaderStages & static_cast<uint16_t>(_stage)) != 0; }
 		inline void AddShaderStage(const ShaderStages& _stage) { shaderStages |= static_cast<uint16_t>(_stage); }
@@ -152,5 +153,7 @@ namespace cp
 		inline void SetShaderReflection(ShaderReflection* _reflection) { shaderReflection = _reflection; };
 
 		void CreateDescriptorSetLayouts();
+
+		static std::shared_ptr<Material> LoadMaterial(const cp::VulkanContext& _context, const std::string& _path);
 	};
 }

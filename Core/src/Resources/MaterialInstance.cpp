@@ -49,15 +49,15 @@ void cp::MaterialInstance::Deserialize(ISerializer& _serializer)
 		return;
 	}
 
-	material = cp::ResourceManager::Get()->Get<Material>(associatedMaterial);
+	material = cp::ResourceManager::Get()->GetOrLoad<Material>(associatedMaterial);
 
-	if (!material) //If the material is not loaded, we need to load it
-	{
-		cp::JsonSerializer matSerializer;
-		matSerializer.Read(associatedMaterial);
-		material = std::make_shared<Material>(context);
-		material->Deserialize(matSerializer);
-	}
+	//if (!material) //If the material is not loaded, we need to load it
+	//{
+	//	cp::JsonSerializer matSerializer;
+	//	matSerializer.Read(associatedMaterial);
+	//	material = std::make_shared<Material>(context);
+	//	material->Deserialize(matSerializer);
+	//}
 
 	if (!material)
 	{
@@ -70,7 +70,7 @@ void cp::MaterialInstance::Deserialize(ISerializer& _serializer)
 	for (uint64_t i = 0; i < elements; i++)
 	{
 		_serializer.BeginObjectArrayElementReading(i);
-		MaterialInstanceResource resource;
+		MaterialInstanceResource resource{ context };
 		resource.Deserialize(_serializer);
 		resources.push_back(resource);
 		_serializer.EndObjectArrayElement();
@@ -91,25 +91,61 @@ std::vector<cp::MaterialInstanceResource> cp::MaterialInstance::CreateMaterialIn
 
 	for (const auto& resource : material->GetShaderReflection()->resources)
 	{
-		MaterialInstanceResource instanceResource;
+		if (resource.set < 2)
+		{
+			LOG_WARNING(MF("Skipping resource [", resource.name, "] with set index [", resource.set, "] less than 2"));
+			continue; // Skip resources with set index less than 2 (these are reserved for engine use)
+		}
+
+		MaterialInstanceResource instanceResource{ context, &resource };
 		instanceResource.name = resource.name;
 		instanceResource.kind = resource.kind;
 		instanceResource.binding = resource.binding;
 		instanceResource.set = resource.set;
 
-		instanceResource.associatedResource = &resource;
-
 		instanceResource.fields.reserve(resource.field.fields.size());
 
 		instanceResource.CollectFields(resource.field, "", instanceResource.fields);
 
-		//instanceResource.packedData.resize(resource.field.size);
 		instanceResource.Repack();
+
+		instanceResource.CreateBuffer();
+		instanceResource.UpdateBufferData();
 
 		newResources.push_back(std::move(instanceResource));
 	}
 
 	return newResources;
+}
+
+void cp::MaterialInstanceResource::CreateBuffer()
+{
+	dataBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(),
+		packedData.size(),
+		vk::BufferUsageFlagBits::eUniformBuffer,
+		vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+
+	isBufferCreated = true;
+}
+
+void cp::MaterialInstanceResource::UpdateBufferData()
+{
+	Helper::Memory::MapMemory(context->GetDevice(), dataBuffer.memory, packedData.size(), 0, packedData.data());
+}
+
+cp::MaterialInstanceResource::~MaterialInstanceResource()
+{
+	if (!isBufferCreated) return;
+
+	if (dataBuffer.buffer)
+	{
+		context->GetDevice().destroyBuffer(dataBuffer.buffer);
+	}
+
+	if (dataBuffer.memory)
+	{
+		context->GetDevice().freeMemory(dataBuffer.memory);
+	}
 }
 
 void cp::MaterialInstance::ValidateData()
@@ -186,14 +222,14 @@ void cp::MaterialInstance::ValidateData()
 
 	// Removing stale resources that are not in the correctResources
 
-	LOG_DEBUG(MF("Validating resources, removing stale ones..."));
+	//LOG_DEBUG(MF("Validating resources, removing stale ones..."));
 
-	resources.erase(std::remove_if(resources.begin(), resources.end(), [&](const MaterialInstanceResource& res) {
-		return material->GetShaderReflection()->resources.end() == std::find_if(material->GetShaderReflection()->resources.begin(), material->GetShaderReflection()->resources.end(),
-			[&res](const ShaderResource& correctRes) {
-				return res.name == correctRes.name && res.set == correctRes.set && res.binding == correctRes.binding;
-			});
-		}), resources.end());
+	//resources.erase(std::remove_if(resources.begin(), resources.end(), [&](const MaterialInstanceResource& res) {
+	//	return material->GetShaderReflection()->resources.end() == std::find_if(material->GetShaderReflection()->resources.begin(), material->GetShaderReflection()->resources.end(),
+	//		[&res](const ShaderResource& correctRes) {
+	//			return res.name == correctRes.name && res.set == correctRes.set && res.binding == correctRes.binding;
+	//		});
+	//	}), resources.end());
 
 	LOG_DEBUG(MF("Validation complete, ", resources.size(), " resources remaining after validation."));
 }
@@ -205,6 +241,12 @@ QWidget* cp::MaterialInstance::CreateMaterialInstanceWidget(QWidget* _parent)
 
 	for (const auto& resource : resources)
 	{
+		if (resource.set < 2)
+		{
+			LOG_WARNING(MF("Skipping set ", resource.set, " for resource ", resource.name, " in material instance widget creation"));
+			continue; // Skip sets 0 and 1 (commonly reserved for global and per-frame data)
+		}
+
 		QGroupBox* resourceGroup = new QGroupBox(QString::fromStdString(resource.name), widget);
 		QVBoxLayout* resourceLayout = new QVBoxLayout(resourceGroup);
 
@@ -324,4 +366,15 @@ void cp::MaterialInstanceResource::Repack()
 
 		std::memcpy(packedData.data() + offset, field.data.data(), field.data.size() * sizeof(uint8_t));
 	}
+}
+
+std::shared_ptr<cp::MaterialInstance> cp::MaterialInstance::LoadMaterialInstance(const VulkanContext& _context, const std::string& _path)
+{
+	std::shared_ptr<MaterialInstance> matInstance = std::make_shared<MaterialInstance>(&_context);
+
+	cp::JsonSerializer serializer;
+	serializer.Read(_path);
+	matInstance->Deserialize(serializer);
+
+	return matInstance;
 }

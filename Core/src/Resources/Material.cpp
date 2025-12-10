@@ -5,6 +5,7 @@
 #include "MaterialInstance.hpp"
 
 #include "Util/Serializers/ISerializer.hpp"
+#include "Util/Serializers/JsonSerializer.hpp"
 
 std::unordered_map<cp::MaterialFieldType, size_t> cp::Material::MaterialFieldSizeMap = {
 	{ cp::MaterialFieldType::Bool, sizeof(bool) },
@@ -39,9 +40,18 @@ cp::Material::~Material()
 	//}
 }
 
-void cp::Material::BindMaterial(vk::CommandBuffer& _command)
+void cp::Material::BindMaterial(vk::CommandBuffer& _command, const std::string& _renderpass)
 {
-	//_command.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineData->pipeline);
+	assert(pipelineDatas.contains(_renderpass) && "Material does not have a pipeline data for the given renderpass");
+
+	_command.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineDatas.at(_renderpass)->pipeline);
+}
+
+vk::PipelineLayout cp::Material::GetPipelineLayout(const std::string& _renderpass) const
+{
+	assert(pipelineDatas.contains(_renderpass) && "Material does not have a pipeline data for the given renderpass");
+
+	return pipelineDatas.at(_renderpass)->pipelineLayout;
 }
 
 void cp::Material::Reload(cp::RendererPrototype& _renderer)
@@ -247,7 +257,8 @@ void cp::Material::CreateDescriptorSetLayouts()
 		LOG_WARNING("Material already has descriptor set layouts, they will be destroyed");
 		for (auto& layout : descriptorSetLayouts)
 		{
-			context->GetDevice().destroyDescriptorSetLayout(layout); // Destroy the previous descriptor set layout
+			context->GetDescriptorSetLayoutsManager()->DestroyDescriptorSetLayout(layout);
+			//context->GetDevice().destroyDescriptorSetLayout(layout); // Destroy the previous descriptor set layout
 		}
 		descriptorSetLayouts.clear();
 	}
@@ -263,18 +274,25 @@ void cp::Material::CreateDescriptorSetLayouts()
 
 	for (const auto& resource : shaderReflection->resources)
 	{
+		if (resource.set < 2)
+		{
+			LOG_WARNING(MF("Skipping resource [", resource.name, "] with set index [", resource.set, "] less than 2"));
+			continue; // Skip resources with set index less than 2 (these are reserved for engine use)
+		}
+
 		if (lastSetIndex != resource.set)
 		{
 			if (lastSetIndex != ~(0ull)) // If this is not the first set
 			{
-				layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size()); // Set the binding count for the layout info
-				layoutInfo.pBindings = bindings.data(); // Set the bindings for the layout info
-				descriptorSetLayouts.push_back(context->GetDevice().createDescriptorSetLayout(layoutInfo)); // Create the descriptor set layout for the previous set
+				//layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size()); // Set the binding count for the layout info
+				//layoutInfo.pBindings = bindings.data(); // Set the bindings for the layout info
+				descriptorSetLayouts.push_back(context->GetDescriptorSetLayoutsManager()->CreateDescriptorSetLayout(moduleName + "_" + std::to_string(resource.set), bindings));
+				//descriptorSetLayouts.push_back(context->GetDevice().createDescriptorSetLayout(layoutInfo)); // Create the descriptor set layout for the previous set
 				bindings.clear(); // Clear the bindings for the next set
 			}
 
 			lastSetIndex = resource.set; // Update the last set index
-			layoutInfo = vk::DescriptorSetLayoutCreateInfo(); // Reset the layout info
+			//layoutInfo = vk::DescriptorSetLayoutCreateInfo(); // Reset the layout info
 		}
 
 		vk::DescriptorSetLayoutBinding binding;
@@ -287,9 +305,10 @@ void cp::Material::CreateDescriptorSetLayouts()
 
 	if (lastSetIndex != ~(0ull)) // If there is still a set to create
 	{
-		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size()); // Set the binding count for the layout info
-		layoutInfo.pBindings = bindings.data(); // Set the bindings for the layout info
-		descriptorSetLayouts.push_back(context->GetDevice().createDescriptorSetLayout(layoutInfo)); // Create the descriptor set layout for the last set
+		//layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size()); // Set the binding count for the layout info
+		//layoutInfo.pBindings = bindings.data(); // Set the bindings for the layout info
+		//descriptorSetLayouts.push_back(context->GetDevice().createDescriptorSetLayout(layoutInfo)); // Create the descriptor set layout for the last set
+		descriptorSetLayouts.push_back(context->GetDescriptorSetLayoutsManager()->CreateDescriptorSetLayout(moduleName + "_" + std::to_string(lastSetIndex), bindings));
 	}
 
 	if (descriptorSetLayouts.empty())
@@ -361,4 +380,17 @@ void cp::RenderPassRequirement::Deserialize(ISerializer& _serializer)
 	}
 
 	customShaderPath = _serializer.ReadString("CustomShaderPath", "");
+}
+
+std::shared_ptr<cp::Material> cp::Material::LoadMaterial(const cp::VulkanContext& _context, const std::string& _path)
+{
+	std::shared_ptr<Material> material = std::make_shared<Material>(&_context);
+
+	cp::JsonSerializer serializer;
+	serializer.Read(_path);
+	material->Deserialize(serializer);
+
+	LOG_DEBUG(MF("Material [", material->GetName(), "] loaded from [", _path, "]"));
+
+	return material;
 }

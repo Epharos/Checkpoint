@@ -14,41 +14,42 @@ struct Transform : public cp::IComponentBase, public DirtyPattern
 
 	class Helper : public cp::ComponentBaseHelper<Transform>
 	{
-		void Translate(Transform& _component, const glm::vec3& _translation)
+	public:
+		static void Translate(Transform& _component, const glm::vec3& _translation)
 		{
 			_component.position += _translation;
 			_component.MarkDirty();
 		}
 
-		void SetPosition(Transform& _component, const glm::vec3& _position)
+		static void SetPosition(Transform& _component, const glm::vec3& _position)
 		{
 			_component.position = _position;
 			_component.MarkDirty();
 		}
 
-		void Rotate(Transform& _component, const glm::quat& _rotation)
+		static void Rotate(Transform& _component, const glm::quat& _rotation)
 		{
 			_component.rotation = _rotation * _component.rotation;
 			_component.MarkDirty();
 		}
 
-		void Rotate(Transform& _component, const glm::vec3& _rotation)
+		static void Rotate(Transform& _component, const glm::vec3& _rotation)
 		{
 			Rotate(_component, glm::quat(_rotation));
 		}
 
-		void SetRotation(Transform& _component, const glm::quat& _rotation)
+		static void SetRotation(Transform& _component, const glm::quat& _rotation)
 		{
 			_component.rotation = _rotation;
 			_component.MarkDirty();
 		}
 
-		void SetRotation(Transform& _component, const glm::vec3& _rotation)
+		static void SetRotation(Transform& _component, const glm::vec3& _rotation)
 		{
 			SetRotation(_component, glm::quat(_rotation));
 		}
 
-		void LookAt(Transform& _component, const glm::vec3& _target, const glm::vec3& _up = VEC3_UP)
+		static void LookAt(Transform& _component, const glm::vec3& _target, const glm::vec3& _up = VEC3_UP)
 		{
 			glm::vec3 forward = glm::normalize(_target - _component.position);
 			glm::vec3 fallback = _up;
@@ -70,43 +71,43 @@ struct Transform : public cp::IComponentBase, public DirtyPattern
 			_component.MarkDirty();
 		}
 
-		void SetScale(Transform& _component, const glm::vec3& _scale)
+		static void SetScale(Transform& _component, const glm::vec3& _scale)
 		{
 			_component.scale = _scale;
 			_component.MarkDirty();
 		}
 
-		const glm::vec3 GetPosition(const Transform& _component)
+		static const glm::vec3 GetPosition(const Transform& _component)
 		{
 			return _component.position;
 		}
 
-		const glm::quat GetRotation(const Transform& _component)
+		static const glm::quat GetRotation(const Transform& _component)
 		{
 			return _component.rotation;
 		}
 
-		const glm::vec3 GetScale(const Transform& _component)
+		static const glm::vec3 GetScale(const Transform& _component)
 		{
 			return _component.scale;
 		}
 
-		const glm::vec3 GetForward(const Transform& _component)
+		static const glm::vec3 GetForward(const Transform& _component)
 		{
 			return glm::normalize(_component.rotation * VEC3_FORWARD);
 		}
 
-		const glm::vec3 GetRight(const Transform& _component)
+		static const glm::vec3 GetRight(const Transform& _component)
 		{
 			return glm::normalize(_component.rotation * VEC3_RIGHT);
 		}
 
-		const glm::vec3 GetUp(const Transform& _component)
+		static const glm::vec3 GetUp(const Transform& _component)
 		{
 			return glm::normalize(_component.rotation * VEC3_UP);
 		}
 
-		void UpdateMatrix(Transform& _component)
+		static void UpdateMatrix(Transform& _component)
 		{
 			if (!_component.dirty) return;
 
@@ -116,7 +117,7 @@ struct Transform : public cp::IComponentBase, public DirtyPattern
 			_component.MarkClean();
 		}
 
-		const glm::mat4 GetModelMatrix(Transform& _component)
+		static const glm::mat4 GetModelMatrix(Transform& _component)
 		{
 			if (_component.dirty)
 			{
@@ -126,7 +127,7 @@ struct Transform : public cp::IComponentBase, public DirtyPattern
 			return _component.matrix;
 		}
 
-		const glm::mat3 GetNormalMatrix(Transform& _component)
+		static const glm::mat3 GetNormalMatrix(Transform& _component)
 		{
 			if (_component.dirty)
 			{

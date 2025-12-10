@@ -36,7 +36,7 @@ void cp::VulkanContext::Initialize(VulkanContextInfo& _contextInfo)
 	pipelinesManager = new cp::PipelinesManager(GetDevice());
 	layoutsManager = new cp::LayoutsManager(GetDevice());
 	descriptorSetLayoutsManager = new cp::DescriptorSetLayoutsManager(GetDevice());
-	descriptorSetManager = new cp::DescriptorSetManager(GetDevice());
+	descriptorSetManager = new cp::DescriptorSetManager(this);
 }
 
 void cp::VulkanContext::Shutdown()

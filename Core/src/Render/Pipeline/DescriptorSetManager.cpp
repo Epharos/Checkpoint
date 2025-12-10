@@ -1,19 +1,36 @@
 #include "pch.hpp"
 #include "DescriptorSetManager.hpp"
 
-cp::DescriptorSetManager::DescriptorSetManager(vk::Device _device) : device(_device)
+#include "Context/VulkanContext.hpp"
+
+cp::DescriptorSetManager::DescriptorSetManager(cp::VulkanContext* _context) : context(_context)
 {
-	vk::DescriptorPoolSize poolSize = {};
-	poolSize.type = vk::DescriptorType::eUniformBuffer;
-	poolSize.descriptorCount = 100;
+	vk::DescriptorPoolSize poolSizeUniform = {};
+	poolSizeUniform.type = vk::DescriptorType::eUniformBuffer;
+	poolSizeUniform.descriptorCount = 100;
+
+	vk::DescriptorPoolSize poolSizeStorage = {};
+	poolSizeStorage.type = vk::DescriptorType::eStorageBuffer;
+	poolSizeStorage.descriptorCount = 100;
+
+	vk::DescriptorPoolSize poolSizeSampler = {};
+	poolSizeSampler.type = vk::DescriptorType::eSampledImage;
+	poolSizeSampler.descriptorCount = 100;
+
+	std::vector< vk::DescriptorPoolSize> pools = { poolSizeUniform, poolSizeStorage, poolSizeSampler };
 
 	vk::DescriptorPoolCreateInfo poolInfo = {};
-	poolInfo.poolSizeCount = 1;
-	poolInfo.pPoolSizes = &poolSize;
+	poolInfo.poolSizeCount = static_cast<uint32_t>(pools.size());
+	poolInfo.pPoolSizes = pools.data();
 	poolInfo.maxSets = 100;
 	poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
 
-	pool = device.createDescriptorPool(poolInfo);
+	pool = context->GetDevice().createDescriptorPool(poolInfo);
+
+	for (auto& [name, setLayout] : context->GetDescriptorSetLayoutsManager()->GetAllLayouts())
+	{
+		CreateDescriptorSet(name, setLayout);
+	}
 }
 
 vk::DescriptorSet& cp::DescriptorSetManager::GetDescriptorSet(const std::string& _name)
@@ -45,7 +62,7 @@ void cp::DescriptorSetManager::UpdateDescriptorSet(const std::string& _name, con
 		break;
 	}
 
-	device.updateDescriptorSets(1, &write, 0, nullptr);
+	context->GetDevice().updateDescriptorSets(1, &write, 0, nullptr);
 }
 
 void cp::DescriptorSetManager::UpdateDescriptorSet(const std::string& _name, const std::vector<DescriptorSetUpdate>& _writes)
@@ -79,7 +96,7 @@ void cp::DescriptorSetManager::UpdateDescriptorSet(const std::string& _name, con
 		writes.push_back(write);
 	}
 
-	device.updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
+	context->GetDevice().updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 }
 
 void cp::DescriptorSetManager::UpdateDescriptorSets(const std::vector<std::string>& _names, const std::vector<DescriptorSetUpdate>& _writes)
@@ -117,7 +134,7 @@ void cp::DescriptorSetManager::UpdateDescriptorSets(const std::vector<std::strin
 		writes.push_back(write);
 	}
 
-	device.updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
+	context->GetDevice().updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 }
 
 vk::DescriptorSet cp::DescriptorSetManager::CreateDescriptorSet(const std::string& _name, const vk::DescriptorSetLayout& _layout)
@@ -126,6 +143,8 @@ vk::DescriptorSet cp::DescriptorSetManager::CreateDescriptorSet(const std::strin
 	if (sets.find(_name) != sets.end())
 		throw std::runtime_error("Descriptor set with name " + _name + " already exists");
 #endif
+
+	LOG_INFO(MF("Creating Descriptor Set [", _name, "]"));
 
 	sets[_name] = CreateOrphanedDescriptorSet(_layout);
 	return sets[_name];
@@ -142,7 +161,7 @@ std::vector<vk::DescriptorSet> cp::DescriptorSetManager::CreateDescriptorSets(co
 			throw std::runtime_error("Descriptor set with name " + name + " already exists");
 #endif
 
-	std::vector<vk::DescriptorSet> results = device.allocateDescriptorSets(vk::DescriptorSetAllocateInfo(pool, static_cast<uint32_t>(_names.size()), _layouts.data()));
+	std::vector<vk::DescriptorSet> results = context->GetDevice().allocateDescriptorSets(vk::DescriptorSetAllocateInfo(pool, static_cast<uint32_t>(_names.size()), _layouts.data()));
 
 	for (size_t i = 0; i < _names.size(); i++)
 		sets[_names[i]] = results[i];
@@ -152,7 +171,7 @@ std::vector<vk::DescriptorSet> cp::DescriptorSetManager::CreateDescriptorSets(co
 
 vk::DescriptorSet cp::DescriptorSetManager::CreateOrphanedDescriptorSet(const vk::DescriptorSetLayout& _layout)
 {
-	return device.allocateDescriptorSets(vk::DescriptorSetAllocateInfo(pool, 1, &_layout))[0];
+	return context->GetDevice().allocateDescriptorSets(vk::DescriptorSetAllocateInfo(pool, 1, &_layout))[0];
 }
 
 void cp::DescriptorSetManager::UpdateOrphanedDescriptorSet(const vk::DescriptorSet& _set, const DescriptorSetUpdate& _write)
@@ -174,7 +193,7 @@ void cp::DescriptorSetManager::UpdateOrphanedDescriptorSet(const vk::DescriptorS
 		break;
 	}
 
-	device.updateDescriptorSets(1, &write, 0, nullptr);
+	context->GetDevice().updateDescriptorSets(1, &write, 0, nullptr);
 }
 
 void cp::DescriptorSetManager::UpdateOrphanedDescriptorSet(const vk::DescriptorSet& _set, const std::vector<DescriptorSetUpdate>& _writes)
@@ -203,13 +222,13 @@ void cp::DescriptorSetManager::UpdateOrphanedDescriptorSet(const vk::DescriptorS
 		writes.push_back(write);
 	}
 
-	device.updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
+	context->GetDevice().updateDescriptorSets(static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 
 }
 
 void cp::DescriptorSetManager::DestroyOrphanedDescriptorSet(const vk::DescriptorSet& _set)
 {
-	device.freeDescriptorSets(pool, _set);
+	context->GetDevice().freeDescriptorSets(pool, _set);
 }
 
 void cp::DescriptorSetManager::DestroyDescriptorSet(const std::string& _name)
@@ -219,14 +238,14 @@ void cp::DescriptorSetManager::DestroyDescriptorSet(const std::string& _name)
 		throw std::runtime_error("Descriptor set with name " + _name + " does not exist");
 #endif
 
-	device.freeDescriptorSets(pool, sets[_name]);
+	context->GetDevice().freeDescriptorSets(pool, sets[_name]);
 	sets.erase(_name);
 }
 
 void cp::DescriptorSetManager::Cleanup()
 {
 	for (auto& set : sets)
-		device.freeDescriptorSets(pool, set.second);
+		context->GetDevice().freeDescriptorSets(pool, set.second);
 
-	device.destroyDescriptorPool(pool);
+	context->GetDevice().destroyDescriptorPool(pool);
 }

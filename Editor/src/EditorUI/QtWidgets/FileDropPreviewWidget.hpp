@@ -202,8 +202,8 @@ namespace cp {
                 UpdateDisplay();
 	        }
 
-        private:
-            void OnFileSelected(const QString& path) {
+        protected:
+            virtual void OnFileSelected(const QString& path) {
                 if (resourcePtr) {
                     *resourcePtr = cp::ResourceManager::Get()->GetOrLoad<T>(path.toStdString());
                 }
@@ -244,5 +244,24 @@ namespace cp {
             MaterialInstanceDropPreviewWidget(std::shared_ptr<cp::MaterialInstance>* value, const QString& label, const QString& rootDir, QWidget* parent = nullptr)
                 : ResourceDropPreviewWidget<cp::MaterialInstance>(value, label, { "matinstance" }, rootDir, parent)
             {}
+
+        protected:
+            virtual void OnFileSelected(const QString& path) override {
+				ResourceDropPreviewWidget<cp::MaterialInstance>::OnFileSelected(path);
+
+                if (cp::CheckpointEditor::CurrentScene) {
+					if (resourcePtr && *resourcePtr) {
+                        cp::RendererPrototype* renderer = cp::CheckpointEditor::CurrentScene->renderer;
+
+						cp::MaterialInstance& matInstance = **resourcePtr;
+
+                        matInstance.GetMaterial()->Reload(*renderer);
+						matInstance.ValidateData();
+
+
+						LOG_INFO("Reloaded material for material instance after selection: " + path.toStdString());
+                    }
+                }
+			}
     };
 }

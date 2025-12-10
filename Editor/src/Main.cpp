@@ -119,7 +119,9 @@ int main(int argc, char* args[])
 	cp::ResourceManager::Get()->RegisterResourceType<cp::Texture>();
 	cp::ResourceManager::Get()->GetResourceType<cp::Texture>()->SetLoader(std::bind(&cp::Texture::LoadTexture, std::placeholders::_1, std::placeholders::_2));
 	cp::ResourceManager::Get()->RegisterResourceType<cp::Material>();
+	cp::ResourceManager::Get()->GetResourceType<cp::Material>()->SetLoader(std::bind(&cp::Material::LoadMaterial, std::placeholders::_1, std::placeholders::_2));
 	cp::ResourceManager::Get()->RegisterResourceType<cp::MaterialInstance>();
+	cp::ResourceManager::Get()->GetResourceType<cp::MaterialInstance>()->SetLoader(std::bind(&cp::MaterialInstance::LoadMaterialInstance, std::placeholders::_1, std::placeholders::_2));
 
 	cp::Launcher launcher;
 	//cp::EditorWindow editorWindow{ cp::CheckpointEditor::CurrentProject };

@@ -25,6 +25,8 @@ namespace cp
 
 	struct MaterialInstanceResource : public ISerializable
 	{
+		const cp::VulkanContext* context;
+
 		std::string name;
 		cp::ShaderResourceKind kind = cp::ShaderResourceKind::Unknown;
 		uint32_t binding = 0;
@@ -35,12 +37,22 @@ namespace cp
 		std::vector<MaterialInstanceField> fields; // Fields that are part of this resource
 		std::vector<uint8_t> packedData;
 
+		cp::Buffer dataBuffer;
+		bool isBufferCreated = false;
+
+		MaterialInstanceResource(const cp::VulkanContext* _context, const cp::ShaderResource* _sr) : context(_context), associatedResource(_sr) {};
+		MaterialInstanceResource(const cp::VulkanContext* _context) : context(_context), associatedResource(nullptr) {};
+		~MaterialInstanceResource();
+
 		void Serialize(ISerializer& _serializer) const override;
 		void Deserialize(ISerializer& _serializer) override;
 
 		void CollectFields(const ShaderField& field, const std::string& prefix, std::vector<MaterialInstanceField>& fields) const;
 
 		void Repack();
+
+		void CreateBuffer();
+		void UpdateBufferData();
 	};
 
 	class MaterialInstance : public ISerializable
@@ -76,5 +88,7 @@ namespace cp
 		inline std::string GetAssociatedMaterial() const { return associatedMaterial; }
 
 		inline void SetAssociatedMaterial(const std::string& _materialPath) { associatedMaterial = _materialPath; }
+
+		static std::shared_ptr<MaterialInstance> LoadMaterialInstance(const VulkanContext& _context, const std::string& _path);
 	};
 }

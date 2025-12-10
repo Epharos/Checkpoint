@@ -4,6 +4,8 @@
 
 namespace cp
 {
+	class VulkanContext;
+
 	enum DescriptorSetUpdateType
 	{
 		BUFFER,
@@ -31,13 +33,13 @@ namespace cp
 	class DescriptorSetManager
 	{
 	private:
-		vk::Device device;
+		cp::VulkanContext* context;
 		vk::DescriptorPool pool;
 
 		std::unordered_map<std::string, vk::DescriptorSet> sets;
 
 	public:
-		DescriptorSetManager(vk::Device _device);
+		DescriptorSetManager(cp::VulkanContext* _context);
 
 		void Cleanup();
 

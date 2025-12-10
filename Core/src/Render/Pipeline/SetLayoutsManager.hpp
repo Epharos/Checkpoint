@@ -24,6 +24,8 @@ namespace cp
 		void DestroyDescriptorSetLayout(const std::string& _name);
 		void DestroyDescriptorSetLayout(const vk::DescriptorSetLayout& _layout);
 
+		std::unordered_map<std::string, vk::DescriptorSetLayout>& GetAllLayouts() { return layouts; }
+
 		inline constexpr vk::DescriptorSetLayout GlobalLit() { return globalLit; }
 		inline constexpr vk::DescriptorSetLayout GlobalUnlit() { return globalUnlit; }
 		inline constexpr vk::DescriptorSetLayout InstancedDrawing() { return instancedDrawing; }

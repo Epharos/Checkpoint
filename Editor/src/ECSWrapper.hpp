@@ -33,11 +33,11 @@ namespace cp {
 			return components;
 		}
 
-	protected:
-		std::vector<cp::IComponentBase*> components;
-
 		Transform* transform = nullptr; // Shortcut to Transform component
 		MeshRenderer* meshRenderer = nullptr; // Shortcut to MeshRenderer component
+
+	protected:
+		std::vector<cp::IComponentBase*> components;
 	};
 
 	struct SceneAsset : public cp::ISerializable {
