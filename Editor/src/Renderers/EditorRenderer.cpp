@@ -7,32 +7,6 @@ cp::EditorRenderer::EditorRenderer(cp::VulkanContext * _context) : cp::RendererP
 
 	cp::RenderpassDescription colorRenderpassDesc(_context, "Color Pass");
 	renderPassDescriptions.emplace("Color Pass", colorRenderpassDesc);
-
-	//cp::RenderpassDescription zPrepassDesc(_context, "Z Pre-Pass");
-	//zPrepassDesc.SetDepthOnly(true);
-	//renderPassDescriptions.emplace("Z Pre-Pass", zPrepassDesc);
-
-	//cp::RenderpassDescription gBufferPassDesc(_context, "G-Buffer Pass");
-	//renderPassDescriptions.emplace("G-Buffer Pass", gBufferPassDesc);
-
-	instancedBuffer = Helper::Memory::CreateBuffer(
-		_context->GetDevice(),
-		_context->GetPhysicalDevice(),
-		sizeof(cp::TransformData) * MAX_RENDERABLE_ENTITIES,
-		vk::BufferUsageFlagBits::eStorageBuffer,
-		vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-	);
-
-	cp::DescriptorSetUpdate instanceBufferUpdate;
-	instanceBufferUpdate.updateType = cp::DescriptorSetUpdateType::BUFFER;
-	instanceBufferUpdate.buffer = instancedBuffer.buffer;
-	instanceBufferUpdate.offset = 0;
-	instanceBufferUpdate.range = sizeof(cp::TransformData) * MAX_RENDERABLE_ENTITIES;
-	instanceBufferUpdate.dstBinding = 0;
-	instanceBufferUpdate.dstArrayElement = 0;
-	instanceBufferUpdate.descriptorType = vk::DescriptorType::eStorageBuffer;
-	instanceBufferUpdate.descriptorCount = 1;
-	context->GetDescriptorSetManager()->UpdateDescriptorSet("Instanced Drawing", { instanceBufferUpdate });
 }
 
 void cp::EditorRenderer::Render(RendererInstance* _instance, const std::vector<InstanceGroup>& _instanceGroups)
@@ -54,12 +28,6 @@ void cp::EditorRenderer::CreateMainRenderPass(RendererInstance& _instance)
 
 void cp::EditorRenderer::RenderFrame(RendererInstance* _instance, const std::vector<InstanceGroup>& _instanceGroups)
 {
-	if (!activeCamera)
-	{
-		//LOG_WARNING("No active camera set for EditorRenderer, cannot render frame");
-		return;
-	}
-
 	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4> { 0.8f, 0.2f, 0.2f, 1.0f });
 	vk::ClearDepthStencilValue clearDepth = vk::ClearDepthStencilValue(1.0f, 0);
 
@@ -87,13 +55,17 @@ void cp::EditorRenderer::RenderFrame(RendererInstance* _instance, const std::vec
 	renderingInfo.layerCount = 1;
 	renderingInfo.renderArea = vk::Rect2D{ vk::Offset2D{}, _instance->GetSwapchain()->GetExtent() };
 
+	vk::Viewport vp = vk::Viewport(0, 0, _instance->GetSwapchain()->GetExtent().width, _instance->GetSwapchain()->GetExtent().height, 0, 1);
+	vk::Rect2D scissor = vk::Rect2D(vk::Offset2D(0, 0), _instance->GetSwapchain()->GetExtent());
+
 	commandBuffer.beginRenderingKHR(renderingInfo, context->GetDynamicLoader());
+
+	commandBuffer.setViewport(0, vp);
+	commandBuffer.setScissor(0, scissor);
 
 	cp::Mesh* currentMesh = nullptr;
 	cp::Material* currentMaterial = nullptr;
 	cp::MaterialInstance* currentMaterialInstance = nullptr;
-
-	return; //tmp
 
 	for (const auto& instanceGroup : _instanceGroups)
 	{
@@ -122,7 +94,7 @@ void cp::EditorRenderer::RenderFrame(RendererInstance* _instance, const std::vec
 
 		Helper::Memory::MapMemory(
 			context->GetDevice(),
-			instancedBuffer.memory,
+			_instance->GetInstancedBuffer().memory,
 			sizeof(cp::TransformData) * instanceGroup.transforms.size(),
 			sizeof(cp::TransformData) * instanceGroup.instanceOffset,
 			instanceGroup.transforms.data()
@@ -132,25 +104,4 @@ void cp::EditorRenderer::RenderFrame(RendererInstance* _instance, const std::vec
 	}
 
 	commandBuffer.endRenderingKHR(context->GetDynamicLoader());
-}
-
-void cp::EditorRenderer::UpdateCameraBuffer()
-{
-	if(!activeCamera)
-	{
-		LOG_WARNING("No active camera set for EditorRenderer, cannot update camera buffer");
-		return;
-	}
-
-	cp::DescriptorSetUpdate cameraSetUpdate;
-	cameraSetUpdate.updateType = cp::DescriptorSetUpdateType::BUFFER;
-	cameraSetUpdate.buffer = activeCamera->GetUBOBuffer();
-	cameraSetUpdate.offset = 0;
-	cameraSetUpdate.range = sizeof(cp::CameraUBO);
-	cameraSetUpdate.dstBinding = 0;
-	cameraSetUpdate.dstArrayElement = 0;
-	cameraSetUpdate.descriptorType = vk::DescriptorType::eUniformBuffer;
-	cameraSetUpdate.descriptorCount = 1;
-
-	context->GetDescriptorSetManager()->UpdateDescriptorSet("Global Unlit", { cameraSetUpdate });
 }

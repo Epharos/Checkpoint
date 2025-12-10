@@ -129,8 +129,12 @@ void cp::VulkanContext::CreateLogicalDevice()
 	deviceLayers.push_back("VK_LAYER_KHRONOS_validation");
 	#endif
 
+	vk::PhysicalDeviceVulkan11Features v11features;
+	v11features.shaderDrawParameters = VK_TRUE;
+
 	vk::PhysicalDeviceSynchronization2Features sync2Feature;
 	sync2Feature.synchronization2 = VK_TRUE;
+	sync2Feature.pNext = &v11features;
 
 	vk::PhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeature;
 	dynamicRenderingFeature.dynamicRendering = VK_TRUE;

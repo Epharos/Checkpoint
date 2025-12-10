@@ -132,6 +132,9 @@ namespace cp {
                         return a.material < b.material && a.mesh < b.mesh && a.materialInstance < b.materialInstance;
                     });
 
+                editorCamera->UpdateUniformBuffer();
+				renderer->UpdateCameraBuffer(editorCamera->GetUBOBuffer());
+
                 if (renderer)
                 {
                     renderer->Render(groups);

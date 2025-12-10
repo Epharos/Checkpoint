@@ -15,7 +15,7 @@ namespace cp
 		viewMatrix = glm::mat4(1.0f); // Identity matrix
 		projectionMatrix = glm::mat4(1.0f); // Identity matrix
 
-		uboBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(CameraUBO), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, uboBufferMemory);
+		uboBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(), sizeof(CameraUBO), vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
 		SetPerspective(70.f, _renderer->GetPlatform()->GetAspectRatio(), 0.1f, 300.f);
 
@@ -25,8 +25,7 @@ namespace cp
 
 	Camera::~Camera()
 	{
-		context->GetDevice().destroyBuffer(uboBuffer);
-		context->GetDevice().freeMemory(uboBufferMemory);
+		Helper::Memory::DestroyBuffer(context->GetDevice(), uboBuffer);
 	}
 
 	void Camera::SetPosition(const glm::vec3& _position)
@@ -109,7 +108,7 @@ namespace cp
 		{
 			viewMatrix = glm::lookAtRH(position, position + rotation * VEC3_FORWARD, VEC3_UP);
 			ubo.viewProjectionMatrix = projectionMatrix * viewMatrix;
-			Helper::Memory::MapMemory(context->GetDevice(), uboBufferMemory, sizeof(CameraUBO), &ubo);
+			Helper::Memory::MapMemory(context->GetDevice(), uboBuffer.memory, sizeof(CameraUBO), &ubo);
 			dirty = false;
 		}
 	}

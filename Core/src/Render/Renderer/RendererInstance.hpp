@@ -27,8 +27,10 @@ namespace cp {
 
 		RendererPrototype* prototype = nullptr;
 
-		vk::RenderPass mainRenderPass = VK_NULL_HANDLE;
-		std::unordered_map<RenderpassDescription, Renderpass> renderPasses;
+		constexpr static uint32_t MAX_RENDERABLE_ENTITIES = 10000;
+
+		cp::Buffer cameraBuffer;
+		cp::Buffer instancedBuffer;
 
 	public:
 		RendererInstance(cp::VulkanContext* _context, Platform* _platform, RendererPrototype* _prototype);
@@ -47,9 +49,9 @@ namespace cp {
 		void SetSurface(vk::SurfaceKHR _surface);
 		void ResetSwapchain();
 
-		inline std::unordered_map<RenderpassDescription, Renderpass>& GetRenderPasses() { return renderPasses; }
-		Renderpass& RegisterRenderPass(const RenderpassDescription& _name, vk::RenderPass _rp);
-		Renderpass& GetRenderPass(const RenderpassDescription& _name);
-		std::vector<RenderpassDescription> GetRenderPassDescriptions();
+		cp::Buffer& GetCameraBuffer() { return cameraBuffer; }
+		cp::Buffer& GetInstancedBuffer() { return instancedBuffer; }
+
+		void UpdateCameraBuffer(cp::Buffer _buffer);
 	};
 }

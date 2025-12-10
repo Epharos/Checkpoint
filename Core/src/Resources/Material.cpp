@@ -83,8 +83,9 @@ void cp::Material::Reload(cp::RendererPrototype& _renderer)
 
 		if (rpRequirement.customShaderPath.empty())
 		{
-			LOG_WARNING(MF("Custom shader path is empty for material [", name, "]"));
-			continue; // Skip if the custom shader path is empty
+			LOG_WARNING(MF("Custom shader path is empty for material [", name, "], using material shader path [", shaderPath, "]"));
+			rpRequirement.customShaderPath = shaderPath;
+			rpRequirement.customShaderPath = rpRequirement.customShaderPath.substr(0, rpRequirement.customShaderPath.find_last_of('.')) + ".spv"; // Change the extension to .spv
 		}
 
 		if (pipelineDatas.find(name) != pipelineDatas.end()) // Check if the pipeline data already exists
@@ -99,7 +100,7 @@ void cp::Material::Reload(cp::RendererPrototype& _renderer)
 		vk::PipelineRenderingCreateInfoKHR pipelineRenderingCreateInfo;
 		pipelineRenderingCreateInfo.sType = vk::StructureType::ePipelineRenderingCreateInfoKHR;
 		std::vector<vk::Format> colorAttachmentFormats{ vk::Format::eR16G16B16A16Sfloat }; // Default color format is 16-bit float RGBA (for HDR rendering)
-		vk::Format depthAttachmentFormat = vk::Format::eD32Sfloat; // Default depth format is 32-bit float depth
+		vk::Format depthAttachmentFormat = vk::Format::eD32SfloatS8Uint; // Default depth format is 32-bit float depth
 		//TODO : Get the formats from the RenderPassDescription
 
 		pipelineRenderingCreateInfo.colorAttachmentCount = static_cast<uint32_t>(colorAttachmentFormats.size());
@@ -113,15 +114,20 @@ void cp::Material::Reload(cp::RendererPrototype& _renderer)
 		pipelineCreateData.createInfo.renderPass = VK_NULL_HANDLE;
 		pipelineCreateData.createInfo.pNext = &pipelineRenderingCreateInfo;
 		pipelineCreateData.shaderFile = rpRequirement.customShaderPath;
+
+		for (const auto& [stageFlag, entryPoint] : rpRequirement.customEntryPoints)
+		{
+			LOG_DEBUG(MF("Material [", this->moduleName, "] RenderPass [", name, "] using custom entry point [", entryPoint, "] for stage [", static_cast<uint16_t>(stageFlag), "]"));
+		}
 		
 		pipelineCreateData.mains = { 
 			{ vk::ShaderStageFlagBits::eVertex, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::Vertex], "Vertex_Default") },
 			{ vk::ShaderStageFlagBits::eFragment, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::Fragment], "Fragment_Default") },
-			{ vk::ShaderStageFlagBits::eGeometry, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::Geometry], "Geometry_Default") },
-			{ vk::ShaderStageFlagBits::eTessellationControl, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::TessellationControl], "TessellationControl_Default") },
-			{ vk::ShaderStageFlagBits::eTessellationEvaluation, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::TessellationEvaluation], "TessellationEvaluation_Default") },
-			{ vk::ShaderStageFlagBits::eMeshEXT, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::Mesh], "Mesh_Default") },
-			{ vk::ShaderStageFlagBits::eCompute, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::Compute], "Compute_Default") }
+			//{ vk::ShaderStageFlagBits::eGeometry, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::Geometry], "Geometry_Default") },
+			//{ vk::ShaderStageFlagBits::eTessellationControl, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::TessellationControl], "TessellationControl_Default") },
+			//{ vk::ShaderStageFlagBits::eTessellationEvaluation, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::TessellationEvaluation], "TessellationEvaluation_Default") },
+			//{ vk::ShaderStageFlagBits::eMeshEXT, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::Mesh], "Mesh_Default") },
+			//{ vk::ShaderStageFlagBits::eCompute, ValueOrDefault(rpRequirement.customEntryPoints[cp::ShaderStages::Compute], "Compute_Default") }
 		};
 		pipelineCreateData.descriptorSetLayouts = descriptorSetLayouts;
 
@@ -146,7 +152,6 @@ void cp::Material::Reload(cp::RendererPrototype& _renderer)
 		attributeDescriptions[3] = vk::VertexInputAttributeDescription(3, 0, vk::Format::eR32G32B32Sfloat, offsetof(cp::Vertex, tangent));
 		attributeDescriptions[4] = vk::VertexInputAttributeDescription(4, 0, vk::Format::eR32G32B32Sfloat, offsetof(cp::Vertex, bitangent));
 
-		pipelineCreateData.createInfo.subpass = 0; // TODO IMPORTANT : Add support for multiple subpasses
 		pipelineCreateData.createInfo.pDynamicState = new vk::PipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), static_cast<uint32_t>(dynamicStates.size()), dynamicStates.data());
 		pipelineCreateData.createInfo.pDepthStencilState = new vk::PipelineDepthStencilStateCreateInfo(vk::PipelineDepthStencilStateCreateFlags(), pipelineCreationData.depthTestEnable, pipelineCreationData.depthWriteEnable, pipelineCreationData.depthCompareOp);
 		pipelineCreateData.createInfo.pViewportState = new vk::PipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);
@@ -170,7 +175,7 @@ void cp::Material::Serialize(cp::ISerializer& _serializer) const
 
 	_serializer.BeginObjectArrayWriting("RenderPass Requirements");
 
-	for (const auto& [name, rpr] : rpRequirements)
+	for (auto& [name, rpr] : rpRequirements)
 	{
 		_serializer.BeginObjectArrayElementWriting();
 		_serializer.WriteString("RP Name", name);
@@ -276,7 +281,9 @@ void cp::Material::CreateDescriptorSetLayouts()
 	{
 		if (resource.set < 2)
 		{
-			LOG_WARNING(MF("Skipping resource [", resource.name, "] with set index [", resource.set, "] less than 2"));
+			//LOG_WARNING(MF("Skipping resource [", resource.name, "] with set index [", resource.set, "] less than 2"));
+			LOG_TRACE(MF("Getting already existing descriptor set layout for [", resource.set, "]"));
+			descriptorSetLayouts.push_back(context->GetDescriptorSetLayoutsManager()->GetDescriptorSetLayout(resource.set == 0 ? "Global Unlit" : "Instanced Drawing")); //TODO : Make it use the material type (Opaque, Transparent, ...)
 			continue; // Skip resources with set index less than 2 (these are reserved for engine use)
 		}
 

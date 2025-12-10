@@ -1,4 +1,5 @@
 #include "RendererInstance.hpp"
+#include "Render/Renderer/Camera.hpp"
 
 cp::RendererInstance::RendererInstance(cp::VulkanContext* _context, Platform* _platform, RendererPrototype* _prototype)
 	: context(_context), platform(_platform), prototype(_prototype)
@@ -12,6 +13,44 @@ cp::RendererInstance::RendererInstance(cp::VulkanContext* _context, Platform* _p
 	}
 
 	_context->GetDevice().waitIdle();
+
+	instancedBuffer = Helper::Memory::CreateBuffer(
+		_context->GetDevice(),
+		_context->GetPhysicalDevice(),
+		sizeof(cp::TransformData) * MAX_RENDERABLE_ENTITIES,
+		vk::BufferUsageFlagBits::eStorageBuffer,
+		vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+	);
+
+	cp::DescriptorSetUpdate instanceBufferUpdate;
+	instanceBufferUpdate.updateType = cp::DescriptorSetUpdateType::BUFFER;
+	instanceBufferUpdate.buffer = instancedBuffer.buffer;
+	instanceBufferUpdate.offset = 0;
+	instanceBufferUpdate.range = sizeof(cp::TransformData) * MAX_RENDERABLE_ENTITIES;
+	instanceBufferUpdate.dstBinding = 0;
+	instanceBufferUpdate.dstArrayElement = 0;
+	instanceBufferUpdate.descriptorType = vk::DescriptorType::eStorageBuffer;
+	instanceBufferUpdate.descriptorCount = 1;
+	context->GetDescriptorSetManager()->UpdateDescriptorSet("Instanced Drawing", { instanceBufferUpdate });
+
+	cameraBuffer = Helper::Memory::CreateBuffer(
+		_context->GetDevice(),
+		_context->GetPhysicalDevice(),
+		sizeof(cp::CameraUBO),
+		vk::BufferUsageFlagBits::eUniformBuffer,
+		vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+	);
+
+	cp::DescriptorSetUpdate cameraBufferUpdate;
+	cameraBufferUpdate.updateType = cp::DescriptorSetUpdateType::BUFFER;
+	cameraBufferUpdate.buffer = cameraBuffer.buffer;
+	cameraBufferUpdate.offset = 0;
+	cameraBufferUpdate.range = sizeof(cp::CameraUBO);
+	cameraBufferUpdate.dstBinding = 0;
+	cameraBufferUpdate.dstArrayElement = 0;
+	cameraBufferUpdate.descriptorType = vk::DescriptorType::eUniformBuffer;
+	cameraBufferUpdate.descriptorCount = 1;
+	context->GetDescriptorSetManager()->UpdateDescriptorSet("Global Unlit", { cameraBufferUpdate });
 
 	VkSurfaceKHR surfaceHandle = VK_NULL_HANDLE;
 	VkResult vr = VkResult::VK_RESULT_MAX_ENUM; // Just to silence uninitialized variable warning
@@ -91,29 +130,16 @@ void cp::RendererInstance::ResetSwapchain()
 	}
 }
 
-cp::Renderpass& cp::RendererInstance::RegisterRenderPass(const cp::RenderpassDescription& _desc, vk::RenderPass _rp)
+void cp::RendererInstance::UpdateCameraBuffer(cp::Buffer _buffer)
 {
-	if (renderPasses.find(_desc) == renderPasses.end())
-	{
-		renderPasses.insert({ _desc, cp::Renderpass(context, _desc)});
-	}
-
-	return renderPasses.at(_desc);
-}
-
-cp::Renderpass& cp::RendererInstance::GetRenderPass(const cp::RenderpassDescription& _desc)
-{
-	return renderPasses.at(_desc);
-}
-
-std::vector<cp::RenderpassDescription> cp::RendererInstance::GetRenderPassDescriptions()
-{
-	std::vector<cp::RenderpassDescription> names;
-
-	for (auto& [name, _] : renderPasses)
-	{
-		names.push_back(name);
-	}
-
-	return names;
+	cp::DescriptorSetUpdate cameraBufferUpdate;
+	cameraBufferUpdate.updateType = cp::DescriptorSetUpdateType::BUFFER;
+	cameraBufferUpdate.buffer = _buffer.buffer;
+	cameraBufferUpdate.offset = 0;
+	cameraBufferUpdate.range = sizeof(cp::CameraUBO);
+	cameraBufferUpdate.dstBinding = 0;
+	cameraBufferUpdate.dstArrayElement = 0;
+	cameraBufferUpdate.descriptorType = vk::DescriptorType::eUniformBuffer;
+	cameraBufferUpdate.descriptorCount = 1;
+	context->GetDescriptorSetManager()->UpdateDescriptorSet("Global Unlit", { cameraBufferUpdate });
 }

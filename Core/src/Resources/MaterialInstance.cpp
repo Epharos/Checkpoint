@@ -97,7 +97,8 @@ std::vector<cp::MaterialInstanceResource> cp::MaterialInstance::CreateMaterialIn
 			continue; // Skip resources with set index less than 2 (these are reserved for engine use)
 		}
 
-		MaterialInstanceResource instanceResource{ context, &resource };
+		auto& instanceResource = newResources.emplace_back(context, &resource);
+
 		instanceResource.name = resource.name;
 		instanceResource.kind = resource.kind;
 		instanceResource.binding = resource.binding;
@@ -111,8 +112,6 @@ std::vector<cp::MaterialInstanceResource> cp::MaterialInstance::CreateMaterialIn
 
 		instanceResource.CreateBuffer();
 		instanceResource.UpdateBufferData();
-
-		newResources.push_back(std::move(instanceResource));
 	}
 
 	return newResources;
@@ -222,14 +221,14 @@ void cp::MaterialInstance::ValidateData()
 
 	// Removing stale resources that are not in the correctResources
 
-	//LOG_DEBUG(MF("Validating resources, removing stale ones..."));
+	LOG_DEBUG(MF("Validating resources, removing stale ones..."));
 
-	//resources.erase(std::remove_if(resources.begin(), resources.end(), [&](const MaterialInstanceResource& res) {
-	//	return material->GetShaderReflection()->resources.end() == std::find_if(material->GetShaderReflection()->resources.begin(), material->GetShaderReflection()->resources.end(),
-	//		[&res](const ShaderResource& correctRes) {
-	//			return res.name == correctRes.name && res.set == correctRes.set && res.binding == correctRes.binding;
-	//		});
-	//	}), resources.end());
+	resources.erase(std::remove_if(resources.begin(), resources.end(), [&](const MaterialInstanceResource& res) {
+		return material->GetShaderReflection()->resources.end() == std::find_if(material->GetShaderReflection()->resources.begin(), material->GetShaderReflection()->resources.end(),
+			[&res](const ShaderResource& correctRes) {
+				return res.name == correctRes.name && res.set == correctRes.set && res.binding == correctRes.binding;
+			});
+		}), resources.end());
 
 	LOG_DEBUG(MF("Validation complete, ", resources.size(), " resources remaining after validation."));
 }

@@ -34,8 +34,7 @@ namespace cp
 		inline constexpr glm::mat4& GetProjectionMatrix() { return projectionMatrix; }
 		inline constexpr glm::mat4 GetViewProjectionMatrix() const { return projectionMatrix * viewMatrix; }
 
-		inline constexpr vk::Buffer& GetUBOBuffer() { return uboBuffer; }
-		inline constexpr vk::DeviceMemory& GetUBOBufferMemory() { return uboBufferMemory; }
+		inline constexpr cp::Buffer& GetUBOBuffer() { return uboBuffer; }
 
 		inline glm::vec3 GetForward() const { return glm::normalize(rotation * VEC3_FORWARD); }
 		inline glm::vec3 GetRight() const { return glm::normalize(glm::cross(GetUp(), GetForward())); }
@@ -61,7 +60,6 @@ namespace cp
 
 		CameraUBO ubo;
 
-		vk::Buffer uboBuffer;
-		vk::DeviceMemory uboBufferMemory;
+		cp::Buffer uboBuffer;
 	};
 }

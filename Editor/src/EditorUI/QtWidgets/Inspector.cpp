@@ -167,25 +167,30 @@ void cp::Inspector::ShowMaterial(const std::string& _path) {
 		{
 			if (!_mat.HasShaderStage(_stage)) return nullptr;
 
-auto entryPoints = factory.CreateComboBox();
-entryPoints->SetPlaceholderText(_placeholder);
+			auto entryPoints = factory.CreateComboBox();
+			entryPoints->SetPlaceholderText(_placeholder);
 
-for (auto& [name, ep] : _mat.GetShaderReflection()->entryPoints)
-{
-	if (ep == _stage) entryPoints->AddItem(name);
-}
+			for (auto& [name, ep] : _mat.GetShaderReflection()->entryPoints)
+			{
+				if (ep == _stage) entryPoints->AddItem(name);
+			}
 
-if (_mat.GetRenderPassRequirement(_renderpass).customEntryPoints.contains(_stage))
-{
-	entryPoints->SetSelectedItem(_mat.GetRenderPassRequirement(_renderpass).customEntryPoints.at(_stage));
-}
+			if (_mat.GetRenderPassRequirement(_renderpass).customEntryPoints.contains(_stage))
+			{
+				entryPoints->SetSelectedItem(_mat.GetRenderPassRequirement(_renderpass).customEntryPoints.at(_stage));
+			}
 
-if (entryPoints->GetSelectedItem().empty())
-{
-	entryPoints->SetSelectedIndex(0);
-}
+			if (entryPoints->GetSelectedItem().empty())
+			{
+				entryPoints->SetSelectedIndex(0);
+				_mat.GetRenderPassRequirement(_renderpass).customEntryPoints[_stage] = entryPoints->GetSelectedItem();
+			}
 
-return entryPoints.release();
+			entryPoints->SetOnSelectionChangedListener([=, &_mat](const std::string& selectedItem) {
+				_mat.GetRenderPassRequirement(_renderpass).customEntryPoints[_stage] = selectedItem;
+			});
+
+			return entryPoints.release();
 		};
 
 		for (const auto& [rpName, rpDesc] : cp::CheckpointEditor::CurrentScene->renderer->GetRenderPassDescriptions())

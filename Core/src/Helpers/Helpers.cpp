@@ -116,8 +116,13 @@ namespace Helper
 
 		void DestroyBuffer(const vk::Device& device, const vk::Buffer& buffer, const vk::DeviceMemory& bufferMemory)
 		{
-			device.destroyBuffer(buffer);
-			device.freeMemory(bufferMemory);
+			if (buffer) device.destroyBuffer(buffer);
+			if (bufferMemory) device.freeMemory(bufferMemory);
+		}
+
+		void DestroyBuffer(const vk::Device& device, const cp::Buffer& buffer)
+		{
+			DestroyBuffer(device, buffer.buffer, buffer.memory);
 		}
 	}
 
