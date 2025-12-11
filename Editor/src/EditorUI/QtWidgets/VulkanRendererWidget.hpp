@@ -36,6 +36,7 @@ namespace cp {
 				setMinimumSize(QSize(400, 400));
 
 				editorCamera = new cp::Camera(&CheckpointEditor::VulkanCtx, renderer);
+                editorCamera->SetPerspective(60.f, renderer->GetPlatform()->GetAspectRatio(), 0.01f, 300.f);
 				//editorCamera->Translate(glm::vec3(0.0f, 0.0f, 5.0f));
 				//editorCamera->LookAt(glm::vec3(0.0f));
                 renderer->UpdateCameraBuffer(editorCamera->GetUBOBuffer());
@@ -61,6 +62,11 @@ namespace cp {
                 if (renderer)
                 {
                     renderer->TriggerSwapchainRecreation();
+
+                    if (editorCamera)
+                    {
+                        editorCamera->SetPerspective(60.f, renderer->GetPlatform()->GetAspectRatio(), 0.01f, 300.f);
+                    }
                 }
             }
 
@@ -95,6 +101,37 @@ namespace cp {
 
             void UpdateRender()
             {
+				LOG_DEBUG("--- Vulkan Renderer Widget Update Render ---");
+                LOG_DEBUG("");
+
+                auto Mat4ToString = [](const glm::mat4& mat)
+                    {
+                        std::string result;
+                        for (int i = 0; i < 4; ++i)
+                        {
+                            result += "| ";
+                            for (int j = 0; j < 4; ++j)
+                            {
+                                result += std::to_string(mat[i][j]) + " ";
+                            }
+                            result += "|\n";
+                        }
+                        return result;
+                    };
+
+                auto Vec3ToString = [](const glm::vec3& vec)
+                    {
+                        return "(" + std::to_string(vec.x) + ", " + std::to_string(vec.y) + ", " + std::to_string(vec.z) + ")";
+                    };
+
+                if(editorCamera)
+                {
+					LOG_DEBUG("Editor Camera Position: " + Vec3ToString(editorCamera->GetPosition()));
+					LOG_DEBUG("Editor Camera View Matrix:\n" + Mat4ToString(editorCamera->GetViewMatrix()));
+					LOG_DEBUG("Editor Camera Projection Matrix:\n" + Mat4ToString(editorCamera->GetProjectionMatrix()));
+					LOG_DEBUG("Editor Camera View-Projection Matrix:\n" + Mat4ToString(editorCamera->GetProjectionMatrix() * editorCamera->GetViewMatrix()));
+                }
+
                 // Creating groups
 
                 std::vector<cp::InstanceGroup> groups;
@@ -109,6 +146,9 @@ namespace cp {
 
                     glm::mat4 modelMatrix = Transform::Helper::GetModelMatrix(*entity->transform);
                     glm::mat4 normalMatrix = glm::mat4(Transform::Helper::GetNormalMatrix(*entity->transform));
+
+					LOG_DEBUG(MF("Entity '", entity->name, "' Model Matrix:\n", Mat4ToString(modelMatrix)));
+                    LOG_DEBUG(MF("Entity '", entity->name, "' Position:\n", Vec3ToString(entity->transform->position)));
 
 					if (entity->meshRenderer->materialInstance == nullptr || entity->meshRenderer->mesh == nullptr)
                     {
@@ -135,30 +175,7 @@ namespace cp {
                         return a.material < b.material && a.mesh < b.mesh && a.materialInstance < b.materialInstance;
                     });
 
-                auto Mat4ToString = [](const glm::mat4& mat)
-                {
-                    std::string result;
-                    for (int i = 0; i < 4; ++i)
-                    {
-                        result += "| ";
-                        for (int j = 0; j < 4; ++j)
-                        {
-                            result += std::to_string(mat[i][j]) + " ";
-                        }
-                        result += "|\n";
-                    }
-                    return result;
-				};
-
-                auto Vec3ToString = [](const glm::vec3& vec)
-                {
-                    return "(" + std::to_string(vec.x) + ", " + std::to_string(vec.y) + ", " + std::to_string(vec.z) + ")";
-				};
-
                 editorCamera->UpdateUniformBuffer();
-                LOG_DEBUG(MF("Camera View Matrix: \n", Mat4ToString(editorCamera->GetViewMatrix())));
-				LOG_DEBUG(MF("Camera Projection Matrix: \n", Mat4ToString(editorCamera->GetProjectionMatrix())));
-				LOG_DEBUG(MF("Camera Position: ", Vec3ToString(editorCamera->GetPosition()), " | Camera Rotation: ", Vec3ToString(editorCamera->GetRotationEuler())));
 
                 if (renderer)
                 {
@@ -166,6 +183,10 @@ namespace cp {
                 }
 
                 renderTimer.start();
+
+                LOG_DEBUG("");
+                LOG_DEBUG("");
+                LOG_DEBUG("");
             }
     };
 }

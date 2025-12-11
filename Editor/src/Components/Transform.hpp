@@ -119,6 +119,8 @@ struct Transform : public cp::IComponentBase, public DirtyPattern
 
 		static const glm::mat4 GetModelMatrix(Transform& _component)
 		{
+			_component.MarkDirty();
+
 			if (_component.dirty)
 			{
 				UpdateMatrix(_component);

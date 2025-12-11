@@ -4,10 +4,7 @@
 
 struct CameraData
 {
-    float4x4 view;
-    float4x4 projection;
     float4x4 viewProjection;
-	float2 nearFar;
 };
 
 struct ModelData
@@ -70,5 +67,5 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 [shader("pixel")]
 float4 pixelMain(VSOutput input) : SV_TARGET
 {
-    return textureData.meshColor;
+    return float4(input.worldPosition, 1.0f);
 }

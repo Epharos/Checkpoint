@@ -28,7 +28,7 @@ void cp::EditorRenderer::CreateMainRenderPass(RendererInstance& _instance)
 
 void cp::EditorRenderer::RenderFrame(RendererInstance* _instance, const std::vector<InstanceGroup>& _instanceGroups)
 {
-	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4> { 0.8f, 0.2f, 0.2f, 1.0f });
+	vk::ClearColorValue clearColor = vk::ClearColorValue(std::array<float, 4> { 0.8f, 0.8f, 0.8f, 1.0f });
 	vk::ClearDepthStencilValue clearDepth = vk::ClearDepthStencilValue(1.0f, 0);
 
 	vk::CommandBuffer commandBuffer = _instance->GetSwapchain()->GetCurrentFrame()->GetCommandBuffer();
