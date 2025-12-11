@@ -59,9 +59,11 @@ void cp::Swapchain::CreateData()
 		RenderTarget* rt = new RenderTarget(*context, extent);
 		frame->AddRenderTarget(rt);
 		auto colorRTA = std::make_shared<RenderTargetAttachment>(context, image, surfaceFormat.format, vk::ImageAspectFlagBits::eColor);
+		auto hdrColorRTA = std::make_shared<RenderTargetAttachment>(context, extent, vk::Format::eR16G16B16A16Sfloat, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled, vk::ImageAspectFlagBits::eColor, true);
 		colorRTA->isSwapchain = true;
 		rt->AddAttachment(depthRTA);
 		rt->AddAttachment(colorRTA);
+		rt->AddAttachment(hdrColorRTA);
 		
 		frames.push_back(frame);
 	}

@@ -257,7 +257,7 @@ namespace cp {
 
                         matInstance.GetMaterial()->Reload(*renderer);
 						matInstance.ValidateData();
-
+                        matInstance.UpdateDescriptorSets();
 
 						LOG_INFO("Reloaded material for material instance after selection: " + path.toStdString());
                     }

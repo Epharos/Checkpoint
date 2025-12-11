@@ -119,12 +119,11 @@ std::vector<cp::MaterialInstanceResource> cp::MaterialInstance::CreateMaterialIn
 
 void cp::MaterialInstanceResource::CreateBuffer()
 {
+	LOG_TRACE(MF("Creating MaterialInstanceResource buffer for resource: ", name, " of size: ", packedData.size()));
 	dataBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(),
 		packedData.size(),
 		vk::BufferUsageFlagBits::eUniformBuffer,
 		vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-
-	isBufferCreated = true;
 }
 
 void cp::MaterialInstanceResource::UpdateBufferData()
@@ -132,19 +131,59 @@ void cp::MaterialInstanceResource::UpdateBufferData()
 	Helper::Memory::MapMemory(context->GetDevice(), dataBuffer.memory, packedData.size(), 0, packedData.data());
 }
 
+cp::MaterialInstanceResource::MaterialInstanceResource(const cp::MaterialInstanceResource& other)
+{
+	context = other.context;
+	name = other.name;
+	kind = other.kind;
+	binding = other.binding;
+	set = other.set;
+	associatedResource = other.associatedResource;
+	fields = other.fields;
+	packedData = other.packedData;
+
+	if (other.dataBuffer.buffer != VK_NULL_HANDLE || other.dataBuffer.memory != VK_NULL_HANDLE)
+	{
+		CreateBuffer();
+		UpdateBufferData();
+	}
+
+	LOG_DEBUG(MF("Copied MaterialInstanceResource: ", name));
+}
+
+cp::MaterialInstanceResource& cp::MaterialInstanceResource::operator=(const MaterialInstanceResource& other)
+{
+	if (this == &other)
+		return *this;
+
+	context = other.context;
+	name = other.name;
+	kind = other.kind;
+	binding = other.binding;
+	set = other.set;
+	associatedResource = other.associatedResource;
+	fields = other.fields;
+	packedData = other.packedData;
+
+	if (dataBuffer.buffer != VK_NULL_HANDLE || dataBuffer.memory != VK_NULL_HANDLE)
+	{
+		Helper::Memory::DestroyBuffer(context->GetDevice(), dataBuffer);
+	}
+
+	if (other.dataBuffer.buffer != VK_NULL_HANDLE || other.dataBuffer.memory != VK_NULL_HANDLE)
+	{
+		CreateBuffer();
+		UpdateBufferData();
+	}
+
+	LOG_DEBUG(MF("Assigned MaterialInstanceResource: ", name));
+	return *this;
+}
+
 cp::MaterialInstanceResource::~MaterialInstanceResource()
 {
-	if (!isBufferCreated) return;
-
-	if (dataBuffer.buffer)
-	{
-		context->GetDevice().destroyBuffer(dataBuffer.buffer);
-	}
-
-	if (dataBuffer.memory)
-	{
-		context->GetDevice().freeMemory(dataBuffer.memory);
-	}
+	LOG_TRACE(MF("Destroying MaterialInstanceResource buffer for resource: ", name));
+	Helper::Memory::DestroyBuffer(context->GetDevice(), dataBuffer);
 }
 
 void cp::MaterialInstance::ValidateData()
@@ -231,6 +270,27 @@ void cp::MaterialInstance::ValidateData()
 		}), resources.end());
 
 	LOG_DEBUG(MF("Validation complete, ", resources.size(), " resources remaining after validation."));
+
+	for (auto& res : resources)
+	{
+		if (res.set < 2)
+		{
+			continue; // Skip sets 0 and 1 (commonly reserved for global and per-frame data)
+		}
+
+		if (res.kind != cp::ShaderResourceKind::ConstantBuffer && res.kind != cp::ShaderResourceKind::StructuredBuffer)
+		{
+			continue; // Only need to update buffers
+		}
+
+		if (res.dataBuffer.buffer != VK_NULL_HANDLE || res.dataBuffer.memory != VK_NULL_HANDLE)
+		{
+			Helper::Memory::DestroyBuffer(context->GetDevice(), res.dataBuffer);
+		}
+
+		res.CreateBuffer();
+		res.UpdateBufferData();
+	}
 }
 
 QWidget* cp::MaterialInstance::CreateMaterialInstanceWidget(QWidget* _parent)
@@ -319,6 +379,14 @@ void cp::MaterialInstanceResource::Deserialize(ISerializer& _serializer)
 		fields.push_back(field);
 		_serializer.EndObjectArrayElement();
 	}
+
+//	if (set >= 2 && (kind == cp::ShaderResourceKind::ConstantBuffer || kind == cp::ShaderResourceKind::StructuredBuffer))
+//	{
+//		Repack();
+//		CreateBuffer();
+//		UpdateBufferData();
+//	}
+
 	_serializer.EndObjectArray();
 }
 
@@ -364,6 +432,72 @@ void cp::MaterialInstanceResource::Repack()
 		LOG_DEBUG(MF("Packing ", field.data.size(), " bytes at offset ", offset, " for field ", field.name, " (packedData is used up to byte ", (offset + field.data.size()), "/", packedData.size(), ")"));
 
 		std::memcpy(packedData.data() + offset, field.data.data(), field.data.size() * sizeof(uint8_t));
+	}
+}
+
+void cp::MaterialInstance::BindMaterialInstance(vk::CommandBuffer _command, const std::string& _renderpass)
+{
+	if (!material || !material->GetShaderReflection())
+	{
+		LOG_ERROR("Material or shader reflection is null");
+		return;
+	}
+	for (const auto& resource : resources)
+	{
+		if (resource.set < 2)
+		{
+			LOG_WARNING(MF("Skipping binding for resource ", resource.name, " with set ", resource.set));
+			continue; // Skip sets 0 and 1 (commonly reserved for global and per-frame data)
+		}
+
+		std::string descriptorSetName = material->GetName() + "_" + std::to_string(resource.set);
+		vk::DescriptorSet descriptorSet = context->GetDescriptorSetManager()->GetDescriptorSet(descriptorSetName);
+		_command.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, material->GetPipelineLayout(_renderpass), resource.set, descriptorSet, nullptr);
+
+		//LOG_TRACE(MF("Bound descriptor set ", descriptorSetName, " to pipeline layout for renderpass ", _renderpass));
+	}
+}
+
+void cp::MaterialInstance::UpdateDescriptorSets()
+{
+	if (!material || !material->GetShaderReflection())
+	{
+		LOG_ERROR("Material or shader reflection is null");
+		return;
+	}
+
+	size_t lastUpdatedSet = ~(0ull);
+
+	for (const auto& resource : resources)
+	{
+		if (resource.set < 2)
+		{
+			LOG_WARNING(MF("Skipping descriptor set update for resource ", resource.name, " with set ", resource.set));
+			continue; // Skip sets 0 and 1 (commonly reserved for global and per-frame data)
+		}
+
+		if (resource.set != lastUpdatedSet)
+		{
+			LOG_DEBUG(MF("Updating descriptor set for set index ", resource.set));
+			lastUpdatedSet = resource.set;
+			std::string setName = material->GetName() + "_" + std::to_string(resource.set);
+			context->GetDescriptorSetManager()->CreateDescriptorSet(setName, context->GetDescriptorSetLayoutsManager()->GetDescriptorSetLayout(setName));
+		}
+
+		cp::DescriptorSetUpdate descriptorUpdate;
+		descriptorUpdate.dstBinding = resource.binding;
+		descriptorUpdate.dstArrayElement = 0;
+		descriptorUpdate.descriptorType = Helper::Material::GetDescriptorTypeFromBindingType(resource.kind);
+		descriptorUpdate.descriptorCount = 1;
+		descriptorUpdate.buffer = resource.dataBuffer.buffer;
+		descriptorUpdate.offset = 0;
+		descriptorUpdate.range = resource.packedData.size();
+
+		std::string descriptorSetName = material->GetName() + "_" + std::to_string(resource.set);
+		LOG_DEBUG(MF("Trying to update descriptor set ", descriptorSetName, " for resource ", resource.name));
+		context->GetDescriptorSetManager()->UpdateDescriptorSet(descriptorSetName, { descriptorUpdate });
+
+		LOG_TRACE(MF("Updated descriptor set ", descriptorSetName, " for resource ", resource.name));
 	}
 }
 

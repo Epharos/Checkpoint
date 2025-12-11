@@ -33,12 +33,12 @@ void cp::EditorRenderer::RenderFrame(RendererInstance* _instance, const std::vec
 
 	vk::CommandBuffer commandBuffer = _instance->GetSwapchain()->GetCurrentFrame()->GetCommandBuffer();
 
-	vk::RenderingAttachmentInfoKHR colorAttachmentInfo;
-	colorAttachmentInfo.imageView = _instance->GetSwapchain()->GetCurrentFrame()->GetMainRenderTarget()->GetAttachment(1)->GetImageView();
-	colorAttachmentInfo.imageLayout = vk::ImageLayout::eAttachmentOptimalKHR;
-	colorAttachmentInfo.clearValue = clearColor;
-	colorAttachmentInfo.loadOp = vk::AttachmentLoadOp::eClear;
-	colorAttachmentInfo.storeOp = vk::AttachmentStoreOp::eStore;
+	vk::RenderingAttachmentInfoKHR hdrColorAttachmentInfo;
+	hdrColorAttachmentInfo.imageView = _instance->GetSwapchain()->GetCurrentFrame()->GetMainRenderTarget()->GetAttachment(2)->GetImageView();
+	hdrColorAttachmentInfo.imageLayout = vk::ImageLayout::eAttachmentOptimalKHR;
+	hdrColorAttachmentInfo.clearValue = clearColor;
+	hdrColorAttachmentInfo.loadOp = vk::AttachmentLoadOp::eClear;
+	hdrColorAttachmentInfo.storeOp = vk::AttachmentStoreOp::eStore;
 
 	vk::RenderingAttachmentInfoKHR depthAttachmentInfo;
 	depthAttachmentInfo.imageView = _instance->GetSwapchain()->GetCurrentFrame()->GetMainRenderTarget()->GetAttachment(0)->GetImageView();
@@ -49,7 +49,7 @@ void cp::EditorRenderer::RenderFrame(RendererInstance* _instance, const std::vec
 
 	vk::RenderingInfo renderingInfo;
 	renderingInfo.colorAttachmentCount = 1;
-	renderingInfo.pColorAttachments = &colorAttachmentInfo;
+	renderingInfo.pColorAttachments = &hdrColorAttachmentInfo;
 	renderingInfo.pDepthAttachment = &depthAttachmentInfo;
 	//renderingInfo.pStencilAttachment = &depthAttachmentInfo;
 	renderingInfo.layerCount = 1;
@@ -82,7 +82,7 @@ void cp::EditorRenderer::RenderFrame(RendererInstance* _instance, const std::vec
 		if (currentMaterialInstance != instanceGroup.materialInstance)
 		{
 			currentMaterialInstance = instanceGroup.materialInstance;
-			//currentMaterialInstance->BindMaterialInstance(commandBuffer);
+			currentMaterialInstance->BindMaterialInstance(commandBuffer, "Color Pass");
 		}
 
 		if (currentMesh != instanceGroup.mesh)

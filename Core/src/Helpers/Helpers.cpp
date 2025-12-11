@@ -149,7 +149,7 @@ namespace Helper
 
 		vk::Format FindDepthFormat(const vk::PhysicalDevice& physicalDevice)
 		{
-			return FindSupportedFormat(physicalDevice, { vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint }, vk::ImageTiling::eOptimal, vk::FormatFeatureFlagBits::eDepthStencilAttachment);
+			return FindSupportedFormat(physicalDevice, { vk::Format::eD32SfloatS8Uint, vk::Format::eD32Sfloat, vk::Format::eD24UnormS8Uint }, vk::ImageTiling::eOptimal, vk::FormatFeatureFlagBits::eDepthStencilAttachment);
 		}
 	}
 

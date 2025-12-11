@@ -36,6 +36,9 @@ namespace cp {
 				setMinimumSize(QSize(400, 400));
 
 				editorCamera = new cp::Camera(&CheckpointEditor::VulkanCtx, renderer);
+				//editorCamera->Translate(glm::vec3(0.0f, 0.0f, 5.0f));
+				//editorCamera->LookAt(glm::vec3(0.0f));
+                renderer->UpdateCameraBuffer(editorCamera->GetUBOBuffer());
             }
 
             void Cleanup()
@@ -132,8 +135,30 @@ namespace cp {
                         return a.material < b.material && a.mesh < b.mesh && a.materialInstance < b.materialInstance;
                     });
 
+                auto Mat4ToString = [](const glm::mat4& mat)
+                {
+                    std::string result;
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        result += "| ";
+                        for (int j = 0; j < 4; ++j)
+                        {
+                            result += std::to_string(mat[i][j]) + " ";
+                        }
+                        result += "|\n";
+                    }
+                    return result;
+				};
+
+                auto Vec3ToString = [](const glm::vec3& vec)
+                {
+                    return "(" + std::to_string(vec.x) + ", " + std::to_string(vec.y) + ", " + std::to_string(vec.z) + ")";
+				};
+
                 editorCamera->UpdateUniformBuffer();
-				renderer->UpdateCameraBuffer(editorCamera->GetUBOBuffer());
+                LOG_DEBUG(MF("Camera View Matrix: \n", Mat4ToString(editorCamera->GetViewMatrix())));
+				LOG_DEBUG(MF("Camera Projection Matrix: \n", Mat4ToString(editorCamera->GetProjectionMatrix())));
+				LOG_DEBUG(MF("Camera Position: ", Vec3ToString(editorCamera->GetPosition()), " | Camera Rotation: ", Vec3ToString(editorCamera->GetRotationEuler())));
 
                 if (renderer)
                 {

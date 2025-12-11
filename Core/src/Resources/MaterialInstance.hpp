@@ -38,10 +38,10 @@ namespace cp
 		std::vector<uint8_t> packedData;
 
 		cp::Buffer dataBuffer;
-		bool isBufferCreated = false;
 
 		MaterialInstanceResource(const cp::VulkanContext* _context, const cp::ShaderResource* _sr) : context(_context), associatedResource(_sr) {};
 		MaterialInstanceResource(const cp::VulkanContext* _context) : context(_context), associatedResource(nullptr) {};
+		MaterialInstanceResource(const cp::MaterialInstanceResource& other);
 		~MaterialInstanceResource();
 
 		void Serialize(ISerializer& _serializer) const override;
@@ -53,6 +53,8 @@ namespace cp
 
 		void CreateBuffer();
 		void UpdateBufferData();
+
+		MaterialInstanceResource& operator=(const MaterialInstanceResource& other);
 	};
 
 	class MaterialInstance : public ISerializable
@@ -80,9 +82,8 @@ namespace cp
 		QWidget* CreateMaterialInstanceWidget(QWidget* _parent);
 #endif
 
-		/*virtual void PopulateDescriptorSet() = 0;
-
-		virtual void BindMaterialInstance(vk::CommandBuffer _command) = 0;*/
+		void BindMaterialInstance(vk::CommandBuffer _command, const std::string& _renderpass);
+		void UpdateDescriptorSets();
 
 		inline std::shared_ptr<Material> GetMaterial() const { return material; }
 		inline std::string GetAssociatedMaterial() const { return associatedMaterial; }
