@@ -30,8 +30,6 @@ struct VSInput
 struct VSOutput
 {
 	float4 position : SV_POSITION;
-    
-    float3 worldPosition : TEXCOORD1;
 };
 
 [vk::binding(0)]
@@ -48,12 +46,10 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 {
 	VSOutput output;
 
-    float4 worldPos = mul(models[instanceID].model, float4(input.position, 1.0f));
+    output.position = float4(input.position, 1.0f);
 
-    output.worldPosition = worldPos.xyz;
-
-    // Calculate the model-view-projection matrix and multiply it with the vertex position to get the clip-space position
-    output.position = mul(camera.viewProjection, worldPos);
+    float4x4 mvp = mul(camera.viewProjection, models[instanceID].model);
+    output.position = mul(mvp, float4(input.position, 1.0f));
 
     // Fix to avoid unused variable warnings
     float3 normal = input.normal;
@@ -67,5 +63,5 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 [shader("pixel")]
 float4 pixelMain(VSOutput input) : SV_TARGET
 {
-    return float4(input.worldPosition, 1.0f);
+    return textureData.meshColor;
 }

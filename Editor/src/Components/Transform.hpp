@@ -111,8 +111,13 @@ struct Transform : public cp::IComponentBase, public DirtyPattern
 		{
 			if (!_component.dirty) return;
 
-			_component.matrix = glm::translate(glm::mat4(1.0f), _component.position) * glm::mat4_cast(_component.rotation) * glm::scale(glm::mat4(1.0f), _component.scale);
-			_component.normalMatrix = glm::mat3(glm::transpose(glm::inverse(_component.matrix)));
+			glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), _component.position);
+			glm::mat4 rotationMatrix = glm::toMat4(_component.rotation);
+			glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0), _component.scale);
+
+			_component.matrix = translationMatrix * rotationMatrix * scaleMatrix;
+			//_component.matrix = glm::transpose(_component.matrix);
+			_component.normalMatrix = glm::transpose(glm::inverse(glm::mat3(_component.matrix)));
 
 			_component.MarkClean();
 		}

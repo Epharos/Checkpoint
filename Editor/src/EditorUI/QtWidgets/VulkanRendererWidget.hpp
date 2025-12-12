@@ -36,7 +36,7 @@ namespace cp {
 				setMinimumSize(QSize(400, 400));
 
 				editorCamera = new cp::Camera(&CheckpointEditor::VulkanCtx, renderer);
-                editorCamera->SetPerspective(60.f, renderer->GetPlatform()->GetAspectRatio(), 0.01f, 300.f);
+                editorCamera->SetPerspective(60.f, renderer->GetPlatform()->GetAspectRatio(), 0.1f, 300.f);
 				//editorCamera->Translate(glm::vec3(0.0f, 0.0f, 5.0f));
 				//editorCamera->LookAt(glm::vec3(0.0f));
                 renderer->UpdateCameraBuffer(editorCamera->GetUBOBuffer());
@@ -65,7 +65,7 @@ namespace cp {
 
                     if (editorCamera)
                     {
-                        editorCamera->SetPerspective(60.f, renderer->GetPlatform()->GetAspectRatio(), 0.01f, 300.f);
+                        editorCamera->SetPerspective(60.f, renderer->GetPlatform()->GetAspectRatio(), 0.1f, 300.f);
                     }
                 }
             }
@@ -155,6 +155,14 @@ namespace cp {
                         LOG_WARNING(MF("Entity '", entity->name, "' is missing a material instance or mesh, skipping rendering for this entity."));
                         continue;
                     }
+
+//					glm::mat4 MVP = editorCamera->GetProjectionMatrix() * editorCamera->GetViewMatrix() * modelMatrix;
+//                    
+//                    for (auto v : entity->meshRenderer->mesh->GetVertices())
+//                    {
+//						glm::vec4 fp = MVP * glm::vec4(v.position, 1.0f);
+//						LOG_DEBUG(MF("Vertex Position: ", Vec3ToString(v.position), " -> Clip Space: (", std::to_string(fp.x), ", ", std::to_string(fp.y), ", ", std::to_string(fp.z), ", ", std::to_string(fp.w), ")"));
+//                    }
 
                     data[std::make_tuple(entity->meshRenderer->materialInstance->GetMaterial().get(), entity->meshRenderer->mesh.get(), entity->meshRenderer->materialInstance.get())].push_back({modelMatrix, normalMatrix});
                 }
