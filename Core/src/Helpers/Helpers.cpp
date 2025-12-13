@@ -484,7 +484,7 @@ vk::DescriptorType Helper::Material::GetDescriptorTypeFromBindingType(const cp::
 	case cp::ShaderResourceKind::CombinedImageSampler:
 		return vk::DescriptorType::eCombinedImageSampler;
 	case cp::ShaderResourceKind::TextureResource:
-		return vk::DescriptorType::eSampledImage;
+		return vk::DescriptorType::eCombinedImageSampler; //We should test it with eSampledImage too but for now this should work
 	case cp::ShaderResourceKind::Sampler:
 		return vk::DescriptorType::eSampler;
 	default:

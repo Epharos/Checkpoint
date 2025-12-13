@@ -14,6 +14,9 @@ namespace cp
 
 		protected:
 			std::shared_ptr<cp::MaterialInstance> postProcessMaterialInstance;
+			std::shared_ptr<cp::Mesh> quadMesh;
+
+			bool postProcessingSetup = false;
 
 			void CreateMainRenderPass(RendererInstance& _instance) override;
 			void RenderFrame(RendererInstance* _instance, const std::vector<InstanceGroup>& _instanceGroups) override;

@@ -251,6 +251,7 @@ namespace cp
 			std::shared_ptr<T> resource = resourceType->GetResource(_name);
 			if (!resource)
 			{
+				LOG_TRACE(MF("Resource ", _name, " not found, loading from path: ", _path.empty() ? _name : _path));
 				resource = resourceType->LoadResource(*context, _name, _path.empty() ? _name : _path);
 			}
 

@@ -487,6 +487,12 @@ void cp::MaterialInstance::UpdateDescriptorSets()
 			context->GetDescriptorSetManager()->CreateDescriptorSet(setName, context->GetDescriptorSetLayoutsManager()->GetDescriptorSetLayout(setName));
 		}
 
+		if (resource.kind != cp::ShaderResourceKind::ConstantBuffer && resource.kind != cp::ShaderResourceKind::StructuredBuffer)
+		{
+			LOG_WARNING(MF("Skipping descriptor update for resource ", resource.name));
+			continue; // Only need to update buffers
+		}
+
 		cp::DescriptorSetUpdate descriptorUpdate;
 		descriptorUpdate.dstBinding = resource.binding;
 		descriptorUpdate.dstArrayElement = 0;

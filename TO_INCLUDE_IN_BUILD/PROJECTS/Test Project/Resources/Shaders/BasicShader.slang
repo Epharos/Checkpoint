@@ -1,7 +1,3 @@
-// slangc.exe TexturedNormalLighting.slang -target spirv -fvk-use-entrypoint-name -o TNL.spv
-
-#include "Constants.slang"
-
 struct CameraData
 {
     float4x4 viewProjection;
@@ -29,9 +25,11 @@ struct VSInput
 
 struct VSOutput
 {
-	float4 position : SV_POSITION;
-    
-    float3 worldPosition : TEXCOORD1;
+    float4 position : SV_POSITION;
+    float3 normal : NORMAL;
+    float2 uv : TEXCOORD;
+    float3 tangent : TANGENT;
+    float3 bitangent : BITANGENT;
 };
 
 [vk::binding(0)]
@@ -48,18 +46,12 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 {
 	VSOutput output;
 
-    float4 worldPos = mul(models[instanceID].model, float4(input.position, 1.0f));
+    output.position = float4(input.position, 1.0f);
 
-    output.worldPosition = worldPos.xyz;
+    float4x4 mvp = mul(camera.viewProjection, models[instanceID].model);
+    output.position = mul(mvp, float4(input.position, 1.0f));
 
-    // Calculate the model-view-projection matrix and multiply it with the vertex position to get the clip-space position
-    output.position = mul(camera.viewProjection, worldPos);
-
-    // Fix to avoid unused variable warnings
-    float3 normal = input.normal;
-    float3 tangent = input.tangent;
-    float3 bitangent = input.bitangent;
-    float2 uv = input.uv;
+    output.normal = input.normal;
 
 	return output;
 }
@@ -67,5 +59,7 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 [shader("pixel")]
 float4 pixelMain(VSOutput input) : SV_TARGET
 {
-    return float4(input.worldPosition, 1.0f);
+    float3 lightDir = normalize(float3(1.0f, 1.0f, -1.0f));
+    float NdotL = max(dot(input.normal, lightDir), 0.0f);
+    return float4(textureData.meshColor.rgb * NdotL, 1.0);
 }

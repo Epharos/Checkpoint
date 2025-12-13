@@ -40,6 +40,8 @@ vk::DescriptorSet& cp::DescriptorSetManager::GetDescriptorSet(const std::string&
 
 void cp::DescriptorSetManager::UpdateDescriptorSet(const std::string& _name, const DescriptorSetUpdate& _write)
 {
+	context->GetDevice().waitIdle();
+
 #ifdef _DEBUG
 	if (sets.find(_name) == sets.end())
 		throw std::runtime_error("Descriptor set with name " + _name + " does not exist");
@@ -141,7 +143,10 @@ vk::DescriptorSet cp::DescriptorSetManager::CreateDescriptorSet(const std::strin
 {
 #ifdef _DEBUG
 	if (sets.find(_name) != sets.end())
-		throw std::runtime_error("Descriptor set with name " + _name + " already exists");
+	{
+		LOG_WARNING("Descriptor set with name " + _name + " already exists");
+		DestroyDescriptorSet(_name);
+	}
 #endif
 
 	LOG_INFO(MF("Creating Descriptor Set [", _name, "]"));

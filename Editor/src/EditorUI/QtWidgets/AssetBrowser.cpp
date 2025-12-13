@@ -45,12 +45,14 @@ void cp::AssetBrowserWidget::SetupUI()
     model = new QFileSystemModel(this);
     model->setRootPath(rootPath);
     model->setFilter(QDir::NoDotAndDotDot | QDir::AllEntries);
+	model->setReadOnly(false);
 
     // --- Views ---
     treeView = new QTreeView(this);
     treeView->setModel(model);
     treeView->setRootIndex(model->index(rootPath));
     treeView->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+	treeView->setEditTriggers(QAbstractItemView::EditKeyPressed);
     treeView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     listView = new QListView(this);

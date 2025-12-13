@@ -54,7 +54,7 @@ vk::PipelineLayout cp::Material::GetPipelineLayout(const std::string& _renderpas
 	return pipelineDatas.at(_renderpass)->pipelineLayout;
 }
 
-void cp::Material::Reload(cp::RendererPrototype& _renderer)
+void cp::Material::Reload(cp::RendererPrototype& _renderer, vk::Format _colorFormat)
 {
 	auto ValueOrDefault = [](const std::string& str, const std::string& defaultValue) { return str.empty() ? defaultValue : str; }; // This lambda is used to check if the string is empty and return the default value if it is
 
@@ -99,7 +99,7 @@ void cp::Material::Reload(cp::RendererPrototype& _renderer)
 
 		vk::PipelineRenderingCreateInfoKHR pipelineRenderingCreateInfo;
 		pipelineRenderingCreateInfo.sType = vk::StructureType::ePipelineRenderingCreateInfoKHR;
-		std::vector<vk::Format> colorAttachmentFormats{ vk::Format::eR16G16B16A16Sfloat }; // Default color format is 16-bit float RGBA (for HDR rendering)
+		std::vector<vk::Format> colorAttachmentFormats{ _colorFormat }; // Default color format is 16-bit float RGBA (for HDR rendering)
 		vk::Format depthAttachmentFormat = vk::Format::eD32SfloatS8Uint; // Default depth format is 32-bit float depth
 		//TODO : Get the formats from the RenderPassDescription
 
@@ -257,14 +257,18 @@ std::vector<std::string> cp::Material::GetUniqueEntryPoints() const
 
 void cp::Material::CreateDescriptorSetLayouts()
 {
+	auto dslManager = context->GetDescriptorSetLayoutsManager();
+
 	if (descriptorSetLayouts.size() > 0)
 	{
 		LOG_WARNING("Material already has descriptor set layouts, they will be destroyed");
+
 		for (auto& layout : descriptorSetLayouts)
 		{
-			context->GetDescriptorSetLayoutsManager()->DestroyDescriptorSetLayout(layout);
-			//context->GetDevice().destroyDescriptorSetLayout(layout); // Destroy the previous descriptor set layout
+			if(layout != dslManager->GlobalLit() && layout != dslManager->InstancedDrawing())
+				dslManager->DestroyDescriptorSetLayout(layout);
 		}
+
 		descriptorSetLayouts.clear();
 	}
 
@@ -277,13 +281,13 @@ void cp::Material::CreateDescriptorSetLayouts()
 	vk::DescriptorSetLayoutCreateInfo layoutInfo;
 	std::vector<vk::DescriptorSetLayoutBinding> bindings;
 
+	descriptorSetLayouts.push_back(dslManager->GlobalUnlit()); // Set 0 : Global Unlit
+	descriptorSetLayouts.push_back(dslManager->InstancedDrawing()); // Set 1 : Instanced Drawing
+
 	for (const auto& resource : shaderReflection->resources)
 	{
 		if (resource.set < 2)
 		{
-			//LOG_WARNING(MF("Skipping resource [", resource.name, "] with set index [", resource.set, "] less than 2"));
-			LOG_TRACE(MF("Getting already existing descriptor set layout for [", resource.set, "]"));
-			descriptorSetLayouts.push_back(context->GetDescriptorSetLayoutsManager()->GetDescriptorSetLayout(resource.set == 0 ? "Global Unlit" : "Instanced Drawing")); //TODO : Make it use the material type (Opaque, Transparent, ...)
 			continue; // Skip resources with set index less than 2 (these are reserved for engine use)
 		}
 
@@ -293,7 +297,7 @@ void cp::Material::CreateDescriptorSetLayouts()
 			{
 				//layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size()); // Set the binding count for the layout info
 				//layoutInfo.pBindings = bindings.data(); // Set the bindings for the layout info
-				descriptorSetLayouts.push_back(context->GetDescriptorSetLayoutsManager()->CreateDescriptorSetLayout(moduleName + "_" + std::to_string(resource.set), bindings));
+				descriptorSetLayouts.push_back(dslManager->CreateDescriptorSetLayout(moduleName + "_" + std::to_string(resource.set), bindings));
 				//descriptorSetLayouts.push_back(context->GetDevice().createDescriptorSetLayout(layoutInfo)); // Create the descriptor set layout for the previous set
 				bindings.clear(); // Clear the bindings for the next set
 			}
@@ -315,7 +319,7 @@ void cp::Material::CreateDescriptorSetLayouts()
 		//layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size()); // Set the binding count for the layout info
 		//layoutInfo.pBindings = bindings.data(); // Set the bindings for the layout info
 		//descriptorSetLayouts.push_back(context->GetDevice().createDescriptorSetLayout(layoutInfo)); // Create the descriptor set layout for the last set
-		descriptorSetLayouts.push_back(context->GetDescriptorSetLayoutsManager()->CreateDescriptorSetLayout(moduleName + "_" + std::to_string(lastSetIndex), bindings));
+		descriptorSetLayouts.push_back(dslManager->CreateDescriptorSetLayout(moduleName + "_" + std::to_string(lastSetIndex), bindings));
 	}
 
 	if (descriptorSetLayouts.empty())

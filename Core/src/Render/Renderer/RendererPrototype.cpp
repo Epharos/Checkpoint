@@ -52,48 +52,28 @@ uint32_t cp::RendererPrototype::PrepareFrame(cp::Swapchain* _swapchain)
 	vk::CommandBufferBeginInfo beginInfo = {};
 	_swapchain->GetCurrentFrame()->GetCommandBuffer().begin(beginInfo);
 
-	vk::ImageMemoryBarrier2 imageBarrier2{};
-	imageBarrier2.oldLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-	imageBarrier2.newLayout = vk::ImageLayout::eColorAttachmentOptimal;
-	imageBarrier2.srcAccessMask = vk::AccessFlagBits2::eNone;
-	imageBarrier2.dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
-	imageBarrier2.srcStageMask = vk::PipelineStageFlagBits2::eNone;
-	imageBarrier2.dstStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
-	imageBarrier2.image = _swapchain->GetCurrentFrame()->GetMainRenderTarget()->GetAttachment(2)->GetImage();
-	imageBarrier2.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
-	imageBarrier2.subresourceRange.baseMipLevel = 0;
-	imageBarrier2.subresourceRange.levelCount = 1;
-	imageBarrier2.subresourceRange.baseArrayLayer = 0;
-	imageBarrier2.subresourceRange.layerCount = 1;
-
-	vk::DependencyInfo dependencyInfo{};
-	dependencyInfo.imageMemoryBarrierCount = 1;
-	dependencyInfo.pImageMemoryBarriers = &imageBarrier2;
-
-	_swapchain->GetCurrentFrame()->GetCommandBuffer().pipelineBarrier2(dependencyInfo);
-
 	return imageIndex;
 }
 
 void cp::RendererPrototype::SubmitFrame(cp::Swapchain* _swapchain)
 {
-	vk::ImageMemoryBarrier2 imageBarrier2{};
-	imageBarrier2.oldLayout = vk::ImageLayout::eColorAttachmentOptimal;
-	imageBarrier2.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-	imageBarrier2.srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
-	imageBarrier2.dstAccessMask = vk::AccessFlagBits2::eShaderSampledRead;
-	imageBarrier2.srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
-	imageBarrier2.dstStageMask = vk::PipelineStageFlagBits2::eFragmentShader;
-	imageBarrier2.image = _swapchain->GetCurrentFrame()->GetMainRenderTarget()->GetAttachment(2)->GetImage();
-	imageBarrier2.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
-	imageBarrier2.subresourceRange.baseMipLevel = 0;
-	imageBarrier2.subresourceRange.levelCount = 1;
-	imageBarrier2.subresourceRange.baseArrayLayer = 0;
-	imageBarrier2.subresourceRange.layerCount = 1;
+	vk::ImageMemoryBarrier2 imageBarrierSwapchain{};
+	imageBarrierSwapchain.oldLayout = vk::ImageLayout::eAttachmentOptimalKHR;
+	imageBarrierSwapchain.newLayout = vk::ImageLayout::ePresentSrcKHR;
+	imageBarrierSwapchain.srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
+	imageBarrierSwapchain.dstAccessMask = vk::AccessFlagBits2::eNone;
+	imageBarrierSwapchain.srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+	imageBarrierSwapchain.dstStageMask = vk::PipelineStageFlagBits2::eNone;
+	imageBarrierSwapchain.image = _swapchain->GetCurrentFrame()->GetMainRenderTarget()->GetAttachment(1)->GetImage();
+	imageBarrierSwapchain.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+	imageBarrierSwapchain.subresourceRange.baseMipLevel = 0;
+	imageBarrierSwapchain.subresourceRange.levelCount = 1;
+	imageBarrierSwapchain.subresourceRange.baseArrayLayer = 0;
+	imageBarrierSwapchain.subresourceRange.layerCount = 1;
 
 	vk::DependencyInfo dependencyInfo{};
 	dependencyInfo.imageMemoryBarrierCount = 1;
-	dependencyInfo.pImageMemoryBarriers = &imageBarrier2;
+	dependencyInfo.pImageMemoryBarriers = &imageBarrierSwapchain;
 
 	_swapchain->GetCurrentFrame()->GetCommandBuffer().pipelineBarrier2(dependencyInfo);
 	

@@ -129,7 +129,7 @@ namespace cp
 		inline void AddShaderStage(const ShaderStages& _stage) { shaderStages |= static_cast<uint16_t>(_stage); }
 		inline void RemoveShaderStage(const ShaderStages& _stage) { shaderStages &= ~static_cast<uint16_t>(_stage); }
 
-		virtual void Reload(cp::RendererPrototype& _renderer);
+		virtual void Reload(cp::RendererPrototype& _renderer, vk::Format _colorFormat = vk::Format::eR16G16B16A16Sfloat); //Shouldn't take the format here, but for now it's easier
 
 		virtual void Serialize(ISerializer& _serializer) const override;
 		virtual void Deserialize(ISerializer& _serializer) override;

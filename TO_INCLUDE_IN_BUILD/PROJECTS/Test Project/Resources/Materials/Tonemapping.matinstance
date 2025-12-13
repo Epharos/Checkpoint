@@ -1,0 +1,17 @@
+{
+    "Associated Material": "D:/SVN/Eleves/arey/Checkpoint/build/x64-debug/Editor/PROJECTS/Test Project/Resources/Materials/Tonemapping.mat",
+    "Resources": [
+        {
+            "Binding": 0,
+            "Fields": [
+                {
+                    "Data": [],
+                    "Name": ""
+                }
+            ],
+            "Kind": 3,
+            "Name": "screenColorTexture",
+            "Set": 2
+        }
+    ]
+}

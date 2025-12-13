@@ -1,0 +1,48 @@
+{
+    "Name": "Tonemapping_POSTFX",
+    "RenderPass Requirements": [
+        {
+            "RP Name": "Color Pass",
+            "Requirements": {
+                "CustomEntryPoints": {
+                    "FragmentEntryPoint": "PS_Main",
+                    "VertexEntryPoint": "VS_Main"
+                },
+                "ShouldRenderToPass": true,
+                "UseDefaultShader": false
+            }
+        }
+    ],
+    "Shader Stages": 3,
+    "ShaderPath": "D:/SVN/Eleves/arey/Checkpoint/build/x64-debug/Editor/PROJECTS/Test Project/Resources/Shaders/Tonemapping.slang",
+    "ShaderReflection": {
+        "entryPoints": [
+            {
+                "name": "VS_Main",
+                "stage": 1
+            },
+            {
+                "name": "PS_Main",
+                "stage": 2
+            }
+        ],
+        "resources": [
+            {
+                "binding": 0,
+                "field": {
+                    "alignment": 0,
+                    "fields": [],
+                    "name": "",
+                    "offset": -1,
+                    "size": 0,
+                    "stride": 0,
+                    "typeName": ""
+                },
+                "kind": 3,
+                "name": "screenColorTexture",
+                "set": 2,
+                "typeName": "_Texture"
+            }
+        ]
+    }
+}
