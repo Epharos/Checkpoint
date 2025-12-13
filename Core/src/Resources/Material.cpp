@@ -90,6 +90,7 @@ void cp::Material::Reload(cp::RendererPrototype& _renderer, vk::Format _colorFor
 
 		if (pipelineDatas.find(name) != pipelineDatas.end()) // Check if the pipeline data already exists
 		{
+			context->GetDevice().waitIdle();
 			//In this case, we unload the previous layout and pipeline
 			if (pipelineDatas[name]->pipelineLayout) layoutsManager->UnloadLayout(pipelineDatas[name]->pipelineLayout); // Unload the previous layout if it exists
 			if (pipelineDatas[name]->pipeline) pipelinesManager->DestroyPipeline({ this->moduleName + "_" + name }); // Unload the previous pipeline if it exists
@@ -265,7 +266,7 @@ void cp::Material::CreateDescriptorSetLayouts()
 
 		for (auto& layout : descriptorSetLayouts)
 		{
-			if(layout != dslManager->GlobalLit() && layout != dslManager->InstancedDrawing())
+			if(layout != dslManager->GlobalLit() && layout != dslManager->InstancedDrawing() && layout != dslManager->GlobalUnlit())
 				dslManager->DestroyDescriptorSetLayout(layout);
 		}
 
