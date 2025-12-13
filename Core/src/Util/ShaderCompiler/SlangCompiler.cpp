@@ -17,7 +17,7 @@ namespace cp
 		case TypeReflection::Kind::ShaderStorageBuffer:
 		case TypeReflection::Kind::ParameterBlock:
 		{
-			switch (layout->getResourceShape())
+			switch (layout->getResourceShape() & SLANG_RESOURCE_BASE_SHAPE_MASK)
 			{
 			case SlangResourceShape::SLANG_STRUCTURED_BUFFER:
 				return ShaderResourceKind::StructuredBuffer;
@@ -96,11 +96,13 @@ namespace cp
 
 		CompilerOptionEntry compilerOptions[] = {
 			{ CompilerOptionName::VulkanUseEntryPointName, {.intValue0 = 1 } },
+			{ CompilerOptionName::MatrixLayoutRow, { .intValue0 = 0 } },
+			{ CompilerOptionName::MatrixLayoutColumn, {.intValue0 = 1 } },
 			{ CompilerOptionName::EmitSpirvDirectly, {.intValue0 = 1 } }
 		};
 
 		sessionDesc.compilerOptionEntries = compilerOptions;
-		sessionDesc.compilerOptionEntryCount = 2;
+		sessionDesc.compilerOptionEntryCount = 4;
 		sessionDesc.targets = &targetDesc;
 		sessionDesc.targetCount = 1;
 
@@ -243,6 +245,15 @@ namespace cp
 			resource.binding = paramLayout->getBindingIndex();
 			resource.set = paramLayout->getBindingSpace();
 			resource.typeName = paramLayout->getTypeLayout()->getName();
+
+			LOG_DEBUG(MF("TYPE LAYOUT OF ", paramLayout->getName(), " IS ", paramLayout->getTypeLayout()->getName()));
+			LOG_DEBUG(MF("TYPE LAYOUT ENUM VALUE ", std::to_string((int)paramLayout->getTypeLayout()->getKind())));
+
+			if (paramLayout->getTypeLayout()->getKind() == TypeReflection::Kind::Resource)
+			{
+				LOG_DEBUG(MF("RESOURCE SHAPE OF ", paramLayout->getName(), " IS ", std::to_string((int)(paramLayout->getTypeLayout()->getResourceShape() & SLANG_RESOURCE_BASE_SHAPE_MASK))));
+			}
+
 			resource.kind = DetermineResourceKind(paramLayout->getTypeLayout());
 
 			if(paramLayout->getTypeLayout()->getElementTypeLayout())

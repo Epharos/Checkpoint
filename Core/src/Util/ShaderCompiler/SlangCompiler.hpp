@@ -29,10 +29,10 @@ namespace cp
 	{
 		std::string name;
 		std::string typeName;
-		size_t size;
+		size_t size = 0;
 		size_t offset = -1;
-		size_t alignment;
-		size_t stride;
+		size_t alignment = 0;
+		size_t stride = 0;
 		std::vector<ShaderField> fields;
 
 		std::string vectorType; // For vector types, e.g. float, int, ...

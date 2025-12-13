@@ -101,8 +101,8 @@ namespace cp {
 
             void UpdateRender()
             {
-				LOG_DEBUG("--- Vulkan Renderer Widget Update Render ---");
-                LOG_DEBUG("");
+//				LOG_DEBUG("--- Vulkan Renderer Widget Update Render ---");
+//                LOG_DEBUG("");
 
                 auto Mat4ToString = [](const glm::mat4& mat)
                     {
@@ -124,13 +124,13 @@ namespace cp {
                         return "(" + std::to_string(vec.x) + ", " + std::to_string(vec.y) + ", " + std::to_string(vec.z) + ")";
                     };
 
-                if(editorCamera)
-                {
-					LOG_DEBUG("Editor Camera Position: " + Vec3ToString(editorCamera->GetPosition()));
-					LOG_DEBUG("Editor Camera View Matrix:\n" + Mat4ToString(editorCamera->GetViewMatrix()));
-					LOG_DEBUG("Editor Camera Projection Matrix:\n" + Mat4ToString(editorCamera->GetProjectionMatrix()));
-					LOG_DEBUG("Editor Camera View-Projection Matrix:\n" + Mat4ToString(editorCamera->GetProjectionMatrix() * editorCamera->GetViewMatrix()));
-                }
+//                if(editorCamera)
+//                {
+//					LOG_DEBUG("Editor Camera Position: " + Vec3ToString(editorCamera->GetPosition()));
+//					LOG_DEBUG("Editor Camera View Matrix:\n" + Mat4ToString(editorCamera->GetViewMatrix()));
+//					LOG_DEBUG("Editor Camera Projection Matrix:\n" + Mat4ToString(editorCamera->GetProjectionMatrix()));
+//					LOG_DEBUG("Editor Camera View-Projection Matrix:\n" + Mat4ToString(editorCamera->GetProjectionMatrix() * editorCamera->GetViewMatrix()));
+//                }
 
                 // Creating groups
 
@@ -147,8 +147,8 @@ namespace cp {
                     glm::mat4 modelMatrix = Transform::Helper::GetModelMatrix(*entity->transform);
                     glm::mat4 normalMatrix = glm::mat4(Transform::Helper::GetNormalMatrix(*entity->transform));
 
-					LOG_DEBUG(MF("Entity '", entity->name, "' Model Matrix:\n", Mat4ToString(modelMatrix)));
-                    LOG_DEBUG(MF("Entity '", entity->name, "' Position:\n", Vec3ToString(entity->transform->position)));
+//					LOG_DEBUG(MF("Entity '", entity->name, "' Model Matrix:\n", Mat4ToString(modelMatrix)));
+//                    LOG_DEBUG(MF("Entity '", entity->name, "' Position:\n", Vec3ToString(entity->transform->position)));
 
 					if (entity->meshRenderer->materialInstance == nullptr || entity->meshRenderer->mesh == nullptr)
                     {
@@ -157,6 +157,9 @@ namespace cp {
                     }
 
 //					glm::mat4 MVP = editorCamera->GetProjectionMatrix() * editorCamera->GetViewMatrix() * modelMatrix;
+//
+//					LOG_DEBUG(MF("MVP Matrix for Entity '", entity->name, "':\n", Mat4ToString(MVP)));
+//					LOG_DEBUG(MF("Model Matrix for Entity '", entity->name, "':\n", Mat4ToString(modelMatrix)));
 //                    
 //                    for (auto v : entity->meshRenderer->mesh->GetVertices())
 //                    {
@@ -192,9 +195,9 @@ namespace cp {
 
                 renderTimer.start();
 
-                LOG_DEBUG("");
-                LOG_DEBUG("");
-                LOG_DEBUG("");
+//                LOG_DEBUG("");
+//                LOG_DEBUG("");
+//                LOG_DEBUG("");
             }
     };
 }

@@ -105,3 +105,8 @@ void cp::EditorRenderer::RenderFrame(RendererInstance* _instance, const std::vec
 
 	commandBuffer.endRenderingKHR(context->GetDynamicLoader());
 }
+
+void cp::EditorRenderer::SetupPostProcessingPass(RendererInstance* _instance)
+{
+	postProcessMaterialInstance = cp::ResourceManager::Get()->GetOrLoad<cp::MaterialInstance>("Tonemapping POSTFX", cp::CheckpointEditor::CurrentProject.GetResourcePath() + "/Materials/Tonemapping.matinstance");
+}

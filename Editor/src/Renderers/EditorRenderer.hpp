@@ -13,7 +13,11 @@ namespace cp
 			void Render(RendererInstance* _instance, const std::vector<InstanceGroup>& _instanceGroups) override;
 
 		protected:
+			std::shared_ptr<cp::MaterialInstance> postProcessMaterialInstance;
+
 			void CreateMainRenderPass(RendererInstance& _instance) override;
 			void RenderFrame(RendererInstance* _instance, const std::vector<InstanceGroup>& _instanceGroups) override;
+
+			void SetupPostProcessingPass(RendererInstance* _instance);
 	};
 }

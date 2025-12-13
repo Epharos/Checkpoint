@@ -1,0 +1,48 @@
+{
+    "Name": "PostFX_Tonemapping",
+    "RenderPass Requirements": [
+        {
+            "RP Name": "Color Pass",
+            "Requirements": {
+                "CustomEntryPoints": {
+                    "FragmentEntryPoint": "PS_Main",
+                    "VertexEntryPoint": "VS_Main"
+                },
+                "ShouldRenderToPass": true,
+                "UseDefaultShader": false
+            }
+        }
+    ],
+    "Shader Stages": 3,
+    "ShaderPath": "D:/Projets/Cpp/Checkpoint/build/x64-debug/Editor/PROJECTS/Test Project Home/Resources/Shaders/Tonemapping.slang",
+    "ShaderReflection": {
+        "entryPoints": [
+            {
+                "name": "VS_Main",
+                "stage": 1
+            },
+            {
+                "name": "PS_Main",
+                "stage": 2
+            }
+        ],
+        "resources": [
+            {
+                "binding": 0,
+                "field": {
+                    "alignment": 0,
+                    "fields": [],
+                    "name": "",
+                    "offset": -1,
+                    "size": 0,
+                    "stride": 0,
+                    "typeName": ""
+                },
+                "kind": 1,
+                "name": "screenColorTexture",
+                "set": 0,
+                "typeName": "_Texture"
+            }
+        ]
+    }
+}

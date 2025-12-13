@@ -110,8 +110,11 @@ std::vector<cp::MaterialInstanceResource> cp::MaterialInstance::CreateMaterialIn
 
 		instanceResource.Repack();
 
-		instanceResource.CreateBuffer();
-		instanceResource.UpdateBufferData();
+		if (instanceResource.kind == ShaderResourceKind::ConstantBuffer || instanceResource.kind == ShaderResourceKind::PushConstant || instanceResource.kind == ShaderResourceKind::StructuredBuffer)
+		{
+			instanceResource.CreateBuffer();
+			instanceResource.UpdateBufferData();
+		}
 	}
 
 	return newResources;

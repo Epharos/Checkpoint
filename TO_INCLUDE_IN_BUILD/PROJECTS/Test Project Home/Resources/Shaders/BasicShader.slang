@@ -29,7 +29,11 @@ struct VSInput
 
 struct VSOutput
 {
-	float4 position : SV_POSITION;
+    float4 position : SV_POSITION;
+    float3 normal : NORMAL;
+    float2 uv : TEXCOORD;
+    float3 tangent : TANGENT;
+    float3 bitangent : BITANGENT;
 };
 
 [vk::binding(0)]
@@ -52,10 +56,10 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
     output.position = mul(mvp, float4(input.position, 1.0f));
 
     // Fix to avoid unused variable warnings
-    float3 normal = input.normal;
-    float3 tangent = input.tangent;
-    float3 bitangent = input.bitangent;
-    float2 uv = input.uv;
+    output.normal = input.normal;
+    output.tangent = input.tangent;
+    output.bitangent = input.bitangent;
+    output.uv = input.uv;
 
 	return output;
 }
@@ -63,5 +67,5 @@ VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
 [shader("pixel")]
 float4 pixelMain(VSOutput input) : SV_TARGET
 {
-    return textureData.meshColor;
+    return textureData.meshColor * input.position.w;
 }
