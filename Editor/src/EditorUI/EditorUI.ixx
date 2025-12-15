@@ -38,6 +38,7 @@ export namespace cp {
 			EDITOR_API virtual std::unique_ptr<ICollapsible> CreateCollapsible() noexcept = 0;
 
 			EDITOR_API virtual std::unique_ptr<IHorizontalSeparator> CreateHorizontalSeparator() noexcept = 0;
+			EDITOR_API virtual std::unique_ptr<IScrollArea> CreateScrollArea() noexcept = 0;
 
 			EDITOR_API virtual std::unique_ptr<INumericField<int>> CreateIntField(int* value) noexcept = 0;
 			EDITOR_API virtual std::unique_ptr<INumericField<float>> CreateFloatField(float* value) noexcept = 0;
@@ -145,6 +146,10 @@ export namespace cp {
 
 			EDITOR_API virtual std::unique_ptr<IHorizontalSeparator> CreateHorizontalSeparator() noexcept override {
 				return std::make_unique<cp::QtHorizontalSeparator>();
+			}
+
+			EDITOR_API virtual std::unique_ptr<IScrollArea> CreateScrollArea() noexcept override {
+				return std::make_unique<cp::QtScrollArea>();
 			}
 
 			EDITOR_API virtual std::unique_ptr<INumericField<int>> CreateIntField(int* value) noexcept override {

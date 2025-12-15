@@ -164,7 +164,10 @@ void cp::Material::Reload(cp::RendererPrototype& _renderer, vk::Format _colorFor
 
 		//pipelineCreateData.createInfo.pTessellationState = new vk::PipelineTessellationStateCreateInfo(vk::PipelineTessellationStateCreateFlags(), 3); // TODO : Add support for tessellation
 
-		pipelineDatas.insert({ name, &pipelinesManager->CreatePipeline(pipelineCreateData) }); // Create the pipeline and store it in the map
+		if (!pipelineDatas.contains(name))
+			pipelineDatas.insert({ name, &pipelinesManager->CreatePipeline(pipelineCreateData) }); // Create the pipeline and store it in the map
+		else
+			pipelineDatas[name] = &pipelinesManager->CreatePipeline(pipelineCreateData); // Create the pipeline and store it in the map
 	}
 }
 

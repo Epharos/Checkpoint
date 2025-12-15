@@ -27,7 +27,7 @@ namespace cp {
 
 		RendererPrototype* prototype = nullptr;
 
-		constexpr static uint32_t MAX_RENDERABLE_ENTITIES = 10000;
+		constexpr static size_t MAX_RENDERABLE_ENTITIES = 10000;
 
 		cp::Buffer cameraBuffer;
 		cp::Buffer instancedBuffer;

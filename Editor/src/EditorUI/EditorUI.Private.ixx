@@ -9,6 +9,7 @@ module;
 #include "QtWidgets/AssetBrowser.hpp"
 #include "QtWidgets/VulkanRendererWidget.hpp"
 #include "QtWidgets/LauncherProjectList.hpp"
+#include <QScrollArea>
 
 export module EditorUI:Private;
 
@@ -58,6 +59,7 @@ export namespace cp {
 		public:
 		virtual void ShowEntity(EntityAsset* _entity) = 0;
 		virtual void ShowFile(const std::string& _path) = 0;
+
 	};
 
 	class QtInspector : public IInspector {
@@ -137,6 +139,7 @@ export namespace cp {
 	class IAssetBrowser : public IWidget {
 		public:
 			virtual void LinkToInspector(IInspector* inspector) = 0;
+			virtual void LinkToSceneHierarchy(ISceneHierarchy* sceneHierarchy) = 0;
 	};
 
 	class QtAssetBrowser : public IAssetBrowser {
@@ -164,6 +167,11 @@ export namespace cp {
 			virtual void LinkToInspector(IInspector* inspector) {
 				cp::Inspector* insp = reinterpret_cast<cp::Inspector*>(inspector->NativeHandle());
 				assetBrowser->LinkToInspector(insp);
+			}
+
+			virtual void LinkToSceneHierarchy(ISceneHierarchy* sceneHierarchy) {
+				cp::SceneHierarchy* hierarchy = reinterpret_cast<cp::SceneHierarchy*>(sceneHierarchy->NativeHandle());
+				assetBrowser->LinkToSceneHierarchy(hierarchy);
 			}
 		protected:
 			cp::AssetBrowserWidget* assetBrowser;

@@ -46,7 +46,15 @@ void cp::Inspector::ShowEntity(cp::EntityAsset* _entity)
 		return;
 	}
 
-	titleLabel->setText(QString::fromStdString(_entity->name.empty() ? "Entity" : _entity->name));
+	titleLabel->setText(QString::fromStdString("Entity"));
+
+	cp::StringEdit* nameField = new cp::StringEdit("Name", _entity->name, "My Super Entity");
+
+	nameField->SetOnTextChangedListener([_entity](const std::string& newName) {
+		_entity->SetName(newName);
+	});
+
+	layout->addWidget(nameField);
 
 	QFrame* line = new QFrame(this);
 	line->setFrameShape(QFrame::HLine);
@@ -91,7 +99,7 @@ void cp::Inspector::ShowMaterial(const std::string& _path) {
 	matLayout->setContentsMargins(0, 0, 0, 0);
 	matLayout->setSpacing(8);
 	matLayout->setAlignment(Qt::AlignTop);
-	matLayout->setSizeConstraint(QLayout::SetFixedSize);
+	matLayout->setSizeConstraint(QLayout::SetMinimumSize);
 
 #pragma region Material Properties
 	cp::StringField* materialNameField = new cp::StringField(mat->GetNamePtr(), "Name");

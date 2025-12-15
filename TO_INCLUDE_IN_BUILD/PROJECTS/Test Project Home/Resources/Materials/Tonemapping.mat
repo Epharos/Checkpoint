@@ -1,5 +1,5 @@
 {
-    "Name": "PostFX_Tonemapping",
+    "Name": "Tonemapping_POSTFX",
     "RenderPass Requirements": [
         {
             "RP Name": "Color Pass",
@@ -38,9 +38,9 @@
                     "stride": 0,
                     "typeName": ""
                 },
-                "kind": 1,
+                "kind": 3,
                 "name": "screenColorTexture",
-                "set": 0,
+                "set": 2,
                 "typeName": "_Texture"
             }
         ]

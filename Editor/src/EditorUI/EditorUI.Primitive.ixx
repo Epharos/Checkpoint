@@ -15,6 +15,7 @@ module;
 
 #include <QComboBox>
 #include <QCheckBox>
+#include <QScrollArea>
 
 #include "QtWidgets/PrimitiveFields.hpp"
 
@@ -144,6 +145,15 @@ export namespace cp {
 	};
 
 	class IHorizontalSeparator : public IWidget {
+	};
+
+	class IScrollArea : public IWidget {
+		public:
+			EDITOR_API virtual void SetContent(IWidget* content) noexcept = 0;
+
+			EDITOR_API virtual void SetHorizontalScrollPolicy(ScrollAreaPolicy policy) noexcept = 0;
+			EDITOR_API virtual void SetVerticalScrollPolicy(ScrollAreaPolicy policy) noexcept = 0;
+			EDITOR_API virtual void SetScrollPolicies(ScrollAreaPolicy horizontalPolicy, ScrollAreaPolicy verticalPolicy) noexcept = 0;
 	};
 }
 
@@ -1021,5 +1031,74 @@ export namespace cp {
 			}
 		protected:
 			QFrame* separatorWidget;
+	};
+
+	class QtScrollArea : public IScrollArea {
+		public:
+			EDITOR_API QtScrollArea() {
+				scrollAreaWidget = new QScrollArea();
+				scrollAreaWidget->setMinimumWidth(310); //tmp
+				scrollAreaWidget->setWidgetResizable(true);
+				scrollAreaWidget->setStyleSheet(
+					"QScrollBar:vertical { background: #1A1F2B; width: 10px; margin: 2px; } QScrollBar::handle:vertical { background: #3E465A; border-radius: 5px; min-height: 20px; } QScrollBar::handle:vertical:hover { background: #5A647D; } QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical{ height: 0px; } QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical{ background: none; }"
+				);
+			}
+			EDITOR_API virtual ~QtScrollArea() override {
+				delete scrollAreaWidget;
+			}
+			EDITOR_API virtual void SetVisible(bool visible) noexcept override {
+				scrollAreaWidget->setVisible(visible);
+			}
+			EDITOR_API virtual bool IsVisible() const noexcept override {
+				return scrollAreaWidget->isVisible();
+			}
+			EDITOR_API virtual void SetEnabled(bool enabled) noexcept override {
+				scrollAreaWidget->setEnabled(enabled);
+			}
+			EDITOR_API virtual bool IsEnabled() const noexcept override {
+				return scrollAreaWidget->isEnabled();
+			}
+			EDITOR_API virtual void* NativeHandle() const noexcept override {
+				return static_cast<void*>(scrollAreaWidget);
+			}
+			EDITOR_API virtual void SetContent(IWidget* content) noexcept override {
+				scrollAreaWidget->setWidget(reinterpret_cast<QWidget*>(content->NativeHandle()));
+			}
+
+			EDITOR_API virtual void SetHorizontalScrollPolicy(ScrollAreaPolicy policy) noexcept override {
+				switch (policy) {
+				case ScrollAreaPolicy::Never:
+					scrollAreaWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+					break;
+					case ScrollAreaPolicy::Always:
+					scrollAreaWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+					break;
+				case ScrollAreaPolicy::AsNeeded:
+					scrollAreaWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+					break;
+				}
+			}
+
+			EDITOR_API virtual void SetVerticalScrollPolicy(ScrollAreaPolicy policy) noexcept override {
+				switch (policy) {
+				case ScrollAreaPolicy::Never:
+					scrollAreaWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+					break;
+				case ScrollAreaPolicy::Always:
+					scrollAreaWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+					break;
+				case ScrollAreaPolicy::AsNeeded:
+					scrollAreaWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+					break;
+				}
+			}
+
+			EDITOR_API virtual void SetScrollPolicies(ScrollAreaPolicy horizontal, ScrollAreaPolicy vertical) noexcept override {
+				SetHorizontalScrollPolicy(horizontal);
+				SetVerticalScrollPolicy(vertical);
+			}
+
+		protected:
+			QScrollArea* scrollAreaWidget;
 	};
 }

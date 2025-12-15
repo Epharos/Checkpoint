@@ -20,6 +20,7 @@ class DropMainWindow : public QMainWindow {
 public:
     DropMainWindow(QWidget* parent = nullptr) : QMainWindow(parent) {
         setAcceptDrops(true);
+        setWindowIcon(QIcon(QString::fromStdString("Editor_Resources/logo_bg.png")));
     }
 
 protected:

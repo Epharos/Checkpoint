@@ -47,6 +47,48 @@ namespace cp {
 			std::string* valuePtr = nullptr;
 	};
 
+	class StringEdit : public QWidget {
+#ifndef BUILDING_PLUGIN_LOADER
+		Q_OBJECT
+#endif
+
+	public:
+		StringEdit(const std::string& _fieldName, const std::string& _baseValue, const std::string& _placeholder = "", QWidget * parent = nullptr)
+			: QWidget(parent)
+		{
+			QHBoxLayout* layout = new QHBoxLayout(this);
+			layout->setContentsMargins(0, 0, 0, 0);
+			label = new QLabel(QString::fromStdString(_fieldName), this);
+			lineEdit = new QLineEdit(QString::fromStdString(_baseValue), this);
+			if (!_placeholder.empty())
+				lineEdit->setPlaceholderText(QString::fromStdString(_placeholder));
+			lineEdit->setStyleSheet("QLineEdit { padding: 2px 4px; background-color: #1A1F2B; }");
+			layout->addWidget(label);
+			layout->addWidget(lineEdit);
+			setLayout(layout);
+			QObject::connect(lineEdit, &QLineEdit::textChanged, this, &StringEdit::OnTextChanged);
+		}
+
+		void OnTextChanged(const QString& _text) {
+			if (onTextChanged) onTextChanged(_text.toStdString());
+		}
+
+		void SetOnTextChangedListener(const std::function<void(const std::string& _value)>& listener) {
+			onTextChanged = listener;
+		}
+
+		virtual ~StringEdit() {
+			delete label;
+			delete lineEdit;
+		}
+
+	protected:
+		QLabel* label = nullptr;
+		QLineEdit* lineEdit = nullptr;
+
+		std::function<void(const std::string& _value)> onTextChanged;
+	};
+
 	class ModernCheckBoxWidget : public QWidget {
 	public:
 		ModernCheckBoxWidget(const QString& text = QString(), QWidget* parent = nullptr)

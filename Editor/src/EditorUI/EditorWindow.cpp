@@ -10,6 +10,7 @@ cp::EditorWindow::EditorWindow(cp::Project _project)
 	cp::QtEditorUIFactory* factory = new cp::QtEditorUIFactory();
 
 	window = factory->CreateWindow();
+	window->SetMinSize(1100, 688);
 	window->Show();
 
 	auto dockSceneHierarchy = factory->CreateDockableWindow(window.get());
@@ -21,12 +22,14 @@ cp::EditorWindow::EditorWindow(cp::Project _project)
 	containerSceneHierarchy->AddChild(sceneHierarchy.get());
 	dockSceneHierarchy->SetContainer(containerSceneHierarchy);
 
-	QObject::connect((cp::SceneHierarchy*)sceneHierarchy->NativeHandle(), &cp::SceneHierarchy::SceneUpdated, [&](const cp::SceneAsset* _scene) {
+	auto dockSceneHierarchyPtr = dockSceneHierarchy.get();
+
+	QObject::connect((cp::SceneHierarchy*)sceneHierarchy.get()->NativeHandle(), &cp::SceneHierarchy::SceneUpdated, [&](const cp::SceneAsset* _scene) {
 		if (_scene) {
 			LOG_INFO(MF("Scene updated: ", _scene->name));
 		}
 
-		dockSceneHierarchy->SetTitle("Scene Hierarchy: " + _scene->name);
+		//dockSceneHierarchyPtr->SetTitle("Scene Hierarchy: " + _scene->name);
 		});
 
 	auto dockViewport = factory->CreateDockableWindow();
@@ -44,15 +47,19 @@ cp::EditorWindow::EditorWindow(cp::Project _project)
 	auto containerViewport = factory->CreateContainer().release();
 	containerViewport->AddChild(viewport.get());
 	dockViewport->SetContainer(containerViewport);
-
+	
 	auto dockInspector = factory->CreateDockableWindow(nullptr);
 	dockInspector->SetTitle("Inspector");
 	dockInspector->DockTo(dockViewport.get(), cp::DockArea::Right);
 	dockInspector->Show();
 
+	auto scrollAreaInspector = factory->CreateScrollArea().release();
+	scrollAreaInspector->SetScrollPolicies(cp::ScrollAreaPolicy::Never, cp::ScrollAreaPolicy::AsNeeded);
+
 	auto inspector = factory->CreateInspector().release();
+	scrollAreaInspector->SetContent(inspector);
 	auto containerInspector = factory->CreateContainer().release();
-	containerInspector->AddChild(inspector);
+	containerInspector->AddChild(scrollAreaInspector);
 	dockInspector->SetContainer(containerInspector);
 
 	QObject::connect((cp::SceneHierarchy*)sceneHierarchy->NativeHandle(), &cp::SceneHierarchy::EntitySelected, [inspector](cp::EntityAsset* _entity) {
@@ -66,6 +73,7 @@ cp::EditorWindow::EditorWindow(cp::Project _project)
 
 	auto assetBrowser = factory->CreateAssetBrowser(cp::CheckpointEditor::CurrentProject.GetResourcePath());
 	assetBrowser->LinkToInspector(inspector);
+	assetBrowser->LinkToSceneHierarchy(sceneHierarchy.get());
 	auto containerAssetBrowser = factory->CreateContainer().release();
 	containerAssetBrowser->AddChild(assetBrowser.get());
 	dockAssetBrowser->SetContainer(containerAssetBrowser);

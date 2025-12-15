@@ -5,4 +5,10 @@ export namespace cp {
 		Vertical,
 		Horizontal
 	};
+
+	enum class ScrollAreaPolicy {
+		Always,
+		AsNeeded,
+		Never
+	};
 }

@@ -11,6 +11,7 @@
 
 namespace cp {
 	class Inspector;
+	class SceneHierarchy;
 
     class AssetBrowserWidget : public QWidget
     {
@@ -32,6 +33,7 @@ namespace cp {
         void SetRootPath(const QString& path);
         void SetViewMode(ViewMode mode);
 		void LinkToInspector(cp::Inspector* inspector);
+		void LinkToSceneHierarchy(cp::SceneHierarchy* sceneHierarchy);
 
     signals:
         void FileActivated(const QString& filePath);
@@ -41,6 +43,7 @@ namespace cp {
         void OnViewModeChanged(int index);
         void OnSearchTextChanged(const QString& text);
         void OnItemActivated(const QModelIndex& index);
+		void OnItemSelected(const QModelIndex& index);
 
     private:
         void SetupUI();

@@ -9,6 +9,8 @@ namespace cp {
 		std::string name;
 		std::vector<EntityAsset> children;
 
+		std::function<void(const std::string& _newName)> onNameChanged;
+
 		bool locked = false;
 		bool visible = true;
 		bool favorite = false;
@@ -29,6 +31,12 @@ namespace cp {
 			}
 		}
 
+		void SetName(const std::string& _newName)
+		{
+			name = _newName;
+			if(onNameChanged) onNameChanged(_newName);
+		}
+
 		std::vector<cp::IComponentBase*>& GetComponents() {
 			return components;
 		}
@@ -42,11 +50,14 @@ namespace cp {
 
 	struct SceneAsset : public cp::ISerializable {
 		std::string name;
+		std::string path;
 		std::vector<EntityAsset*> entities;
 
 		cp::RendererPrototype* renderer = nullptr;
 
 		void Serialize(ISerializer& _serializer) const override;
 		void Deserialize(ISerializer& _serializer) override;
+
+		void SaveScene();
 	};
 }

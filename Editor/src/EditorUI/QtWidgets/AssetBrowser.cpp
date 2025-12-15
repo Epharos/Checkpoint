@@ -6,6 +6,7 @@
 #include <QDebug>
 
 #include "Inspector.hpp"
+#include "SceneHierarchy.hpp"
 #include "CheckpointEditor.hpp"
 
 cp::AssetBrowserWidget::AssetBrowserWidget(const QString& rootPath, QWidget* parent)
@@ -21,6 +22,7 @@ void cp::AssetBrowserWidget::SetupUI()
 {
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
+	layout->setSizeConstraint(QLayout::SetMinimumSize);
 
     toolbar = new QToolBar(this);
     toolbar->setIconSize(QSize(16, 16));
@@ -198,6 +200,15 @@ void cp::AssetBrowserWidget::SetupConnections()
         this, &cp::AssetBrowserWidget::OnItemActivated);
     connect(largeIconView, &QListView::clicked,
         this, &cp::AssetBrowserWidget::OnItemActivated);
+
+    connect(treeView, &QTreeView::doubleClicked,
+		this, &cp::AssetBrowserWidget::OnItemSelected);
+	connect(listView, &QListView::doubleClicked,
+		this, &cp::AssetBrowserWidget::OnItemSelected);
+	connect(iconView, &QListView::doubleClicked,
+		this, &cp::AssetBrowserWidget::OnItemSelected);
+	connect(largeIconView, &QListView::doubleClicked,
+		this, &cp::AssetBrowserWidget::OnItemSelected);
 }
 
 void cp::AssetBrowserWidget::SetRootPath(const QString& path)
@@ -245,7 +256,12 @@ void cp::AssetBrowserWidget::OnItemActivated(const QModelIndex& index)
 {
     QString filePath = model->filePath(index);
     emit FileActivated(filePath);
-	LOG_DEBUG(MF("File activated: ", filePath.toStdString()));
+}
+
+void cp::AssetBrowserWidget::OnItemSelected(const QModelIndex& index)
+{
+    QString filePath = model->filePath(index);
+	emit FileSelected(filePath);
 }
 
 void cp::AssetBrowserWidget::LinkToInspector(cp::Inspector* inspector)
@@ -259,6 +275,28 @@ void cp::AssetBrowserWidget::LinkToInspector(cp::Inspector* inspector)
             {
 				LOG_DEBUG(MF("Showing file in inspector: ", path.toStdString()));
                 inspector->ShowFile(path.toStdString());
+            }
+        });
+}
+
+void cp::AssetBrowserWidget::LinkToSceneHierarchy(cp::SceneHierarchy* sceneHierarchy)
+{
+    connect(this, &cp::AssetBrowserWidget::FileSelected, [=](const QString& path)
+        {
+            if (path.endsWith(".cpscene"))
+            {
+                cp::SceneAsset* newScene = new cp::SceneAsset();
+                newScene->path = path.toStdString();
+
+                cp::JsonSerializer serializer;
+                serializer.Read(path.toStdString());
+                newScene->Deserialize(serializer);
+
+                cp::SceneAsset* oldScene = cp::CheckpointEditor::CurrentScene;
+                cp::CheckpointEditor::CurrentScene = newScene;
+                delete oldScene;
+
+				sceneHierarchy->InitTree(newScene);
             }
         });
 }

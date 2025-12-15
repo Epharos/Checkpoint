@@ -10,6 +10,7 @@
 #include "ColoredIconButton.hpp"
 #include <format>
 #include "../../CheckpointEditor.hpp"
+#include "PrimitiveFields.hpp"
 
 #define SCENE_HIERARCHY_ITEM_MARGIN 8
 #define SCENE_HIERARCHY_ITEM_ICON_SIZE 14
@@ -215,6 +216,10 @@ namespace cp {
 		ColoredIconButton* refreshButton;
 		SceneTreeWidget* treeWidget;
 
+		cp::StringField* sceneNameField;
+		ColoredIconButton* settingsButton;
+		ColoredIconButton* saveButton;
+
 		QVBoxLayout* globalLayout;
 	public:
 		SceneHierarchy(QWidget* _parent = nullptr) {
@@ -223,6 +228,25 @@ namespace cp {
 			globalLayout->setSpacing(0);
 
 			setLayout(globalLayout);
+
+			QHBoxLayout* titleLayout = new QHBoxLayout();
+			titleLayout->setContentsMargins(8, 0, 8, 4);
+			titleLayout->setSpacing(8);
+
+			sceneNameField = new cp::StringField(&cp::CheckpointEditor::CurrentScene->name, "Name", this);
+			saveButton = new ColoredIconButton("Editor_Resources/Icons/save.svg", QSize(18, 18), QColor("#D0D3DC"), this);
+			saveButton->setHoveredColor(QColor("#B987FF"));
+			saveButton->setDisabledColor(QColor("#5A5F6E"));
+			settingsButton = new ColoredIconButton("Editor_Resources/Icons/gear.svg", QSize(18, 18), QColor("#D0D3DC"), this);
+			settingsButton->setHoveredColor(QColor("#B987FF"));
+			settingsButton->setDisabledColor(QColor("#5A5F6E"));
+			settingsButton->setEnabled(false);
+
+			titleLayout->addWidget(sceneNameField, 1);
+			titleLayout->addWidget(saveButton);
+			titleLayout->addWidget(settingsButton);
+
+			globalLayout->addLayout(titleLayout);
 
 			QHBoxLayout* actionsLayout = new QHBoxLayout();
 			actionsLayout->setContentsMargins(8, 0, 8, 4);
@@ -277,6 +301,11 @@ namespace cp {
 				InitTree(cp::CheckpointEditor::CurrentScene);
 			});
 
+			connect(saveButton, &QPushButton::clicked, this, [&]() {
+				if (!cp::CheckpointEditor::CurrentScene) return;
+				cp::CheckpointEditor::CurrentScene->SaveScene();
+				});
+
 			connect(treeWidget, &QTreeWidget::itemClicked, this, [&](QTreeWidgetItem* item, int column) {
 				QVariant entityVariant = item->data(0, Qt::UserRole);
 				cp::EntityAsset* entityAsset = entityVariant.value<cp::EntityAsset*>();
@@ -295,6 +324,10 @@ namespace cp {
 
 				for (auto& entityAsset : _sceneAsset->entities) {
 					TreeEntityItem* item = new TreeEntityItem(entityAsset, treeWidget);
+
+					entityAsset->onNameChanged = [item](const std::string& newName) {
+						item->setText(0, QString::fromStdString(newName.empty() ? "Entity" : newName));
+					};
 				}
 			}
 		}
@@ -303,11 +336,16 @@ namespace cp {
 		void AddEntityToTree() {
 			cp::EntityAsset* newEntity = new cp::EntityAsset();
 			newEntity->name = "New Entity";
+			
 			cp::CheckpointEditor::CurrentScene->entities.push_back(newEntity);
 			auto& entityRef = cp::CheckpointEditor::CurrentScene->entities.back();
 
 			TreeEntityItem* item = new TreeEntityItem(entityRef, treeWidget);
 			treeWidget->scrollToItem(item);
+
+			newEntity->onNameChanged = [item](const std::string& newName) {
+				item->setText(0, QString::fromStdString(newName.empty() ? "Entity" : newName));
+			};
 		}
 	};
 #pragma endregion

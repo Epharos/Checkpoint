@@ -129,7 +129,7 @@ void cp::EditorRenderer::RenderFrame(RendererInstance* _instance, const std::vec
 			instanceGroup.transforms.data()
 		);
 
-		commandBuffer.drawIndexed(instanceGroup.mesh->GetIndexCount(), instanceGroup.transforms.size(), 0, 0, instanceGroup.instanceOffset);
+		commandBuffer.drawIndexed(currentMesh->GetIndexCount(), instanceGroup.transforms.size(), 0, 0, instanceGroup.instanceOffset);
 	}
 
 	commandBuffer.endRenderingKHR(context->GetDynamicLoader());
