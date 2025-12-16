@@ -4,7 +4,7 @@
 #include "../../Util/Serializers/ISerializer.hpp"
 
 using ID = uint32_t;
-using Version = uint8_t;
+using Version = uint32_t;
 
 namespace cp
 {
