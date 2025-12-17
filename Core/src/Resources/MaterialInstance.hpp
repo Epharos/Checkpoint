@@ -87,6 +87,7 @@ namespace cp
 
 		inline std::shared_ptr<Material> GetMaterial() const { return material; }
 		inline std::string GetAssociatedMaterial() const { return associatedMaterial; }
+		inline std::string GetDescriptorSetName(const uint32_t& _set) const;
 
 		inline void SetAssociatedMaterial(const std::string& _materialPath) { associatedMaterial = _materialPath; }
 

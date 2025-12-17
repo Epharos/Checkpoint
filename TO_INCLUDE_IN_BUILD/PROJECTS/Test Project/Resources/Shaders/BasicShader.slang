@@ -30,6 +30,8 @@ struct VSOutput
     float2 uv : TEXCOORD;
     float3 tangent : TANGENT;
     float3 bitangent : BITANGENT;
+
+    uint instanceID;
 };
 
 [vk::binding(0)]
@@ -42,16 +44,19 @@ StructuredBuffer<ModelData> models;
 ConstantBuffer<MeshData> textureData;
 
 [shader("vertex")]
-VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID)
+VSOutput vertexMain(VSInput input, uint instanceID : SV_InstanceID, uint baseInstanceID : SV_StartInstanceLocation)
 {
 	VSOutput output;
 
+    uint instanceIndex = instanceID + baseInstanceID;
+
     output.position = float4(input.position, 1.0f);
 
-    float4x4 mvp = mul(camera.viewProjection, models[instanceID].model);
+    float4x4 mvp = mul(camera.viewProjection, models[instanceIndex].model);
     output.position = mul(mvp, float4(input.position, 1.0f));
 
     output.normal = input.normal;
+    output.instanceID = instanceIndex;
 
 	return output;
 }

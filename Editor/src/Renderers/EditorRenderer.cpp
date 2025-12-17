@@ -181,7 +181,7 @@ void cp::EditorRenderer::RenderFrame(RendererInstance* _instance, const std::vec
 	update.descriptorType = vk::DescriptorType::eCombinedImageSampler;
 	update.descriptorCount = 1;
 
-	context->GetDescriptorSetManager()->UpdateDescriptorSet("Tonemapping_POSTFX_2", update);
+	context->GetDescriptorSetManager()->UpdateDescriptorSet(postProcessMaterialInstance->GetDescriptorSetName(2), update);
 
 	vk::RenderingAttachmentInfoKHR swapchainColorAttachmentInfo;
 	swapchainColorAttachmentInfo.imageView = _instance->GetSwapchain()->GetCurrentFrame()->GetMainRenderTarget()->GetAttachment(1)->GetImageView();

@@ -93,7 +93,6 @@ std::vector<cp::MaterialInstanceResource> cp::MaterialInstance::CreateMaterialIn
 	{
 		if (resource.set < 2)
 		{
-			LOG_WARNING(MF("Skipping resource [", resource.name, "] with set index [", resource.set, "] less than 2"));
 			continue; // Skip resources with set index less than 2 (these are reserved for engine use)
 		}
 
@@ -122,7 +121,6 @@ std::vector<cp::MaterialInstanceResource> cp::MaterialInstance::CreateMaterialIn
 
 void cp::MaterialInstanceResource::CreateBuffer()
 {
-	LOG_TRACE(MF("Creating MaterialInstanceResource buffer for resource: ", name, " of size: ", packedData.size()));
 	dataBuffer = Helper::Memory::CreateBuffer(context->GetDevice(), context->GetPhysicalDevice(),
 		packedData.size(),
 		vk::BufferUsageFlagBits::eUniformBuffer,
@@ -150,8 +148,6 @@ cp::MaterialInstanceResource::MaterialInstanceResource(const cp::MaterialInstanc
 		CreateBuffer();
 		UpdateBufferData();
 	}
-
-	LOG_DEBUG(MF("Copied MaterialInstanceResource: ", name));
 }
 
 cp::MaterialInstanceResource& cp::MaterialInstanceResource::operator=(const MaterialInstanceResource& other)
@@ -179,13 +175,11 @@ cp::MaterialInstanceResource& cp::MaterialInstanceResource::operator=(const Mate
 		UpdateBufferData();
 	}
 
-	LOG_DEBUG(MF("Assigned MaterialInstanceResource: ", name));
 	return *this;
 }
 
 cp::MaterialInstanceResource::~MaterialInstanceResource()
 {
-	LOG_TRACE(MF("Destroying MaterialInstanceResource buffer for resource: ", name));
 	Helper::Memory::DestroyBuffer(context->GetDevice(), dataBuffer);
 }
 
@@ -205,28 +199,21 @@ void cp::MaterialInstance::ValidateData()
 
 	for (auto& correctRes : correctResources)
 	{
-		LOG_DEBUG(MF("Comparing ", correctRes.name, " with existing resources"));
-
 		auto it = std::find_if(resources.begin(), resources.end(), [&correctRes](const MaterialInstanceResource& res) {
 			return res.name.compare(correctRes.name) == 0 && res.set == correctRes.set && res.binding == correctRes.binding; // Compare by name, set, and binding
 			});
 		
 		if (it == resources.end()) // If the resource is not found, we simply add it
 		{
-			//LOG_DEBUG(MF("Resource ", correctRes.name, " not found, adding it"));
 			resources.push_back(correctRes);
 			continue;
 		}
 
 		std::vector<MaterialInstanceField> validatedFields;
 
-		//LOG_DEBUG(MF("Resource ", correctRes.name, " found, validating fields"));
-
 		for (const auto& correctField : correctRes.fields)
 		{
 			MaterialInstanceField validatedField = correctField; // Copy the correct field
-
-			LOG_DEBUG(MF("Validating field ", validatedField.name, " in resource ", correctRes.name));
 
 			auto fieldIt = std::find_if(it->fields.begin(), it->fields.end(), [&validatedField](const MaterialInstanceField& f) {
 				return f.name == validatedField.name;
@@ -234,7 +221,6 @@ void cp::MaterialInstance::ValidateData()
 
 			if (fieldIt != it->fields.end() && fieldIt->data.size() == validatedField.data.size())
 			{
-				//LOG_DEBUG(MF("Field ", correctField.name, " found in resource ", correctRes.name, ", using existing data"));
 				validatedField.data.resize(fieldIt->data.size()); // Resize to match the existing data size
 				std::memcpy(validatedField.data.data(), fieldIt->data.data(), fieldIt->data.size() * sizeof(uint8_t)); // Copy the existing data
 			}
@@ -246,24 +232,13 @@ void cp::MaterialInstance::ValidateData()
 		it->kind = correctRes.kind; // Update the kind in case it was changed
 		it->associatedResource = correctRes.associatedResource; // Update the associated resource pointer
 
-		LOG_DEBUG(MF("Resource ", it->name, " validated with ", it->fields.size(), " fields."));
 		for (const auto& field : it->fields)
 		{
 			std::string dataStr(field.data.begin(), field.data.end());
-			LOG_DEBUG(MF(" - Field: ", field.name, ", Size: ", field.data.size(), ", Content: ", dataStr));
 		}
 
-		//LOG_DEBUG(MF("Repacking resource ", it->name, " after validation"));
-
 		it->Repack(); // Repack the data after validation
-
-		//LOG_DEBUG(MF("Resource ", it->name, " validated and repacked successfully"));
-		LOG_DEBUG("--------------------");
 	}
-
-	// Removing stale resources that are not in the correctResources
-
-	LOG_DEBUG(MF("Validating resources, removing stale ones..."));
 
 	resources.erase(std::remove_if(resources.begin(), resources.end(), [&](const MaterialInstanceResource& res) {
 		return material->GetShaderReflection()->resources.end() == std::find_if(material->GetShaderReflection()->resources.begin(), material->GetShaderReflection()->resources.end(),
@@ -272,7 +247,7 @@ void cp::MaterialInstance::ValidateData()
 			});
 		}), resources.end());
 
-	LOG_DEBUG(MF("Validation complete, ", resources.size(), " resources remaining after validation."));
+	LOG_DEBUG(MF("Validation complete!"));
 
 	for (auto& res : resources)
 	{
@@ -305,7 +280,6 @@ QWidget* cp::MaterialInstance::CreateMaterialInstanceWidget(QWidget* _parent)
 	{
 		if (resource.set < 2)
 		{
-			LOG_WARNING(MF("Skipping set ", resource.set, " for resource ", resource.name, " in material instance widget creation"));
 			continue; // Skip sets 0 and 1 (commonly reserved for global and per-frame data)
 		}
 
@@ -383,13 +357,6 @@ void cp::MaterialInstanceResource::Deserialize(ISerializer& _serializer)
 		_serializer.EndObjectArrayElement();
 	}
 
-//	if (set >= 2 && (kind == cp::ShaderResourceKind::ConstantBuffer || kind == cp::ShaderResourceKind::StructuredBuffer))
-//	{
-//		Repack();
-//		CreateBuffer();
-//		UpdateBufferData();
-//	}
-
 	_serializer.EndObjectArray();
 }
 
@@ -432,8 +399,6 @@ void cp::MaterialInstanceResource::Repack()
 			continue;
 		}
 
-		LOG_DEBUG(MF("Packing ", field.data.size(), " bytes at offset ", offset, " for field ", field.name, " (packedData is used up to byte ", (offset + field.data.size()), "/", packedData.size(), ")"));
-
 		std::memcpy(packedData.data() + offset, field.data.data(), field.data.size() * sizeof(uint8_t));
 	}
 }
@@ -449,15 +414,12 @@ void cp::MaterialInstance::BindMaterialInstance(vk::CommandBuffer _command, cons
 	{
 		if (resource.set < 2)
 		{
-			LOG_WARNING(MF("Skipping binding for resource ", resource.name, " with set ", resource.set));
 			continue; // Skip sets 0 and 1 (commonly reserved for global and per-frame data)
 		}
 
-		std::string descriptorSetName = material->GetName() + "_" + std::to_string(resource.set);
+		std::string descriptorSetName = GetDescriptorSetName(resource.set);
 		vk::DescriptorSet descriptorSet = context->GetDescriptorSetManager()->GetDescriptorSet(descriptorSetName);
 		_command.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, material->GetPipelineLayout(_renderpass), resource.set, descriptorSet, nullptr);
-
-		//LOG_TRACE(MF("Bound descriptor set ", descriptorSetName, " to pipeline layout for renderpass ", _renderpass));
 	}
 }
 
@@ -475,21 +437,20 @@ void cp::MaterialInstance::UpdateDescriptorSets()
 	{
 		if (resource.set < 2)
 		{
-			LOG_WARNING(MF("Skipping descriptor set update for resource ", resource.name, " with set ", resource.set));
 			continue; // Skip sets 0 and 1 (commonly reserved for global and per-frame data)
 		}
 
 		if (resource.set != lastUpdatedSet)
 		{
-			LOG_DEBUG(MF("Updating descriptor set for set index ", resource.set));
+			std::string setName = GetDescriptorSetName(resource.set);
+			LOG_DEBUG(MF("Updating descriptor set [", setName, "]"));
 			lastUpdatedSet = resource.set;
-			std::string setName = material->GetName() + "_" + std::to_string(resource.set);
-			context->GetDescriptorSetManager()->CreateDescriptorSet(setName, context->GetDescriptorSetLayoutsManager()->GetDescriptorSetLayout(setName));
+			std::string setLayoutName = material->GetName() + "_" + std::to_string(resource.set);
+			context->GetDescriptorSetManager()->CreateDescriptorSet(setName, context->GetDescriptorSetLayoutsManager()->GetDescriptorSetLayout(setLayoutName));
 		}
 
 		if (resource.kind != cp::ShaderResourceKind::ConstantBuffer && resource.kind != cp::ShaderResourceKind::StructuredBuffer)
 		{
-			LOG_WARNING(MF("Skipping descriptor update for resource ", resource.name));
 			continue; // Only need to update buffers
 		}
 
@@ -502,8 +463,7 @@ void cp::MaterialInstance::UpdateDescriptorSets()
 		descriptorUpdate.offset = 0;
 		descriptorUpdate.range = resource.packedData.size();
 
-		std::string descriptorSetName = material->GetName() + "_" + std::to_string(resource.set);
-		LOG_DEBUG(MF("Trying to update descriptor set ", descriptorSetName, " for resource ", resource.name));
+		std::string descriptorSetName = GetDescriptorSetName(resource.set);
 		context->GetDescriptorSetManager()->UpdateDescriptorSet(descriptorSetName, { descriptorUpdate });
 
 		LOG_TRACE(MF("Updated descriptor set ", descriptorSetName, " for resource ", resource.name));
@@ -518,5 +478,18 @@ std::shared_ptr<cp::MaterialInstance> cp::MaterialInstance::LoadMaterialInstance
 	serializer.Read(_path);
 	matInstance->Deserialize(serializer);
 
+	auto material = cp::ResourceManager::Get()->GetOrLoad<Material>(matInstance->GetAssociatedMaterial());
+
+	if (!material)
+	{
+		LOG_ERROR(MF("Failed to load associated material: ", matInstance->GetAssociatedMaterial()));
+		return matInstance;
+	}
+
 	return matInstance;
+}
+
+inline std::string cp::MaterialInstance::GetDescriptorSetName(const uint32_t& _set) const
+{
+	return material->GetName() + "_" + std::to_string(_set) + "_" + std::to_string(reinterpret_cast<unsigned long long>(this));
 }
