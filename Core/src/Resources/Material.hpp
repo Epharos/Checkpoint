@@ -36,7 +36,7 @@ namespace cp
 
 		//Rasterization
 		vk::PolygonMode polygonMode = vk::PolygonMode::eFill;
-		vk::CullModeFlags cullMode = vk::CullModeFlagBits::eNone; //TODO: Change default to Back when testing is done
+		vk::CullModeFlags cullMode = vk::CullModeFlagBits::eBack;
 		vk::FrontFace frontFace = vk::FrontFace::eCounterClockwise;
 		bool depthBiasEnable = false;
 		float depthBiasConstantFactor = 0.0f;
