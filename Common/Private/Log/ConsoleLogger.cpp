@@ -15,21 +15,23 @@ namespace cp
 	{
 		cp::TerminalColor GetLogLevelColor(LogLevel _logLevel)
 		{
-			switch (_logLevel)
-			{
-			case LogLevel::Debug:
+			if (_logLevel.severity < ILogger::Debug.severity)
+				return TerminalColor::Cyan;
+
+			if (_logLevel.severity < ILogger::Info.severity)
 				return TerminalColor::Blue;
-			case LogLevel::Info:
+
+			if (_logLevel.severity < ILogger::Warning.severity)
 				return TerminalColor::Green;
-			case LogLevel::Warning:
-				return TerminalColor::Yellow;
-			case LogLevel::Error:
-				return TerminalColor::Red;
-			case LogLevel::Critical:
+
+			if (_logLevel.severity >= ILogger::Critical.severity)
 				return TerminalColor::Magenta;
-			default:
-				return TerminalColor::Default;
-			}
+
+			if (_logLevel.severity >= ILogger::Error.severity)
+				return TerminalColor::Red;
+
+			if (_logLevel.severity >= ILogger::Warning.severity)
+				return TerminalColor::Yellow;
 		}
 
 		void WriteLogHeader(std::stringstream& _ss, const LogEvent& _event)
@@ -41,7 +43,8 @@ namespace cp
 			auto timepointAsSecond = std::chrono::floor<std::chrono::seconds>(_event.timestamp);
 
 			_ss << std::format("{:%Y/%m/%d %T} ", timepointAsSecond)
-				<< GetFormattingCode(TerminalColor::Black, GetLogLevelColor(_event.level)) << ILogger::LogLevelToString[static_cast<uint8_t>(_event.level)] << GetTerminalResetCode()
+				<< GetFormattingCode(TerminalColor::Black, TerminalColor::White) << _event.label << GetTerminalResetCode() << " "
+				<< GetFormattingCode(TerminalColor::Black, GetLogLevelColor(_event.level)) << _event.level.name << GetTerminalResetCode()
 				<< " [" << GetTerminalForegroundColorCode(TerminalColor::Cyan) << fileNameOnly << GetTerminalResetCode() << ":" << _event.source.line() << "/"
 				<< GetTerminalForegroundColorCode(TerminalColor::Yellow) << _event.threadId << GetTerminalResetCode() << "] - ";
 		}

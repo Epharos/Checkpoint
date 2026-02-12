@@ -5,6 +5,8 @@
 #include "Macros.hpp"
 #include "Log.hpp"
 
+#include "RenderingHardwareInterface.hpp"
+
 namespace cp
 {
 	VulkanInstance::VulkanInstance(ILogger& _logger, const RHIInstanceInfo& _info)
@@ -32,21 +34,20 @@ namespace cp
 	{
 		if (!CreateInstance())
 		{
-			logger.Log(CP_LOG_EVENT(cp::LogLevel::Critical, cp::Message::Create<cp::TextComponent>("Failed to create instance")));
+			logger.Log(CP_LOG_EVENT(cp::ILogger::Critical, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Failed to create instance")));
 			return;
 		}
 
-		logger.Log(CP_LOG_EVENT(cp::LogLevel::Info, cp::Message::Create<cp::TextComponent>("Instance created successfully")));
-
+		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Instance created successfully")));
 		if (info.enableValidationLayers)
 		{
 			if (!CreateDebugMessenger())
 			{
-				logger.Log(CP_LOG_EVENT(cp::LogLevel::Error, cp::Message::Create<cp::TextComponent>("Failed to create debug messenger")));
+				logger.Log(CP_LOG_EVENT(cp::ILogger::Error, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Failed to create debug messenger")));
 				return;
 			}
 
-			logger.Log(CP_LOG_EVENT(cp::LogLevel::Info, cp::Message::Create<cp::TextComponent>("Debug messenger created successfully")));
+			logger.Log(CP_LOG_EVENT(cp::ILogger::Info, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Debug messenger created successfully")));
 		}
 	}
 
@@ -83,7 +84,7 @@ namespace cp
 
 				if (!found)
 				{
-					logger.Log(CP_LOG_EVENT(cp::LogLevel::Error, cp::Message::Create<cp::TextComponent>("{} extension not found", extension)));
+					logger.Log(CP_LOG_EVENT(cp::ILogger::Error, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("{} extension not found", extension)));
 				}
 			}
 		}
@@ -104,7 +105,7 @@ namespace cp
 				}
 				if (!found)
 				{
-					logger.Log(CP_LOG_EVENT(cp::LogLevel::Error, cp::Message::Create<cp::TextComponent>("{} layer not found", layer)));
+					logger.Log(CP_LOG_EVENT(cp::ILogger::Error, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("{} layer not found", layer)));
 				}
 			}
 		}
@@ -175,7 +176,6 @@ namespace cp
 		ILogger* logger = reinterpret_cast<ILogger*>(_userData);
 
 		std::stringstream message;
-		message << "[VL ";
 		if (_messageType & vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral)
 			message << "GENERAL";
 		else if (_messageType & vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation)
@@ -183,22 +183,22 @@ namespace cp
 		else if (_messageType & vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance)
 			message << "PERFORMANCE";
 
-		message << "] ";
+		message << " > ";
 		message << _callbackData->pMessage;
 
 		switch (_messageSeverity)
 		{
 		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
-			logger->Log(CP_LOG_EVENT(cp::LogLevel::Error, cp::Message::Create<cp::TextComponent>(message.str())));
+			logger->Log(CP_LOG_EVENT(cp::ILogger::Error, "Validation", cp::Message::Create<cp::TextComponent>(message.str())));
 			break;
 		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
-			logger->Log(CP_LOG_EVENT(cp::LogLevel::Warning, cp::Message::Create<cp::TextComponent>(message.str())));
+			logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "Validation", cp::Message::Create<cp::TextComponent>(message.str())));
 			break;
 		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
-			logger->Log(CP_LOG_EVENT(cp::LogLevel::Info, cp::Message::Create<cp::TextComponent>(message.str())));
+			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Validation", cp::Message::Create<cp::TextComponent>(message.str())));
 			break;
 		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
-			logger->Log(CP_LOG_EVENT(cp::LogLevel::Debug, cp::Message::Create<cp::TextComponent>(message.str())));
+			logger->Log(CP_LOG_EVENT(cp::ILogger::Debug, "Validation", cp::Message::Create<cp::TextComponent>(message.str())));
 			break;
 		}
 

@@ -6,6 +6,8 @@
 
 auto main(int argc, char** argv) -> int
 {
+	constexpr const char* InitLabel = "Init";
+
 	const std::shared_ptr<cp::IMessageVisitor> messageVisitor = std::make_shared<cp::ConsoleVisitor>();
 	const std::shared_ptr<cp::IMessageVisitor> fileMessageVisitor = std::make_shared<cp::FileVisitor>();
 
@@ -15,15 +17,16 @@ auto main(int argc, char** argv) -> int
 	compositeLogger->AddLogger(logger);
 	compositeLogger->AddLogger(fileLogger);
 
-	compositeLogger->Log(CP_LOG_EVENT(cp::LogLevel::Info, cp::Message::Create<cp::TextComponent>("Hello, World!")));
+	compositeLogger->Log(CP_LOG_EVENT(cp::ILogger::Info, InitLabel, cp::Message::Create<cp::TextComponent>("Hello, World!")));
 
 	compositeLogger->Spacing(1);
 
-	compositeLogger->Log(CP_LOG_EVENT(cp::LogLevel::Debug, cp::Message::Create<cp::TextComponent>("This is a debug message.")));
-	compositeLogger->Log(CP_LOG_EVENT(cp::LogLevel::Info, cp::Message::Create<cp::TextComponent>("This is an info message.")));
-	compositeLogger->Log(CP_LOG_EVENT(cp::LogLevel::Warning, cp::Message::Create<cp::TextComponent>("This is a warning message.")));
-	compositeLogger->Log(CP_LOG_EVENT(cp::LogLevel::Error, cp::Message::Create<cp::TextComponent>("This is an error message.")));
-	compositeLogger->Log(CP_LOG_EVENT(cp::LogLevel::Critical, cp::Message::Create<cp::TextComponent>("This is a critical message.")));
+	compositeLogger->Log(CP_LOG_EVENT(cp::ILogger::Trace, InitLabel, cp::Message::Create<cp::TextComponent>("This is a trace message.")));
+	compositeLogger->Log(CP_LOG_EVENT(cp::ILogger::Debug, InitLabel, cp::Message::Create<cp::TextComponent>("This is a debug message.")));
+	compositeLogger->Log(CP_LOG_EVENT(cp::ILogger::Info, InitLabel, cp::Message::Create<cp::TextComponent>("This is an info message.")));
+	compositeLogger->Log(CP_LOG_EVENT(cp::ILogger::Warning, InitLabel, cp::Message::Create<cp::TextComponent>("This is a warning message.")));
+	compositeLogger->Log(CP_LOG_EVENT(cp::ILogger::Error, InitLabel, cp::Message::Create<cp::TextComponent>("This is an error message.")));
+	compositeLogger->Log(CP_LOG_EVENT(cp::ILogger::Critical, InitLabel, cp::Message::Create<cp::TextComponent>("This is a critical message.")));
 
 	compositeLogger->Spacing(1);
 

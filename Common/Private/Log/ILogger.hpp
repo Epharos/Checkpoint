@@ -8,27 +8,21 @@
 
 #include "Message.hpp"
 
-#define CP_LOG_EVENT(_logLevel, _message) \
+#define CP_LOG_EVENT(_logLevel, _label, _message) \
 	cp::LogEvent{ \
 		.level = _logLevel, \
+		.label = _label, \
 		.message = _message \
 	}
-
-//.timestamp = std::chrono::system_clock::now(), \
-//.source = std::source_location::current(), \
-//.threadId = std::this_thread::get_id(), \
 
 namespace cp
 {
 	class IMessageVisitor;
 
-	enum class LogLevel : uint8_t
+	struct LogLevel
 	{
-		Debug,
-		Info,
-		Warning,
-		Error,
-		Critical,
+		std::string name;
+		size_t severity;
 	};
 
 	struct LogEvent
@@ -37,13 +31,21 @@ namespace cp
 		std::source_location source = std::source_location::current();
 		std::thread::id threadId = std::this_thread::get_id();
 		LogLevel level;
+		std::string_view label;
 		Message message;
 	};
 
 	class ILogger
 	{
 	public:
-		ILogger(const std::shared_ptr<IMessageVisitor>& _messageVisitor);
+		/**
+		* @brief Constructs a new ILogger instance with the given message visitor and log level threshold.
+		* 
+		* @param _messageVisitor The message visitor to use for dispatching log messages.
+		* @param _logLevelThreshold The log level threshold for filtering log messages.
+		*/
+		ILogger(const std::shared_ptr<IMessageVisitor>& _messageVisitor, size_t _logLevelThreshold = 0);
+
 		virtual ~ILogger() = default;
 
 		/**
@@ -52,7 +54,7 @@ namespace cp
 		* @param _message The message to log.
 		* @param _logLevel The log level of the message.
 		*/
-		virtual void Log(std::string_view _message, LogLevel _logLevel = LogLevel::Info);
+		virtual void Log(std::string_view _message, LogLevel _logLevel = ILogger::Info);
 		
 		/**
 		* @brief Logs a structured message.
@@ -60,7 +62,7 @@ namespace cp
 		* @param _message The structured message to log.
 		* @param _logLevel The log level of the message.
 		*/
-		virtual void Log(const Message& _message, LogLevel _logLevel = LogLevel::Info);
+		virtual void Log(const Message& _message, LogLevel _logLevel = ILogger::Info);
 
 		/**
 		* @brief Logs a log event.
@@ -76,15 +78,26 @@ namespace cp
 		*/
 		virtual void Spacing(size_t _verticalSpaces);
 
-		static constexpr const char* LogLevelToString[] = {
-			"DEBUG",
-			"INFO",
-			"WARNING",
-			"ERROR",
-			"CRITICAL"
-		};
+	protected:
+		/**
+		* @brief Determines whether a message with the given log level should be logged based on the current log level threshold.
+		* 
+		* @param _logLevel The log level of the message to check.
+		* 
+		* @return true if the message should be logged, false otherwise.
+		*/
+		virtual bool ShouldLog(LogLevel _logLevel) const;
+
+	public:
+		static LogLevel Trace;
+		static LogLevel Debug;
+		static LogLevel Info;
+		static LogLevel Warning;
+		static LogLevel Error;
+		static LogLevel Critical;
 
 	protected:
-		std::shared_ptr<IMessageVisitor> messageVisitor;
+		std::shared_ptr<IMessageVisitor> messageVisitor = nullptr;
+		size_t logLevelThreshold = 0; // Only log messages with severity >= threshold
 	};
 }

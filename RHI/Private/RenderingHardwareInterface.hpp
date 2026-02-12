@@ -17,7 +17,11 @@ namespace cp
 
 		virtual std::unique_ptr<RHIInstance> CreateInstance(const RHIInstanceInfo& _info) = 0;
 
+		static constexpr const char* RHI_Label = "RHI";
+
 	protected:
 		ILogger& GetLogger() const;
 	};
+
+	using RHI = RenderingHardwareInterface;
 }

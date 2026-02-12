@@ -19,7 +19,8 @@ namespace cp
 			auto timepointAsSecond = std::chrono::floor<std::chrono::seconds>(_event.timestamp);
 
 			_ss << std::format("{:%Y/%m/%d %T} ", timepointAsSecond)
-				<< ILogger::LogLevelToString[static_cast<uint8_t>(_event.level)]
+				<< _event.label << " "
+				<< _event.level.name
 				<< " [" << fileNameOnly << ":" << _event.source.line() << "/"
 				<< _event.threadId << "] - ";
 		}
