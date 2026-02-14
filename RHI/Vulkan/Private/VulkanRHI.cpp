@@ -2,6 +2,9 @@
 
 #include "VulkanInstance.hpp"
 
+#include <Profiling.hpp>
+#include <Macros.hpp>
+
 namespace cp
 {
 	namespace
@@ -35,6 +38,7 @@ namespace cp
 
 	std::unique_ptr<RHIInstance> VulkanRHI::CreateInstance(const RHIInstanceInfo& _info)
 	{
+		CP_PROFILE_SCOPE("Vulkan#Instance creation");
 		return std::make_unique<VulkanInstance>(GetLogger(), _info);
 	}
 }

@@ -19,6 +19,9 @@ add_library(Common STATIC
 
     "Private/Log/Visitors/ConsoleVisitor.cpp"
     "Private/Log/Visitors/FileVisitor.cpp"
+
+    "Private/Profiler/ScopedProfiler.cpp"
+    "Private/Profiler/ProfilerTracker.cpp"
 )
 
 target_include_directories(Common PUBLIC

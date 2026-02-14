@@ -9,3 +9,23 @@
 #define CP_VERSION_PATCH(version) (version & 0x3FFF)
 
 #define CP_VERSION CP_MAKE_VERSION(0, 1, 0, 0) // Alpha 1.0.0
+
+#define CP_STRINGIFY(x) #x
+
+#define CP_PROFILING_ENABLED
+
+#if defined(CP_PROFILING_ENABLED)
+#define CP_PROFILE_SCOPE(name) cp::ScopedProfiler profiler##__LINE__(name)
+#else
+#define CP_PROFILE_SCOPE(name)
+#endif
+
+#if defined(_WIN32) || defined(_WIN64)
+	#define CP_PLATFORM_WINDOWS
+#elif defined(__linux__)
+	#define CP_PLATFORM_LINUX
+#elif defined(__APPLE__)
+	#define CP_PLATFORM_MACOS
+#else
+	#error "Unsupported platform!"
+#endif
