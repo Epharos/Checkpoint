@@ -18,7 +18,6 @@ export default function Timeline({
 }: { events: Event[]; leftLabel?: number; minContentWidth?: number; threadGap?: number; palette?: string[];}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
-  // measure width
   React.useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -60,7 +59,6 @@ export default function Timeline({
 
   const showHover = (ev: any | null, clientX = 0, clientY = 0) => setHover({ ev, clientX, clientY });
 
-  // drag-pan state
   const [isDragging, setIsDragging] = useState(false);
   const lastXRef = useRef<number | null>(null);
 
@@ -81,7 +79,6 @@ export default function Timeline({
     if (Math.abs(dx) < 1) return;
     lastXRef.current = e.clientX;
     if (cWidth > 0) {
-      // pan: positive dx means move timeline left -> decrease time, so panBy negative fraction
       panBy(-dx / cWidth);
     }
   };
@@ -95,7 +92,7 @@ export default function Timeline({
   };
 
   const resetView = () => {
-    zoomAt((viewStart + viewEnd) / 2, 1 / 1.0); // no-op to re-center
+    zoomAt((viewStart + viewEnd) / 2, 1 / 1.0);
   };
 
   const zoomIn = () => zoomAt((viewStart + viewEnd) / 2, 1.5);

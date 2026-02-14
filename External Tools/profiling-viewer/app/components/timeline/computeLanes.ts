@@ -21,7 +21,7 @@ export function computeLanes(events: Event[], opts: LaneOptions = {}) {
   const perThreadHeights = new Map<string, number>();
 
   let totalHeight = 0;
-  let cursor = 40; // starting offset
+  let cursor = 40; 
 
   for (const t of threadOrder) {
     const items = (byThread.get(t) || []).slice().sort((a, b) => a.startTime - b.startTime);
