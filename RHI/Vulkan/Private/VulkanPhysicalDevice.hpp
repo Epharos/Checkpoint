@@ -8,6 +8,7 @@ namespace cp
 {
 	class ILogger;
 	class VulkanInstance;
+	struct VulkanQueueFamilies;
 
 	class VulkanPhysicalDevice final : public RHIPhysicalDevice
 	{
@@ -20,6 +21,11 @@ namespace cp
 
 		vk::PhysicalDevice& GetHandle() { return physicalDevice; }
 		const vk::PhysicalDevice& GetHandle() const { return physicalDevice; }
+
+		VulkanQueueFamilies FindQueueFamilies();
+		VulkanQueueFamilies FindQueueFamilies(vk::SurfaceKHR _surface);
+
+		std::unique_ptr<RHIDevice> CreateDevice() override;
 
 	private:
 		VulkanInstance& instance;

@@ -46,6 +46,7 @@ auto main(int argc, char** argv) -> int
 
 			std::unique_ptr<cp::RHIInstance> rhiInstance = rhi->CreateInstance(instanceInfo);
 			std::unique_ptr<cp::RHIPhysicalDevice> physicalDevice = rhiInstance->CreatePhysicalDevice();
+			std::unique_ptr<cp::RHIDevice> device = physicalDevice->CreateDevice();
 		}
 	}
 
