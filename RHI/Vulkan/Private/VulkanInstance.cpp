@@ -11,8 +11,8 @@
 
 namespace cp
 {
-	VulkanInstance::VulkanInstance(ILogger& _logger, const RHIInstanceInfo& _info)
-		: RHIInstance(_logger, _info)
+	VulkanInstance::VulkanInstance(ILogger& _logger, const RHIInstanceInfo& _instanceInfo)
+		: RHIInstance(_logger, _instanceInfo)
 	{
 		Initialize();
 	}
@@ -42,7 +42,7 @@ namespace cp
 
 		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Instance created successfully")));
 
-		if (info.enableValidationLayers)
+		if (instanceInfo.enableValidationLayers)
 		{
 			if (!CreateDebugMessenger())
 			{
@@ -56,7 +56,7 @@ namespace cp
 
 	void VulkanInstance::Cleanup()
 	{
-		if (info.enableValidationLayers)
+		if (instanceInfo.enableValidationLayers)
 		{
 			instance.destroyDebugUtilsMessengerEXT(debugMessenger, nullptr, dispatchLoaderDynamic);
 		}
@@ -124,16 +124,16 @@ namespace cp
 	bool VulkanInstance::CreateInstance()
 	{
 		vk::ApplicationInfo appInfo;
-		appInfo.setPApplicationName(info.appName.c_str()); // User defined
-		appInfo.setApplicationVersion(info.appVersion); // User defined
-		appInfo.setApiVersion(info.apiVersion == 0 ? VK_API_VERSION_1_4 : info.apiVersion);
+		appInfo.setPApplicationName(instanceInfo.appName.c_str()); // User defined
+		appInfo.setApplicationVersion(instanceInfo.appVersion); // User defined
+		appInfo.setApiVersion(instanceInfo.apiVersion == 0 ? VK_API_VERSION_1_4 : instanceInfo.apiVersion);
 		appInfo.setPEngineName("Checkpoint");
 		appInfo.setEngineVersion(CP_VERSION);
 
 		std::vector<const char*> extensions;
 		std::vector<const char*> layers;
 
-		if (info.enableValidationLayers)
+		if (instanceInfo.enableValidationLayers)
 		{
 			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 			layers.push_back("VK_LAYER_KHRONOS_validation");

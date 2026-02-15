@@ -23,7 +23,7 @@ namespace cp
 	class RHIInstance
 	{
 	public:
-		RHIInstance(ILogger& _logger, const RHIInstanceInfo& _info);
+		RHIInstance(ILogger& _logger, const RHIInstanceInfo& _instanceInfo);
 		virtual ~RHIInstance() = default;
 
 		virtual std::unique_ptr<RHIPhysicalDevice> CreatePhysicalDevice() = 0;
@@ -31,6 +31,6 @@ namespace cp
 	protected:
 		ILogger& logger;
 
-		RHIInstanceInfo info;
+		RHIInstanceInfo instanceInfo;
 	};
 }

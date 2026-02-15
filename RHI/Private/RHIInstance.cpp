@@ -4,7 +4,7 @@
 
 namespace cp
 {
-	RHIInstance::RHIInstance(ILogger& _logger, const RHIInstanceInfo& _info) : logger(_logger), info(_info)
+	RHIInstance::RHIInstance(ILogger& _logger, const RHIInstanceInfo& _instanceInfo) : logger(_logger), instanceInfo(_instanceInfo)
 	{
 
 	}
