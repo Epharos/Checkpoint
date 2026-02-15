@@ -12,12 +12,14 @@ namespace cp
 		VulkanInstance(ILogger& _logger, const RHIInstanceInfo& _info);
 		~VulkanInstance() override;
 
-		[[nodiscard]] vk::Instance& GetInstance();
-		[[nodiscard]] const vk::Instance& GetInstance() const;
+		[[nodiscard]] vk::Instance& GetHandle();
+		[[nodiscard]] const vk::Instance& GetHandle() const;
 
 	private:
 		void Initialize();
 		void Cleanup();
+
+		std::unique_ptr<RHIPhysicalDevice> CreatePhysicalDevice() override;
 
 		void ValidateExtensionsAndLayers(const std::vector<const char*>& _extensions, const std::vector<const char*>& _layers) const;
 

@@ -2,10 +2,12 @@
 
 #include <sstream>
 
-#include "Macros.hpp"
-#include "Log.hpp"
+#include <Macros.hpp>
+#include <Log.hpp>
+#include <Profiling.hpp>
 
 #include "RenderingHardwareInterface.hpp"
+#include "VulkanPhysicalDevice.hpp"
 
 namespace cp
 {
@@ -20,12 +22,12 @@ namespace cp
 		Cleanup();
 	}
 
-	vk::Instance& VulkanInstance::GetInstance()
+	vk::Instance& VulkanInstance::GetHandle()
 	{
 		return instance;
 	}
 
-	const vk::Instance& VulkanInstance::GetInstance() const
+	const vk::Instance& VulkanInstance::GetHandle() const
 	{
 		return instance;
 	}
@@ -39,6 +41,7 @@ namespace cp
 		}
 
 		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Instance created successfully")));
+
 		if (info.enableValidationLayers)
 		{
 			if (!CreateDebugMessenger())
@@ -61,6 +64,11 @@ namespace cp
 		instance.destroy();
 	}
 
+	std::unique_ptr<RHIPhysicalDevice> VulkanInstance::CreatePhysicalDevice()
+	{
+		return std::make_unique<VulkanPhysicalDevice>(logger, *this);
+	}
+
 	void VulkanInstance::ValidateExtensionsAndLayers(
 		const std::vector<const char*>& _extensions, 
 		const std::vector<const char*>& _layers
@@ -68,6 +76,7 @@ namespace cp
 	{
 		// Validate Extensions
 		{
+			CP_PROFILE_SCOPE("VulkanInstance#Validate Extensions");
 			auto availableExtensions = vk::enumerateInstanceExtensionProperties();
 
 			for (const auto& extension : _extensions)
@@ -91,6 +100,7 @@ namespace cp
 
 		// Validate Layers
 		{
+			CP_PROFILE_SCOPE("VulkanInstance#Validate Layers");
 			auto availableLayers = vk::enumerateInstanceLayerProperties();
 			for (const auto& layer : _layers)
 			{
@@ -138,13 +148,17 @@ namespace cp
 		instanceInfo.setEnabledLayerCount(static_cast<uint32_t>(layers.size()));
 		instanceInfo.setPpEnabledLayerNames(layers.data());
 
-		instance = vk::createInstance(instanceInfo);
+		{ 
+			CP_PROFILE_SCOPE("VulkanInstance#Create instance"); 
+			instance = vk::createInstance(instanceInfo);
+		}
 
 		return instance != VK_NULL_HANDLE;
 	}
 
 	bool VulkanInstance::CreateDebugMessenger()
 	{
+		CP_PROFILE_SCOPE("VulkanInstance#Create Debug Messenger");
 		dispatchLoaderDynamic = vk::detail::DispatchLoaderDynamic(instance, vkGetInstanceProcAddr);
 
 		vk::PFN_DebugUtilsMessengerCallbackEXT callback = reinterpret_cast<vk::PFN_DebugUtilsMessengerCallbackEXT>(cp::VulkanInstance::DebugLayerCallback);

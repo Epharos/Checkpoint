@@ -1,6 +1,7 @@
 add_library(RHI_Core STATIC
 	"Private/RenderingHardwareInterface.cpp"
 	"Private/RHIInstance.cpp"
+	"Private/RHIPhysicalDevice.cpp"
 )
 
 target_include_directories(RHI_Core 

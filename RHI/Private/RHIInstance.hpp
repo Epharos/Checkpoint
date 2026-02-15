@@ -2,7 +2,9 @@
 
 #include <string>
 #include <cstdint>
+#include <memory>
 
+#include "RHIPhysicalDevice.hpp"
 
 namespace cp
 {
@@ -23,6 +25,8 @@ namespace cp
 	public:
 		RHIInstance(ILogger& _logger, const RHIInstanceInfo& _info);
 		virtual ~RHIInstance() = default;
+
+		virtual std::unique_ptr<RHIPhysicalDevice> CreatePhysicalDevice() = 0;
 
 	protected:
 		ILogger& logger;
