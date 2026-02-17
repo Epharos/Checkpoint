@@ -1,18 +1,22 @@
 #pragma once
 
+#include "pch.hpp"
+
 #include <RHIQueue.hpp>
 
-#include <vulkan/vulkan.hpp>
 #include <optional>
 
 namespace cp
 {
 	struct VulkanQueueFamilies
 	{
+#pragma push_macro("max")
+#undef max
 		uint32_t graphics = std::numeric_limits<uint32_t>::max();
 		uint32_t compute = std::numeric_limits<uint32_t>::max();
 		uint32_t transfer = std::numeric_limits<uint32_t>::max();
 		uint32_t present = std::numeric_limits<uint32_t>::max();
+#pragma pop_macro("max")
 	};
 
 	class VulkanQueue final : public RHIQueue

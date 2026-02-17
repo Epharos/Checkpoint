@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "VulkanInstance.hpp"
 
 #include <sstream>
@@ -8,6 +9,7 @@
 
 #include "RenderingHardwareInterface.hpp"
 #include "VulkanPhysicalDevice.hpp"
+#include "VulkanSurface.hpp"
 
 namespace cp
 {
@@ -36,21 +38,21 @@ namespace cp
 	{
 		if (!CreateInstance())
 		{
-			logger.Log(CP_LOG_EVENT(cp::ILogger::Critical, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Failed to create instance")));
+			logger.Log(CP_LOG_EVENT(cp::ILogger::Critical, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Failed to create instance")));
 			return;
 		}
 
-		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Instance created successfully")));
+		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Instance created successfully")));
 
 		if (instanceInfo.enableValidationLayers)
 		{
 			if (!CreateDebugMessenger())
 			{
-				logger.Log(CP_LOG_EVENT(cp::ILogger::Error, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Failed to create debug messenger")));
+				logger.Log(CP_LOG_EVENT(cp::ILogger::Error, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Failed to create debug messenger")));
 				return;
 			}
 
-			logger.Log(CP_LOG_EVENT(cp::ILogger::Info, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Debug messenger created successfully")));
+			logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Debug messenger created successfully")));
 		}
 	}
 
@@ -67,6 +69,11 @@ namespace cp
 	std::unique_ptr<RHIPhysicalDevice> VulkanInstance::CreatePhysicalDevice()
 	{
 		return std::make_unique<VulkanPhysicalDevice>(logger, *this);
+	}
+
+	std::unique_ptr<RHISurface> VulkanInstance::CreateSurface(RHISurfaceInfo _info)
+	{
+		return std::make_unique<VulkanSurface>(_info, logger, *this);
 	}
 
 	void VulkanInstance::ValidateExtensionsAndLayers(
@@ -138,6 +145,12 @@ namespace cp
 			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 			layers.push_back("VK_LAYER_KHRONOS_validation");
 		}
+
+		extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+
+#if defined(CP_PLATFORM_WINDOWS)
+		extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#endif
 
 		ValidateExtensionsAndLayers(extensions, layers);
 

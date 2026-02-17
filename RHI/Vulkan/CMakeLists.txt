@@ -3,7 +3,11 @@ add_library(RHI_Vulkan STATIC
 	"Private/VulkanInstance.cpp"
 	"Private/VulkanPhysicalDevice.cpp"
 	"Private/VulkanQueue.cpp"
- "Private/VulkanDevice.cpp")
+	"Private/VulkanDevice.cpp" 
+	"Private/VulkanSurface.cpp"
+
+	"Private/pch.cpp"
+)
 
 target_include_directories(RHI_Vulkan 
 	PUBLIC
@@ -15,3 +19,7 @@ target_link_libraries(RHI_Vulkan
 		RHI_Core
 		Vulkan::Vulkan
 )
+
+target_precompile_headers(RHI_Vulkan 
+	PRIVATE 
+		"Private/pch.hpp")

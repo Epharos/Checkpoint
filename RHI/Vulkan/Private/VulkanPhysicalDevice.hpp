@@ -1,8 +1,10 @@
 #pragma once
 
+#include "pch.hpp"
+
 #include "RHIPhysicalDevice.hpp"
 
-#include <vulkan/vulkan.hpp>
+#include <optional>
 
 namespace cp
 {
@@ -22,8 +24,7 @@ namespace cp
 		vk::PhysicalDevice& GetHandle() { return physicalDevice; }
 		const vk::PhysicalDevice& GetHandle() const { return physicalDevice; }
 
-		VulkanQueueFamilies FindQueueFamilies();
-		VulkanQueueFamilies FindQueueFamilies(vk::SurfaceKHR _surface);
+		VulkanQueueFamilies FindQueueFamilies(std::optional<vk::SurfaceKHR> _surface = std::nullopt);
 
 		std::unique_ptr<RHIDevice> CreateDevice() override;
 

@@ -94,6 +94,9 @@ add_subdirectory(EngineWidgets) #Temporary
 add_subdirectory(Common) # Common structures and methods : Math, Allocators, Data Structures, Etc.
 add_subdirectory(RHI) # Rendering Hardware Interface : Vulkan and DirectX12 backends
 add_subdirectory(RHI/Vulkan) # Vulkan RHI backend
+add_subdirectory(RHI/DirectX12) # DirectX12 RHI backend
+add_subdirectory(Platform) # Platform abstraction layer : Windowing, Input, Etc.
+add_subdirectory(Platform/GLFW) # GLFW implementation of the platform layer
 add_subdirectory(Rendering)  # Rendering module : Framegraph, Materials, Etc.
 add_subdirectory(ECS) # Entity Component System
 add_subdirectory(Builder) # Executable Builder module : Turning project files into a runnable executable

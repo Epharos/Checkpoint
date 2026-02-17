@@ -1,6 +1,6 @@
-#include "VulkanQueue.hpp"
+#include "pch.hpp"
 
-#include <vulkan/vulkan.hpp>
+#include "VulkanQueue.hpp"
 
 #include <stdexcept>
 

@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "RHIPhysicalDevice.hpp"
+#include "RHISurface.hpp"
 
 namespace cp
 {
@@ -27,6 +28,7 @@ namespace cp
 		virtual ~RHIInstance() = default;
 
 		virtual std::unique_ptr<RHIPhysicalDevice> CreatePhysicalDevice() = 0;
+		virtual std::unique_ptr<RHISurface> CreateSurface(RHISurfaceInfo _info) = 0;
 
 	protected:
 		ILogger& logger;

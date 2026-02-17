@@ -1,3 +1,5 @@
+#include "pch.hpp"
+
 #include "VulkanPhysicalDevice.hpp"
 
 #include "VulkanInstance.hpp"
@@ -5,7 +7,6 @@
 #include "VulkanDevice.hpp"
 
 #include <Log.hpp>
-#include <Macros.hpp>
 #include <Profiling.hpp>
 #include <RenderingHardwareInterface.hpp>
 
@@ -100,7 +101,7 @@ namespace cp
 
 		if (devices.empty())
 		{
-			logger.Log(CP_LOG_EVENT(cp::ILogger::Critical, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Failed to find any physical devices with Vulkan support")));
+			logger.Log(CP_LOG_EVENT(cp::ILogger::Critical, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Failed to find any physical devices with Vulkan support")));
 			return;
 		}
 
@@ -121,7 +122,7 @@ namespace cp
 
 		std::string_view deviceName = bestDevice.getProperties().deviceName;
 
-		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>(
+		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>(
 			"Selected physical device: {} (score: {})", 
 			deviceName,
 			bestScore
@@ -133,7 +134,7 @@ namespace cp
 		
 	}
 
-	VulkanQueueFamilies VulkanPhysicalDevice::FindQueueFamilies()
+	VulkanQueueFamilies VulkanPhysicalDevice::FindQueueFamilies(std::optional<vk::SurfaceKHR> _surface)
 	{
 #pragma push_macro("max")
 #undef max
@@ -146,38 +147,12 @@ namespace cp
 			const auto& properties = families[i];
 
 			StoreGraphicsQueueIndex(queueFamilies, properties, i);
-			StoreComputeQueueIndex(queueFamilies, properties, i);
-			StoreTransferQueueIndex(queueFamilies, properties, i);
 
-			if (queueFamilies.graphics != std::numeric_limits<uint32_t>::max() &&
-				queueFamilies.compute != std::numeric_limits<uint32_t>::max() &&
-				queueFamilies.transfer != std::numeric_limits<uint32_t>::max())
+			if (_surface.has_value())
 			{
-				 break;
+				StorePresentQueueIndex(queueFamilies, physicalDevice, *_surface, i);
 			}
-		}
 
-		QueueIndicesFallbacks(queueFamilies);
-
-#pragma pop_macro("max")
-
-		return queueFamilies;
-	}
-
-	VulkanQueueFamilies VulkanPhysicalDevice::FindQueueFamilies(vk::SurfaceKHR _surface)
-	{
-#pragma push_macro("max")
-#undef max
-		auto families = physicalDevice.getQueueFamilyProperties();
-
-		VulkanQueueFamilies queueFamilies;
-
-		for (uint32_t i = 0; i < families.size(); i++)
-		{
-			const auto& properties = families[i];
-
-			StoreGraphicsQueueIndex(queueFamilies, properties, i);
-			StorePresentQueueIndex(queueFamilies, physicalDevice, _surface, i);
 			StoreComputeQueueIndex(queueFamilies, properties, i);
 			StoreTransferQueueIndex(queueFamilies, properties, i);
 

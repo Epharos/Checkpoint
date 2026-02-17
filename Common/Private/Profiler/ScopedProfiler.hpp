@@ -4,6 +4,12 @@
 
 #include "ProfilerEvent.hpp"
 
+#if defined(CP_PROFILING_ENABLED)
+#define CP_PROFILE_SCOPE(name) cp::ScopedProfiler profiler##__LINE__(name)
+#else
+#define CP_PROFILE_SCOPE(name)
+#endif
+
 namespace cp
 {
 	class ScopedProfiler

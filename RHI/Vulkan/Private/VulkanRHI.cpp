@@ -1,9 +1,10 @@
+#include "pch.hpp"
+
 #include "VulkanRHI.hpp"
 
 #include "VulkanInstance.hpp"
 
 #include <Profiling.hpp>
-#include <Macros.hpp>
 
 namespace cp
 {
@@ -15,14 +16,14 @@ namespace cp
 
 			if (vk::enumerateInstanceVersion(&vulkanVersion) != vk::Result::eSuccess)
 			{
-				_logger.Log(CP_LOG_EVENT(cp::ILogger::Error, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Couldn't retrieve Vulkan version")));
+				_logger.Log(CP_LOG_EVENT(cp::ILogger::Error, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Couldn't retrieve Vulkan version")));
 				return false;
 			}
 
 			std::stringstream ss;
 			ss << VK_VERSION_MAJOR(vulkanVersion) << "." << VK_VERSION_MINOR(vulkanVersion) << "." << VK_VERSION_PATCH(vulkanVersion);
 
-			_logger.Log(CP_LOG_EVENT(cp::ILogger::Info, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Vulkan version " + ss.str())));
+			_logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Vulkan version " + ss.str())));
 			return true;
 		}
 	}
@@ -33,7 +34,7 @@ namespace cp
 		if(!RetrieveVulkanVersion(GetLogger()))
 			throw std::runtime_error("Could not locate Vulkan on the system.");
 
-		_logger->Log(CP_LOG_EVENT(cp::ILogger::Info, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Vulkan RHI created.")));
+		_logger->Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Vulkan RHI created.")));
 	}
 
 	std::unique_ptr<RHIInstance> VulkanRHI::CreateInstance(const RHIInstanceInfo& _info)

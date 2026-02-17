@@ -1,10 +1,11 @@
+#include "pch.hpp"
+
 #include "VulkanDevice.hpp"
 
 #include "VulkanPhysicalDevice.hpp"
 #include "VulkanQueue.hpp"
 
 #include <Log.hpp>
-#include <Macros.hpp>
 #include <RenderingHardwareInterface.hpp>
 #include <Profiling.hpp>
 
@@ -29,16 +30,16 @@ namespace cp
 
 		if (!CreateLogicalDevice())
 		{
-			logger.Log(CP_LOG_EVENT(cp::ILogger::Critical, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Failed to create logical device")));
+			logger.Log(CP_LOG_EVENT(cp::ILogger::Critical, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Failed to create logical device")));
 			return;
 		}
 
 		CreateQueues();
 
-		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Logical device created successfully")));
-		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Graphics Queue Family: {}", families.graphics)));
-		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Compute Queue Family: {}", families.compute)));
-		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, cp::RHI::RHI_Label, cp::Message::Create<cp::TextComponent>("Transfer Queue Family: {}", families.transfer)));
+		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Logical device created successfully")));
+		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Graphics Queue Family: {}", families.graphics)));
+		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Compute Queue Family: {}", families.compute)));
+		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Transfer Queue Family: {}", families.transfer)));
 	}
 
 	void VulkanDevice::Cleanup()

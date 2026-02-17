@@ -4,6 +4,7 @@
 #include <VulkanRHI.hpp>
 #include <Macros.hpp>
 #include <Profiling.hpp>
+#include <GLFWWindow.hpp>
 
 auto main(int argc, char** argv) -> int
 {
@@ -33,6 +34,12 @@ auto main(int argc, char** argv) -> int
 
 		compositeLogger->Spacing(1);
 
+		std::unique_ptr<cp::IWindow> window = nullptr;
+		{
+			CP_PROFILE_SCOPE("Window Creation");
+			window = std::make_unique<cp::GLFWWindow>(cp::WindowInfo{ .title = "Test Window", .width = 800, .height = 600, .resizable = true });
+		}
+
 		{
 			CP_PROFILE_SCOPE("Rendering Hardware Interface");
 			std::unique_ptr<cp::RenderingHardwareInterface> rhi = std::make_unique<cp::VulkanRHI>(compositeLogger);
@@ -47,10 +54,38 @@ auto main(int argc, char** argv) -> int
 			std::unique_ptr<cp::RHIInstance> rhiInstance = rhi->CreateInstance(instanceInfo);
 			std::unique_ptr<cp::RHIPhysicalDevice> physicalDevice = rhiInstance->CreatePhysicalDevice();
 			std::unique_ptr<cp::RHIDevice> device = physicalDevice->CreateDevice();
+
+			if(!window)
+			{
+				compositeLogger->Log(CP_LOG_EVENT(cp::ILogger::Critical, "Main", cp::Message::Create<cp::TextComponent>("Window was not created, therefore Surface cannot be created")));
+				return -1;
+			}
+
+			{
+				CP_PROFILE_SCOPE("Surface Creation");
+
+				CP_ASSERT_MSG(window->GetNativeWindowHandle() != nullptr, "Window was created but native handle is null, cannot create surface");
+
+				cp::RHISurfaceInfo surfaceInfo
+				{
+					.nativeHandle = window->GetNativeWindowHandle()
+				};
+
+				std::unique_ptr<cp::RHISurface> surface = rhiInstance->CreateSurface(surfaceInfo);
+			}
+		}
+
+		{
+			CP_PROFILE_SCOPE("Main Loop");
+
+			while (!window->ShouldClose())
+			{
+				window->PollEvents();
+			}
 		}
 	}
 
-	cp::ProfilerTracker::GetInstance().SerializeEvents("profile.txt");
+	cp::ProfilerTracker::GetInstance().SerializeEvents("profile.csv");
 
 	return 0;
 }

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <RHIInstance.hpp>
+#include "pch.hpp"
 
-#include <vulkan/vulkan.hpp>
+#include <RHIInstance.hpp>
 
 namespace cp
 {
@@ -20,6 +20,7 @@ namespace cp
 		void Cleanup();
 
 		std::unique_ptr<RHIPhysicalDevice> CreatePhysicalDevice() override;
+		std::unique_ptr<RHISurface> CreateSurface(RHISurfaceInfo _info) override;
 
 		void ValidateExtensionsAndLayers(const std::vector<const char*>& _extensions, const std::vector<const char*>& _layers) const;
 

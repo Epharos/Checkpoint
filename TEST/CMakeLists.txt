@@ -4,5 +4,6 @@ add_executable(TEST
 
 target_link_libraries(TEST PRIVATE
 	RHI_Vulkan
+	Platform_GLFW
 	Common
 )
