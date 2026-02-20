@@ -2,16 +2,16 @@
 
 #include "pch.hpp"
 
-#include <RHISurface.hpp>
+#include <ISurface.hpp>
 
 namespace cp
 {
 	class VulkanInstance;
 
-	class VulkanSurface final : public RHISurface
+	class VulkanSurface final : public ISurface
 	{
 	public:
-		VulkanSurface(RHISurfaceInfo _info, ILogger& _logger, VulkanInstance& _instance);
+		VulkanSurface(SurfaceInfo _info, ILogger& _logger, VulkanInstance& _instance);
 		virtual ~VulkanSurface();
 
 	private:

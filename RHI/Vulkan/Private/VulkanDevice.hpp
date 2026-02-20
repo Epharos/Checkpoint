@@ -2,7 +2,7 @@
 
 #include "pch.hpp"
 
-#include <RHIDevice.hpp>
+#include <IDevice.hpp>
 
 #include <vector>
 #include <array>
@@ -15,13 +15,13 @@ namespace cp
 	class VulkanInstance;
 	class VulkanPhysicalDevice;
 
-	class VulkanDevice final : public RHIDevice
+	class VulkanDevice final : public IDevice
 	{
 	public:
 		VulkanDevice(ILogger& _logger, VulkanPhysicalDevice& _physicalDevice);
 		~VulkanDevice() override;
 
-		RHIQueue& GetQueue(RHIQueueType _queueType, uint32_t _index) override;
+		IQueue& GetQueue(IQueueType _queueType, uint32_t _index) override;
 
 	private:
 		void Initialize();

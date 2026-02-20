@@ -37,7 +37,7 @@ namespace cp
 		_logger->Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Vulkan RHI created.")));
 	}
 
-	std::unique_ptr<RHIInstance> VulkanRHI::CreateInstance(const RHIInstanceInfo& _info)
+	std::unique_ptr<IInstance> VulkanRHI::CreateInstance(const InstanceInfo& _info)
 	{
 		CP_PROFILE_SCOPE("Vulkan#Instance creation");
 		return std::make_unique<VulkanInstance>(GetLogger(), _info);

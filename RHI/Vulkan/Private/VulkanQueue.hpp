@@ -2,7 +2,7 @@
 
 #include "pch.hpp"
 
-#include <RHIQueue.hpp>
+#include <IQueue.hpp>
 
 #include <optional>
 
@@ -19,16 +19,16 @@ namespace cp
 #pragma pop_macro("max")
 	};
 
-	class VulkanQueue final : public RHIQueue
+	class VulkanQueue final : public IQueue
 	{
 	public:
-		VulkanQueue(vk::Queue _queue, uint32_t _familyIndex, RHIQueueType _type);
+		VulkanQueue(vk::Queue _queue, uint32_t _familyIndex, IQueueType _type);
 		~VulkanQueue() override;
 
-		void Submit(const RHISubmitInfo& _submitInfo) override;
+		void Submit(const ISubmitInfo& _submitInfo) override;
 		void WaitIdle() override;
 
-		RHIQueueType GetType() const override;
+		IQueueType GetType() const override;
 		
 		vk::Queue& GetHandle();
 		const vk::Queue& GetHandle() const;
@@ -38,6 +38,6 @@ namespace cp
 	private:
 		vk::Queue queue;
 		uint32_t familyIndex;
-		RHIQueueType type;
+		IQueueType type;
 	};
 }

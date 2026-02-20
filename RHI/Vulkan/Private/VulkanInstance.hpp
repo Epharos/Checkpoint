@@ -2,14 +2,14 @@
 
 #include "pch.hpp"
 
-#include <RHIInstance.hpp>
+#include <IInstance.hpp>
 
 namespace cp
 {
-	class VulkanInstance final : public RHIInstance
+	class VulkanInstance final : public IInstance
 	{
 	public:
-		VulkanInstance(ILogger& _logger, const RHIInstanceInfo& _info);
+		VulkanInstance(ILogger& _logger, const InstanceInfo& _info);
 		~VulkanInstance() override;
 
 		[[nodiscard]] vk::Instance& GetHandle();
@@ -19,8 +19,8 @@ namespace cp
 		void Initialize();
 		void Cleanup();
 
-		std::unique_ptr<RHIPhysicalDevice> CreatePhysicalDevice() override;
-		std::unique_ptr<RHISurface> CreateSurface(RHISurfaceInfo _info) override;
+		std::unique_ptr<IPhysicalDevice> CreatePhysicalDevice() override;
+		std::unique_ptr<ISurface> CreateSurface(SurfaceInfo _info) override;
 
 		void ValidateExtensionsAndLayers(const std::vector<const char*>& _extensions, const std::vector<const char*>& _layers) const;
 

@@ -13,8 +13,8 @@
 
 namespace cp
 {
-	VulkanInstance::VulkanInstance(ILogger& _logger, const RHIInstanceInfo& _instanceInfo)
-		: RHIInstance(_logger, _instanceInfo)
+	VulkanInstance::VulkanInstance(ILogger& _logger, const InstanceInfo& _instanceInfo)
+		: IInstance(_logger, _instanceInfo)
 	{
 		Initialize();
 	}
@@ -66,12 +66,12 @@ namespace cp
 		instance.destroy();
 	}
 
-	std::unique_ptr<RHIPhysicalDevice> VulkanInstance::CreatePhysicalDevice()
+	std::unique_ptr<IPhysicalDevice> VulkanInstance::CreatePhysicalDevice()
 	{
 		return std::make_unique<VulkanPhysicalDevice>(logger, *this);
 	}
 
-	std::unique_ptr<RHISurface> VulkanInstance::CreateSurface(RHISurfaceInfo _info)
+	std::unique_ptr<ISurface> VulkanInstance::CreateSurface(SurfaceInfo _info)
 	{
 		return std::make_unique<VulkanSurface>(_info, logger, *this);
 	}

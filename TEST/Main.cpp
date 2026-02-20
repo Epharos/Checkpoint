@@ -37,23 +37,23 @@ auto main(int argc, char** argv) -> int
 		std::unique_ptr<cp::IWindow> window = nullptr;
 		{
 			CP_PROFILE_SCOPE("Window Creation");
-			window = std::make_unique<cp::GLFWWindow>(cp::WindowInfo{ .title = "Test Window", .width = 800, .height = 600, .resizable = true });
+			window = std::make_unique<cp::GLFWWindow>(cp::WindowInfo{ .title = "Test Window", .extent = { 800, 600 }, .resizable = true});
 		}
 
 		{
 			CP_PROFILE_SCOPE("Rendering Hardware Interface");
 			std::unique_ptr<cp::RenderingHardwareInterface> rhi = std::make_unique<cp::VulkanRHI>(compositeLogger);
 
-			cp::RHIInstanceInfo instanceInfo
+			cp::InstanceInfo instanceInfo
 			{
 				.appName = "TestApp",
 				.appVersion = CP_MAKE_VERSION(0, 1, 0, 0),
 				.enableValidationLayers = true
 			};
 
-			std::unique_ptr<cp::RHIInstance> rhiInstance = rhi->CreateInstance(instanceInfo);
-			std::unique_ptr<cp::RHIPhysicalDevice> physicalDevice = rhiInstance->CreatePhysicalDevice();
-			std::unique_ptr<cp::RHIDevice> device = physicalDevice->CreateDevice();
+			std::unique_ptr<cp::IInstance> rhiInstance = rhi->CreateInstance(instanceInfo);
+			std::unique_ptr<cp::IPhysicalDevice> physicalDevice = rhiInstance->CreatePhysicalDevice();
+			std::unique_ptr<cp::IDevice> device = physicalDevice->CreateDevice();
 
 			if(!window)
 			{
@@ -66,12 +66,12 @@ auto main(int argc, char** argv) -> int
 
 				CP_ASSERT_MSG(window->GetNativeWindowHandle() != nullptr, "Window was created but native handle is null, cannot create surface");
 
-				cp::RHISurfaceInfo surfaceInfo
+				cp::SurfaceInfo surfaceInfo
 				{
 					.nativeHandle = window->GetNativeWindowHandle()
 				};
 
-				std::unique_ptr<cp::RHISurface> surface = rhiInstance->CreateSurface(surfaceInfo);
+				std::unique_ptr<cp::ISurface> surface = rhiInstance->CreateSurface(surfaceInfo);
 			}
 		}
 

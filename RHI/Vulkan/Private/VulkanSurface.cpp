@@ -9,8 +9,8 @@
 
 namespace cp
 {
-	cp::VulkanSurface::VulkanSurface(RHISurfaceInfo _info, ILogger& _logger, VulkanInstance& _instance)
-		: RHISurface(_info, _logger), instance(_instance)
+	cp::VulkanSurface::VulkanSurface(SurfaceInfo _info, ILogger& _logger, VulkanInstance& _instance)
+		: ISurface(_info, _logger), instance(_instance)
 	{
 		Initialize();
 	}

@@ -83,7 +83,7 @@ namespace cp
 	}
 
 	VulkanPhysicalDevice::VulkanPhysicalDevice(ILogger& _logger, VulkanInstance& _instance)
-		: RHIPhysicalDevice(_logger), instance(_instance)
+		: IPhysicalDevice(_logger), instance(_instance)
 	{
 		Initialize();
 	}
@@ -172,7 +172,7 @@ namespace cp
 		return queueFamilies;
 	}
 
-	std::unique_ptr<RHIDevice> VulkanPhysicalDevice::CreateDevice()
+	std::unique_ptr<IDevice> VulkanPhysicalDevice::CreateDevice()
 	{
 		return std::make_unique<VulkanDevice>(logger, *this);
 	}

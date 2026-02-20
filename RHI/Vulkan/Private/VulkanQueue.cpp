@@ -6,7 +6,7 @@
 
 namespace cp
 {
-	VulkanQueue::VulkanQueue(vk::Queue _queue, uint32_t _familyIndex, RHIQueueType _type)
+	VulkanQueue::VulkanQueue(vk::Queue _queue, uint32_t _familyIndex, IQueueType _type)
 		: queue(_queue), familyIndex(_familyIndex), type(_type)
 	{
 
@@ -17,7 +17,7 @@ namespace cp
 
 	}
 
-	void VulkanQueue::Submit(const RHISubmitInfo& _submitInfo)
+	void VulkanQueue::Submit(const ISubmitInfo& _submitInfo)
 	{
 		// TODO : Implement this function to submit command buffers to the queue using the provided submit info
 		throw std::logic_error("VulkanQueue::Submit is not implemented yet");
@@ -28,7 +28,7 @@ namespace cp
 		queue.waitIdle();
 	}
 
-	RHIQueueType VulkanQueue::GetType() const
+	IQueueType VulkanQueue::GetType() const
 	{
 		return type;
 	}

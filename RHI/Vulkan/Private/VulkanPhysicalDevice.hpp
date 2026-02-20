@@ -2,7 +2,7 @@
 
 #include "pch.hpp"
 
-#include "RHIPhysicalDevice.hpp"
+#include "IPhysicalDevice.hpp"
 
 #include <optional>
 
@@ -12,7 +12,7 @@ namespace cp
 	class VulkanInstance;
 	struct VulkanQueueFamilies;
 
-	class VulkanPhysicalDevice final : public RHIPhysicalDevice
+	class VulkanPhysicalDevice final : public IPhysicalDevice
 	{
 	public:
 		VulkanPhysicalDevice(ILogger& _logger, VulkanInstance& _instance);
@@ -26,7 +26,7 @@ namespace cp
 
 		VulkanQueueFamilies FindQueueFamilies(std::optional<vk::SurfaceKHR> _surface = std::nullopt);
 
-		std::unique_ptr<RHIDevice> CreateDevice() override;
+		std::unique_ptr<IDevice> CreateDevice() override;
 
 	private:
 		VulkanInstance& instance;
