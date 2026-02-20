@@ -3,6 +3,8 @@
 #include <IWindow.hpp>
 #include <GLFW/glfw3.h>
 
+#include <Extent.hpp>
+
 namespace cp
 {
 	class GLFWWindow : public IWindow
@@ -23,8 +25,8 @@ namespace cp
 		void SetTitle(std::string_view _title) const override;
 		std::string_view GetTitle() const override;
 
-		void SetExtent(uint32_t _width, uint32_t _height) override;
-		void GetExtent(uint32_t& _width, uint32_t& _height) const override;
+		void SetExtent(Extent2D<int> _extent) override;
+		Extent2D<int> GetExtent() const override;
 
 		void SetResizable(bool _resizable) override;
 		bool IsResizable() const override;

@@ -16,7 +16,7 @@ namespace cp
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, _info.resizable ? GLFW_TRUE : GLFW_FALSE);
 
-		window = glfwCreateWindow(_info.width, _info.height, _info.title.c_str(), nullptr, nullptr);
+		window = glfwCreateWindow(_info.extent.x(), _info.extent.y(), _info.title.c_str(), nullptr, nullptr);
 
 		glfwSetWindowUserPointer(window, this);
 	}
@@ -58,17 +58,17 @@ namespace cp
 		return std::string_view(glfwGetWindowTitle(window));
 	}
 
-	void GLFWWindow::SetExtent(uint32_t _width, uint32_t _height)
+	void GLFWWindow::SetExtent(Extent2D<int> _extent)
 	{
-		glfwSetWindowSize(window, _width, _height);
+		glfwSetWindowSize(window, _extent.x(), _extent.y());
 	}
 
-	void GLFWWindow::GetExtent(uint32_t& _width, uint32_t& _height) const
+	Extent2D<int> GLFWWindow::GetExtent() const
 	{
 		int width, height;
 		glfwGetFramebufferSize(window, &width, &height);
-		_width = static_cast<uint32_t>(width);
-		_height = static_cast<uint32_t>(height);
+		
+		return Extent2D<int>{ width, height };
 	}
 
 	void GLFWWindow::SetResizable(bool _resizable)
