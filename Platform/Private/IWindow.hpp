@@ -4,15 +4,15 @@
 #include <string>
 #include <cstdint>
 
+#include <Extent.hpp>
+
 namespace cp
 {
 	struct WindowInfo
 	{
 		std::string title = "Checkpoint";
 
-		uint32_t width = 1920;
-		uint32_t height = 1080;
-		// TODO : Change uint32_t to an extent struct
+		Extent2D<int> extent{ 1280, 720 };
 
 		bool resizable = true;
 		bool fullscreen = false;
@@ -34,8 +34,8 @@ namespace cp
 		virtual void SetTitle(std::string_view _title) const = 0;
 		virtual std::string_view GetTitle() const = 0;
 
-		virtual void SetExtent(uint32_t _width, uint32_t _height) = 0; // TODO : Change uint32_t to an extent struct
-		virtual void GetExtent(uint32_t& _width, uint32_t& _height) const = 0; // TODO : Change uint32_t to an extent struct
+		virtual void SetExtent(Extent2D<int> _extent) = 0;
+		virtual Extent2D<int> GetExtent() const = 0;
 
 		virtual void SetResizable(bool _resizable) = 0;
 		virtual bool IsResizable() const = 0;
