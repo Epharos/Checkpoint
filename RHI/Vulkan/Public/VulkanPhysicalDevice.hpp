@@ -1,3 +1,3 @@
 #pragma once
 
-#include "../Private/VulkanPhysicalDevice.hpp"
+#include "../Private/Core/VulkanPhysicalDevice.hpp"

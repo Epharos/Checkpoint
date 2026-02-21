@@ -2,7 +2,7 @@
 
 namespace cp
 {
-	ISurface::ISurface(SurfaceInfo _info, ILogger& _logger)
+	cp::ISurface::ISurface(ILogger& _logger, const SurfaceInfo& _info)
 		: info(_info), logger(_logger)
 	{
 		

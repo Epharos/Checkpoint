@@ -1,3 +1,3 @@
 #pragma once
 
-#include "../Private/RHIInstance.hpp"
+#include "../Private/Core/IInstance.hpp"

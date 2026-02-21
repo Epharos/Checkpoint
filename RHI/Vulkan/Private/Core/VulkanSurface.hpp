@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pch.hpp"
+#include "../pch.hpp"
 
 #include <ISurface.hpp>
 
@@ -11,7 +11,7 @@ namespace cp
 	class VulkanSurface final : public ISurface
 	{
 	public:
-		VulkanSurface(SurfaceInfo _info, ILogger& _logger, VulkanInstance& _instance);
+		VulkanSurface(ILogger & _logger, const SurfaceInfo& _info, VulkanInstance& _instance);
 		virtual ~VulkanSurface();
 
 	private:

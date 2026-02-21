@@ -1,3 +1,3 @@
 #pragma once
 
-#include "../Private/IQueue.hpp"
+#include "../Private/Core/IQueue.hpp"

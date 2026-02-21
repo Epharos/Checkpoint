@@ -1,4 +1,4 @@
-#include "pch.hpp"
+#include "../pch.hpp"
 
 #include "VulkanSurface.hpp"
 
@@ -9,8 +9,8 @@
 
 namespace cp
 {
-	cp::VulkanSurface::VulkanSurface(SurfaceInfo _info, ILogger& _logger, VulkanInstance& _instance)
-		: ISurface(_info, _logger), instance(_instance)
+	VulkanSurface::VulkanSurface(ILogger& _logger, const SurfaceInfo& _info, VulkanInstance& _instance)
+		: ISurface(_logger, _info), instance(_instance)
 	{
 		Initialize();
 	}

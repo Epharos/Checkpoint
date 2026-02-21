@@ -12,7 +12,7 @@ namespace cp
 	class ISurface
 	{
 	public:
-		ISurface(SurfaceInfo _info, ILogger& _logger);
+		ISurface(ILogger& _logger, const SurfaceInfo& _info);
 		virtual ~ISurface() = default;
 
 	protected:

@@ -1,4 +1,5 @@
-#include "pch.hpp"
+#include "../pch.hpp"
+
 #include "VulkanInstance.hpp"
 
 #include <sstream>
@@ -73,7 +74,7 @@ namespace cp
 
 	std::unique_ptr<ISurface> VulkanInstance::CreateSurface(SurfaceInfo _info)
 	{
-		return std::make_unique<VulkanSurface>(_info, logger, *this);
+		return std::make_unique<VulkanSurface>(logger, _info, *this);
 	}
 
 	void VulkanInstance::ValidateExtensionsAndLayers(

@@ -1,3 +1,3 @@
 #pragma once
 
-#include "../Private/VulkanQueue.hpp"
+#include "../Private/Core/VulkanQueue.hpp"

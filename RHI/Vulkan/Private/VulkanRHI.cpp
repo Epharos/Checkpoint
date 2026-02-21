@@ -2,7 +2,7 @@
 
 #include "VulkanRHI.hpp"
 
-#include "VulkanInstance.hpp"
+#include "Core/VulkanInstance.hpp"
 
 #include <Profiling.hpp>
 

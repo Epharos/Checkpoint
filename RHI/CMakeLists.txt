@@ -1,9 +1,13 @@
 add_library(RHI_Core STATIC
 	"Private/RenderingHardwareInterface.cpp"
-	"Private/IInstance.cpp"
-	"Private/IPhysicalDevice.cpp"
-	"Private/IDevice.cpp"
-	"Private/ISurface.cpp")
+	"Private/Core/IInstance.cpp"
+	"Private/Core/IPhysicalDevice.cpp"
+	"Private/Core/IDevice.cpp"
+	"Private/Core/ISurface.cpp" 
+	"Private/Core/ISwapchain.cpp"
+
+	"Private/Data/ITexture.cpp"
+)
 
 target_include_directories(RHI_Core 
 	PUBLIC

@@ -1,3 +1,3 @@
 #pragma once
 
-#include "../Private/IDevice.hpp"
+#include "../Private/Core/IDevice.hpp"

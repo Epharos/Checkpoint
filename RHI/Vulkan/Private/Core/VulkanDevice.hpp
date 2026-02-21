@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pch.hpp"
+#include "../pch.hpp"
 
 #include <IDevice.hpp>
 
@@ -22,6 +22,11 @@ namespace cp
 		~VulkanDevice() override;
 
 		IQueue& GetQueue(IQueueType _queueType, uint32_t _index) override;
+
+		vk::Device& GetHandle() { return device; }
+		const vk::Device& GetHandle() const { return device; }
+
+		const VulkanPhysicalDevice& GetPhysicalDevice() const { return physicalDevice; }
 
 	private:
 		void Initialize();
