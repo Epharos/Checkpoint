@@ -53,4 +53,19 @@ namespace cp
 			}
 		}
 	}
+
+	vk::ImageAspectFlagBits ConvertToVulkanImageAspectFlagBit(TextureAspect _aspect)
+	{
+		switch(_aspect)
+		{
+			case TextureAspect::Color:
+				return vk::ImageAspectFlagBits::eColor;
+			case TextureAspect::Depth:
+				return vk::ImageAspectFlagBits::eDepth;
+			case TextureAspect::Stencil:
+				return vk::ImageAspectFlagBits::eStencil;
+		}
+
+		throw std::logic_error("Unrecognized texture aspect!");
+	}
 }

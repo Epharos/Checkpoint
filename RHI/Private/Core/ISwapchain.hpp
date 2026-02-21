@@ -2,7 +2,7 @@
 
 #include <Extent.hpp>
 
-#include "../Data/Format.hpp"
+#include <Formats.hpp>
 
 namespace cp
 {

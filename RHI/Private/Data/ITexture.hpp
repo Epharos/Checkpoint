@@ -17,6 +17,16 @@ namespace cp
 		// In case more usages are added, keep in mind that the converters will need to be updated to handle the new flags.
 	};
 
+	enum class TextureAspect : uint32_t
+	{
+		None = 0,
+		Color = 1 << 1,
+		Depth = 1 << 2,
+		Stencil = 1 << 3,
+
+		DepthStencil = Depth | Stencil
+	};
+
 	struct TextureInfo
 	{
 		Extent3D<uint32_t> extent;

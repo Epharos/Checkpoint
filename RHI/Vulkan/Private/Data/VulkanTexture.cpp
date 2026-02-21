@@ -40,29 +40,34 @@ namespace cp
 
 	void VulkanTexture::Initiate()
 	{
-		//vk::ImageViewCreateInfo viewCreateInfo = {};
-		//viewCreateInfo.setImage(resource->image);
-		//viewCreateInfo.setFormat(ConvertToVulkanFormat(info.format));
+		vk::ImageViewCreateInfo viewCreateInfo = {};
+		viewCreateInfo.setImage(resource->image);
+		viewCreateInfo.setFormat(ConvertToVulkanFormat(info.format));
 
-		//vk::ImageViewType type = vk::ImageViewType::e2D;
+		vk::ImageViewType type = vk::ImageViewType::e2D;
 
-		//if(info.extent.z() != 0)
-		//{
-		//	type = vk::ImageViewType::e3D;
-		//}
-		//else if (info.arrayLayers > 1)
-		//{
-		//	type = vk::ImageViewType::e2DArray;
-		//}
-		//else
-		//{
-		//	type = vk::ImageViewType::e2D;
-		//}
+		if(info.extent.z() != 0)
+		{
+			type = vk::ImageViewType::e3D;
+		}
+		else if (info.arrayLayers > 1)
+		{
+			type = vk::ImageViewType::e2DArray;
+		}
+		else
+		{
+			type = vk::ImageViewType::e2D;
+		}
 
-		//viewCreateInfo.setViewType(type);
+		viewCreateInfo.setViewType(type);
 
-		//vk::ImageSubresourceRange subresourceRange = {};
+		vk::ImageSubresourceRange subresourceRange = {};
 		//subresourceRange.setAspectMask()
+		subresourceRange.setBaseMipLevel(0);
+		subresourceRange.setLevelCount(info.mipLevels);
+		subresourceRange.setBaseArrayLayer(0);
+		subresourceRange.setLayerCount(info.arrayLayers);
+		subresourceRange.setAspectMask(ConvertToVulkanImageAspectFlags(info.format, info.usage));
 
 		//viewCreateInfo.setSubresourceRange
 
@@ -99,7 +104,8 @@ namespace cp
 		imageCreateInfo.setSharingMode(vk::SharingMode::eExclusive);
 		imageCreateInfo.setInitialLayout(vk::ImageLayout::eUndefined);
 
-		device->GetHandle().createImage(&imageCreateInfo, nullptr, &image);
+		CP_VK_CHECK(device->GetHandle().createImage(&imageCreateInfo, nullptr, &image));
+		CP_ENSURE_MSG(image != VK_NULL_HANDLE, "Image was not initialized");
 
 		vk::MemoryRequirements memoryRequirements = device->GetHandle().getImageMemoryRequirements(image);
 
@@ -114,10 +120,10 @@ namespace cp
 		);
 
 		memory = device->GetHandle().allocateMemory(memoryAllocateInfo);
-		device->GetHandle().bindImageMemory(image, memory, 0);
 
-		CP_ENSURE_MSG(image != VK_NULL_HANDLE, "Image was not initialized");
 		CP_ENSURE_MSG(memory != VK_NULL_HANDLE, "Memory was not initialized");
+
+		device->GetHandle().bindImageMemory(image, memory, 0);
 	}
 
 	VulkanTextureResource::~VulkanTextureResource()
@@ -125,6 +131,8 @@ namespace cp
 		if (!isOwner) return;
 
 		CP_EXPECT_MSG(device, "No VulkanDeviced associated to VulkanTextureResource");
+		CP_EXPECT_MSG(image != VK_NULL_HANDLE, "Image shouldn't be null");
+		CP_EXPECT_MSG(memory != VK_NULL_HANDLE, "Memory shouldn't be null");
 
 		device->GetHandle().destroyImage(image);
 		device->GetHandle().freeMemory(memory);

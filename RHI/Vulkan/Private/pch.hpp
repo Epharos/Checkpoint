@@ -8,4 +8,6 @@
 
 #include <vulkan/vulkan.hpp>
 
+#define CP_VK_CHECK(result) CP_ENSURE_MSG(result == vk::Result::eSuccess, ("Vulkan error: " + static_cast<size_t>(result)))
+
 constinit static const char* VulkanRHI_Label = "RHI Vulkan";

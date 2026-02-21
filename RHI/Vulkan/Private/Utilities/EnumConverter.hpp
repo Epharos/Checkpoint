@@ -10,4 +10,6 @@ namespace cp
 	vk::Format ConvertToVulkanFormat(Format _format);
 	vk::ImageUsageFlagBits ConvertToVulkanImageUsageFlagBit(TextureUsage _usage);
 	vk::ImageUsageFlags ConvertToVulkanImageUsageFlags(TextureUsage _usage);
+	vk::ImageAspectFlagBits ConvertToVulkanImageAspectFlagBit(TextureAspect _aspect);
+	vk::ImageUsageFlags ConvertToVulkanImageUsageFlags(TextureAspect _aspect);
 }
