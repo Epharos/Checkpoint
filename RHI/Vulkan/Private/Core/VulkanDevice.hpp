@@ -22,6 +22,7 @@ namespace cp
 		~VulkanDevice() override;
 
 		IQueue& GetQueue(IQueueType _queueType, uint32_t _index) override;
+		std::shared_ptr<ITexture> CreateTexture(const TextureInfo& _info) override;
 
 		vk::Device& GetHandle() { return device; }
 		const vk::Device& GetHandle() const { return device; }

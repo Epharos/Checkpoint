@@ -26,8 +26,6 @@ namespace cp
 
 		VulkanQueueFamilies FindQueueFamilies(std::optional<vk::SurfaceKHR> _surface = std::nullopt);
 
-		std::unique_ptr<IDevice> CreateDevice() override;
-
 	private:
 		VulkanInstance& instance;
 

@@ -2,7 +2,7 @@
 
 #include "VulkanRHI.hpp"
 
-#include "Core/VulkanInstance.hpp"
+#include "Core/VulkanSurface.hpp"
 
 #include <Profiling.hpp>
 
@@ -37,9 +37,77 @@ namespace cp
 		_logger->Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Vulkan RHI created.")));
 	}
 
-	std::unique_ptr<IInstance> VulkanRHI::CreateInstance(const InstanceInfo& _info)
+	IInstance& VulkanRHI::CreateInstance(const InstanceInfo& _info)
 	{
+		CP_EXPECT_MSG(!instance, "Instance already created");
 		CP_PROFILE_SCOPE("Vulkan#Instance creation");
-		return std::make_unique<VulkanInstance>(GetLogger(), _info);
+		instance = std::make_unique<cp::VulkanInstance>(GetLogger(), _info);
+		CP_ENSURE_MSG(instance, "Failed to create Vulkan instance");
+		return *instance;
+	}
+
+	IPhysicalDevice& VulkanRHI::CreatePhysicalDevice()
+	{
+		CP_EXPECT_MSG(instance, "Instance must be created before creating a physical device");
+		CP_EXPECT_MSG(!physicalDevice, "Physical device already created");
+		CP_PROFILE_SCOPE("Vulkan#PhysicalDevice creation");
+		physicalDevice = std::make_unique<VulkanPhysicalDevice>(GetLogger(), *instance);
+		CP_ENSURE_MSG(physicalDevice, "Failed to create Vulkan physical device");
+		return *physicalDevice;
+	}
+
+	IDevice& VulkanRHI::CreateDevice()
+	{
+		CP_EXPECT_MSG(physicalDevice, "Physical device must be created before creating a logical device");
+		CP_EXPECT_MSG(!device, "Logical device already created");
+		CP_PROFILE_SCOPE("Vulkan#Device creation");
+		device = std::make_unique<VulkanDevice>(GetLogger(), *physicalDevice);
+		CP_ENSURE_MSG(device, "Failed to create Vulkan logical device");
+		return *device;
+	}
+
+	std::unique_ptr<ISurface> VulkanRHI::CreateSurface(SurfaceInfo _info)
+	{
+		CP_EXPECT_MSG(instance, "Instance must be created before creating a surface");
+		CP_PROFILE_SCOPE("Vulkan#Surface creation");
+		auto surface = std::make_unique<VulkanSurface>(GetLogger(), _info, *instance);
+		CP_ENSURE_MSG(surface, "Failed to create Vulkan surface");
+		return surface;
+	}
+
+	IInstance& VulkanRHI::GetInstance()
+	{
+		CP_EXPECT_MSG(instance, "Instance must be created before it can be accessed");
+		return *instance;
+	}
+
+	const IInstance& VulkanRHI::GetInstance() const
+	{
+		CP_EXPECT_MSG(instance, "Instance must be created before it can be accessed");
+		return *instance;
+	}
+
+	IPhysicalDevice& VulkanRHI::GetPhysicalDevice()
+	{
+		CP_EXPECT_MSG(physicalDevice, "Physical device must be created before it can be accessed");
+		return *physicalDevice;
+	}
+
+	const IPhysicalDevice& VulkanRHI::GetPhysicalDevice() const
+	{
+		CP_EXPECT_MSG(physicalDevice, "Physical device must be created before it can be accessed");
+		return *physicalDevice;
+	}
+
+	IDevice& VulkanRHI::GetDevice()
+	{
+		CP_EXPECT_MSG(device, "Logical device must be created before it can be accessed");
+		return *device;
+	}
+
+	const IDevice& VulkanRHI::GetDevice() const
+	{
+		CP_EXPECT_MSG(device, "Logical device must be created before it can be accessed");
+		return *device;
 	}
 }

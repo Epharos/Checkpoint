@@ -4,10 +4,12 @@
 
 #include "VulkanPhysicalDevice.hpp"
 #include "VulkanQueue.hpp"
+#include "../Data/VulkanTexture.hpp"
 
 #include <Log.hpp>
 #include <RenderingHardwareInterface.hpp>
 #include <Profiling.hpp>
+
 
 #include <set>
 
@@ -38,6 +40,7 @@ namespace cp
 
 		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Logical device created successfully")));
 		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Graphics Queue Family: {}", families.graphics)));
+		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Present Queue Family: {}", families.present)));
 		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Compute Queue Family: {}", families.compute)));
 		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Transfer Queue Family: {}", families.transfer)));
 	}
@@ -46,6 +49,7 @@ namespace cp
 	{
 		if (device != VK_NULL_HANDLE)
 		{
+			device.waitIdle();
 			device.destroy();
 		}
 	}
@@ -104,5 +108,10 @@ namespace cp
 	IQueue& VulkanDevice::GetQueue(IQueueType _queueType, uint32_t _index)
 	{
 		return *queues[static_cast<size_t>(_queueType)].at(_index);
+	}
+
+	std::shared_ptr<ITexture> VulkanDevice::CreateTexture(const TextureInfo& _info)
+	{
+		return std::make_shared<VulkanTexture>(logger, _info, *this);
 	}
 }

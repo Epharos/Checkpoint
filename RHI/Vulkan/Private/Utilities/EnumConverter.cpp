@@ -45,13 +45,7 @@ namespace cp
 
 	vk::ImageUsageFlags ConvertToVulkanImageUsageFlags(TextureUsage _usage)
 	{
-		for (int i = 0; i < 5; ++i)
-		{
-			if(static_cast<uint32_t>(_usage) & (1 << i))
-			{
-				return ConvertToVulkanImageUsageFlagBit(static_cast<TextureUsage>(1 << i));
-			}
-		}
+		return ConvertFromVulkan<TextureUsage, vk::ImageUsageFlags, ConvertToVulkanImageUsageFlagBit, 4>(_usage);
 	}
 
 	vk::ImageAspectFlagBits ConvertToVulkanImageAspectFlagBit(TextureAspect _aspect)
@@ -67,5 +61,25 @@ namespace cp
 		}
 
 		throw std::logic_error("Unrecognized texture aspect!");
+	}
+
+	vk::ImageAspectFlags ConvertToVulkanImageAspectFlags(TextureAspect _aspect)
+	{
+		return ConvertFromVulkan<TextureAspect, vk::ImageAspectFlags, ConvertToVulkanImageAspectFlagBit, 4>(_aspect);
+	}
+
+	vk::ImageViewType ConvertToVulkanImageViewType(TextureType _type)
+	{
+		switch (_type)
+		{
+			case TextureType::Texture2D:
+				return vk::ImageViewType::e2D;
+			case TextureType::Texture3D:
+				return vk::ImageViewType::e3D;
+			case TextureType::Texture2DArray:
+				return vk::ImageViewType::e2DArray;
+			default:
+				throw std::logic_error("Unrecognized texture type!");
+		}
 	}
 }

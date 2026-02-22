@@ -20,9 +20,6 @@ namespace cp
 		void Initialize();
 		void Cleanup();
 
-		std::unique_ptr<IPhysicalDevice> CreatePhysicalDevice() override;
-		std::unique_ptr<ISurface> CreateSurface(SurfaceInfo _info) override;
-
 		void ValidateExtensionsAndLayers(const std::vector<const char*>& _extensions, const std::vector<const char*>& _layers) const;
 
 		bool CreateInstance();

@@ -21,6 +21,6 @@ namespace cp
 		void Cleanup();
 
 	private:
-		vk::SwapchainKHR swapchain;
+		vk::SwapchainKHR swapchain { VK_NULL_HANDLE };
 	};
 }

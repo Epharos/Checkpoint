@@ -1,16 +1,37 @@
 #pragma once
 
 #include <RenderingHardwareInterface.hpp>
-#include <IInstance.hpp>
+
+#include "Core/VulkanInstance.hpp"
+#include "Core/VulkanPhysicalDevice.hpp"
+#include "Core/VulkanDevice.hpp"
 
 namespace cp
 {
+	class ISurface;
+
 	class VulkanRHI final : public RenderingHardwareInterface
 	{
 	public:
 		VulkanRHI(std::shared_ptr<cp::ILogger> _logger);
 		virtual ~VulkanRHI() = default;
 
-		virtual std::unique_ptr<IInstance> CreateInstance(const InstanceInfo& _info) override;
+		IInstance& CreateInstance(const InstanceInfo& _info) override;
+		IPhysicalDevice& CreatePhysicalDevice() override;
+		IDevice& CreateDevice() override;
+
+		std::unique_ptr<ISurface> CreateSurface(SurfaceInfo _info) override;
+
+		IInstance& GetInstance() override;
+		const IInstance& GetInstance() const override;
+		IPhysicalDevice& GetPhysicalDevice() override;
+		const IPhysicalDevice& GetPhysicalDevice() const override;
+		IDevice& GetDevice() override;
+		const IDevice& GetDevice() const override;
+
+	private:	
+		std::unique_ptr<VulkanInstance> instance = nullptr;
+		std::unique_ptr<VulkanPhysicalDevice> physicalDevice = nullptr;
+		std::unique_ptr<VulkanDevice> device = nullptr;
 	};
 }

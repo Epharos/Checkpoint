@@ -171,9 +171,4 @@ namespace cp
 
 		return queueFamilies;
 	}
-
-	std::unique_ptr<IDevice> VulkanPhysicalDevice::CreateDevice()
-	{
-		return std::make_unique<VulkanDevice>(logger, *this);
-	}
 }

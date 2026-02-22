@@ -1,10 +1,16 @@
 #include <iostream>
 
 #include <Log.hpp>
-#include <VulkanRHI.hpp>
-#include <Macros.hpp>
 #include <Profiling.hpp>
+#include <Macros.hpp>
+
+#include <IDevice.hpp>
+#include <ISurface.hpp>
+
+#include <VulkanRHI.hpp>
 #include <GLFWWindow.hpp>
+
+#include <ITexture.hpp>
 
 auto main(int argc, char** argv) -> int
 {
@@ -51,9 +57,9 @@ auto main(int argc, char** argv) -> int
 				.enableValidationLayers = true
 			};
 
-			std::unique_ptr<cp::IInstance> rhiInstance = rhi->CreateInstance(instanceInfo);
-			std::unique_ptr<cp::IPhysicalDevice> physicalDevice = rhiInstance->CreatePhysicalDevice();
-			std::unique_ptr<cp::IDevice> device = physicalDevice->CreateDevice();
+			cp::IInstance& rhiInstance = rhi->CreateInstance(instanceInfo);
+			cp::IPhysicalDevice& physicalDevice = rhi->CreatePhysicalDevice();
+			cp::IDevice& device = rhi->CreateDevice();
 
 			if(!window)
 			{
@@ -71,7 +77,24 @@ auto main(int argc, char** argv) -> int
 					.nativeHandle = window->GetNativeWindowHandle()
 				};
 
-				std::unique_ptr<cp::ISurface> surface = rhiInstance->CreateSurface(surfaceInfo);
+				std::unique_ptr<cp::ISurface> surface = rhi->CreateSurface(surfaceInfo);
+			}
+
+			{
+				CP_PROFILE_SCOPE("Texture Creation");
+
+				cp::TextureInfo textureInfo
+				{
+					.type = cp::TextureType::Texture2D,
+					.extent = { 512, 512, 1 },
+					.mipLevels = 1,
+					.arrayLayers = 1,
+					.format = cp::Format::R8G8B8A8_UNORM,
+					.usage = cp::TextureUsage::ColorAttachment,
+					.aspect = cp::TextureAspect::Color
+				};
+
+				std::shared_ptr<cp::ITexture> texture = device.CreateTexture(textureInfo);
 			}
 		}
 

@@ -67,16 +67,6 @@ namespace cp
 		instance.destroy();
 	}
 
-	std::unique_ptr<IPhysicalDevice> VulkanInstance::CreatePhysicalDevice()
-	{
-		return std::make_unique<VulkanPhysicalDevice>(logger, *this);
-	}
-
-	std::unique_ptr<ISurface> VulkanInstance::CreateSurface(SurfaceInfo _info)
-	{
-		return std::make_unique<VulkanSurface>(logger, _info, *this);
-	}
-
 	void VulkanInstance::ValidateExtensionsAndLayers(
 		const std::vector<const char*>& _extensions, 
 		const std::vector<const char*>& _layers

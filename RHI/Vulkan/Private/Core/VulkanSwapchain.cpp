@@ -38,6 +38,9 @@ namespace cp
 
 	void VulkanSwapchain::Cleanup()
 	{
-	
+		if (swapchain != VK_NULL_HANDLE)
+		{
+
+		}
 	}
 }

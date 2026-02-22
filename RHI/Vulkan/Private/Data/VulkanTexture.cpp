@@ -2,6 +2,8 @@
 
 #include "VulkanTexture.hpp"
 
+#include <iostream>
+
 #include <Log.hpp>
 
 #include "../Core/VulkanDevice.hpp"
@@ -9,28 +11,125 @@
 #include "../Utilities/EnumConverter.hpp"
 #include "../Utilities/MemoryHelper.hpp"
 
+#include <string_view>
+
 namespace cp
 {
-	VulkanTexture::VulkanTexture(ILogger& _logger, const TextureInfo& _info, std::shared_ptr<VulkanDevice> _device)
-		: ITexture(_info), device(_device)
+	namespace
 	{
-		resource = std::make_shared<VulkanTextureResource>(_info, _device);
+		constexpr const std::string_view to_string(Format _format)
+		{
+			switch (_format)
+			{
+				case Format::R8G8B8A8_UNORM:
+					return "R8G8B8A8_UNORM";
+				case Format::B8G8R8A8_UNORM:
+					return "B8G8R8A8_UNORM";
+				case Format::R16G16B16A16_FLOAT:
+					return "R16G16B16A16_FLOAT";
+				case Format::R32_UINT:
+					return "R32_UINT";
 
-		_logger.Log(CP_LOG_EVENT(ILogger::Info, VulkanRHI_Label, cp::Message::Create<TextComponent>("Created texture"))); // TODO : Add more information about the texture created
+				case Format::D24_UNORM_S8_UINT:
+					return "D24_UNORM_S8_UINT";
+				case Format::D32_FLOAT:
+					return "D32_FLOAT";
+			}
 
-		CP_ENSURE_MSG(resource, "Could not create texture");
-		CP_ENSURE_MSG(view != VK_NULL_HANDLE, "View could not be created");
+			return "Unknown";
+		}
+
+		void CreateImage(vk::Image& _image, const TextureInfo& _info, VulkanDevice& _device)
+		{
+			vk::ImageCreateInfo imageCreateInfo = {};
+
+			imageCreateInfo.setImageType(_info.extent.z() > 1 ? vk::ImageType::e3D : vk::ImageType::e2D);
+			imageCreateInfo.setFormat(ConvertToVulkanFormat(_info.format));
+			imageCreateInfo.setExtent({ _info.extent.x(), _info.extent.y(), _info.extent.z() });
+			imageCreateInfo.setMipLevels(_info.mipLevels);
+			imageCreateInfo.setArrayLayers(_info.arrayLayers);
+			imageCreateInfo.setSamples(vk::SampleCountFlagBits::e1);
+			imageCreateInfo.setTiling(vk::ImageTiling::eOptimal);
+			imageCreateInfo.setUsage(ConvertToVulkanImageUsageFlags(_info.usage));
+			imageCreateInfo.setSharingMode(vk::SharingMode::eExclusive);
+			imageCreateInfo.setInitialLayout(vk::ImageLayout::eUndefined);
+
+			CP_VK_CHECK(_device.GetHandle().createImage(&imageCreateInfo, nullptr, &_image));
+			CP_ENSURE_MSG(_image != VK_NULL_HANDLE, "Image was not initialized");
+		}
+
+		void AllocateImageMemory(vk::DeviceMemory& _memory, vk::Image& _image, VulkanDevice& _device)
+		{
+			vk::MemoryRequirements memoryRequirements = _device.GetHandle().getImageMemoryRequirements(_image);
+
+			vk::MemoryAllocateInfo memoryAllocateInfo = {};
+			memoryAllocateInfo.setAllocationSize(memoryRequirements.size);
+			memoryAllocateInfo.setMemoryTypeIndex(
+				FindMemoryType(
+					_device.GetPhysicalDevice().GetHandle(),
+					memoryRequirements.memoryTypeBits,
+					vk::MemoryPropertyFlagBits::eDeviceLocal
+				)
+			);
+
+			_memory = _device.GetHandle().allocateMemory(memoryAllocateInfo);
+
+			CP_ENSURE_MSG(_memory != VK_NULL_HANDLE, "Memory was not initialized");
+		}
+
+		void BindImageMemory(vk::Image& _image, vk::DeviceMemory& _memory, VulkanDevice& _device)
+		{
+			_device.GetHandle().bindImageMemory(_image, _memory, 0);
+		}
+
+		void CreateImageView(vk::ImageView& _view, const TextureInfo& _info, vk::Image& _image, VulkanDevice& _device)
+		{
+			vk::ImageViewCreateInfo viewCreateInfo = {};
+			viewCreateInfo.setImage(_image);
+			viewCreateInfo.setFormat(ConvertToVulkanFormat(_info.format));
+			viewCreateInfo.setViewType(ConvertToVulkanImageViewType(_info.type));
+
+			vk::ImageSubresourceRange subresourceRange = {};
+			subresourceRange.setBaseMipLevel(0);
+			subresourceRange.setLevelCount(_info.mipLevels);
+			subresourceRange.setBaseArrayLayer(0);
+			subresourceRange.setLayerCount(_info.arrayLayers);
+			subresourceRange.setAspectMask(ConvertToVulkanImageAspectFlags(_info.aspect));
+
+			viewCreateInfo.setSubresourceRange(subresourceRange);
+
+			CP_VK_CHECK(_device.GetHandle().createImageView(&viewCreateInfo, nullptr, &_view));
+			CP_ENSURE_MSG(_view != VK_NULL_HANDLE, "View was not initialized");
+		}
 	}
 
-	VulkanTexture::VulkanTexture(ILogger& _logger, vk::Image& _image)
-		: ITexture(TextureInfo{}), device(nullptr)
+	VulkanTexture::VulkanTexture(ILogger& _logger, const TextureInfo& _info, VulkanDevice& _device)
+		: ITexture(_info), device(_device), logger(_logger)
 	{
-		resource = std::make_shared<VulkanTextureResource>(_image);
+		resource = std::make_unique<VulkanTextureResource>(_info, _device);
+
+		Initiate();
+
+		_logger.Log(CP_LOG_EVENT(ILogger::Info, VulkanRHI_Label, cp::Message::Create<TextComponent>(
+			"Created texture (dim: {}x{}x{} format: {})", 
+			info.extent.x(), 
+			info.extent.y(), 
+			info.extent.z(),
+			to_string(info.format))));
+
+		CP_ENSURE_MSG(resource, "Could not create texture");
+	}
+
+	VulkanTexture::VulkanTexture(ILogger& _logger, vk::Image& _image, const TextureInfo& _info, VulkanDevice& _device)
+		: ITexture(_info), device(_device), logger(_logger)
+	{
+		resource = std::make_unique<VulkanTextureResource>(_image, _device);
+
+		Initiate();
 
 		_logger.Log(CP_LOG_EVENT(ILogger::Info, VulkanRHI_Label, cp::Message::Create<TextComponent>("Texture access created")));
 
 		CP_ENSURE_MSG(resource, "Could not store texture");
-		CP_ENSURE_MSG(view != VK_NULL_HANDLE, "View could not be created");
 	}
 
 	VulkanTexture::~VulkanTexture()
@@ -40,101 +139,35 @@ namespace cp
 
 	void VulkanTexture::Initiate()
 	{
-		vk::ImageViewCreateInfo viewCreateInfo = {};
-		viewCreateInfo.setImage(resource->image);
-		viewCreateInfo.setFormat(ConvertToVulkanFormat(info.format));
-
-		vk::ImageViewType type = vk::ImageViewType::e2D;
-
-		if(info.extent.z() != 0)
-		{
-			type = vk::ImageViewType::e3D;
-		}
-		else if (info.arrayLayers > 1)
-		{
-			type = vk::ImageViewType::e2DArray;
-		}
-		else
-		{
-			type = vk::ImageViewType::e2D;
-		}
-
-		viewCreateInfo.setViewType(type);
-
-		vk::ImageSubresourceRange subresourceRange = {};
-		//subresourceRange.setAspectMask()
-		subresourceRange.setBaseMipLevel(0);
-		subresourceRange.setLevelCount(info.mipLevels);
-		subresourceRange.setBaseArrayLayer(0);
-		subresourceRange.setLayerCount(info.arrayLayers);
-		subresourceRange.setAspectMask(ConvertToVulkanImageAspectFlags(info.format, info.usage));
-
-		//viewCreateInfo.setSubresourceRange
-
-		// TODO : Create Image View
+		CreateImageView(view, info, resource->GetImage(), device);
 	}
 
 	void VulkanTexture::Cleanup()
 	{
 		CP_EXPECT_MSG(view != VK_NULL_HANDLE, "View shouldn't be null");
 
-		device->GetHandle().destroyImageView(view);
+		device.GetHandle().destroyImageView(view);
 	}
 
-	VulkanTextureResource::VulkanTextureResource(vk::Image& _image) :
-		image(_image), memory(VK_NULL_HANDLE), device(nullptr), isOwner(false)
+	VulkanTextureResource::VulkanTextureResource(vk::Image& _image, VulkanDevice& _device) :
+		image(_image), memory(VK_NULL_HANDLE), device(_device), isOwner(false) {}
+
+	VulkanTextureResource::VulkanTextureResource(const TextureInfo& _info, VulkanDevice& _device)
+		: device(_device), isOwner(true)
 	{
-
-	}
-
-	VulkanTextureResource::VulkanTextureResource(const TextureInfo& _info, std::shared_ptr<VulkanDevice> _device)
-		: device(_device)
-	{
-		CP_EXPECT_MSG(_device, "VulkanDevice cannot be null");
-
-		vk::ImageCreateInfo imageCreateInfo = {};
-		imageCreateInfo.setImageType(_info.extent.z() != 0 ? vk::ImageType::e3D : vk::ImageType::e2D);
-		imageCreateInfo.setFormat(ConvertToVulkanFormat(_info.format));
-		imageCreateInfo.setExtent({ _info.extent.x(), _info.extent.y(), _info.extent.z() });
-		imageCreateInfo.setMipLevels(_info.mipLevels);
-		imageCreateInfo.setArrayLayers(_info.arrayLayers);
-		imageCreateInfo.setSamples(vk::SampleCountFlagBits::e1);
-		imageCreateInfo.setTiling(vk::ImageTiling::eOptimal);
-		imageCreateInfo.setUsage(ConvertToVulkanImageUsageFlags(_info.usage));
-		imageCreateInfo.setSharingMode(vk::SharingMode::eExclusive);
-		imageCreateInfo.setInitialLayout(vk::ImageLayout::eUndefined);
-
-		CP_VK_CHECK(device->GetHandle().createImage(&imageCreateInfo, nullptr, &image));
-		CP_ENSURE_MSG(image != VK_NULL_HANDLE, "Image was not initialized");
-
-		vk::MemoryRequirements memoryRequirements = device->GetHandle().getImageMemoryRequirements(image);
-
-		vk::MemoryAllocateInfo memoryAllocateInfo = {};
-		memoryAllocateInfo.setAllocationSize(memoryRequirements.size);
-		memoryAllocateInfo.setMemoryTypeIndex(
-			FindMemoryType(
-				device->GetPhysicalDevice().GetHandle(), 
-				memoryRequirements.memoryTypeBits, 
-				vk::MemoryPropertyFlagBits::eDeviceLocal
-			)
-		);
-
-		memory = device->GetHandle().allocateMemory(memoryAllocateInfo);
-
-		CP_ENSURE_MSG(memory != VK_NULL_HANDLE, "Memory was not initialized");
-
-		device->GetHandle().bindImageMemory(image, memory, 0);
+		CreateImage(image, _info, device);
+		AllocateImageMemory(memory, image, device);
+		BindImageMemory(image, memory, device);
 	}
 
 	VulkanTextureResource::~VulkanTextureResource()
 	{
 		if (!isOwner) return;
 
-		CP_EXPECT_MSG(device, "No VulkanDeviced associated to VulkanTextureResource");
 		CP_EXPECT_MSG(image != VK_NULL_HANDLE, "Image shouldn't be null");
 		CP_EXPECT_MSG(memory != VK_NULL_HANDLE, "Memory shouldn't be null");
 
-		device->GetHandle().destroyImage(image);
-		device->GetHandle().freeMemory(memory);
+		device.GetHandle().destroyImage(image);
+		device.GetHandle().freeMemory(memory);
 	}
 }

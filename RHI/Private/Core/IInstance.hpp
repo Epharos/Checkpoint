@@ -4,9 +4,6 @@
 #include <cstdint>
 #include <memory>
 
-#include "IPhysicalDevice.hpp"
-#include "ISurface.hpp"
-
 namespace cp
 {
 	class ILogger;
@@ -26,9 +23,6 @@ namespace cp
 	public:
 		IInstance(ILogger& _logger, const InstanceInfo& _instanceInfo);
 		virtual ~IInstance() = default;
-
-		virtual std::unique_ptr<IPhysicalDevice> CreatePhysicalDevice() = 0;
-		virtual std::unique_ptr<ISurface> CreateSurface(SurfaceInfo _info) = 0;
 
 	protected:
 		ILogger& logger;
