@@ -2,7 +2,10 @@
 
 #include "VulkanRHI.hpp"
 
+#include <memory>
+
 #include "Core/VulkanSurface.hpp"
+#include "Core/VulkanSwapchain.hpp"
 
 #include <Profiling.hpp>
 
@@ -66,13 +69,22 @@ namespace cp
 		return *device;
 	}
 
-	std::unique_ptr<ISurface> VulkanRHI::CreateSurface(SurfaceInfo _info)
+	std::unique_ptr<VulkanSurface> VulkanRHI::CreateSurface(const SurfaceInfo& _info)
 	{
 		CP_EXPECT_MSG(instance, "Instance must be created before creating a surface");
 		CP_PROFILE_SCOPE("Vulkan#Surface creation");
 		auto surface = std::make_unique<VulkanSurface>(GetLogger(), _info, *instance);
 		CP_ENSURE_MSG(surface, "Failed to create Vulkan surface");
 		return surface;
+	}
+
+	std::unique_ptr<ISwapchain> VulkanRHI::CreateSwapchain(const SwapchainInfo& _info)
+	{
+		CP_EXPECT_MSG(device, "Logical device must be created before creating a swapchain");
+		CP_PROFILE_SCOPE("Vulkan#Swapchain creation");
+		auto swapchain = std::make_unique<VulkanSwapchain>(GetLogger(), _info, *device);
+		CP_ENSURE_MSG(swapchain, "Failed to create Vulkan swapchain");
+		return swapchain;
 	}
 
 	IInstance& VulkanRHI::GetInstance()

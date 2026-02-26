@@ -7,7 +7,7 @@ add_library(RHI_Vulkan STATIC
 	"Private/Core/VulkanSurface.cpp"
 	"Private/Core/VulkanSwapchain.cpp"
 
-	"Private/Utilities/EnumConverter.cpp" 
+	 
 	"Private/Data/VulkanTexture.cpp" 
 	"Private/Utilities/MemoryHelper.cpp"
 

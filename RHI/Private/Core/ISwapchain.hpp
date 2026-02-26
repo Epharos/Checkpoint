@@ -15,6 +15,8 @@ namespace cp
 		uint32_t imageCount;
 
 		Format format;
+
+		void* nativeWindowHandle = nullptr;
 	};
 
 	class ISwapchain
@@ -34,7 +36,7 @@ namespace cp
 		Extent2D<int> GetImageExtent() const { return info.extent; }
 		uint32_t GetImageCount() const { return info.imageCount; }
 
-	private:
+	protected:
 		SwapchainInfo info;
 
 		ILogger& logger;

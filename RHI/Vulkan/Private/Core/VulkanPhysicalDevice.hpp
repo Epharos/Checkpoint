@@ -26,6 +26,9 @@ namespace cp
 
 		VulkanQueueFamilies FindQueueFamilies(std::optional<vk::SurfaceKHR> _surface = std::nullopt);
 
+		VulkanInstance& GetInstance() { return instance; }
+		const VulkanInstance& GetInstance() const { return instance; }
+
 	private:
 		VulkanInstance& instance;
 

@@ -7,11 +7,12 @@ namespace cp
 	class IInstance;
 	class IPhysicalDevice;
 	class IDevice;
-	class ISurface;
+
+	class ISwapchain;
 
 	struct InstanceInfo;
-	struct SurfaceInfo;
-
+	struct SwapchainInfo;
+	
 	class RenderingHardwareInterface
 	{
 	public:
@@ -24,7 +25,7 @@ namespace cp
 		virtual IPhysicalDevice& CreatePhysicalDevice() = 0;
 		virtual IDevice& CreateDevice() = 0;
 
-		virtual std::unique_ptr<ISurface> CreateSurface(SurfaceInfo _info) = 0;
+		virtual std::unique_ptr<ISwapchain> CreateSwapchain(const SwapchainInfo& _info) = 0;
 
 		virtual IInstance& GetInstance() = 0;
 		virtual const IInstance& GetInstance() const = 0;

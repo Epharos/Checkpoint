@@ -8,7 +8,9 @@
 
 namespace cp
 {
-	class ISurface;
+	class VulkanSurface;
+
+	struct SurfaceInfo;
 
 	class VulkanRHI final : public RenderingHardwareInterface
 	{
@@ -20,7 +22,8 @@ namespace cp
 		IPhysicalDevice& CreatePhysicalDevice() override;
 		IDevice& CreateDevice() override;
 
-		std::unique_ptr<ISurface> CreateSurface(SurfaceInfo _info) override;
+		std::unique_ptr<VulkanSurface> CreateSurface(const SurfaceInfo& _info);
+		std::unique_ptr<ISwapchain> CreateSwapchain(const SwapchainInfo& _info) override;
 
 		IInstance& GetInstance() override;
 		const IInstance& GetInstance() const override;

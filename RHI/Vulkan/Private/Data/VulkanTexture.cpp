@@ -8,7 +8,7 @@
 
 #include "../Core/VulkanDevice.hpp"
 #include "../Core/VulkanPhysicalDevice.hpp"
-#include "../Utilities/EnumConverter.hpp"
+#include "../Utilities/VulkanConverter.hpp"
 #include "../Utilities/MemoryHelper.hpp"
 
 #include <string_view>
@@ -44,13 +44,13 @@ namespace cp
 			vk::ImageCreateInfo imageCreateInfo = {};
 
 			imageCreateInfo.setImageType(_info.extent.z() > 1 ? vk::ImageType::e3D : vk::ImageType::e2D);
-			imageCreateInfo.setFormat(ConvertToVulkanFormat(_info.format));
+			imageCreateInfo.setFormat(EnumCast<vk::Format, Format>(_info.format));
 			imageCreateInfo.setExtent({ _info.extent.x(), _info.extent.y(), _info.extent.z() });
 			imageCreateInfo.setMipLevels(_info.mipLevels);
 			imageCreateInfo.setArrayLayers(_info.arrayLayers);
 			imageCreateInfo.setSamples(vk::SampleCountFlagBits::e1);
 			imageCreateInfo.setTiling(vk::ImageTiling::eOptimal);
-			imageCreateInfo.setUsage(ConvertToVulkanImageUsageFlags(_info.usage));
+			imageCreateInfo.setUsage(EnumBitsCast<vk::ImageUsageFlags, TextureUsage>(_info.usage));
 			imageCreateInfo.setSharingMode(vk::SharingMode::eExclusive);
 			imageCreateInfo.setInitialLayout(vk::ImageLayout::eUndefined);
 
@@ -86,15 +86,15 @@ namespace cp
 		{
 			vk::ImageViewCreateInfo viewCreateInfo = {};
 			viewCreateInfo.setImage(_image);
-			viewCreateInfo.setFormat(ConvertToVulkanFormat(_info.format));
-			viewCreateInfo.setViewType(ConvertToVulkanImageViewType(_info.type));
+			viewCreateInfo.setFormat(EnumCast<vk::Format, Format>(_info.format));
+			viewCreateInfo.setViewType(EnumCast<vk::ImageViewType, TextureType>(_info.type));
 
 			vk::ImageSubresourceRange subresourceRange = {};
 			subresourceRange.setBaseMipLevel(0);
 			subresourceRange.setLevelCount(_info.mipLevels);
 			subresourceRange.setBaseArrayLayer(0);
 			subresourceRange.setLayerCount(_info.arrayLayers);
-			subresourceRange.setAspectMask(ConvertToVulkanImageAspectFlags(_info.aspect));
+			subresourceRange.setAspectMask(EnumBitsCast<vk::ImageAspectFlags, TextureAspect>(_info.aspect));
 
 			viewCreateInfo.setSubresourceRange(subresourceRange);
 

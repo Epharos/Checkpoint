@@ -79,9 +79,17 @@ namespace cp
 
 		// TODO : Add device features and extensions
 
+		std::vector<const char*> extensions;
+		std::vector<const char*> layers;
+
+		extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
 		vk::DeviceCreateInfo createInfo;
 		createInfo.setQueueCreateInfoCount(static_cast<uint32_t>(queueCreateInfos.size()));
 		createInfo.setPQueueCreateInfos(queueCreateInfos.data());
+		createInfo.setEnabledExtensionCount(static_cast<uint32_t>(extensions.size()));
+		//createInfo.setPEnabledExtensionNames(extensions.data()); 
+		createInfo.ppEnabledExtensionNames = extensions.data(); // Workaround for a compiler issue with setPEnabledExtensionNames
 
 		if(physicalDevice.GetHandle().createDevice(&createInfo, nullptr, &device) != vk::Result::eSuccess)
 		{

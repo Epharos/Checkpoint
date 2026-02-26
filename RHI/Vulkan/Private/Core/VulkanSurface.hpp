@@ -2,17 +2,25 @@
 
 #include "../pch.hpp"
 
-#include <ISurface.hpp>
-
 namespace cp
 {
+	// Forward declarations
 	class VulkanInstance;
+	class ILogger;
 
-	class VulkanSurface final : public ISurface
+	struct SurfaceInfo
+	{
+		void* nativeWindowHandle = nullptr;
+	};
+
+	class VulkanSurface final
 	{
 	public:
 		VulkanSurface(ILogger & _logger, const SurfaceInfo& _info, VulkanInstance& _instance);
-		virtual ~VulkanSurface();
+		~VulkanSurface();
+
+		vk::SurfaceKHR& GetHandle() { return surface; }
+		const vk::SurfaceKHR& GetHandle() const { return surface; }
 
 	private:
 		void Initialize();
@@ -21,6 +29,9 @@ namespace cp
 	private:
 		vk::SurfaceKHR surface{ VK_NULL_HANDLE };
 
+		SurfaceInfo info;
 		VulkanInstance& instance;
+
+		ILogger& logger;
 	};
 }

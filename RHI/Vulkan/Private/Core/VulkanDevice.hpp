@@ -27,7 +27,11 @@ namespace cp
 		vk::Device& GetHandle() { return device; }
 		const vk::Device& GetHandle() const { return device; }
 
+		VulkanPhysicalDevice& GetPhysicalDevice() { return physicalDevice; }
 		const VulkanPhysicalDevice& GetPhysicalDevice() const { return physicalDevice; }
+
+		VulkanQueueFamilies& GetQueueFamilies() { return families; }
+		const VulkanQueueFamilies& GetQueueFamilies() const { return families; }
 
 	private:
 		void Initialize();

@@ -5,7 +5,7 @@
 #include <Macros.hpp>
 
 #include <IDevice.hpp>
-#include <ISurface.hpp>
+#include <ISwapchain.hpp>
 
 #include <VulkanRHI.hpp>
 #include <GLFWWindow.hpp>
@@ -72,12 +72,15 @@ auto main(int argc, char** argv) -> int
 
 				CP_ASSERT_MSG(window->GetNativeWindowHandle() != nullptr, "Window was created but native handle is null, cannot create surface");
 
-				cp::SurfaceInfo surfaceInfo
+				cp::SwapchainInfo swapchainInfo
 				{
-					.nativeHandle = window->GetNativeWindowHandle()
+					.extent = window->GetExtent(),
+					.imageCount = 3,
+					.format = cp::Format::B8G8R8A8_UNORM,
+					.nativeWindowHandle = window->GetNativeWindowHandle()
 				};
 
-				std::unique_ptr<cp::ISurface> surface = rhi->CreateSurface(surfaceInfo);
+				std::unique_ptr<cp::ISwapchain> swapchain = rhi->CreateSwapchain(swapchainInfo);
 			}
 
 			{

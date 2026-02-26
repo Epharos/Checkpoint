@@ -3,10 +3,12 @@ add_library(RHI_Core STATIC
 	"Private/Core/IInstance.cpp"
 	"Private/Core/IPhysicalDevice.cpp"
 	"Private/Core/IDevice.cpp"
-	"Private/Core/ISurface.cpp" 
+	 
 	"Private/Core/ISwapchain.cpp"
 
 	"Private/Data/ITexture.cpp"
+
+	"Private/Utilities/Converter.hpp"
 )
 
 target_include_directories(RHI_Core 
