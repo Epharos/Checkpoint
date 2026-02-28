@@ -4,8 +4,8 @@
 
 #include <memory>
 
-#include "Core/VulkanSurface.hpp"
-#include "Core/VulkanSwapchain.hpp"
+#include "Core/Surface.hpp"
+#include "Core/Swapchain.hpp"
 
 #include <Profiling.hpp>
 
@@ -44,7 +44,7 @@ namespace cp
 	{
 		CP_EXPECT_MSG(!instance, "Instance already created");
 		CP_PROFILE_SCOPE("Vulkan#Instance creation");
-		instance = std::make_unique<cp::VulkanInstance>(GetLogger(), _info);
+		instance = std::make_unique<cp::Instance>(GetLogger(), _info);
 		CP_ENSURE_MSG(instance, "Failed to create Vulkan instance");
 		return *instance;
 	}
@@ -54,7 +54,7 @@ namespace cp
 		CP_EXPECT_MSG(instance, "Instance must be created before creating a physical device");
 		CP_EXPECT_MSG(!physicalDevice, "Physical device already created");
 		CP_PROFILE_SCOPE("Vulkan#PhysicalDevice creation");
-		physicalDevice = std::make_unique<VulkanPhysicalDevice>(GetLogger(), *instance);
+		physicalDevice = std::make_unique<PhysicalDevice>(GetLogger(), *instance);
 		CP_ENSURE_MSG(physicalDevice, "Failed to create Vulkan physical device");
 		return *physicalDevice;
 	}
@@ -64,16 +64,16 @@ namespace cp
 		CP_EXPECT_MSG(physicalDevice, "Physical device must be created before creating a logical device");
 		CP_EXPECT_MSG(!device, "Logical device already created");
 		CP_PROFILE_SCOPE("Vulkan#Device creation");
-		device = std::make_unique<VulkanDevice>(GetLogger(), *physicalDevice);
+		device = std::make_unique<Device>(GetLogger(), *physicalDevice);
 		CP_ENSURE_MSG(device, "Failed to create Vulkan logical device");
 		return *device;
 	}
 
-	std::unique_ptr<VulkanSurface> VulkanRHI::CreateSurface(const SurfaceInfo& _info)
+	std::unique_ptr<Surface> VulkanRHI::CreateSurface(const SurfaceInfo& _info)
 	{
 		CP_EXPECT_MSG(instance, "Instance must be created before creating a surface");
 		CP_PROFILE_SCOPE("Vulkan#Surface creation");
-		auto surface = std::make_unique<VulkanSurface>(GetLogger(), _info, *instance);
+		auto surface = std::make_unique<Surface>(GetLogger(), _info, *instance);
 		CP_ENSURE_MSG(surface, "Failed to create Vulkan surface");
 		return surface;
 	}
@@ -82,7 +82,7 @@ namespace cp
 	{
 		CP_EXPECT_MSG(device, "Logical device must be created before creating a swapchain");
 		CP_PROFILE_SCOPE("Vulkan#Swapchain creation");
-		auto swapchain = std::make_unique<VulkanSwapchain>(GetLogger(), _info, *device);
+		auto swapchain = std::make_unique<Swapchain>(GetLogger(), _info, *device);
 		CP_ENSURE_MSG(swapchain, "Failed to create Vulkan swapchain");
 		return swapchain;
 	}

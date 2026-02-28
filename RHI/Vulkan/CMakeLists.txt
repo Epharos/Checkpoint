@@ -1,14 +1,14 @@
 add_library(RHI_Vulkan STATIC
 	"Private/VulkanRHI.cpp"
-	"Private/Core/VulkanInstance.cpp"
-	"Private/Core/VulkanPhysicalDevice.cpp"
-	"Private/Core/VulkanQueue.cpp"
-	"Private/Core/VulkanDevice.cpp" 
-	"Private/Core/VulkanSurface.cpp"
-	"Private/Core/VulkanSwapchain.cpp"
+	"Private/Core/Instance.cpp"
+	"Private/Core/PhysicalDevice.cpp"
+	"Private/Core/Queue.cpp"
+	"Private/Core/Device.cpp"
+	"Private/Core/Surface.cpp"
+	"Private/Core/Swapchain.cpp"
 
 	 
-	"Private/Data/VulkanTexture.cpp" 
+	"Private/Data/Texture.cpp"
 	"Private/Utilities/MemoryHelper.cpp"
 
 	"Private/pch.cpp"

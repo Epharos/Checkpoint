@@ -2,13 +2,13 @@
 
 #include <RenderingHardwareInterface.hpp>
 
-#include "Core/VulkanInstance.hpp"
-#include "Core/VulkanPhysicalDevice.hpp"
-#include "Core/VulkanDevice.hpp"
+#include "Core/Instance.hpp"
+#include "Core/PhysicalDevice.hpp"
+#include "Core/Device.hpp"
 
 namespace cp
 {
-	class VulkanSurface;
+	class Surface;
 
 	struct SurfaceInfo;
 
@@ -22,7 +22,7 @@ namespace cp
 		IPhysicalDevice& CreatePhysicalDevice() override;
 		IDevice& CreateDevice() override;
 
-		std::unique_ptr<VulkanSurface> CreateSurface(const SurfaceInfo& _info);
+		std::unique_ptr<Surface> CreateSurface(const SurfaceInfo& _info);
 		std::unique_ptr<ISwapchain> CreateSwapchain(const SwapchainInfo& _info) override;
 
 		IInstance& GetInstance() override;
@@ -33,8 +33,8 @@ namespace cp
 		const IDevice& GetDevice() const override;
 
 	private:	
-		std::unique_ptr<VulkanInstance> instance = nullptr;
-		std::unique_ptr<VulkanPhysicalDevice> physicalDevice = nullptr;
-		std::unique_ptr<VulkanDevice> device = nullptr;
+		std::unique_ptr<Instance> instance = nullptr;
+		std::unique_ptr<PhysicalDevice> physicalDevice = nullptr;
+		std::unique_ptr<Device> device = nullptr;
 	};
 }
