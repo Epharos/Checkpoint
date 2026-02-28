@@ -3,6 +3,7 @@
 #include "../pch.hpp"
 
 #include <vector>
+#include <memory>
 
 #include <ISwapchain.hpp>
 
@@ -12,6 +13,7 @@ namespace cp
 {
 	// Forward declarations
 	class VulkanDevice;
+	class VulkanTexture;
 
 	class VulkanSwapchain final : public ISwapchain
 	{
@@ -20,6 +22,9 @@ namespace cp
 		~VulkanSwapchain() override;
 
 		void Present() override;
+
+		void Recreate();
+
 		void Resize(Extent2D<int> newExtent) override;
 		uint32_t AcquireNextImage() override;
 
@@ -28,10 +33,33 @@ namespace cp
 		void Cleanup();
 
 	private:
+		/**
+		 * @brief Creates a vk::Surface from the native window handle provided in the SwapchainInfo
+		 */
 		void CreateSurface();
+		/**
+		 * @brief Creates a vk::Swapchain from the provided SwapchainInfo structure
+		 */
 		void CreateSwapchain();
 
-		void QuerrySurfaceProperties();
+		/**
+		 * @brief Creates the semaphores needed to acquire and present
+		 */
+		void CreateSynchronizationPrimitives();
+
+		/**
+		 * @brief Retrieves the vk::Image from the swapchain and stores them as our ITexture objects
+		 */
+		void RetrieveSwapchainImages();
+
+		/**
+		 * @brief Queries the properties (extent, accepted formats, ...) for the created vk::Surface
+		 */
+		void QuerySurfaceProperties();
+
+		/**
+		 * @brief Using the queried properties, selects the extent, surface format and present modes for this swapchain
+		 */
 		void SelectSwapchainProperties();
 
 	private:
@@ -39,6 +67,8 @@ namespace cp
 		vk::SwapchainKHR swapchain { VK_NULL_HANDLE };
 
 		VulkanDevice& device;
+
+		std::vector<std::unique_ptr<VulkanTexture>> swapchainImages;
 
 		// Cached surface properties
 		vk::SurfaceCapabilitiesKHR surfaceCapabilities;
@@ -48,5 +78,10 @@ namespace cp
 		// Chosen surface properties
 		vk::SurfaceFormatKHR selectedSurfaceFormat;
 		vk::PresentModeKHR selectedPresentMode;
+
+		vk::Semaphore imageAvailableSemaphore { VK_NULL_HANDLE };
+		vk::Semaphore renderFinishedSemaphore { VK_NULL_HANDLE };
+
+		uint32_t imageIndex;
 	};
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <Macros.hpp>
 
 #if defined(CP_PLATFORM_WINDOWS)
@@ -14,4 +16,4 @@
 	CP_ENSURE_MSG(result == vk::Result::eSuccess, ("Vulkan error: " + static_cast<size_t>(result))); \
 }
 
-constinit static const char* VulkanRHI_Label = "RHI Vulkan";
+constinit static const char* VulkanRHI_Label = "RHI (Vulkan)";

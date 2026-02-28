@@ -104,16 +104,21 @@ namespace cp
 		CP_PROFILE_SCOPE("VulkanDevice#Create Queues");
 
 		auto queue = device.getQueue(families.graphics, 0);
-		queues[0].push_back(std::make_unique<VulkanQueue>(queue, families.graphics, IQueueType::Graphics));
+		queues[0].push_back(std::make_unique<VulkanQueue>(queue, families.graphics, QueueType::Graphics));
 
 		queue = device.getQueue(families.compute, 0);
-		queues[1].push_back(std::make_unique<VulkanQueue>(queue, families.compute, IQueueType::Compute));
+		queues[1].push_back(std::make_unique<VulkanQueue>(queue, families.compute, QueueType::Compute));
 
 		queue = device.getQueue(families.transfer, 0);
-		queues[2].push_back(std::make_unique<VulkanQueue>(queue, families.transfer, IQueueType::Transfer));
+		queues[2].push_back(std::make_unique<VulkanQueue>(queue, families.transfer, QueueType::Transfer));
 	}
 
-	IQueue& VulkanDevice::GetQueue(IQueueType _queueType, uint32_t _index)
+	void VulkanDevice::WaitForIdle() const
+	{
+		device.waitIdle();
+	}
+
+	IQueue& VulkanDevice::GetQueue(QueueType _queueType, uint32_t _index)
 	{
 		return *queues[static_cast<size_t>(_queueType)].at(_index);
 	}

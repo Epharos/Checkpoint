@@ -4,7 +4,7 @@
 
 namespace cp
 {
-	enum class IQueueType : uint8_t
+	enum class QueueType : uint8_t
 	{
 		Graphics,
 		Compute,
@@ -24,6 +24,6 @@ namespace cp
 		virtual void Submit(const ISubmitInfo& _submitInfo) = 0;
 		virtual void WaitIdle() = 0;
 
-		virtual IQueueType GetType() const = 0;
+		virtual QueueType GetType() const = 0;
 	};
 }

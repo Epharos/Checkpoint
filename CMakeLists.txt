@@ -6,7 +6,7 @@
 
 set(CMAKE_AUTOMOC ON)
 
-add_compile_options(/Zc:__cplusplus)
+# add_compile_options(/Zc:__cplusplus)
 
 if (POLICY CMP0141)
   cmake_policy(SET CMP0141 NEW)
@@ -88,8 +88,8 @@ FetchContent_MakeAvailable(nlohmann_json)
 # Project subdirs #
 ###################
 
-add_subdirectory(Core)
-add_subdirectory(EngineWidgets) #Temporary
+# add_subdirectory(Core)
+# add_subdirectory(EngineWidgets) #Temporary
 
 add_subdirectory(Common) # Common structures and methods : Math, Allocators, Data Structures, Etc.
 add_subdirectory(RHI) # Rendering Hardware Interface : Vulkan and DirectX12 backends
@@ -102,7 +102,7 @@ add_subdirectory(ECS) # Entity Component System
 add_subdirectory(Builder) # Executable Builder module : Turning project files into a runnable executable
 add_subdirectory(Runtime) # Runtime module : Game loop, Etc.
 add_subdirectory(Launcher) # Editor launcher module : Starts the editor with a selected project
-add_subdirectory(Editor) # Editor module : Tools for building levels, assets, Etc.
+# add_subdirectory(Editor) # Editor module : Tools for building levels, assets, Etc.
 add_subdirectory(TEST) # Test executable
 
 function(copy_to_build TARGET)

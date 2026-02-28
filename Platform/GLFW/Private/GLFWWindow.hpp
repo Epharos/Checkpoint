@@ -20,6 +20,7 @@ namespace cp
 		float GetAspectRatio() const override;
 
 		void PollEvents() const override;
+		void WaitForEvents() const override;
 		bool ShouldClose() const override;
 
 		void SetTitle(std::string_view _title) const override;

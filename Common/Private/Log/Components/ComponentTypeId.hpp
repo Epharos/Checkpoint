@@ -1,6 +1,7 @@
 #pragma once
 
 #include <concepts>
+#include <cstdint>
 
 namespace cp
 {
@@ -9,7 +10,7 @@ namespace cp
 	template<typename T>
 	concept MessageComponentType = std::derived_from<T, IMessageComponent>;
 
-	using MessageComponentTypeId = std::uint32_t;
+	using MessageComponentTypeId = uint32_t;
 
 	/**
 	* @brief Generates a unique MessageComponentTypeId for each component type.

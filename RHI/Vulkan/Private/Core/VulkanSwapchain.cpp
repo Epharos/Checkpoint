@@ -8,6 +8,7 @@
 #include "VulkanInstance.hpp"
 #include "VulkanPhysicalDevice.hpp"
 #include "VulkanDevice.hpp"
+#include "../Data/VulkanTexture.hpp"
 
 #include "../Utilities/VulkanConverter.hpp"
 
@@ -16,35 +17,40 @@ namespace cp
 	namespace
 	{
 		Extent2D<int> SelectSwapExtent(
-			const vk::SurfaceCapabilitiesKHR& surfaceCapabilities, 
-			const Extent2D<int>& desiredExtent
+			const vk::SurfaceCapabilitiesKHR& _surfaceCapabilities,
+			const Extent2D<int>& _desiredExtent
 		)
 		{
-#pragma push_macro("max")
-#undef max
-			if (surfaceCapabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+			if (_surfaceCapabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
 			{
-				auto vkExtent = surfaceCapabilities.currentExtent;
+				auto vkExtent = _surfaceCapabilities.currentExtent;
 				return { static_cast<int>(vkExtent.width), static_cast<int>(vkExtent.height) };
 			}
-#pragma pop_macro("max")
 
 			Extent2D<int> actualExtent = {
-				std::clamp(desiredExtent.x(), static_cast<int>(surfaceCapabilities.minImageExtent.width), static_cast<int>(surfaceCapabilities.maxImageExtent.width)),
-				std::clamp(desiredExtent.y(), static_cast<int>(surfaceCapabilities.minImageExtent.height), static_cast<int>(surfaceCapabilities.maxImageExtent.height))
+				std::clamp(
+					_desiredExtent.x(),
+					static_cast<int>(_surfaceCapabilities.minImageExtent.width),
+					static_cast<int>(_surfaceCapabilities.maxImageExtent.width)
+				),
+				std::clamp(
+					_desiredExtent.y(),
+					static_cast<int>(_surfaceCapabilities.minImageExtent.height),
+					static_cast<int>(_surfaceCapabilities.maxImageExtent.height)
+				)
 			};
 
 			return actualExtent;
 		}
 
 		vk::PresentModeKHR SelectPresentMode(
-			const std::vector<vk::PresentModeKHR>& availablePresentModes, 
-			vk::PresentModeKHR desiredPresentMode
+			const std::vector<vk::PresentModeKHR>& _availablePresentModes,
+			vk::PresentModeKHR _desiredPresentMode
 		)
 		{
-			for (const auto& presentMode : availablePresentModes)
+			for (const auto& presentMode : _availablePresentModes)
 			{
-				if (presentMode == desiredPresentMode)
+				if (presentMode == _desiredPresentMode)
 				{
 					return presentMode;
 				}
@@ -54,19 +60,19 @@ namespace cp
 		}
 
 		vk::SurfaceFormatKHR SelectSurfaceFormat(
-			const std::vector<vk::SurfaceFormatKHR>& availableFormats, 
-			vk::SurfaceFormatKHR desiredFormat
+			const std::vector<vk::SurfaceFormatKHR>& _availableFormats,
+			vk::SurfaceFormatKHR _desiredFormat
 		)
 		{
-			for (const auto& format : availableFormats)
+			for (const auto& format : _availableFormats)
 			{
-				if (format.format == desiredFormat.format && format.colorSpace == desiredFormat.colorSpace)
+				if (format.format == _desiredFormat.format && format.colorSpace == _desiredFormat.colorSpace)
 				{
 					return format;
 				}
 			}
 
-			return availableFormats[0]; // If the desired format isn't available, just pick the first one
+			return _availableFormats[0]; // If the desired format isn't available, just pick the first one
 		}
 	}
 
@@ -83,36 +89,99 @@ namespace cp
 
 	void VulkanSwapchain::Present()
 	{
-		throw std::logic_error("Not implemented yet.");
+		VulkanQueue& graphicsQueue = static_cast<VulkanQueue&>(device.GetQueue(QueueType::Graphics, 0));
+
+		vk::Result result = vk::Result::eSuccess;
+
+		vk::PresentInfoKHR presentInfo = {};
+		presentInfo.setSwapchainCount(1);
+		presentInfo.setPSwapchains(&swapchain);
+		presentInfo.setWaitSemaphoreCount(1);
+		presentInfo.setPWaitSemaphores(&renderFinishedSemaphore);
+		presentInfo.setPImageIndices(&imageIndex);
+
+		try
+		{
+			result = graphicsQueue.GetHandle().presentKHR(presentInfo);
+		}
+		catch (vk::OutOfDateKHRError e)
+		{
+			Recreate();
+		}
+
+		if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
+		{
+			Recreate();
+		}
+		else if (result != vk::Result::eSuccess)
+		{
+			throw std::runtime_error("Failed to present swapchain image");
+		}
+
+		imageIndex++;
+
+		if (imageIndex >= info.imageCount) imageIndex = 0;
+	}
+
+	void VulkanSwapchain::Recreate()
+	{
+		device.WaitForIdle();
+
+		Cleanup();
+
+		QuerySurfaceProperties();
+
+		SelectSwapchainProperties();
+
+		CreateSwapchain();
+		RetrieveSwapchainImages();
+
+		CreateSynchronizationPrimitives();
+
+		imageIndex = 0;
 	}
 
 	void VulkanSwapchain::Resize(Extent2D<int> newExtent)
 	{
-		throw std::logic_error("Not implemented yet.");
+		Recreate();
 	}
 
 	uint32_t VulkanSwapchain::AcquireNextImage()
 	{
-		throw std::logic_error("Not implemented yet.");
-		return 0;
+		uint32_t result;
+
+		try
+		{
+			result = device.GetHandle().acquireNextImageKHR(
+				swapchain,
+				std::numeric_limits<uint32_t>::max(),
+				imageAvailableSemaphore)
+			.value;
+		}
+		catch (vk::OutOfDateKHRError)
+		{
+			Recreate();
+			return static_cast<uint32_t>(-1);
+		}
+
+		imageIndex = result;
+		return result;
 	}
 
 	void VulkanSwapchain::Initialize()
 	{
 		CreateSurface();
-		QuerrySurfaceProperties();
-
-		SelectSwapchainProperties();
-
-		CreateSwapchain();
+		Recreate(); // Technically, we create, not recreate here but it's okay
 	}
 
 	void VulkanSwapchain::Cleanup()
 	{
-		if (swapchain != VK_NULL_HANDLE)
-		{
-			device.GetHandle().destroySwapchainKHR(swapchain);
-		}
+		if (swapchain != VK_NULL_HANDLE) device.GetHandle().destroySwapchainKHR(swapchain);
+
+		swapchainImages.clear();
+
+		if (imageAvailableSemaphore != VK_NULL_HANDLE) device.GetHandle().destroySemaphore(imageAvailableSemaphore);
+		if (renderFinishedSemaphore != VK_NULL_HANDLE) device.GetHandle().destroySemaphore(renderFinishedSemaphore);
 	}
 
 	void VulkanSwapchain::CreateSurface()
@@ -130,24 +199,28 @@ namespace cp
 
 	void VulkanSwapchain::CreateSwapchain()
 	{
-		const uint32_t imageCount = std::clamp(info.imageCount, surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount);
+		info.imageCount = std::clamp(info.imageCount, surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount);
 
 		vk::SwapchainCreateInfoKHR createInfo = {};
 		createInfo.setSurface(surface->GetHandle());
-		createInfo.setMinImageCount(imageCount);
+		createInfo.setMinImageCount(info.imageCount);
 		createInfo.setImageFormat(selectedSurfaceFormat.format);
 		createInfo.setImageColorSpace(selectedSurfaceFormat.colorSpace);
-		createInfo.setImageExtent(vk::Extent2D{ static_cast<uint32_t>(info.extent.x()), static_cast<uint32_t>(info.extent.y()) });
+		createInfo.setImageExtent(vk::Extent2D{
+			static_cast<uint32_t>(info.extent.x()),
+			static_cast<uint32_t>(info.extent.y())
+		});
 		createInfo.setImageArrayLayers(1);
 		createInfo.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
 
 		const VulkanQueueFamilies& queues = device.GetQueueFamilies();
 
-#pragma push_macro("max")
-#undef max
-		CP_ASSERT_MSG(queues.graphics != std::numeric_limits<uint32_t>::max(), "Graphics queue family index must be valid to create a swapchain");
-		CP_ASSERT_MSG(queues.present != std::numeric_limits<uint32_t>::max(), "Present queue family index must be valid to create a swapchain");
-#pragma pop_macro("max")
+		CP_ASSERT_MSG(queues.graphics != std::numeric_limits<uint32_t>::max(),
+			"Graphics queue family index must be valid to create a swapchain"
+		);
+		CP_ASSERT_MSG(queues.present != std::numeric_limits<uint32_t>::max(),
+			"Present queue family index must be valid to create a swapchain"
+		);
 
 		uint32_t queueFamilyIndices[] = { queues.graphics, queues.present };
 
@@ -173,13 +246,54 @@ namespace cp
 		CP_ENSURE_MSG(swapchain, "Failed to create Vulkan swapchain");
 	}
 
-	void VulkanSwapchain::QuerrySurfaceProperties()
+	void VulkanSwapchain::CreateSynchronizationPrimitives()
+	{
+		vk::SemaphoreCreateInfo semaphoreCreateInfo = {};
+
+		imageAvailableSemaphore = device.GetHandle().createSemaphore(semaphoreCreateInfo);
+		renderFinishedSemaphore = device.GetHandle().createSemaphore(semaphoreCreateInfo);
+	}
+
+	void VulkanSwapchain::RetrieveSwapchainImages()
+	{
+		std::vector<vk::Image> swapchainNativeImages = device.GetHandle().getSwapchainImagesKHR(swapchain);
+
+		for (vk::Image& image : swapchainNativeImages)
+		{
+			cp::TextureInfo texInfo
+			{
+				.type = cp::TextureType::Texture2D,
+				.extent = Extent3D<uint32_t> {
+					static_cast<uint32_t>(info.extent.x()),
+					static_cast<uint32_t>(info.extent.y()),
+					1
+				},
+				.mipLevels = 1,
+				.arrayLayers = 1,
+				.format = EnumCast<Format, vk::Format>(selectedSurfaceFormat.format),
+				.usage = cp::TextureUsage::ColorAttachment,
+				.aspect = cp::TextureAspect::Color
+			};
+
+			swapchainImages.emplace_back(new VulkanTexture(logger, image, texInfo, device));
+		}
+
+		CP_ENSURE_MSG(swapchainImages.size() == swapchainNativeImages.size(),
+			"The swapchain object stores a different count of image than what is returned by the vkSwapchain"
+		);
+
+		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>(
+			"Swapchain was created with {} images", swapchainImages.size()
+			)));
+	}
+
+	void VulkanSwapchain::QuerySurfaceProperties()
 	{
 		const vk::PhysicalDevice physicalDevice = device.GetPhysicalDevice().GetHandle();
 		const vk::SurfaceKHR surfaceHandle = surface->GetHandle();
 
-		CP_EXPECT_MSG(physicalDevice, "Physical device must be created before querrying surface properties");
-		CP_EXPECT_MSG(surfaceHandle, "Surface must be created before querrying its properties");
+		CP_EXPECT_MSG(physicalDevice, "Physical device must be created before querying surface properties");
+		CP_EXPECT_MSG(surfaceHandle, "Surface must be created before querying its properties");
 
 		surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(surfaceHandle);
 		surfaceFormats = physicalDevice.getSurfaceFormatsKHR(surfaceHandle);

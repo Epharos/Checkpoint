@@ -22,13 +22,13 @@ namespace cp
 	class VulkanQueue final : public IQueue
 	{
 	public:
-		VulkanQueue(vk::Queue _queue, uint32_t _familyIndex, IQueueType _type);
+		VulkanQueue(vk::Queue _queue, uint32_t _familyIndex, QueueType _type);
 		~VulkanQueue() override;
 
 		void Submit(const ISubmitInfo& _submitInfo) override;
 		void WaitIdle() override;
 
-		IQueueType GetType() const override;
+		QueueType GetType() const override;
 		
 		vk::Queue& GetHandle();
 		const vk::Queue& GetHandle() const;
@@ -38,6 +38,6 @@ namespace cp
 	private:
 		vk::Queue queue;
 		uint32_t familyIndex;
-		IQueueType type;
+		QueueType type;
 	};
 }

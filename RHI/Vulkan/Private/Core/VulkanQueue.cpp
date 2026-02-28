@@ -6,7 +6,7 @@
 
 namespace cp
 {
-	VulkanQueue::VulkanQueue(vk::Queue _queue, uint32_t _familyIndex, IQueueType _type)
+	VulkanQueue::VulkanQueue(vk::Queue _queue, uint32_t _familyIndex, QueueType _type)
 		: queue(_queue), familyIndex(_familyIndex), type(_type)
 	{
 
@@ -28,7 +28,7 @@ namespace cp
 		queue.waitIdle();
 	}
 
-	IQueueType VulkanQueue::GetType() const
+	QueueType VulkanQueue::GetType() const
 	{
 		return type;
 	}

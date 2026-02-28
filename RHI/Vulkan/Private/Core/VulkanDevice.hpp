@@ -17,12 +17,12 @@ namespace cp
 
 	class VulkanDevice final : public IDevice
 	{
-	public:
+	public: // Constructors, destructor, operators
 		VulkanDevice(ILogger& _logger, VulkanPhysicalDevice& _physicalDevice);
 		~VulkanDevice() override;
 
-		IQueue& GetQueue(IQueueType _queueType, uint32_t _index) override;
-		std::shared_ptr<ITexture> CreateTexture(const TextureInfo& _info) override;
+	public: // Getters and Setters
+		IQueue& GetQueue(QueueType _queueType, uint32_t _index) override;
 
 		vk::Device& GetHandle() { return device; }
 		const vk::Device& GetHandle() const { return device; }
@@ -33,12 +33,18 @@ namespace cp
 		VulkanQueueFamilies& GetQueueFamilies() { return families; }
 		const VulkanQueueFamilies& GetQueueFamilies() const { return families; }
 
-	private:
+	public: // Resource creation
+		std::shared_ptr<ITexture> CreateTexture(const TextureInfo& _info) override;
+
+	private: // Initialization and cleanup
 		void Initialize();
 		void Cleanup();
 
 		bool CreateLogicalDevice();
 		void CreateQueues();
+
+	public: // Override methods
+		void WaitForIdle() const override;
 
 	private:
 		vk::Device device{ VK_NULL_HANDLE };

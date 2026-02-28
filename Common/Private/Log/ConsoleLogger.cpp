@@ -30,8 +30,7 @@ namespace cp
 			if (_logLevel.severity >= ILogger::Error.severity)
 				return TerminalColor::Red;
 
-			if (_logLevel.severity >= ILogger::Warning.severity)
-				return TerminalColor::Yellow;
+			return TerminalColor::Yellow;
 		}
 
 		void WriteLogHeader(std::stringstream& _ss, const LogEvent& _event)

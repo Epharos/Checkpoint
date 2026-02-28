@@ -29,6 +29,7 @@ namespace cp
 		virtual float GetAspectRatio() const = 0;
 
 		virtual void PollEvents() const = 0;
+		virtual void WaitForEvents() const = 0;
 		virtual bool ShouldClose() const = 0;
 
 		virtual void SetTitle(std::string_view _title) const = 0;

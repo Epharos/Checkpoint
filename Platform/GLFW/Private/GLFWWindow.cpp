@@ -43,6 +43,11 @@ namespace cp
 		glfwPollEvents();
 	}
 
+	void GLFWWindow::WaitForEvents() const
+	{
+		glfwWaitEvents();
+	}
+
 	bool GLFWWindow::ShouldClose() const
 	{
 		return glfwWindowShouldClose(window);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstdlib>
 
 #include "../Utilities/Concepts.hpp"
 

@@ -14,15 +14,32 @@ namespace cp
 	{
 		switch (_format)
 		{
-		// Color formats
-		case Format::R8G8B8A8_UNORM: return vk::Format::eR8G8B8A8Unorm;
-		case Format::B8G8R8A8_UNORM: return vk::Format::eB8G8R8A8Unorm;
-		case Format::R16G16B16A16_FLOAT: return vk::Format::eR16G16B16A16Sfloat;
-		case Format::R32_UINT: return vk::Format::eR32Uint;
+			// Color formats
+			case Format::R8G8B8A8_UNORM: return vk::Format::eR8G8B8A8Unorm;
+			case Format::B8G8R8A8_UNORM: return vk::Format::eB8G8R8A8Unorm;
+			case Format::R16G16B16A16_FLOAT: return vk::Format::eR16G16B16A16Sfloat;
+			case Format::R32_UINT: return vk::Format::eR32Uint;
 
-		// Depth formats
-		case Format::D24_UNORM_S8_UINT: return vk::Format::eD24UnormS8Uint;
-		case Format::D32_FLOAT: return vk::Format::eD32Sfloat;
+			// Depth formats
+			case Format::D24_UNORM_S8_UINT: return vk::Format::eD24UnormS8Uint;
+			case Format::D32_FLOAT: return vk::Format::eD32Sfloat;
+		}
+
+		throw std::logic_error("Unrecognized format!");
+	}
+
+	template<>
+	inline cp::Format EnumCast<cp::Format, vk::Format>(vk::Format _format)
+	{
+		switch (_format)
+		{
+			case vk::Format::eR8G8B8A8Unorm: return cp::Format::R8G8B8A8_UNORM;
+			case vk::Format::eB8G8R8A8Unorm: return cp::Format::B8G8R8A8_UNORM;
+			case vk::Format::eR16G16B16A16Sfloat: return cp::Format::R16G16B16A16_FLOAT;
+			case vk::Format::eR32Uint: return cp::Format::R32_UINT;
+
+			case vk::Format::eD24UnormS8Uint: return cp::Format::D24_UNORM_S8_UINT;
+			case vk::Format::eD32Sfloat: return cp::Format::D32_FLOAT;
 		}
 
 		throw std::logic_error("Unrecognized format!");
