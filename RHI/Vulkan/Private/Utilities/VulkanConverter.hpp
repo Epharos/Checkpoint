@@ -2,10 +2,8 @@
 
 #include "../pch.hpp"
 
-#include <Converter.hpp>
-
-#include <Formats.hpp>
-#include <ITexture.hpp>
+#include <RHI/Data.hpp>
+#include <RHI/Utilities.hpp>
 
 namespace cp
 {
@@ -23,26 +21,28 @@ namespace cp
 			// Depth formats
 			case Format::D24_UNORM_S8_UINT: return vk::Format::eD24UnormS8Uint;
 			case Format::D32_FLOAT: return vk::Format::eD32Sfloat;
-		}
 
-		throw std::logic_error("Unrecognized format!");
+			default: throw std::logic_error("Unrecognized format!");
+		}
 	}
 
 	template<>
-	inline cp::Format EnumCast<cp::Format, vk::Format>(vk::Format _format)
+	inline Format EnumCast<Format, vk::Format>(vk::Format _format)
 	{
 		switch (_format)
 		{
-			case vk::Format::eR8G8B8A8Unorm: return cp::Format::R8G8B8A8_UNORM;
-			case vk::Format::eB8G8R8A8Unorm: return cp::Format::B8G8R8A8_UNORM;
-			case vk::Format::eR16G16B16A16Sfloat: return cp::Format::R16G16B16A16_FLOAT;
-			case vk::Format::eR32Uint: return cp::Format::R32_UINT;
+			// Color formats
+			case vk::Format::eR8G8B8A8Unorm: return Format::R8G8B8A8_UNORM;
+			case vk::Format::eB8G8R8A8Unorm: return Format::B8G8R8A8_UNORM;
+			case vk::Format::eR16G16B16A16Sfloat: return Format::R16G16B16A16_FLOAT;
+			case vk::Format::eR32Uint: return Format::R32_UINT;
 
-			case vk::Format::eD24UnormS8Uint: return cp::Format::D24_UNORM_S8_UINT;
-			case vk::Format::eD32Sfloat: return cp::Format::D32_FLOAT;
+			// Depth formats
+			case vk::Format::eD24UnormS8Uint: return Format::D24_UNORM_S8_UINT;
+			case vk::Format::eD32Sfloat: return Format::D32_FLOAT;
+
+			default: throw std::logic_error("Unrecognized format!");
 		}
-
-		throw std::logic_error("Unrecognized format!");
 	}
 
 	template<>
@@ -50,10 +50,10 @@ namespace cp
 	{
 		switch (_usage)
 		{
-		case TextureUsage::Sampled: return vk::ImageUsageFlagBits::eSampled;
-		case TextureUsage::ColorAttachment: return vk::ImageUsageFlagBits::eColorAttachment;
-		case TextureUsage::DepthStencilAttachment: return vk::ImageUsageFlagBits::eDepthStencilAttachment;
-		case TextureUsage::Storage: return vk::ImageUsageFlagBits::eStorage;
+			case TextureUsage::Sampled: return vk::ImageUsageFlagBits::eSampled;
+			case TextureUsage::ColorAttachment: return vk::ImageUsageFlagBits::eColorAttachment;
+			case TextureUsage::DepthStencilAttachment: return vk::ImageUsageFlagBits::eDepthStencilAttachment;
+			case TextureUsage::Storage: return vk::ImageUsageFlagBits::eStorage;
 		}
 
 		throw std::logic_error("Unrecognized texture usage!");
@@ -70,12 +70,12 @@ namespace cp
 	{
 		switch (_aspect)
 		{
-		case TextureAspect::Color: return vk::ImageAspectFlagBits::eColor;
-		case TextureAspect::Depth: return vk::ImageAspectFlagBits::eDepth;
-		case TextureAspect::Stencil: return vk::ImageAspectFlagBits::eStencil;
+			case TextureAspect::None: return vk::ImageAspectFlagBits::eNone;
+			case TextureAspect::Color: return vk::ImageAspectFlagBits::eColor;
+			case TextureAspect::Depth: return vk::ImageAspectFlagBits::eDepth;
+			case TextureAspect::Stencil: return vk::ImageAspectFlagBits::eStencil;
+			default: throw std::logic_error("Unrecognized texture aspect!");
 		}
-
-		throw std::logic_error("Unrecognized texture aspect!");
 	}
 
 	template<>
@@ -89,11 +89,10 @@ namespace cp
 	{
 		switch (_type)
 		{
-		case TextureType::Texture2D: return vk::ImageViewType::e2D;
-		case TextureType::Texture3D: return vk::ImageViewType::e3D;
-		case TextureType::Texture2DArray: return vk::ImageViewType::e2DArray;
+			case TextureType::Texture2D: return vk::ImageViewType::e2D;
+			case TextureType::Texture3D: return vk::ImageViewType::e3D;
+			case TextureType::Texture2DArray: return vk::ImageViewType::e2DArray;
+			default: throw std::logic_error("Unrecognized texture type!");
 		}
-
-		throw std::logic_error("Unrecognized texture type!");
 	}
 }

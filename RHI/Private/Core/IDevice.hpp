@@ -24,7 +24,7 @@ namespace cp
 		virtual std::shared_ptr<ITexture> CreateTexture(const TextureInfo& _info) = 0;
 
 	public: // Public methods
-		virtual void WaitForIdle() const = 0;
+		virtual void WaitIdle() const = 0;
 
 	protected:
 		ILogger& logger;

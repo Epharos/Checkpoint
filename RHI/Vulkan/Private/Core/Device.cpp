@@ -2,14 +2,12 @@
 
 #include "Device.hpp"
 
+#include <Log.hpp>
+#include <Profiling.hpp>
+
 #include "PhysicalDevice.hpp"
 #include "Queue.hpp"
 #include "../Data/Texture.hpp"
-
-#include <Log.hpp>
-#include <RenderingHardwareInterface.hpp>
-#include <Profiling.hpp>
-
 
 #include <set>
 
@@ -113,7 +111,7 @@ namespace cp
 		queues[2].push_back(std::make_unique<Queue>(queue, families.transfer, QueueType::Transfer));
 	}
 
-	void Device::WaitForIdle() const
+	void Device::WaitIdle() const
 	{
 		device.waitIdle();
 	}

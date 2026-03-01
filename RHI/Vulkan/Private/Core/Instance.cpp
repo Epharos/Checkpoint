@@ -8,9 +8,7 @@
 #include <Log.hpp>
 #include <Profiling.hpp>
 
-#include "RenderingHardwareInterface.hpp"
-#include "PhysicalDevice.hpp"
-#include "Surface.hpp"
+#include "../../../Public/RHI/RenderingHardwareInterface.hpp"
 
 namespace cp
 {
@@ -191,7 +189,7 @@ namespace cp
 
 	VKAPI_ATTR vk::Bool32 VKAPI_PTR Instance::DebugLayerCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT _messageSeverity, vk::DebugUtilsMessageTypeFlagsEXT _messageType, const vk::DebugUtilsMessengerCallbackDataEXT* _callbackData, void* _userData)
 	{
-		ILogger* logger = reinterpret_cast<ILogger*>(_userData);
+		auto* logger = static_cast<ILogger*>(_userData);
 
 		std::stringstream message;
 		if (_messageType & vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral)

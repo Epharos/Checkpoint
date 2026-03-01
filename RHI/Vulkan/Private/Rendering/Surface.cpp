@@ -1,8 +1,8 @@
 #include "../pch.hpp"
 
-#include "Surface.hpp"
+#include "../Rendering/Surface.hpp"
 
-#include "Instance.hpp"
+#include "../Core/Instance.hpp"
 
 #include <Profiling.hpp>
 #include <Log.hpp>

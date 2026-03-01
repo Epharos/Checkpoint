@@ -4,6 +4,8 @@
 
 namespace cp
 {
+	class ITimelineSemaphore;
+
 	enum class QueueType : uint8_t
 	{
 		Graphics,
@@ -11,9 +13,25 @@ namespace cp
 		Transfer,
 	};
 
-	struct ISubmitInfo
+	struct SubmitInfo
 	{
-		// TODO : Add command buffers, semaphores, etc.
+		// std::vector<ICommandBuffer*> commandBuffers;
+
+		struct WaitInfo
+		{
+			ITimelineSemaphore* semaphore;
+			size_t value;
+			// TODO : Add Pipeline Stage (Vulkan specific but can simply be ignored for DX12 and others)
+		};
+
+		struct SignalInfo
+		{
+			ITimelineSemaphore* semaphore;
+			size_t value;
+		};
+
+		std::vector<WaitInfo> waitInfos;
+		std::vector<SignalInfo> signalInfos;
 	};
 
 	class IQueue
@@ -21,9 +39,9 @@ namespace cp
 	public:
 		virtual ~IQueue() = default;
 
-		virtual void Submit(const ISubmitInfo& _submitInfo) = 0;
+		virtual void Submit(const SubmitInfo& _submitInfo) = 0;
 		virtual void WaitIdle() = 0;
 
-		virtual QueueType GetType() const = 0;
+		[[nodiscard]] virtual QueueType GetType() const = 0;
 	};
 }

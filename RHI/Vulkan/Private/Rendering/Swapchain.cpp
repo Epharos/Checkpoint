@@ -1,13 +1,13 @@
 #include "../pch.hpp"
 
-#include "Swapchain.hpp"
+#include "../Rendering/Swapchain.hpp"
 
 #include <Assert.hpp>
 #include <Log.hpp>
 
-#include "Instance.hpp"
-#include "PhysicalDevice.hpp"
-#include "Device.hpp"
+#include "../Core/Instance.hpp"
+#include "../Core/PhysicalDevice.hpp"
+#include "../Core/Device.hpp"
 #include "../Data/Texture.hpp"
 
 #include "../Utilities/VulkanConverter.hpp"
@@ -89,7 +89,7 @@ namespace cp
 
 	void Swapchain::Present()
 	{
-		Queue& graphicsQueue = static_cast<Queue&>(device.GetQueue(QueueType::Graphics, 0));
+		auto& graphicsQueue = dynamic_cast<Queue&>(device.GetQueue(QueueType::Graphics, 0));
 
 		vk::Result result = vk::Result::eSuccess;
 
@@ -104,7 +104,7 @@ namespace cp
 		{
 			result = graphicsQueue.GetHandle().presentKHR(presentInfo);
 		}
-		catch (vk::OutOfDateKHRError e)
+		catch (vk::OutOfDateKHRError& e)
 		{
 			Recreate();
 		}
@@ -125,7 +125,7 @@ namespace cp
 
 	void Swapchain::Recreate()
 	{
-		device.WaitForIdle();
+		device.WaitIdle();
 
 		Cleanup();
 
@@ -159,13 +159,16 @@ namespace cp
 				imageAvailableSemaphore)
 			.value;
 		}
-		catch (vk::OutOfDateKHRError)
+		catch (vk::OutOfDateKHRError& e)
 		{
 			Recreate();
 			return static_cast<uint32_t>(-1);
 		}
 
 		imageIndex = result;
+
+		CP_ENSURE_MSG(imageIndex < info.imageCount, "Image index is more than the image count the swapchain should have");
+
 		return result;
 	}
 

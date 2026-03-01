@@ -2,7 +2,7 @@
 
 #include "../pch.hpp"
 
-#include <ITexture.hpp>
+#include <RHI/Data.hpp>
 
 namespace cp
 {

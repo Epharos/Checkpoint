@@ -5,7 +5,8 @@
 #include <vector>
 #include <memory>
 
-#include <ISwapchain.hpp>
+#include <RHI/Rendering.hpp>
+#include <Assert.hpp>
 
 #include "Surface.hpp"
 
@@ -42,6 +43,12 @@ namespace cp
 		 * @return The index of the next back buffer image.
 		 */
 		uint32_t AcquireNextImage() override;
+
+		[[nodiscard]] vk::SwapchainKHR& GetHandle() { return swapchain; }
+		[[nodiscard]] const vk::SwapchainKHR& GetHandle() const { return swapchain; }
+
+		[[nodiscard]] Surface& GetSurface() { CP_EXPECT_MSG(surface, "Surface cannot be null"); return *surface; }
+		[[nodiscard]] const Surface& GetSurface() const { CP_EXPECT_MSG(surface, "Surface cannot be null"); return *surface; }
 
 	private:
 		void Initialize();

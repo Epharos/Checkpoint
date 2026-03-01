@@ -4,13 +4,13 @@
 #include <Profiling.hpp>
 #include <Macros.hpp>
 
-#include <IDevice.hpp>
-#include <ISwapchain.hpp>
-
 #include <VulkanRHI.hpp>
-#include <GLFWWindow.hpp>
 
-#include <ITexture.hpp>
+#include <RHI/Core.hpp>
+#include <RHI/Rendering.hpp>
+#include <RHI/Data.hpp>
+
+#include <GLFWWindow.hpp>
 
 auto main(int argc, char** argv) -> int
 {

@@ -4,14 +4,16 @@ add_library(RHI_Vulkan STATIC
 	"Private/Core/PhysicalDevice.cpp"
 	"Private/Core/Queue.cpp"
 	"Private/Core/Device.cpp"
-	"Private/Core/Surface.cpp"
-	"Private/Core/Swapchain.cpp"
+	"Private/Rendering/Surface.cpp"
+	"Private/Rendering/Swapchain.cpp"
 
 	 
 	"Private/Data/Texture.cpp"
 	"Private/Utilities/MemoryHelper.cpp"
 
 	"Private/pch.cpp"
+		Private/Synchro/TimelineSemaphore.cpp
+		Private/Synchro/TimelineSemaphore.hpp
 )
 
 target_include_directories(RHI_Vulkan 

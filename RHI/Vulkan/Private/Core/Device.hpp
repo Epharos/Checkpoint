@@ -2,7 +2,7 @@
 
 #include "../pch.hpp"
 
-#include <IDevice.hpp>
+#include <RHI/Core.hpp>
 
 #include <vector>
 #include <array>
@@ -24,14 +24,14 @@ namespace cp
 	public: // Getters and Setters
 		IQueue& GetQueue(QueueType _queueType, uint32_t _index) override;
 
-		vk::Device& GetHandle() { return device; }
-		const vk::Device& GetHandle() const { return device; }
+		[[nodiscard]] vk::Device& GetHandle() { return device; }
+		[[nodiscard]] const vk::Device& GetHandle() const { return device; }
 
-		PhysicalDevice& GetPhysicalDevice() { return physicalDevice; }
-		const PhysicalDevice& GetPhysicalDevice() const { return physicalDevice; }
+		[[nodiscard]] PhysicalDevice& GetPhysicalDevice() { return physicalDevice; }
+		[[nodiscard]] const PhysicalDevice& GetPhysicalDevice() const { return physicalDevice; }
 
-		VulkanQueueFamilies& GetQueueFamilies() { return families; }
-		const VulkanQueueFamilies& GetQueueFamilies() const { return families; }
+		[[nodiscard]] VulkanQueueFamilies& GetQueueFamilies() { return families; }
+		[[nodiscard]] const VulkanQueueFamilies& GetQueueFamilies() const { return families; }
 
 	public: // Resource creation
 		std::shared_ptr<ITexture> CreateTexture(const TextureInfo& _info) override;
@@ -44,7 +44,7 @@ namespace cp
 		void CreateQueues();
 
 	public: // Override methods
-		void WaitForIdle() const override;
+		void WaitIdle() const override;
 
 	private:
 		vk::Device device{ VK_NULL_HANDLE };

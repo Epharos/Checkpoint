@@ -1,6 +1,6 @@
 #pragma once
 
-#include <RenderingHardwareInterface.hpp>
+#include <RHI/RenderingHardwareInterface.hpp>
 
 #include "Core/Instance.hpp"
 #include "Core/PhysicalDevice.hpp"
@@ -15,22 +15,25 @@ namespace cp
 	class VulkanRHI final : public RenderingHardwareInterface
 	{
 	public:
-		VulkanRHI(std::shared_ptr<cp::ILogger> _logger);
-		virtual ~VulkanRHI() = default;
+		VulkanRHI(const std::shared_ptr<cp::ILogger> &_logger);
+		~VulkanRHI() override = default;
 
 		IInstance& CreateInstance(const InstanceInfo& _info) override;
 		IPhysicalDevice& CreatePhysicalDevice() override;
 		IDevice& CreateDevice() override;
 
-		std::unique_ptr<Surface> CreateSurface(const SurfaceInfo& _info);
+		[[nodiscard]] std::unique_ptr<Surface> CreateSurface(const SurfaceInfo& _info) const;
 		std::unique_ptr<ISwapchain> CreateSwapchain(const SwapchainInfo& _info) override;
 
-		IInstance& GetInstance() override;
-		const IInstance& GetInstance() const override;
-		IPhysicalDevice& GetPhysicalDevice() override;
-		const IPhysicalDevice& GetPhysicalDevice() const override;
-		IDevice& GetDevice() override;
-		const IDevice& GetDevice() const override;
+		[[nodiscard]] IInstance& GetInstance() override;
+		[[nodiscard]] const IInstance& GetInstance() const override;
+		[[nodiscard]] IPhysicalDevice& GetPhysicalDevice() override;
+		[[nodiscard]] const IPhysicalDevice& GetPhysicalDevice() const override;
+		[[nodiscard]] IDevice& GetDevice() override;
+		[[nodiscard]] const IDevice& GetDevice() const override;
+
+		std::shared_ptr<ITexture> CreateTexture(const TextureInfo &_info) override;
+		std::shared_ptr<ITimelineSemaphore> CreateTimelineSemaphore() override;
 
 	private:	
 		std::unique_ptr<Instance> instance = nullptr;

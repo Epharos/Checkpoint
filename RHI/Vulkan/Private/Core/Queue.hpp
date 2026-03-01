@@ -2,7 +2,7 @@
 
 #include "../pch.hpp"
 
-#include <IQueue.hpp>
+#include <RHI/Core.hpp>
 
 #include <optional>
 
@@ -10,13 +10,10 @@ namespace cp
 {
 	struct VulkanQueueFamilies
 	{
-#pragma push_macro("max")
-#undef max
 		uint32_t graphics = std::numeric_limits<uint32_t>::max();
 		uint32_t compute = std::numeric_limits<uint32_t>::max();
 		uint32_t transfer = std::numeric_limits<uint32_t>::max();
 		uint32_t present = std::numeric_limits<uint32_t>::max();
-#pragma pop_macro("max")
 	};
 
 	class Queue final : public IQueue
@@ -25,15 +22,15 @@ namespace cp
 		Queue(vk::Queue _queue, uint32_t _familyIndex, QueueType _type);
 		~Queue() override;
 
-		void Submit(const ISubmitInfo& _submitInfo) override;
+		void Submit(const SubmitInfo& _submitInfo) override;
 		void WaitIdle() override;
 
-		QueueType GetType() const override;
+		[[nodiscard]] QueueType GetType() const override { return type; }
 		
-		vk::Queue& GetHandle();
-		const vk::Queue& GetHandle() const;
+		[[nodiscard]] vk::Queue& GetHandle() { return queue; }
+		[[nodiscard]] const vk::Queue& GetHandle() const { return queue; }
 
-		uint32_t GetFamilyIndex() const;
+		[[nodiscard]] uint32_t GetFamilyIndex() const { return familyIndex; }
 
 	private:
 		vk::Queue queue;

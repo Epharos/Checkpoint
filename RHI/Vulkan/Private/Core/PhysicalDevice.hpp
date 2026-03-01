@@ -2,7 +2,7 @@
 
 #include "../pch.hpp"
 
-#include "IPhysicalDevice.hpp"
+#include "RHI/Core.hpp"
 
 #include <optional>
 
@@ -21,13 +21,13 @@ namespace cp
 		void Initialize();
 		void Cleanup();
 
-		vk::PhysicalDevice& GetHandle() { return physicalDevice; }
-		const vk::PhysicalDevice& GetHandle() const { return physicalDevice; }
+		[[nodiscard]] vk::PhysicalDevice& GetHandle() { return physicalDevice; }
+		[[nodiscard]] const vk::PhysicalDevice& GetHandle() const { return physicalDevice; }
 
 		VulkanQueueFamilies FindQueueFamilies(std::optional<vk::SurfaceKHR> _surface = std::nullopt);
 
-		Instance& GetInstance() { return instance; }
-		const Instance& GetInstance() const { return instance; }
+		[[nodiscard]] Instance& GetInstance() { return instance; }
+		[[nodiscard]] const Instance& GetInstance() const { return instance; }
 
 	private:
 		Instance& instance;

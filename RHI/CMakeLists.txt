@@ -4,11 +4,13 @@ add_library(RHI_Core STATIC
 	"Private/Core/IPhysicalDevice.cpp"
 	"Private/Core/IDevice.cpp"
 	 
-	"Private/Core/ISwapchain.cpp"
+	"Private/Rendering/ISwapchain.cpp"
 
 	"Private/Data/ITexture.cpp"
 
 	"Private/Utilities/Converter.hpp"
+		Private/Synchro/ITimelineSemaphore.hpp
+		Public/RHI/Rendering.hpp
 )
 
 target_include_directories(RHI_Core 

@@ -2,7 +2,7 @@
 
 #include "../pch.hpp"
 
-#include <IInstance.hpp>
+#include <RHI/Core.hpp>
 
 namespace cp
 {

@@ -2,13 +2,12 @@
 
 #include "PhysicalDevice.hpp"
 
+#include <Log.hpp>
+#include <Profiling.hpp>
+
 #include "Instance.hpp"
 #include "Queue.hpp"
 #include "Device.hpp"
-
-#include <Log.hpp>
-#include <Profiling.hpp>
-#include <RenderingHardwareInterface.hpp>
 
 namespace cp
 {
@@ -62,8 +61,6 @@ namespace cp
 
 		void QueueIndicesFallbacks(VulkanQueueFamilies& _queueFamilies)
 		{
-#pragma push_macro("max")
-#undef max
 			if (_queueFamilies.compute == std::numeric_limits<uint32_t>::max())
 			{
 				_queueFamilies.compute = _queueFamilies.graphics;
@@ -78,7 +75,6 @@ namespace cp
 			{
 				_queueFamilies.present = _queueFamilies.graphics;
 			}
-#pragma pop_macro("max")
 		}
 	}
 
@@ -136,8 +132,6 @@ namespace cp
 
 	VulkanQueueFamilies PhysicalDevice::FindQueueFamilies(std::optional<vk::SurfaceKHR> _surface)
 	{
-#pragma push_macro("max")
-#undef max
 		auto families = physicalDevice.getQueueFamilyProperties();
 
 		VulkanQueueFamilies queueFamilies;
@@ -166,8 +160,6 @@ namespace cp
 		}
 
 		QueueIndicesFallbacks(queueFamilies);
-
-#pragma pop_macro("max")
 
 		return queueFamilies;
 	}

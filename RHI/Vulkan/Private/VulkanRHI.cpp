@@ -4,10 +4,12 @@
 
 #include <memory>
 
-#include "Core/Surface.hpp"
-#include "Core/Swapchain.hpp"
+#include "Rendering/Surface.hpp"
+#include "Rendering/Swapchain.hpp"
 
 #include <Profiling.hpp>
+
+#include "Synchro/TimelineSemaphore.hpp"
 
 namespace cp
 {
@@ -31,7 +33,7 @@ namespace cp
 		}
 	}
 
-	VulkanRHI::VulkanRHI(std::shared_ptr<cp::ILogger> _logger)
+	VulkanRHI::VulkanRHI(const std::shared_ptr<cp::ILogger>& _logger)
 		: RenderingHardwareInterface(_logger)
 	{
 		if(!RetrieveVulkanVersion(GetLogger()))
@@ -69,7 +71,7 @@ namespace cp
 		return *device;
 	}
 
-	std::unique_ptr<Surface> VulkanRHI::CreateSurface(const SurfaceInfo& _info)
+	std::unique_ptr<Surface> VulkanRHI::CreateSurface(const SurfaceInfo& _info) const
 	{
 		CP_EXPECT_MSG(instance, "Instance must be created before creating a surface");
 		CP_PROFILE_SCOPE("Vulkan#Surface creation");
@@ -121,5 +123,19 @@ namespace cp
 	{
 		CP_EXPECT_MSG(device, "Logical device must be created before it can be accessed");
 		return *device;
+	}
+
+	std::shared_ptr<ITexture> VulkanRHI::CreateTexture(const TextureInfo& _info)
+	{
+		CP_EXPECT_MSG(device, "Logical device must be created before creating a texture");
+
+		return device->CreateTexture(_info);
+	}
+
+	std::shared_ptr<ITimelineSemaphore> VulkanRHI::CreateTimelineSemaphore()
+	{
+		CP_EXPECT_MSG(device, "Logical device must be created before creating a timeline semaphore");
+
+		return std::make_shared<TimelineSemaphore>(*device);
 	}
 }

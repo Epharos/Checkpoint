@@ -2,7 +2,7 @@
 
 namespace cp
 {
-	RenderingHardwareInterface::RenderingHardwareInterface(std::shared_ptr<cp::ILogger> _logger)
+	RenderingHardwareInterface::RenderingHardwareInterface(const std::shared_ptr<cp::ILogger>& _logger)
 		: logger(_logger)
 	{
 

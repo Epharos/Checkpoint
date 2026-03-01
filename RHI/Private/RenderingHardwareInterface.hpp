@@ -4,6 +4,9 @@
 
 namespace cp
 {
+	class ITimelineSemaphore;
+	struct TextureInfo;
+	class ITexture;
 	class IInstance;
 	class IPhysicalDevice;
 	class IDevice;
@@ -16,9 +19,7 @@ namespace cp
 	class RenderingHardwareInterface
 	{
 	public:
-		std::shared_ptr<cp::ILogger> logger;
-
-		RenderingHardwareInterface(std::shared_ptr<cp::ILogger> _logger);
+		RenderingHardwareInterface(const std::shared_ptr<ILogger> &_logger);
 		virtual ~RenderingHardwareInterface() = default;
 
 		virtual IInstance& CreateInstance(const InstanceInfo& _info) = 0;
@@ -26,6 +27,10 @@ namespace cp
 		virtual IDevice& CreateDevice() = 0;
 
 		virtual std::unique_ptr<ISwapchain> CreateSwapchain(const SwapchainInfo& _info) = 0;
+
+		virtual std::shared_ptr<ITexture> CreateTexture(const TextureInfo& _info) = 0;
+
+		virtual std::shared_ptr<ITimelineSemaphore> CreateTimelineSemaphore() = 0;
 
 		virtual IInstance& GetInstance() = 0;
 		virtual const IInstance& GetInstance() const = 0;
@@ -38,6 +43,9 @@ namespace cp
 
 	protected:
 		ILogger& GetLogger() const;
+
+	private:
+		std::shared_ptr<ILogger> logger;
 	};
 
 	using RHI = RenderingHardwareInterface;
