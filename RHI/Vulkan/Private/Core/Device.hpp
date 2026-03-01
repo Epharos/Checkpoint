@@ -22,7 +22,11 @@ namespace cp
 		~Device() override;
 
 	public: // Getters and Setters
-		IQueue& GetQueue(QueueType _queueType, uint32_t _index) override;
+		[[nodiscard]] IQueue& GetQueue(QueueType _queueType, uint32_t _index) override;
+		[[nodiscard]] const IQueue& GetQueue(QueueType _queueType, uint32_t _index) const override;
+
+		[[nodiscard]] vk::CommandPool& GetCommandPool(QueueType _queueType, uint32_t _index);
+		[[nodiscard]] const vk::CommandPool& GetCommandPool(QueueType _queueType, uint32_t _index) const;
 
 		[[nodiscard]] vk::Device& GetHandle() { return device; }
 		[[nodiscard]] const vk::Device& GetHandle() const { return device; }
@@ -38,20 +42,26 @@ namespace cp
 
 	private: // Initialization and cleanup
 		void Initialize();
-		void Cleanup();
+
+		void CleanupCommandPools() const;
+
+		void Cleanup() const;
 
 		bool CreateLogicalDevice();
 		void CreateQueues();
+		void CreateCommandPools();
 
 	public: // Override methods
 		void WaitIdle() const override;
 
 	private:
 		vk::Device device{ VK_NULL_HANDLE };
+
 		VulkanQueueFamilies families;
 
 		// 0 : Graphics, 1 : Compute, 2 : Transfer
-		std::array<std::vector<std::unique_ptr<Queue>>, 3> queues; 
+		std::array<std::vector<std::unique_ptr<Queue>>, 3> queues;
+		std::array<std::vector<vk::CommandPool>, 3> commandPools;
 
 		PhysicalDevice& physicalDevice;
 	};

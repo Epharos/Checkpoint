@@ -18,7 +18,8 @@ namespace cp
 		virtual ~IDevice() = default;
 
 	public: // Getters and Setters
-		virtual IQueue& GetQueue(QueueType _queueType, uint32_t _index) = 0;
+		[[nodiscard]] virtual IQueue& GetQueue(QueueType _queueType, uint32_t _index) = 0;
+		[[nodiscard]] virtual const IQueue& GetQueue(QueueType _queueType, uint32_t _index) const = 0;
 
 	public: // Resource creation
 		virtual std::shared_ptr<ITexture> CreateTexture(const TextureInfo& _info) = 0;

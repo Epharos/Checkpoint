@@ -4,6 +4,7 @@
 
 namespace cp
 {
+	class ICommandBuffer;
 	class ITimelineSemaphore;
 
 	enum class QueueType : uint8_t
@@ -15,7 +16,7 @@ namespace cp
 
 	struct SubmitInfo
 	{
-		// std::vector<ICommandBuffer*> commandBuffers;
+		std::vector<ICommandBuffer*> commandBuffers;
 
 		struct WaitInfo
 		{

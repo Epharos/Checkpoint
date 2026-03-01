@@ -2,6 +2,7 @@
 
 #include "Queue.hpp"
 
+#include "CommandBuffer.hpp"
 #include "../Synchro/TimelineSemaphore.hpp"
 
 namespace cp
@@ -21,7 +22,11 @@ namespace cp
 	{
 		std::vector<vk::CommandBuffer> commandBuffers;
 
-		// TODO : Introduce logic to create commandBuffer from the SubmitInfo
+		for (const ICommandBuffer* commandBuffer : _submitInfo.commandBuffers)
+		{
+			auto* upcastCommandBuffer = dynamic_cast<const CommandBuffer*>(commandBuffer);
+			commandBuffers.push_back(upcastCommandBuffer->GetHandle());
+		}
 
 		std::vector<vk::Semaphore> waitSemaphores;
 		std::vector<size_t> waitValues;
@@ -57,7 +62,8 @@ namespace cp
 
 		submitInfo.setPNext(&timelineSemaphoreSubmitInfo);
 
-		// TODO : Add command buffers submit infos
+		submitInfo.setCommandBufferCount(static_cast<uint32_t>(commandBuffers.size()));
+		submitInfo.setPCommandBuffers(commandBuffers.data());
 
 		submitInfo.setWaitSemaphoreCount(static_cast<uint32_t>(waitSemaphores.size()));
 		submitInfo.setPWaitSemaphores(waitSemaphores.data());

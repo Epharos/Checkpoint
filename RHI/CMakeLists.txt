@@ -11,6 +11,7 @@ add_library(RHI_Core STATIC
 	"Private/Utilities/Converter.hpp"
 		Private/Synchro/ITimelineSemaphore.hpp
 		Public/RHI/Rendering.hpp
+		Private/Core/ICommandBuffer.hpp
 )
 
 target_include_directories(RHI_Core 
