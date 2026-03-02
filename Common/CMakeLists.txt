@@ -22,6 +22,7 @@ add_library(Common STATIC
 
     "Private/Profiler/ScopedProfiler.cpp"
     "Private/Profiler/ProfilerTracker.cpp"
+        Private/Data/Color.hpp
 )
 
 target_include_directories(Common PUBLIC
