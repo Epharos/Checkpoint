@@ -6,7 +6,7 @@
 #include <memory>
 
 #include <RHI/Rendering.hpp>
-#include <Assert.hpp>
+#include <Common/Core/Assert.hpp>
 
 #include "Surface.hpp"
 
@@ -25,7 +25,7 @@ namespace cp
 		/**
 		 * @brief Updates the swapchain image state to present it within the surface (i.e. the window) and swap the back buffer.
 		 */
-		void Present() override;
+		void Present(size_t _synchronizationSignalValue) override;
 
 		/**
 		 * @brief Recreates the whole swapchain and related objects (semaphores, ...).
@@ -84,6 +84,9 @@ namespace cp
 		 */
 		void SelectSwapchainProperties();
 
+	public:
+		ITexture& GetSwapchainImage(size_t _index) override;
+
 	private:
 		std::unique_ptr<Surface> surface;
 		vk::SwapchainKHR swapchain { VK_NULL_HANDLE };
@@ -101,9 +104,10 @@ namespace cp
 		vk::SurfaceFormatKHR selectedSurfaceFormat;
 		vk::PresentModeKHR selectedPresentMode;
 
-		vk::Semaphore imageAvailableSemaphore { VK_NULL_HANDLE };
-		vk::Semaphore renderFinishedSemaphore { VK_NULL_HANDLE };
+		vk::Semaphore* imageAvailableBinarySemaphore = nullptr;
+		vk::Semaphore* renderFinishedBinarySemaphore = nullptr;
 
-		uint32_t imageIndex;
+		uint32_t imageIndex{};
+		uint32_t acquireSemaphoreIndex{};
 	};
 }

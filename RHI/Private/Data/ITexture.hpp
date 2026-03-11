@@ -2,9 +2,9 @@
 
 #include <cstdint>
 
-#include <Extent.hpp>
+#include <Common/Data/Extent.hpp>
 
-#include "Formats.hpp"
+#include "Enums.hpp"
 
 namespace cp
 {
@@ -29,6 +29,27 @@ namespace cp
 		// Common combinations
 
 		DepthStencil = Depth | Stencil
+	};
+
+	enum class TextureLayout : uint32_t
+	{
+		Undefined,
+		General,
+
+		AttachmentOptimal,
+		ColorAttachment,
+		DepthStencilAttachment,
+		DepthStencilReadOnly,
+
+		ShaderReadOnly,
+
+		TransferSrc,
+		TransferDst,
+
+		ResolveSrc,
+		ResolveDst,
+
+		Present
 	};
 
 	enum class TextureType
@@ -57,10 +78,28 @@ namespace cp
 	class ITexture
 	{
 	public:
-		ITexture(const TextureInfo& _info);
+		explicit ITexture(const TextureInfo& _info, TextureLayout _initialLayout = TextureLayout::Undefined);
 		virtual ~ITexture() = default;
 
+		/**
+		* @brief Returns the current layout of this texture.
+		*        Reflects the last layout transition performed via a barrier.
+		*
+		* @return The current texture layout.
+		*/
+		[[nodiscard]] TextureLayout GetLayout() const { return layout; }
+
+		/**
+		* @brief Updates the cached layout of this texture on the CPU side.
+		*        Must be called after recording a barrier that transitions this texture to a new layout.
+		*
+		* @param _layout The new layout of the texture.
+		*/
+		void UpdateLayout(TextureLayout _layout);
+
 	protected:
-		TextureInfo info;
+		const TextureInfo info;
+
+		TextureLayout layout;
 	};
 }

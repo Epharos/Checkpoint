@@ -1,17 +1,18 @@
 add_library(RHI_Core STATIC
 	"Private/RenderingHardwareInterface.cpp"
+
 	"Private/Core/IInstance.cpp"
 	"Private/Core/IPhysicalDevice.cpp"
 	"Private/Core/IDevice.cpp"
-	 
-	"Private/Rendering/ISwapchain.cpp"
+	"Private/Core/ICommandBuffer.hpp"
 
 	"Private/Data/ITexture.cpp"
 
+	"Private/Rendering/ISwapchain.cpp"
+
 	"Private/Utilities/Converter.hpp"
-		Private/Synchro/ITimelineSemaphore.hpp
-		Public/RHI/Rendering.hpp
-		Private/Core/ICommandBuffer.hpp
+
+	"Private/Synchro/ITimelineSemaphore.hpp"
 )
 
 target_include_directories(RHI_Core 

@@ -2,8 +2,8 @@
 
 #include "Device.hpp"
 
-#include <Log.hpp>
-#include <Profiling.hpp>
+#include <Common/Core/Log.hpp>
+#include <Common/Core/Profiling.hpp>
 
 #include "PhysicalDevice.hpp"
 #include "Queue.hpp"
@@ -67,9 +67,22 @@ namespace cp
 		}
 	}
 
+	vk::PhysicalDeviceDynamicRenderingFeatures Device::FillFeatureStructures()
+	{
+		vk::PhysicalDeviceVulkan12Features device12Features;
+		device12Features.setTimelineSemaphore(true);
+		device12Features.setPNext(nullptr);
+
+		vk::PhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures;
+		dynamicRenderingFeatures.setDynamicRendering(true);
+		dynamicRenderingFeatures.setPNext(&device12Features);
+
+		return dynamicRenderingFeatures;
+	}
+
 	bool Device::CreateLogicalDevice()
 	{
-		CP_PROFILE_SCOPE("VulkanDevice#Create Logical Device");
+		CP_PROFILE_SCOPE_NAMED("VulkanDevice#Create Logical Device");
 
 		std::set<uint32_t> uniqueQueueFamilies = {
 			families.graphics,
@@ -96,24 +109,37 @@ namespace cp
 		std::vector<const char*> layers;
 
 		extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+		extensions.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+
+		// FEATURES
+
+		vk::PhysicalDeviceSynchronization2Features synchronization2Features;
+		synchronization2Features.setSynchronization2(true);
+		synchronization2Features.setPNext(nullptr);
+
+		vk::PhysicalDeviceVulkan12Features device12Features;
+		device12Features.setTimelineSemaphore(true);
+		device12Features.setPNext(&synchronization2Features);
+
+		vk::PhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures;
+		dynamicRenderingFeatures.setDynamicRendering(true);
+		dynamicRenderingFeatures.setPNext(&device12Features);
+
+		// CREATION
 
 		vk::DeviceCreateInfo createInfo;
 		createInfo.setQueueCreateInfoCount(static_cast<uint32_t>(queueCreateInfos.size()));
 		createInfo.setPQueueCreateInfos(queueCreateInfos.data());
 		createInfo.setEnabledExtensionCount(static_cast<uint32_t>(extensions.size()));
 		createInfo.setPpEnabledExtensionNames(extensions.data());
+		createInfo.setPNext(&dynamicRenderingFeatures);
 
-		if(physicalDevice.GetHandle().createDevice(&createInfo, nullptr, &device) != vk::Result::eSuccess)
-		{
-			return false;
-		}
-
-		return true;
+		return physicalDevice.GetHandle().createDevice(&createInfo, nullptr, &device) == vk::Result::eSuccess;
 	}
 
 	void Device::CreateQueues()
 	{
-		CP_PROFILE_SCOPE("VulkanDevice#Create Queues");
+		CP_PROFILE_SCOPE_NAMED("VulkanDevice#Create Queues");
 
 		auto queue = device.getQueue(families.graphics, 0);
 		queues[0].push_back(std::make_unique<Queue>(queue, families.graphics, QueueType::Graphics));
@@ -127,7 +153,7 @@ namespace cp
 
 	void Device::CreateCommandPools()
 	{
-		CP_PROFILE_SCOPE("VulkanDevice#Create CommandPool");
+		CP_PROFILE_SCOPE_NAMED("VulkanDevice#Create CommandPool");
 
 		for (int queuesIndex = 0 ; queuesIndex < queues.size() ; queuesIndex++)
 		{
@@ -176,8 +202,8 @@ namespace cp
 		return commandPools[static_cast<size_t>(_queueType)][_index];
 	}
 
-	std::shared_ptr<ITexture> Device::CreateTexture(const TextureInfo& _info)
+	std::shared_ptr<ITexture> Device::CreateTexture(const TextureInfo& _info, TextureLayout _initialLayout)
 	{
-		return std::make_shared<Texture>(logger, _info, *this);
+		return std::make_shared<Texture>(logger, _info, *this, _initialLayout);
 	}
 }

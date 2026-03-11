@@ -3,7 +3,7 @@
 #include <IWindow.hpp>
 #include <GLFW/glfw3.h>
 
-#include <Extent.hpp>
+#include <../../../Common/Public/Common/Data/Extent.hpp>
 
 namespace cp
 {

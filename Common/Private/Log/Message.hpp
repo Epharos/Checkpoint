@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "Components/ComponentTypeId.hpp"
+#include "Components/TextComponent.hpp"
 
 namespace cp
 {
@@ -61,6 +62,19 @@ namespace cp
 			Message message;
 			message.Then<T>(std::forward<Args>(args)...);
 			return message;
+		}
+
+		/**
+		 * @brief Create a new message with a single component of type TextComponent, forwarding the arguments to its constructor.
+		 *
+		 * @param args The arguments to forward to the component's constructor.
+		 *
+		 * @return A new message containing a single component of type TextComponent.
+		 */
+		template<typename... Args>
+		static Message Create(Args&&... args)
+		{
+			return Create<cp::TextComponent>(std::forward<Args>(args)...);
 		}
 	};
 }

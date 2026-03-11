@@ -7,8 +7,9 @@
 #include "Rendering/Surface.hpp"
 #include "Rendering/Swapchain.hpp"
 
-#include <Profiling.hpp>
+#include <../../../Common/Public/Common/Core/Profiling.hpp>
 
+#include "Core/CommandAllocator.hpp"
 #include "Synchro/TimelineSemaphore.hpp"
 
 namespace cp
@@ -45,7 +46,7 @@ namespace cp
 	IInstance& VulkanRHI::CreateInstance(const InstanceInfo& _info)
 	{
 		CP_EXPECT_MSG(!instance, "Instance already created");
-		CP_PROFILE_SCOPE("Vulkan#Instance creation");
+		CP_PROFILE_SCOPE_NAMED("Vulkan#Instance creation");
 		instance = std::make_unique<cp::Instance>(GetLogger(), _info);
 		CP_ENSURE_MSG(instance, "Failed to create Vulkan instance");
 		return *instance;
@@ -55,7 +56,7 @@ namespace cp
 	{
 		CP_EXPECT_MSG(instance, "Instance must be created before creating a physical device");
 		CP_EXPECT_MSG(!physicalDevice, "Physical device already created");
-		CP_PROFILE_SCOPE("Vulkan#PhysicalDevice creation");
+		CP_PROFILE_SCOPE_NAMED("Vulkan#PhysicalDevice creation");
 		physicalDevice = std::make_unique<PhysicalDevice>(GetLogger(), *instance);
 		CP_ENSURE_MSG(physicalDevice, "Failed to create Vulkan physical device");
 		return *physicalDevice;
@@ -65,7 +66,7 @@ namespace cp
 	{
 		CP_EXPECT_MSG(physicalDevice, "Physical device must be created before creating a logical device");
 		CP_EXPECT_MSG(!device, "Logical device already created");
-		CP_PROFILE_SCOPE("Vulkan#Device creation");
+		CP_PROFILE_SCOPE_NAMED("Vulkan#Device creation");
 		device = std::make_unique<Device>(GetLogger(), *physicalDevice);
 		CP_ENSURE_MSG(device, "Failed to create Vulkan logical device");
 		return *device;
@@ -74,7 +75,7 @@ namespace cp
 	std::unique_ptr<Surface> VulkanRHI::CreateSurface(const SurfaceInfo& _info) const
 	{
 		CP_EXPECT_MSG(instance, "Instance must be created before creating a surface");
-		CP_PROFILE_SCOPE("Vulkan#Surface creation");
+		CP_PROFILE_SCOPE_NAMED("Vulkan#Surface creation");
 		auto surface = std::make_unique<Surface>(GetLogger(), _info, *instance);
 		CP_ENSURE_MSG(surface, "Failed to create Vulkan surface");
 		return surface;
@@ -83,7 +84,7 @@ namespace cp
 	std::unique_ptr<ISwapchain> VulkanRHI::CreateSwapchain(const SwapchainInfo& _info)
 	{
 		CP_EXPECT_MSG(device, "Logical device must be created before creating a swapchain");
-		CP_PROFILE_SCOPE("Vulkan#Swapchain creation");
+		CP_PROFILE_SCOPE_NAMED("Vulkan#Swapchain creation");
 		auto swapchain = std::make_unique<Swapchain>(GetLogger(), _info, *device);
 		CP_ENSURE_MSG(swapchain, "Failed to create Vulkan swapchain");
 		return swapchain;
@@ -125,17 +126,24 @@ namespace cp
 		return *device;
 	}
 
-	std::shared_ptr<ITexture> VulkanRHI::CreateTexture(const TextureInfo& _info)
+	std::shared_ptr<ITexture> VulkanRHI::CreateTexture(const TextureInfo& _info, TextureLayout _initialLayout)
 	{
 		CP_EXPECT_MSG(device, "Logical device must be created before creating a texture");
 
-		return device->CreateTexture(_info);
+		return device->CreateTexture(_info, _initialLayout);
 	}
 
-	std::shared_ptr<ITimelineSemaphore> VulkanRHI::CreateTimelineSemaphore()
+	std::unique_ptr<ITimelineSemaphore> VulkanRHI::CreateTimelineSemaphore()
 	{
 		CP_EXPECT_MSG(device, "Logical device must be created before creating a timeline semaphore");
 
-		return std::make_shared<TimelineSemaphore>(*device);
+		return std::make_unique<TimelineSemaphore>(*device);
+	}
+
+	std::unique_ptr<ICommandAllocator> VulkanRHI::CreateCommandAllocator(IQueue& _queue)
+	{
+		CP_EXPECT_MSG(device, "Logical device must be created before creating a command allocator");
+
+		return std::make_unique<CommandAllocator>(_queue, *device);
 	}
 }

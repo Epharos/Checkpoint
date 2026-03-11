@@ -4,7 +4,7 @@
 #include <chrono>
 #include <thread>
 
-#include "../../Public/Macros.hpp"
+#include "../../Public/Common/Core/Macros.hpp"
 
 #if defined(CP_PLATFORM_WINDOWS)
 #include <Windows.h>

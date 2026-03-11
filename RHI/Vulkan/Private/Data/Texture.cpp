@@ -2,9 +2,7 @@
 
 #include "Texture.hpp"
 
-#include <iostream>
-
-#include <Log.hpp>
+#include <Common/Core/Log.hpp>
 
 #include "../Core/Device.hpp"
 #include "../Core/PhysicalDevice.hpp"
@@ -17,29 +15,22 @@ namespace cp
 {
 	namespace
 	{
-		constexpr const std::string_view to_string(Format _format)
+		constexpr std::string_view to_string(const Format _format)
 		{
 			switch (_format)
 			{
-				case Format::R8G8B8A8_UNORM:
-					return "R8G8B8A8_UNORM";
-				case Format::B8G8R8A8_UNORM:
-					return "B8G8R8A8_UNORM";
-				case Format::R16G16B16A16_FLOAT:
-					return "R16G16B16A16_FLOAT";
-				case Format::R32_UINT:
-					return "R32_UINT";
+				case Format::R8G8B8A8_UNORM: return "R8G8B8A8_UNORM";
+				case Format::B8G8R8A8_UNORM: return "B8G8R8A8_UNORM";
+				case Format::R16G16B16A16_FLOAT: return "R16G16B16A16_FLOAT";
+				case Format::R32_UINT: return "R32_UINT";
 
-				case Format::D24_UNORM_S8_UINT:
-					return "D24_UNORM_S8_UINT";
-				case Format::D32_FLOAT:
-					return "D32_FLOAT";
+				case Format::D24_UNORM_S8_UINT: return "D24_UNORM_S8_UINT";
+				case Format::D32_FLOAT: return "D32_FLOAT";
+				default: return "Unknown";
 			}
-
-			return "Unknown";
 		}
 
-		void CreateImage(vk::Image& _image, const TextureInfo& _info, Device& _device)
+		void CreateImage(vk::Image& _image, const TextureInfo& _info, Device& _device, TextureLayout _initialLayout = TextureLayout::Undefined)
 		{
 			vk::ImageCreateInfo imageCreateInfo = {};
 
@@ -52,7 +43,7 @@ namespace cp
 			imageCreateInfo.setTiling(vk::ImageTiling::eOptimal);
 			imageCreateInfo.setUsage(EnumBitsCast<vk::ImageUsageFlags, TextureUsage>(_info.usage));
 			imageCreateInfo.setSharingMode(vk::SharingMode::eExclusive);
-			imageCreateInfo.setInitialLayout(vk::ImageLayout::eUndefined);
+			imageCreateInfo.setInitialLayout(EnumCast<vk::ImageLayout, TextureLayout>(_initialLayout));
 
 			CP_VK_CHECK(_device.GetHandle().createImage(&imageCreateInfo, nullptr, &_image));
 			CP_ENSURE_MSG(_image != VK_NULL_HANDLE, "Image was not initialized");
@@ -103,10 +94,10 @@ namespace cp
 		}
 	}
 
-	Texture::Texture(ILogger& _logger, const TextureInfo& _info, Device& _device)
-		: ITexture(_info), device(_device), logger(_logger)
+	Texture::Texture(ILogger& _logger, const TextureInfo& _info, Device& _device, TextureLayout _initialLayout)
+		: ITexture(_info, _initialLayout), device(_device), logger(_logger)
 	{
-		resource = std::make_unique<VulkanTextureResource>(_info, _device);
+		resource = std::make_unique<TextureResource>(_info, _device, _initialLayout);
 
 		Initiate();
 
@@ -120,10 +111,10 @@ namespace cp
 		CP_ENSURE_MSG(resource, "Could not create texture");
 	}
 
-	Texture::Texture(ILogger& _logger, vk::Image& _image, const TextureInfo& _info, Device& _device)
-		: ITexture(_info), device(_device), logger(_logger)
+	Texture::Texture(ILogger& _logger, vk::Image& _image, const TextureInfo& _info, Device& _device, TextureLayout _initialLayout)
+		: ITexture(_info, _initialLayout), device(_device), logger(_logger)
 	{
-		resource = std::make_unique<VulkanTextureResource>(_image, _device);
+		resource = std::make_unique<TextureResource>(_image, _device);
 
 		Initiate();
 
@@ -142,25 +133,25 @@ namespace cp
 		CreateImageView(view, info, resource->GetImage(), device);
 	}
 
-	void Texture::Cleanup()
+	void Texture::Cleanup() const
 	{
 		CP_EXPECT_MSG(view != VK_NULL_HANDLE, "View shouldn't be null");
 
 		device.GetHandle().destroyImageView(view);
 	}
 
-	VulkanTextureResource::VulkanTextureResource(vk::Image& _image, Device& _device) :
+	TextureResource::TextureResource(vk::Image& _image, Device& _device) :
 		image(_image), memory(VK_NULL_HANDLE), device(_device), isOwner(false) {}
 
-	VulkanTextureResource::VulkanTextureResource(const TextureInfo& _info, Device& _device)
+	TextureResource::TextureResource(const TextureInfo& _info, Device& _device, TextureLayout _initialLayout)
 		: device(_device), isOwner(true)
 	{
-		CreateImage(image, _info, device);
+		CreateImage(image, _info, device, _initialLayout);
 		AllocateImageMemory(memory, image, device);
 		BindImageMemory(image, memory, device);
 	}
 
-	VulkanTextureResource::~VulkanTextureResource()
+	TextureResource::~TextureResource()
 	{
 		if (!isOwner) return;
 

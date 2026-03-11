@@ -18,6 +18,12 @@ namespace cp
         void WaitCPU(size_t _value) const override;
         [[nodiscard]] size_t GetCompletedValue() const override;
 
+        /**
+        * @brief Returns the underlying Vulkan semaphore handle.
+        *        Required when passing this semaphore to Vulkan API calls directly (e.g. bridge submits).
+        *
+        * @return The Vulkan semaphore handle.
+        */
         [[nodiscard]] vk::Semaphore& GetHandle() { return semaphore; }
         [[nodiscard]] const vk::Semaphore& GetHandle() const { return semaphore; }
 

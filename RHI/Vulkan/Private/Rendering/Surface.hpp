@@ -24,7 +24,7 @@ namespace cp
 
 	private:
 		void Initialize();
-		void Cleanup();
+		void Cleanup() const;
 
 	private:
 		vk::SurfaceKHR surface{ VK_NULL_HANDLE };

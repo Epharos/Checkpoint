@@ -8,7 +8,7 @@
 namespace cp
 {
 	template<>
-	inline vk::Format EnumCast<vk::Format, Format>(Format _format)
+	inline vk::Format EnumCast<vk::Format, Format>(const Format _format)
 	{
 		switch (_format)
 		{
@@ -27,7 +27,7 @@ namespace cp
 	}
 
 	template<>
-	inline Format EnumCast<Format, vk::Format>(vk::Format _format)
+	inline Format EnumCast<Format, vk::Format>(const vk::Format _format)
 	{
 		switch (_format)
 		{
@@ -46,7 +46,7 @@ namespace cp
 	}
 
 	template<>
-	inline vk::ImageUsageFlagBits EnumCast<vk::ImageUsageFlagBits, TextureUsage>(TextureUsage _usage)
+	inline vk::ImageUsageFlagBits EnumCast<vk::ImageUsageFlagBits, TextureUsage>(const TextureUsage _usage)
 	{
 		switch (_usage)
 		{
@@ -60,13 +60,13 @@ namespace cp
 	}
 
 	template<>
-	inline vk::ImageUsageFlags EnumBitsCast<vk::ImageUsageFlags, TextureUsage>(TextureUsage _usage)
+	inline vk::ImageUsageFlags EnumBitsCast<vk::ImageUsageFlags, TextureUsage>(const TextureUsage _usage)
 	{
 		return ConvertBitField<vk::ImageUsageFlags, vk::ImageUsageFlagBits, TextureUsage, 4>(_usage);
 	}
 
 	template<>
-	inline vk::ImageAspectFlagBits EnumCast<vk::ImageAspectFlagBits, TextureAspect>(TextureAspect _aspect)
+	inline vk::ImageAspectFlagBits EnumCast<vk::ImageAspectFlagBits, TextureAspect>(const TextureAspect _aspect)
 	{
 		switch (_aspect)
 		{
@@ -79,13 +79,34 @@ namespace cp
 	}
 
 	template<>
-	inline vk::ImageAspectFlags EnumBitsCast<vk::ImageAspectFlags, TextureAspect>(TextureAspect _aspect)
+	inline vk::ImageAspectFlags EnumBitsCast<vk::ImageAspectFlags, TextureAspect>(const TextureAspect _aspect)
 	{
 		return ConvertBitField<vk::ImageAspectFlags, vk::ImageAspectFlagBits, TextureAspect, 4>(_aspect);
 	}
 
 	template<>
-	inline vk::ImageViewType EnumCast<vk::ImageViewType, TextureType>(TextureType _type)
+	inline vk::ImageLayout EnumCast<vk::ImageLayout, TextureLayout>(const TextureLayout _layout)
+	{
+		switch (_layout)
+		{
+			case TextureLayout::Undefined: return vk::ImageLayout::eUndefined;
+			case TextureLayout::General: return vk::ImageLayout::eGeneral;
+			case TextureLayout::AttachmentOptimal: return vk::ImageLayout::eAttachmentOptimal;
+			case TextureLayout::ColorAttachment: return vk::ImageLayout::eColorAttachmentOptimal;
+			case TextureLayout::DepthStencilAttachment: return vk::ImageLayout::eDepthStencilAttachmentOptimal;
+			case TextureLayout::DepthStencilReadOnly: return vk::ImageLayout::eDepthStencilReadOnlyOptimal;
+			case TextureLayout::ShaderReadOnly: return vk::ImageLayout::eShaderReadOnlyOptimal;
+			case TextureLayout::ResolveSrc:
+			case TextureLayout::TransferSrc: return vk::ImageLayout::eTransferSrcOptimal;
+			case TextureLayout::ResolveDst:
+			case TextureLayout::TransferDst: return vk::ImageLayout::eTransferDstOptimal;
+			case TextureLayout::Present: return vk::ImageLayout::ePresentSrcKHR;
+			default: throw std::logic_error("Unrecognized texture layout!");
+		}
+	}
+
+	template<>
+	inline vk::ImageViewType EnumCast<vk::ImageViewType, TextureType>(const TextureType _type)
 	{
 		switch (_type)
 		{
@@ -94,5 +115,140 @@ namespace cp
 			case TextureType::Texture2DArray: return vk::ImageViewType::e2DArray;
 			default: throw std::logic_error("Unrecognized texture type!");
 		}
+	}
+
+	template<>
+	inline vk::AttachmentLoadOp EnumCast<vk::AttachmentLoadOp, LoadOp>(const LoadOp _loadOp)
+	{
+		switch (_loadOp)
+		{
+			case LoadOp::Clear: return vk::AttachmentLoadOp::eClear;
+			case LoadOp::Load: return vk::AttachmentLoadOp::eLoad;
+			case LoadOp::DontCare: return vk::AttachmentLoadOp::eDontCare;
+			case LoadOp::None: return vk::AttachmentLoadOp::eNone;
+			default: throw std::logic_error("Unrecognized load op!");
+		}
+	}
+
+	template<>
+	inline vk::AttachmentStoreOp EnumCast<vk::AttachmentStoreOp, StoreOp>(const StoreOp _storeOp)
+	{
+		switch (_storeOp)
+		{
+			case StoreOp::Store: return vk::AttachmentStoreOp::eStore;
+			case StoreOp::DontCare: return vk::AttachmentStoreOp::eDontCare;
+			case StoreOp::None: return vk::AttachmentStoreOp::eNone;
+			default: throw std::logic_error("Unrecognized store op!");
+		}
+	}
+
+	template<>
+	inline vk::PipelineStageFlagBits EnumCast<vk::PipelineStageFlagBits, PipelineStage>(const PipelineStage _stage)
+	{
+		switch (_stage)
+		{
+			case PipelineStage::Top: return vk::PipelineStageFlagBits::eTopOfPipe;
+			case PipelineStage::DrawIndirect: return vk::PipelineStageFlagBits::eDrawIndirect;
+			case PipelineStage::VertexInput: return vk::PipelineStageFlagBits::eVertexInput;
+			case PipelineStage::VertexShader: return vk::PipelineStageFlagBits::eVertexShader;
+			case PipelineStage::FragmentShader: return vk::PipelineStageFlagBits::eFragmentShader;
+			case PipelineStage::EarlyDepth: return vk::PipelineStageFlagBits::eEarlyFragmentTests;
+			case PipelineStage::LateDepth: return vk::PipelineStageFlagBits::eLateFragmentTests;
+			case PipelineStage::ColorAttachment: return vk::PipelineStageFlagBits::eColorAttachmentOutput;
+			case PipelineStage::ComputeShader: return vk::PipelineStageFlagBits::eComputeShader;
+			case PipelineStage::Transfer: return vk::PipelineStageFlagBits::eTransfer;
+			case PipelineStage::Bottom: return vk::PipelineStageFlagBits::eBottomOfPipe;
+			case PipelineStage::AllGraphics: return vk::PipelineStageFlagBits::eAllGraphics;
+			case PipelineStage::AllCommands: return vk::PipelineStageFlagBits::eAllCommands;
+			default: throw std::logic_error("Unrecognized pipeline stage!");
+		}
+	}
+
+	template<>
+	inline vk::PipelineStageFlags EnumBitsCast<vk::PipelineStageFlags, PipelineStage>(const PipelineStage _stage)
+	{
+		return ConvertBitField<vk::PipelineStageFlags, vk::PipelineStageFlagBits, PipelineStage, 13>(_stage);
+	}
+
+	template<>
+	inline vk::PipelineStageFlagBits2 EnumCast<vk::PipelineStageFlagBits2, PipelineStage>(const PipelineStage _stage)
+	{
+		switch (_stage)
+		{
+			case PipelineStage::Top: return vk::PipelineStageFlagBits2::eTopOfPipe;
+			case PipelineStage::DrawIndirect: return vk::PipelineStageFlagBits2::eDrawIndirect;
+			case PipelineStage::VertexInput: return vk::PipelineStageFlagBits2::eVertexInput;
+			case PipelineStage::VertexShader: return vk::PipelineStageFlagBits2::eVertexShader;
+			case PipelineStage::FragmentShader: return vk::PipelineStageFlagBits2::eFragmentShader;
+			case PipelineStage::EarlyDepth: return vk::PipelineStageFlagBits2::eEarlyFragmentTests;
+			case PipelineStage::LateDepth: return vk::PipelineStageFlagBits2::eLateFragmentTests;
+			case PipelineStage::ColorAttachment: return vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+			case PipelineStage::ComputeShader: return vk::PipelineStageFlagBits2::eComputeShader;
+			case PipelineStage::Transfer: return vk::PipelineStageFlagBits2::eTransfer;
+			case PipelineStage::Bottom: return vk::PipelineStageFlagBits2::eBottomOfPipe;
+			case PipelineStage::AllGraphics: return vk::PipelineStageFlagBits2::eAllGraphics;
+			case PipelineStage::AllCommands: return vk::PipelineStageFlagBits2::eAllCommands;
+			default: throw std::logic_error("Unrecognized pipeline stage!");
+		}
+	}
+
+	template<>
+	inline vk::PipelineStageFlags2 EnumBitsCast<vk::PipelineStageFlags2, PipelineStage>(const PipelineStage _stage)
+	{
+		return ConvertBitField<vk::PipelineStageFlags2, vk::PipelineStageFlagBits2, PipelineStage, 13>(_stage);
+	}
+
+	template<>
+	inline vk::AccessFlagBits2 EnumCast<vk::AccessFlagBits2, Access>(const Access _access)
+	{
+		switch (_access)
+		{
+			case Access::None: return vk::AccessFlagBits2::eNone;
+			case Access::IndirectCommandRead: return vk::AccessFlagBits2::eIndirectCommandRead;
+			case Access::VertexBufferRead: return vk::AccessFlagBits2::eVertexAttributeRead;
+			case Access::IndexBufferRead: return vk::AccessFlagBits2::eIndexRead;
+			case Access::ShaderRead: return vk::AccessFlagBits2::eShaderRead;
+			case Access::ShaderWrite: return vk::AccessFlagBits2::eShaderWrite;
+			case Access::ColorAttachmentRead: return vk::AccessFlagBits2::eColorAttachmentRead;
+			case Access::ColorAttachmentWrite: return vk::AccessFlagBits2::eColorAttachmentWrite;
+			case Access::DepthStencilRead: return vk::AccessFlagBits2::eDepthStencilAttachmentRead;
+			case Access::DepthStencilWrite: return vk::AccessFlagBits2::eDepthStencilAttachmentWrite;
+			case Access::TransferRead: return vk::AccessFlagBits2::eTransferRead;
+			case Access::TransferWrite: return vk::AccessFlagBits2::eTransferWrite;
+			default: throw std::logic_error("Unrecognized access!");
+		}
+	}
+
+	template<>
+	inline vk::AccessFlags2 EnumBitsCast<vk::AccessFlags2, Access>(const Access _access)
+	{
+		return ConvertBitField<vk::AccessFlags2, vk::AccessFlagBits2, Access, 12>(_access);
+	}
+
+	template<>
+	inline vk::AccessFlagBits EnumCast<vk::AccessFlagBits, Access>(const Access _access)
+	{
+		switch (_access)
+		{
+			case Access::None: return vk::AccessFlagBits::eNone;
+			case Access::IndirectCommandRead: return vk::AccessFlagBits::eIndirectCommandRead;
+			case Access::VertexBufferRead: return vk::AccessFlagBits::eVertexAttributeRead;
+			case Access::IndexBufferRead: return vk::AccessFlagBits::eIndexRead;
+			case Access::ShaderRead: return vk::AccessFlagBits::eShaderRead;
+			case Access::ShaderWrite: return vk::AccessFlagBits::eShaderWrite;
+			case Access::ColorAttachmentRead: return vk::AccessFlagBits::eColorAttachmentRead;
+			case Access::ColorAttachmentWrite: return vk::AccessFlagBits::eColorAttachmentWrite;
+			case Access::DepthStencilRead: return vk::AccessFlagBits::eDepthStencilAttachmentRead;
+			case Access::DepthStencilWrite: return vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+			case Access::TransferRead: return vk::AccessFlagBits::eTransferRead;
+			case Access::TransferWrite: return vk::AccessFlagBits::eTransferWrite;
+			default: throw std::logic_error("Unrecognized access!");
+		}
+	}
+
+	template<>
+	inline vk::AccessFlags EnumBitsCast<vk::AccessFlags, Access>(const Access _access)
+	{
+		return ConvertBitField<vk::AccessFlags, vk::AccessFlagBits, Access, 12>(_access);
 	}
 }

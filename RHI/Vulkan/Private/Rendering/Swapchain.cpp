@@ -2,13 +2,13 @@
 
 #include "../Rendering/Swapchain.hpp"
 
-#include <Assert.hpp>
-#include <Log.hpp>
+#include <Common/Core/Log.hpp>
 
 #include "../Core/Instance.hpp"
 #include "../Core/PhysicalDevice.hpp"
 #include "../Core/Device.hpp"
 #include "../Data/Texture.hpp"
+#include "../Synchro/TimelineSemaphore.hpp"
 
 #include "../Utilities/VulkanConverter.hpp"
 
@@ -16,18 +16,18 @@ namespace cp
 {
 	namespace
 	{
-		Extent2D<int> SelectSwapExtent(
+		Extent2D<int> SelectExtent(
 			const vk::SurfaceCapabilitiesKHR& _surfaceCapabilities,
 			const Extent2D<int>& _desiredExtent
 		)
 		{
 			if (_surfaceCapabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
 			{
-				auto vkExtent = _surfaceCapabilities.currentExtent;
-				return { static_cast<int>(vkExtent.width), static_cast<int>(vkExtent.height) };
+				const auto vkExtent = _surfaceCapabilities.currentExtent;
+				return Extent2D{ static_cast<int>(vkExtent.width), static_cast<int>(vkExtent.height) };
 			}
 
-			Extent2D<int> actualExtent = {
+			const auto actualExtent = Extent2D{
 				std::clamp(
 					_desiredExtent.x(),
 					static_cast<int>(_surfaceCapabilities.minImageExtent.width),
@@ -74,9 +74,67 @@ namespace cp
 
 			return _availableFormats[0]; // If the desired format isn't available, just pick the first one
 		}
+
+		void BridgeBinaryToTimeline(
+			const vk::Queue queue,
+			const vk::Semaphore binaryWait,
+			const vk::Semaphore timelineSignal,
+			const uint64_t timelineSignalValue
+		)
+		{
+			constexpr uint64_t waitValue = 0;
+			const uint64_t signalValue = timelineSignalValue;
+
+			vk::TimelineSemaphoreSubmitInfo timelineInfo;
+			timelineInfo.setWaitSemaphoreValueCount(1);
+			timelineInfo.setPWaitSemaphoreValues(&waitValue);
+			timelineInfo.setSignalSemaphoreValueCount(1);
+			timelineInfo.setPSignalSemaphoreValues(&signalValue);
+
+			constexpr vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eTopOfPipe;
+
+			vk::SubmitInfo submitInfo;
+			submitInfo.setPNext(&timelineInfo);
+			submitInfo.setWaitSemaphoreCount(1);
+			submitInfo.setPWaitSemaphores(&binaryWait);
+			submitInfo.setPWaitDstStageMask(&waitStage);
+			submitInfo.setSignalSemaphoreCount(1);
+			submitInfo.setPSignalSemaphores(&timelineSignal);
+
+			queue.submit(submitInfo);
+		}
+
+		void BridgeTimelineToBinary(
+			const vk::Queue queue,
+			const vk::Semaphore timelineWait,
+			const uint64_t timelineWaitValue,
+			const vk::Semaphore binarySignal
+		)
+		{
+			const uint64_t waitValue = timelineWaitValue;
+			constexpr uint64_t signalValue = 0;
+
+			vk::TimelineSemaphoreSubmitInfo timelineInfo;
+			timelineInfo.setWaitSemaphoreValueCount(1);
+			timelineInfo.setPWaitSemaphoreValues(&waitValue);
+			timelineInfo.setSignalSemaphoreValueCount(1);
+			timelineInfo.setPSignalSemaphoreValues(&signalValue);
+
+			constexpr vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eAllCommands;
+
+			vk::SubmitInfo submitInfo;
+			submitInfo.setPNext(&timelineInfo);
+			submitInfo.setWaitSemaphoreCount(1);
+			submitInfo.setPWaitSemaphores(&timelineWait);
+			submitInfo.setPWaitDstStageMask(&waitStage);
+			submitInfo.setSignalSemaphoreCount(1);
+			submitInfo.setPSignalSemaphores(&binarySignal);
+
+			queue.submit(submitInfo);
+		}
 	}
 
-	cp::Swapchain::Swapchain(ILogger& _logger, const SwapchainInfo& _info, Device& _device)
+	Swapchain::Swapchain(ILogger& _logger, const SwapchainInfo& _info, Device& _device)
 		: ISwapchain(_logger, _info), device(_device)
 	{
 		Initialize();
@@ -87,9 +145,18 @@ namespace cp
 		Cleanup();
 	}
 
-	void Swapchain::Present()
+	void Swapchain::Present(size_t _synchronizationSignalValue)
 	{
 		auto& graphicsQueue = dynamic_cast<Queue&>(device.GetQueue(QueueType::Graphics, 0));
+
+		CP_EXPECT_MSG(renderFinishedTimelineSemaphore, "No Render Finished Timeline semaphore setup");
+
+		BridgeTimelineToBinary(
+			graphicsQueue.GetHandle(),
+			reinterpret_cast<TimelineSemaphore&>(*renderFinishedTimelineSemaphore).GetHandle(),
+			_synchronizationSignalValue,
+			renderFinishedBinarySemaphore[_synchronizationSignalValue % info.imageCount]
+		);
 
 		vk::Result result = vk::Result::eSuccess;
 
@@ -97,14 +164,14 @@ namespace cp
 		presentInfo.setSwapchainCount(1);
 		presentInfo.setPSwapchains(&swapchain);
 		presentInfo.setWaitSemaphoreCount(1);
-		presentInfo.setPWaitSemaphores(&renderFinishedSemaphore);
+		presentInfo.setPWaitSemaphores(&renderFinishedBinarySemaphore[_synchronizationSignalValue % info.imageCount]);
 		presentInfo.setPImageIndices(&imageIndex);
 
 		try
 		{
 			result = graphicsQueue.GetHandle().presentKHR(presentInfo);
 		}
-		catch (vk::OutOfDateKHRError& e)
+		catch (vk::OutOfDateKHRError&)
 		{
 			Recreate();
 		}
@@ -129,6 +196,9 @@ namespace cp
 
 		Cleanup();
 
+		imageAvailableTimelineSemaphore = std::make_unique<TimelineSemaphore>(device);
+		renderFinishedTimelineSemaphore = std::make_unique<TimelineSemaphore>(device);
+
 		QuerySurfaceProperties();
 
 		SelectSwapchainProperties();
@@ -139,6 +209,8 @@ namespace cp
 		CreateSynchronizationPrimitives();
 
 		imageIndex = 0;
+		acquireSemaphoreIndex = 0;
+		lastImageAvailableSignalValue = 0;
 	}
 
 	void Swapchain::Resize(Extent2D<int> newExtent)
@@ -149,6 +221,8 @@ namespace cp
 
 	uint32_t Swapchain::AcquireNextImage()
 	{
+		CP_EXPECT_MSG(imageAvailableTimelineSemaphore, "No Image Available Timeline semaphore setup");
+
 		uint32_t result;
 
 		try
@@ -156,10 +230,19 @@ namespace cp
 			result = device.GetHandle().acquireNextImageKHR(
 				swapchain,
 				std::numeric_limits<uint32_t>::max(),
-				imageAvailableSemaphore)
+				imageAvailableBinarySemaphore[acquireSemaphoreIndex])
 			.value;
+
+			BridgeBinaryToTimeline(
+				reinterpret_cast<Queue&>(device.GetQueue(QueueType::Graphics, 0)).GetHandle(),
+				imageAvailableBinarySemaphore[acquireSemaphoreIndex],
+				reinterpret_cast<TimelineSemaphore&>(*imageAvailableTimelineSemaphore).GetHandle(),
+				++lastImageAvailableSignalValue
+			);
+
+			acquireSemaphoreIndex = (acquireSemaphoreIndex + 1) % info.imageCount;
 		}
-		catch (vk::OutOfDateKHRError& e)
+		catch (vk::OutOfDateKHRError&)
 		{
 			Recreate();
 			return static_cast<uint32_t>(-1);
@@ -180,12 +263,27 @@ namespace cp
 
 	void Swapchain::Cleanup()
 	{
+		device.WaitIdle();
+
 		if (swapchain != VK_NULL_HANDLE) device.GetHandle().destroySwapchainKHR(swapchain);
 
 		swapchainImages.clear();
 
-		if (imageAvailableSemaphore != VK_NULL_HANDLE) device.GetHandle().destroySemaphore(imageAvailableSemaphore);
-		if (renderFinishedSemaphore != VK_NULL_HANDLE) device.GetHandle().destroySemaphore(renderFinishedSemaphore);
+		if (imageAvailableBinarySemaphore != nullptr)
+		{
+			for (size_t i = 0; i < info.imageCount; ++i)
+				device.GetHandle().destroySemaphore(imageAvailableBinarySemaphore[i]);
+
+			delete [] imageAvailableBinarySemaphore;
+		}
+
+		if (renderFinishedBinarySemaphore != nullptr)
+		{
+			for (size_t i = 0; i < info.imageCount; ++i)
+				device.GetHandle().destroySemaphore(renderFinishedBinarySemaphore[i]);
+
+			delete [] renderFinishedBinarySemaphore;
+		}
 	}
 
 	void Swapchain::CreateSurface()
@@ -252,10 +350,32 @@ namespace cp
 
 	void Swapchain::CreateSynchronizationPrimitives()
 	{
+		if (imageAvailableBinarySemaphore != nullptr)
+		{
+			for (size_t i = 0; i < info.imageCount; ++i)
+				device.GetHandle().destroySemaphore(imageAvailableBinarySemaphore[i]);
+
+			delete [] imageAvailableBinarySemaphore;
+		}
+
+		if (renderFinishedBinarySemaphore != nullptr)
+		{
+			for (size_t i = 0; i < info.imageCount; ++i)
+				device.GetHandle().destroySemaphore(renderFinishedBinarySemaphore[i]);
+
+			delete [] renderFinishedBinarySemaphore;
+		}
+
 		vk::SemaphoreCreateInfo semaphoreCreateInfo = {};
 
-		imageAvailableSemaphore = device.GetHandle().createSemaphore(semaphoreCreateInfo);
-		renderFinishedSemaphore = device.GetHandle().createSemaphore(semaphoreCreateInfo);
+		imageAvailableBinarySemaphore = new vk::Semaphore[info.imageCount];
+		renderFinishedBinarySemaphore = new vk::Semaphore[info.imageCount];
+
+		for (size_t i = 0; i < info.imageCount; ++i)
+		{
+			imageAvailableBinarySemaphore[i] = device.GetHandle().createSemaphore(semaphoreCreateInfo);
+			renderFinishedBinarySemaphore[i] = device.GetHandle().createSemaphore(semaphoreCreateInfo);
+		}
 	}
 
 	void Swapchain::RetrieveSwapchainImages()
@@ -309,11 +429,17 @@ namespace cp
 
 	void Swapchain::SelectSwapchainProperties()
 	{
-		info.extent = SelectSwapExtent(surfaceCapabilities, info.extent);
+		info.extent = SelectExtent(surfaceCapabilities, info.extent);
 		selectedPresentMode = SelectPresentMode(presentModes, vk::PresentModeKHR::eMailbox);
 		selectedSurfaceFormat = SelectSurfaceFormat(surfaceFormats, { EnumCast<vk::Format, Format>(info.format), vk::ColorSpaceKHR::eSrgbNonlinear });
 
 		// TODO : Let the user choose Present Mode and Surface Format instead of hardcoding them
 	}
 
+	ITexture& Swapchain::GetSwapchainImage(size_t _index)
+	{
+		CP_EXPECT_MSG(_index < swapchainImages.size(), "Index is higher than the number of images in the swapchain");
+
+		return *swapchainImages[_index];
+	}
 }

@@ -100,9 +100,8 @@ add_subdirectory(Platform/GLFW) # GLFW implementation of the platform layer
 add_subdirectory(Rendering)  # Rendering module : Framegraph, Materials, Etc.
 add_subdirectory(ECS) # Entity Component System
 add_subdirectory(Builder) # Executable Builder module : Turning project files into a runnable executable
-add_subdirectory(Runtime) # Runtime module : Game loop, Etc.
+add_subdirectory(Runtime/Standalone) # Standalone Runtime module : Game loop, Etc.
 add_subdirectory(Launcher) # Editor launcher module : Starts the editor with a selected project
-# add_subdirectory(Editor) # Editor module : Tools for building levels, assets, Etc.
 add_subdirectory(TEST) # Test executable
 
 function(copy_to_build TARGET)

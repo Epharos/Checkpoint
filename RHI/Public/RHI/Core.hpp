@@ -5,3 +5,4 @@
 #include "../../Private/Core/IDevice.hpp"
 #include "../../Private/Core/IQueue.hpp"
 #include "../../Private/Core/ICommandBuffer.hpp"
+#include "../../Private/Core/ICommandAllocator.hpp"

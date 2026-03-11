@@ -18,7 +18,7 @@ namespace cp
 	{
 		T values[N];
 
-		Extent(const std::array<T, N>& _defaultValue = {}) noexcept
+		explicit constexpr Extent(const std::array<T, N>& _defaultValue = {}) noexcept
 		{
 			for (size_t i = 0; i < N; i++)
 			{
@@ -26,7 +26,7 @@ namespace cp
 			}
 		}
 
-		Extent(std::array<T, N>&& _defaultValue) noexcept
+		explicit constexpr Extent(std::array<T, N>&& _defaultValue) noexcept
 		{
 			for (size_t i = 0; i < N; i++)
 			{
@@ -175,9 +175,9 @@ namespace cp
 	template<Numeric T>
 	struct Extent2D : public Extent<T, 2>
 	{
-		Extent2D(const std::array<T, 2>& _defaultValue = {}) noexcept : Extent<T, 2>(_defaultValue) {}
-		Extent2D(std::array<T, 2>&& _defaultValue) noexcept : Extent<T, 2>(std::move(_defaultValue)) {}
-		Extent2D(T x, T y) noexcept : Extent<T, 2>({ x, y }) {}
+		explicit constexpr Extent2D(const std::array<T, 2>& _defaultValue = {}) noexcept : Extent<T, 2>(_defaultValue) {}
+		explicit constexpr Extent2D(std::array<T, 2>&& _defaultValue) noexcept : Extent<T, 2>(std::move(_defaultValue)) {}
+		explicit constexpr Extent2D(T x, T y) noexcept : Extent<T, 2>({ x, y }) {}
 
 		constexpr T& x() noexcept
 		{
@@ -208,9 +208,9 @@ namespace cp
 	template<Numeric T>
 	struct Extent3D : public Extent<T, 3>
 	{
-		Extent3D(const std::array <T, 3>& _defaultValue = {}) noexcept : Extent<T, 3>(_defaultValue) {}
-		Extent3D(std::array<T, 3>&& _defaultValue) noexcept : Extent<T, 3>(std::move(_defaultValue)) {}
-		Extent3D(T x, T y, T z) noexcept : Extent<T, 3>({ x, y, z }) {}
+		explicit constexpr Extent3D(const std::array <T, 3>& _defaultValue = {}) noexcept : Extent<T, 3>(_defaultValue) {}
+		explicit constexpr Extent3D(std::array<T, 3>&& _defaultValue) noexcept : Extent<T, 3>(std::move(_defaultValue)) {}
+		explicit constexpr Extent3D(T x, T y, T z) noexcept : Extent<T, 3>({ x, y, z }) {}
 
 		constexpr T& x() noexcept
 		{

@@ -23,6 +23,7 @@ namespace cp
         uint8_t& Alpha() { return color[3]; }
 
         uint32_t ToUInt32() const { return color[0] | color[1] << 8 | color[2] << 16 | color[3] << 24; }
+        std::array<uint32_t, 4> ToUInt32Array() const { return { color[0], color[1], color[2], color[3] }; }
     };
 
     class Color

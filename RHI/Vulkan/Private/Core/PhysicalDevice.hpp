@@ -24,7 +24,7 @@ namespace cp
 		[[nodiscard]] vk::PhysicalDevice& GetHandle() { return physicalDevice; }
 		[[nodiscard]] const vk::PhysicalDevice& GetHandle() const { return physicalDevice; }
 
-		VulkanQueueFamilies FindQueueFamilies(std::optional<vk::SurfaceKHR> _surface = std::nullopt);
+		VulkanQueueFamilies FindQueueFamilies(std::optional<vk::SurfaceKHR> _surface = std::nullopt) const;
 
 		[[nodiscard]] Instance& GetInstance() { return instance; }
 		[[nodiscard]] const Instance& GetInstance() const { return instance; }

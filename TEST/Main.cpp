@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include <Log.hpp>
-#include <Profiling.hpp>
-#include <Macros.hpp>
+#include <Common/Core/Log.hpp>
+#include <Common/Core/Profiling.hpp>
+#include <Common/Core/Macros.hpp>
 
 #include <VulkanRHI.hpp>
 
@@ -15,7 +15,7 @@
 auto main(int argc, char** argv) -> int
 {
 	{
-		CP_PROFILE_SCOPE("Application");
+		CP_PROFILE_SCOPE_NAMED("Application");
 		constexpr const char* InitLabel = "Init";
 
 		const std::shared_ptr<cp::IMessageVisitor> messageVisitor = std::make_shared<cp::ConsoleVisitor>();
@@ -42,12 +42,12 @@ auto main(int argc, char** argv) -> int
 
 		std::unique_ptr<cp::IWindow> window = nullptr;
 		{
-			CP_PROFILE_SCOPE("Window Creation");
-			window = std::make_unique<cp::GLFWWindow>(cp::WindowInfo{ .title = "Test Window", .extent = { 800, 600 }, .resizable = true});
+			CP_PROFILE_SCOPE_NAMED("Window Creation");
+			window = std::make_unique<cp::GLFWWindow>(cp::WindowInfo{ .title = "Test Window", .extent = cp::Extent2D{ 800, 600 }, .resizable = true});
 		}
 
 		{
-			CP_PROFILE_SCOPE("Rendering Hardware Interface");
+			CP_PROFILE_SCOPE_NAMED("Rendering Hardware Interface");
 			std::unique_ptr<cp::RenderingHardwareInterface> rhi = std::make_unique<cp::VulkanRHI>(compositeLogger);
 
 			cp::InstanceInfo instanceInfo
@@ -68,7 +68,7 @@ auto main(int argc, char** argv) -> int
 			}
 
 			{
-				CP_PROFILE_SCOPE("Surface Creation");
+				CP_PROFILE_SCOPE_NAMED("Surface Creation");
 
 				CP_ASSERT_MSG(window->GetNativeWindowHandle() != nullptr, "Window was created but native handle is null, cannot create surface");
 
@@ -84,12 +84,12 @@ auto main(int argc, char** argv) -> int
 			}
 
 			{
-				CP_PROFILE_SCOPE("Texture Creation");
+				CP_PROFILE_SCOPE_NAMED("Texture Creation");
 
 				cp::TextureInfo textureInfo
 				{
 					.type = cp::TextureType::Texture2D,
-					.extent = { 512, 512, 1 },
+					.extent = cp::Extent3D<uint32_t>{ 512, 512, 1 },
 					.mipLevels = 1,
 					.arrayLayers = 1,
 					.format = cp::Format::R8G8B8A8_UNORM,
@@ -99,10 +99,75 @@ auto main(int argc, char** argv) -> int
 
 				std::shared_ptr<cp::ITexture> texture = device.CreateTexture(textureInfo);
 			}
+
+			{
+
+
+				cp::TextureInfo textureInfo
+				{
+					.type = cp::TextureType::Texture2D,
+					.extent = cp::Extent3D<uint32_t>{ 512, 512, 1 },
+					.mipLevels = 1,
+					.arrayLayers = 1,
+					.format = cp::Format::R8G8B8A8_UNORM,
+					.usage = cp::TextureUsage::ColorAttachment,
+					.aspect = cp::TextureAspect::Color
+				};
+
+				cp::TextureInfo depthTextureInfo
+				{
+					.type = cp::TextureType::Texture2D,
+					.extent = cp::Extent3D<uint32_t>{ 512, 512, 1 },
+					.mipLevels = 1,
+					.arrayLayers = 1,
+					.format = cp::Format::D24_UNORM_S8_UINT,
+					.usage = cp::TextureUsage::DepthStencilAttachment,
+					.aspect = cp::TextureAspect::DepthStencil
+				};
+
+				std::shared_ptr<cp::ITexture> texture = device.CreateTexture(textureInfo);
+				std::shared_ptr<cp::ITexture> depthTexture = device.CreateTexture(depthTextureInfo);
+
+				cp::DepthStencilAttachmentInfo depthStencilAttachmentInfo
+				{
+					.texture = depthTexture.get(),
+					.clearValue = cp::ClearDepthStencil {
+						.depth = 0.5f,
+						.stencil = 0
+					},
+				};
+
+				cp::ColorAttachmentInfo colorAttachment
+				{
+					.texture = texture.get(),
+					.clearValue = cp::Color(cp::ColorRGBA8(127))
+				};
+
+				CP_PROFILE_SCOPE_NAMED("Command Allocator and Command Buffer");
+
+				std::unique_ptr<cp::ICommandAllocator> commandAllocator = rhi->CreateCommandAllocator(device.GetQueue(cp::QueueType::Graphics, 0));
+
+				std::unique_ptr<cp::ICommandBuffer> commandBuffer = commandAllocator->Allocate();
+
+				cp::RenderingInfo renderingInfo
+				{
+					.extent = cp::Extent2D<uint32_t>{ 512, 512 },
+					.layers = 1,
+					.colorAttachments = { colorAttachment },
+					.depthStencilAttachment = depthStencilAttachmentInfo
+				};
+
+				commandBuffer->Begin();
+
+				commandBuffer->BeginRendering(renderingInfo);
+				commandBuffer->EndRendering();
+
+				commandBuffer->End();
+			}
 		}
 
 		{
-			CP_PROFILE_SCOPE("Main Loop");
+			CP_PROFILE_SCOPE_NAMED("Main Loop");
 
 			while (!window->ShouldClose())
 			{

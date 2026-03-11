@@ -1,5 +1,5 @@
 #pragma once
 
-#include "../../Private/Data/Formats.hpp"
+#include "../../Private/Data/Enums.hpp"
 
 #include "../../Private/Data/ITexture.hpp"

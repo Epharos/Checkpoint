@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Concepts.hpp>
+#include <../../../Common/Public/Common/Core/Concepts.hpp>
 
 namespace cp
 {

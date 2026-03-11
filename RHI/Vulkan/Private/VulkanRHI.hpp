@@ -32,8 +32,11 @@ namespace cp
 		[[nodiscard]] IDevice& GetDevice() override;
 		[[nodiscard]] const IDevice& GetDevice() const override;
 
-		std::shared_ptr<ITexture> CreateTexture(const TextureInfo &_info) override;
-		std::shared_ptr<ITimelineSemaphore> CreateTimelineSemaphore() override;
+		std::shared_ptr<ITexture> CreateTexture(const TextureInfo &_info, TextureLayout _initialLayout) override;
+
+		std::unique_ptr<ITimelineSemaphore> CreateTimelineSemaphore() override;
+
+		std::unique_ptr<ICommandAllocator> CreateCommandAllocator(IQueue& _queue) override;
 
 	private:	
 		std::unique_ptr<Instance> instance = nullptr;

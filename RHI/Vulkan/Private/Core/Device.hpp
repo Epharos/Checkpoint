@@ -3,6 +3,7 @@
 #include "../pch.hpp"
 
 #include <RHI/Core.hpp>
+#include <RHI/Data.hpp>
 
 #include <vector>
 #include <array>
@@ -25,6 +26,14 @@ namespace cp
 		[[nodiscard]] IQueue& GetQueue(QueueType _queueType, uint32_t _index) override;
 		[[nodiscard]] const IQueue& GetQueue(QueueType _queueType, uint32_t _index) const override;
 
+		/**
+		* @brief Returns the command pool associated with a queue of the given type at the given index.
+		*        Used internally when allocating command buffers.
+		*
+		* @param _queueType The type of queue whose command pool to retrieve.
+		* @param _index The index of the queue within that type.
+		* @return The command pool for that queue.
+		*/
 		[[nodiscard]] vk::CommandPool& GetCommandPool(QueueType _queueType, uint32_t _index);
 		[[nodiscard]] const vk::CommandPool& GetCommandPool(QueueType _queueType, uint32_t _index) const;
 
@@ -34,11 +43,20 @@ namespace cp
 		[[nodiscard]] PhysicalDevice& GetPhysicalDevice() { return physicalDevice; }
 		[[nodiscard]] const PhysicalDevice& GetPhysicalDevice() const { return physicalDevice; }
 
+		/**
+		* @brief Returns the queue family indices selected for this device.
+		*        Used when creating resources that depend on a specific queue family (e.g. swapchain, command pools).
+		*
+		* @return The selected Vulkan queue family indices.
+		*/
 		[[nodiscard]] VulkanQueueFamilies& GetQueueFamilies() { return families; }
 		[[nodiscard]] const VulkanQueueFamilies& GetQueueFamilies() const { return families; }
 
 	public: // Resource creation
-		std::shared_ptr<ITexture> CreateTexture(const TextureInfo& _info) override;
+		std::shared_ptr<ITexture> CreateTexture(
+			const TextureInfo& _info,
+			TextureLayout _initialLayout
+		) override;
 
 	private: // Initialization and cleanup
 		void Initialize();
@@ -46,6 +64,8 @@ namespace cp
 		void CleanupCommandPools() const;
 
 		void Cleanup() const;
+
+		vk::PhysicalDeviceDynamicRenderingFeatures FillFeatureStructures();
 
 		bool CreateLogicalDevice();
 		void CreateQueues();

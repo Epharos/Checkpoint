@@ -16,6 +16,8 @@ add_library(RHI_Vulkan STATIC
 		Private/Synchro/TimelineSemaphore.hpp
         Private/Core/CommandBuffer.cpp
         Private/Core/CommandBuffer.hpp
+        Private/Core/CommandAllocator.cpp
+        Private/Core/CommandAllocator.hpp
 )
 
 target_include_directories(RHI_Vulkan 

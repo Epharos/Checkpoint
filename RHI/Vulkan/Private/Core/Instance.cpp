@@ -4,11 +4,11 @@
 
 #include <sstream>
 
-#include <Macros.hpp>
-#include <Log.hpp>
-#include <Profiling.hpp>
+#include <Common/Core/Log.hpp>
+#include <Common/Core/Macros.hpp>
+#include <Common/Core/Profiling.hpp>
 
-#include "../../../Public/RHI/RenderingHardwareInterface.hpp"
+#include <RHI/RenderingHardwareInterface.hpp>
 
 namespace cp
 {
@@ -72,7 +72,7 @@ namespace cp
 	{
 		// Validate Extensions
 		{
-			CP_PROFILE_SCOPE("VulkanInstance#Validate Extensions");
+			CP_PROFILE_SCOPE_NAMED("VulkanInstance#Validate Extensions");
 			auto availableExtensions = vk::enumerateInstanceExtensionProperties();
 
 			for (const auto& extension : _extensions)
@@ -96,7 +96,7 @@ namespace cp
 
 		// Validate Layers
 		{
-			CP_PROFILE_SCOPE("VulkanInstance#Validate Layers");
+			CP_PROFILE_SCOPE_NAMED("VulkanInstance#Validate Layers");
 			auto availableLayers = vk::enumerateInstanceLayerProperties();
 			for (const auto& layer : _layers)
 			{
@@ -151,7 +151,7 @@ namespace cp
 		instanceInfo.setPpEnabledLayerNames(layers.data());
 
 		{ 
-			CP_PROFILE_SCOPE("VulkanInstance#Create instance"); 
+			CP_PROFILE_SCOPE_NAMED("VulkanInstance#Create instance"); 
 			instance = vk::createInstance(instanceInfo);
 		}
 
@@ -160,7 +160,7 @@ namespace cp
 
 	bool Instance::CreateDebugMessenger()
 	{
-		CP_PROFILE_SCOPE("VulkanInstance#Create Debug Messenger");
+		CP_PROFILE_SCOPE_NAMED("VulkanInstance#Create Debug Messenger");
 		dispatchLoaderDynamic = vk::detail::DispatchLoaderDynamic(instance, vkGetInstanceProcAddr);
 
 		vk::PFN_DebugUtilsMessengerCallbackEXT callback = reinterpret_cast<vk::PFN_DebugUtilsMessengerCallbackEXT>(cp::Instance::DebugLayerCallback);

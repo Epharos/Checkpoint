@@ -2,8 +2,8 @@
 
 #include "PhysicalDevice.hpp"
 
-#include <Log.hpp>
-#include <Profiling.hpp>
+#include <Common/Core/Log.hpp>
+#include <Common/Core/Profiling.hpp>
 
 #include "Instance.hpp"
 #include "Queue.hpp"
@@ -91,7 +91,7 @@ namespace cp
 
 	void PhysicalDevice::Initialize()
 	{
-		CP_PROFILE_SCOPE("VulkanPhysicalDevice#Initialize");
+		CP_PROFILE_SCOPE_NAMED("VulkanPhysicalDevice#Initialize");
 
 		auto devices = instance.GetHandle().enumeratePhysicalDevices();
 
@@ -130,7 +130,7 @@ namespace cp
 		
 	}
 
-	VulkanQueueFamilies PhysicalDevice::FindQueueFamilies(std::optional<vk::SurfaceKHR> _surface)
+	VulkanQueueFamilies PhysicalDevice::FindQueueFamilies(std::optional<vk::SurfaceKHR> _surface) const
 	{
 		auto families = physicalDevice.getQueueFamilyProperties();
 

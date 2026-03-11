@@ -1,6 +1,6 @@
 #include "GLFWWindow.hpp"
 
-#include <Macros.hpp>
+#include <../../../Common/Public/Common/Core/Macros.hpp>
 
 #if defined(CP_PLATFORM_WINDOWS)
 #define GLFW_EXPOSE_NATIVE_WIN32

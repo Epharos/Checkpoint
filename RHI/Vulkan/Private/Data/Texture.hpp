@@ -9,33 +9,34 @@ namespace cp
 	class Device;
 	class ILogger;
 
-	struct VulkanTextureResource
+	struct TextureResource
 	{
 	public:
 		/**
 		* @brief Creates a VulkanTextureResource from an existing image. The image is not owned by the TextureResource.
 		* 
 		* @param _image The image that need to be stored by the TextureResource.
+		* @param _device The Device used to create the given image.
 		*/
-		VulkanTextureResource(vk::Image& _image, Device& _device);
+		TextureResource(vk::Image& _image, Device& _device);
 
 		/**
 		* @brief Creates a VulkanTextureResource created by the user via a VulkanTexture. The image is owned.
 		* 
 		* @param _info The information needed to create an image.
-		* @param _device The VulkanDevice used to create the given image.
+		* @param _device The Device used to create the given image.
 		*/
-		VulkanTextureResource(const TextureInfo& _info, Device& _device);
+		TextureResource(const TextureInfo& _info, Device& _device, TextureLayout _initialLayout = TextureLayout::Undefined);
 
-		~VulkanTextureResource();
+		~TextureResource();
 
-		vk::Image& GetImage() { return image; }
-		const vk::Image& GetImage() const { return image; }
+		[[nodiscard]] vk::Image& GetImage() { return image; }
+		[[nodiscard]] const vk::Image& GetImage() const { return image; }
 
-		vk::DeviceMemory& GetMemory() { return memory; }
-		const vk::DeviceMemory& GetMemory() const { return memory; }
+		[[nodiscard]] vk::DeviceMemory& GetMemory() { return memory; }
+		[[nodiscard]] const vk::DeviceMemory& GetMemory() const { return memory; }
 
-		bool IsOwner() const { return isOwner; }
+		[[nodiscard]] bool IsOwner() const { return isOwner; }
 
 	private:
 		vk::Image image{ VK_NULL_HANDLE };
@@ -57,7 +58,13 @@ namespace cp
 		* @param _info The information about the given image.
 		* @param _device The VulkanDevice used to create the given image.
 		*/
-		Texture(ILogger& _logger, vk::Image& _image, const TextureInfo& _info, Device& _device);
+		Texture(
+			ILogger& _logger,
+			vk::Image& _image,
+			const TextureInfo& _info,
+			Device& _device,
+			TextureLayout _initialLayout = TextureLayout::Undefined
+		);
 
 		/**
 		* @brief Creates a VulkanTexture that creates its own image. The image is owned by the VulkanTexture and will be destroyed when the VulkanTexture is destroyed.
@@ -66,18 +73,32 @@ namespace cp
 		* @param _info The information needed to create an image.
 		* @param _device The VulkanDevice used to create the given image.
 		*/
-		Texture(ILogger& _logger, const TextureInfo& _info, Device& _device);
+		Texture(
+			ILogger& _logger,
+			const TextureInfo& _info,
+			Device& _device,
+			TextureLayout _initialLayout = TextureLayout::Undefined
+		);
+
 		~Texture() override;
 
-		vk::ImageView& GetImageView() { return view; }
-		const vk::ImageView& GetImageView() const { return view; }
+		[[nodiscard]] vk::ImageView& GetImageView() { return view; }
+		[[nodiscard]] const vk::ImageView& GetImageView() const { return view; }
+
+		[[nodiscard]] vk::Image& GetImage() { return resource->GetImage(); }
+		[[nodiscard]] const vk::Image& GetImage() const { return resource->GetImage(); }
+
+		[[nodiscard]] vk::DeviceMemory& GetMemory() { return resource->GetMemory(); }
+		[[nodiscard]] const vk::DeviceMemory& GetMemory() const { return resource->GetMemory(); }
+
+		[[nodiscard]] const TextureInfo& GetTextureInfo() const { return info; }
 
 	private:
 		void Initiate();
-		void Cleanup();
+		void Cleanup() const;
 
 	private:
-		std::unique_ptr<VulkanTextureResource> resource;
+		std::unique_ptr<TextureResource> resource;
 		vk::ImageView view { VK_NULL_HANDLE };
 
 		Device& device;
