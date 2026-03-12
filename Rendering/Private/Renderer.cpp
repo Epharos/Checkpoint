@@ -5,6 +5,8 @@
 #include <RHI/Rendering.hpp>
 #include <RHI/Synchro.hpp>
 
+#include "../../Common/Private/Data/Rectangle.hpp"
+#include "../../Common/Private/Data/Viewport.hpp"
 #include "../../RHI/Private/Synchro/IBarrier.hpp"
 
 namespace cp
@@ -128,6 +130,15 @@ namespace cp
                 .colorAttachments = { colorAttachment },
                 .depthStencilAttachment = depthStencilAttachmentInfo
             };
+
+            cmdBuffer.SetViewport(cp::Viewport{ 0.f, 0.f, 1.f, 1.f });
+            cmdBuffer.SetScissor(cp::Rectangle2D{
+                cp::Extent2D{0, 0},
+                cp::Extent2D{
+                    static_cast<uint32_t>(rendererInfo.extent.x()),
+                    static_cast<uint32_t>(rendererInfo.extent.y())
+                }
+            });
 
             cmdBuffer.BeginRendering(renderingInfo);
 

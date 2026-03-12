@@ -5,8 +5,14 @@
 
 namespace cp
 {
-    class IBarrier;
     class ICommandAllocator;
+    class IBarrier;
+    class IPipeline;
+    class IDescriptorSet;
+    class IBuffer;
+
+    struct Viewport;
+    struct Rectangle2D;
 
     enum class CommandBufferType
     {
@@ -82,11 +88,7 @@ namespace cp
 
     class ICommandBuffer
     {
-        struct Viewport;
-        struct Rectangle;
-        class IPipeline;
-        class IDescriptorSet;
-        class IBuffer;
+
 
     public:
         ICommandBuffer(ICommandAllocator& _commandAllocator) {};
@@ -129,9 +131,9 @@ namespace cp
         */
         virtual void EndRendering() = 0;
 
-        // virtual void SetViewport(const Viewport& _viewport) = 0;
-        // virtual void SetScissor(const Rectangle& _rectangle) = 0;
-        //
+        virtual void SetViewport(const Viewport& _viewport) = 0;
+        virtual void SetScissor(const Rectangle2D &_rectangle) = 0;
+
         // virtual void BindPipeline(IPipeline* _pipeline) = 0;
         // virtual void BindDescriptorSet(uint32_t _binding, IDescriptorSet* _set) = 0;
         // virtual void BindVertexBuffer(uint32_t _binding, IBuffer* _vertexBuffer) = 0;

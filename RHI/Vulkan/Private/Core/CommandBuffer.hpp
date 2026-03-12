@@ -7,6 +7,8 @@ namespace cp
     class CommandAllocator;
     class Device;
 
+    struct Viewport;
+
     class CommandBuffer final : public ICommandBuffer
     {
     public:
@@ -23,14 +25,14 @@ namespace cp
 
         void AddBarrier(const IBarrier &_barrier) override;
 
-        CommandBufferType GetType() const override;
+        [[nodiscard]] CommandBufferType GetType() const override;
 
         void BeginRendering(const RenderingInfo& _internalRenderingInfo) override;
         void EndRendering() override;
 
-        // void SetViewport(const Viewport &_viewport) override;
-        // void SetScissor(const Rectangle &_rectangle) override;
-        //
+        void SetViewport(const Viewport& _viewport) override;
+        void SetScissor(const Rectangle2D& _rectangle) override;
+
         // void BindPipeline(IPipeline *_pipeline) override;
         // void BindDescriptorSet(uint32_t _binding, IDescriptorSet *_set) override;
         // void BindVertexBuffer(uint32_t _binding, IBuffer *_vertexBuffer) override;

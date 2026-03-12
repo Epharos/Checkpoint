@@ -1,6 +1,8 @@
 #include "CommandBuffer.hpp"
 
 #include <Common/Core/Assert.hpp>
+#include <Common/Data/Viewport.hpp>
+#include <Common/Data/Rectangle.hpp>
 
 #include "CommandAllocator.hpp"
 #include "Device.hpp"
@@ -159,6 +161,28 @@ namespace cp
     void CommandBuffer::EndRendering()
     {
         commandBuffer.endRendering();
+    }
+
+    void CommandBuffer::SetViewport(const Viewport& _viewport)
+    {
+        vk::Viewport viewport;
+        viewport.setX(_viewport.GetX());
+        viewport.setY(_viewport.GetY());
+        viewport.setWidth(_viewport.GetWidth());
+        viewport.setHeight(_viewport.GetHeight());
+        viewport.setMinDepth(_viewport.GetMinDepth());
+        viewport.setMaxDepth(_viewport.GetMaxDepth());
+
+        commandBuffer.setViewport(0, 1, &viewport);
+    }
+
+    void CommandBuffer::SetScissor(const Rectangle2D& _rectangle)
+    {
+        vk::Rect2D scissor;
+        scissor.setOffset(vk::Offset2D { _rectangle.offset.x(), _rectangle.offset.y() });
+        scissor.setExtent(vk::Extent2D { _rectangle.extent.x(), _rectangle.extent.y() });
+
+        commandBuffer.setScissor(0, 1, &scissor);
     }
 
     void CommandBuffer::Initialize()
