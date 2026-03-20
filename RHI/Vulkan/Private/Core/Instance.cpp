@@ -55,7 +55,7 @@ namespace cp
 		}
 	}
 
-	void Instance::Cleanup()
+	void Instance::Cleanup() const
 	{
 		if (instanceInfo.enableValidationLayers)
 		{

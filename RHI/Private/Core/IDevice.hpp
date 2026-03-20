@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 
 namespace cp
@@ -12,6 +13,20 @@ namespace cp
 	struct TextureInfo;
 	class ITexture;
 	enum class TextureLayout : uint32_t;
+
+	// Pipeline / Shaders
+	struct ShaderModuleInfo;
+	class IShaderModule;
+
+	struct DescriptorSetLayoutInfo;
+	class IDescriptorSetLayout;
+
+	struct PipelineLayoutInfo;
+	class IPipelineLayout;
+
+	struct GraphicsPipelineInfo;
+	struct ComputePipelineInfo;
+	class IPipeline;
 
 	class IDevice
 	{
@@ -39,6 +54,24 @@ namespace cp
 		* @return A shared pointer to the created texture.
 		*/
 		virtual std::shared_ptr<ITexture> CreateTexture(const TextureInfo& _info, TextureLayout _initialLayout) = 0;
+
+		/**
+		 * @brief Creates a shader module from backend-specific bytecode (SPIR-V, DXIL, ...).
+		 */
+		virtual std::shared_ptr<IShaderModule> CreateShaderModule(const ShaderModuleInfo& _info) = 0;
+
+		/**
+		 * @brief Creates a descriptor set layout (Vulkan) / root parameter table description (DX12).
+		 */
+		virtual std::shared_ptr<IDescriptorSetLayout> CreateDescriptorSetLayout(const DescriptorSetLayoutInfo& _info) = 0;
+
+		/**
+		 * @brief Creates a pipeline layout (Vulkan VkPipelineLayout / DX12 RootSignature).
+		 */
+		virtual std::shared_ptr<IPipelineLayout> CreatePipelineLayout(const PipelineLayoutInfo& _info) = 0;
+
+		virtual std::shared_ptr<IPipeline> CreateGraphicsPipeline(const GraphicsPipelineInfo& _info) = 0;
+		virtual std::shared_ptr<IPipeline> CreateComputePipeline(const ComputePipelineInfo& _info) = 0;
 
 	public: // Public methods
 		/**

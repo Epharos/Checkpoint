@@ -8,6 +8,10 @@
 #include "PhysicalDevice.hpp"
 #include "Queue.hpp"
 #include "../Data/Texture.hpp"
+#include "../Data/DescriptorSetLayout.hpp"
+#include "../Rendering/ShaderModule.hpp"
+#include "../Rendering/PipelineLayout.hpp"
+#include "../Rendering/Pipeline.hpp"
 
 #include <set>
 
@@ -113,9 +117,13 @@ namespace cp
 
 		// FEATURES
 
+		vk::PhysicalDeviceVulkan11Features device11Features;
+		device11Features.setShaderDrawParameters(true);
+		device11Features.setPNext(nullptr);
+
 		vk::PhysicalDeviceSynchronization2Features synchronization2Features;
 		synchronization2Features.setSynchronization2(true);
-		synchronization2Features.setPNext(nullptr);
+		synchronization2Features.setPNext(&device11Features);
 
 		vk::PhysicalDeviceVulkan12Features device12Features;
 		device12Features.setTimelineSemaphore(true);
@@ -205,5 +213,30 @@ namespace cp
 	std::shared_ptr<ITexture> Device::CreateTexture(const TextureInfo& _info, TextureLayout _initialLayout)
 	{
 		return std::make_shared<Texture>(logger, _info, *this, _initialLayout);
+	}
+
+	std::shared_ptr<IShaderModule> Device::CreateShaderModule(const ShaderModuleInfo& _info)
+	{
+		return std::make_shared<ShaderModule>(_info, *this);
+	}
+
+	std::shared_ptr<IDescriptorSetLayout> Device::CreateDescriptorSetLayout(const DescriptorSetLayoutInfo& _info)
+	{
+		return std::make_shared<DescriptorSetLayout>(_info, *this);
+	}
+
+	std::shared_ptr<IPipelineLayout> Device::CreatePipelineLayout(const PipelineLayoutInfo& _info)
+	{
+		return std::make_shared<PipelineLayout>(_info, *this);
+	}
+
+	std::shared_ptr<IPipeline> Device::CreateGraphicsPipeline(const GraphicsPipelineInfo& _info)
+	{
+		return std::make_shared<Pipeline>(_info, *this);
+	}
+
+	std::shared_ptr<IPipeline> Device::CreateComputePipeline(const ComputePipelineInfo& _info)
+	{
+		return std::make_shared<Pipeline>(_info, *this);
 	}
 }

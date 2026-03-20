@@ -14,8 +14,18 @@ namespace cp
 		ColorAttachment = 1 << 1,
 		DepthStencilAttachment = 1 << 2,
 		Storage = 1 << 3,
-		// In case more usages are added, keep in mind that the converters will need to be updated to handle the new flags.
 	};
+
+	constexpr TextureUsage operator|(TextureUsage _lhs, TextureUsage _rhs)
+	{
+		return static_cast<TextureUsage>(static_cast<uint32_t>(_lhs) | static_cast<uint32_t>(_rhs));
+	}
+
+	constexpr TextureUsage& operator|=(TextureUsage& _lhs, const TextureUsage _rhs)
+	{
+		_lhs = _lhs | _rhs;
+		return _lhs;
+	}
 
 	enum class TextureAspect : uint32_t
 	{
@@ -24,12 +34,19 @@ namespace cp
 		Depth = 1 << 2,
 		Stencil = 1 << 3,
 
-		// In case more usages are added, keep in mind that the converters will need to be updated to handle the new flags.
-
-		// Common combinations
-
 		DepthStencil = Depth | Stencil
 	};
+
+	constexpr TextureAspect operator|(TextureAspect _lhs, TextureAspect _rhs)
+	{
+		return static_cast<TextureAspect>(static_cast<uint32_t>(_lhs) | static_cast<uint32_t>(_rhs));
+	}
+
+	constexpr TextureAspect& operator|=(TextureAspect& _lhs, const TextureAspect _rhs)
+	{
+		_lhs = _lhs | _rhs;
+		return _lhs;
+	}
 
 	enum class TextureLayout : uint32_t
 	{

@@ -6,11 +6,17 @@
 
 #include "CommandAllocator.hpp"
 #include "Device.hpp"
+#include "Instance.hpp"
+#include "PhysicalDevice.hpp"
 #include "../../../Private/Synchro/IBarrier.hpp"
 
 #include "../Utilities/VulkanConverter.hpp"
 
 #include "../Data/Texture.hpp"
+#include "../Data/Buffer.hpp"
+#include "../Data/DescriptorSet.hpp"
+#include "../Rendering/Pipeline.hpp"
+#include "../Rendering/PipelineLayout.hpp"
 
 namespace cp
 {
@@ -52,6 +58,32 @@ namespace cp
 
             _barrierInfo.texture.UpdateLayout(_barrierInfo.dstLayout);
         }
+
+        void AddBufferBarrier(const BufferBarrierInfo& _barrierInfo, vk::CommandBuffer _commandBuffer)
+        {
+            vk::BufferMemoryBarrier2 barrierInfo;
+
+            const auto& buffer = static_cast<Buffer&>(_barrierInfo.buffer);
+
+            barrierInfo.setBuffer(buffer.GetHandle());
+            barrierInfo.setOffset(_barrierInfo.offsetBytes);
+            barrierInfo.setSize(_barrierInfo.sizeBytes);
+
+            barrierInfo.setSrcAccessMask(EnumBitsCast<vk::AccessFlags2>(_barrierInfo.srcAccess));
+            barrierInfo.setDstAccessMask(EnumBitsCast<vk::AccessFlags2>(_barrierInfo.dstAccess));
+
+            barrierInfo.setSrcStageMask(EnumBitsCast<vk::PipelineStageFlags2>(_barrierInfo.srcStage));
+            barrierInfo.setDstStageMask(EnumBitsCast<vk::PipelineStageFlags2>(_barrierInfo.dstStage));
+
+            barrierInfo.setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+            barrierInfo.setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+
+            vk::DependencyInfo dependencyInfo;
+            dependencyInfo.setBufferMemoryBarrierCount(1);
+            dependencyInfo.setPBufferMemoryBarriers(&barrierInfo);
+
+            _commandBuffer.pipelineBarrier2(dependencyInfo);
+        }
     }
 
     CommandBuffer::CommandBuffer(ICommandAllocator& _commandAllocator)
@@ -85,21 +117,42 @@ namespace cp
                 break;
 
             case BarrierType::Buffer:
-                // TODO : Add Buffer Barrier handle method
+                AddBufferBarrier(_barrier.GetBufferBarrierInfo(), commandBuffer);
+                break;
+
+            default:
+                CP_ENSURE_MSG(false, "Unsupported barrier type");
                 break;
         }
     }
 
     CommandBufferType CommandBuffer::GetType() const
     {
-        return CommandBufferType::Graphics; // TODO : Return the correct command buffer type
+        switch (commandAllocator.GetQueue().GetType())
+        {
+            case QueueType::Graphics:
+                return CommandBufferType::Graphics;
+
+            case QueueType::Compute:
+                return CommandBufferType::Compute;
+
+            case QueueType::Transfer:
+                return CommandBufferType::Copy;
+
+            default:
+                CP_ENSURE_MSG(false, "Unsupported queue type for command buffer");
+                return CommandBufferType::Graphics;
+        }
     }
 
     void CommandBuffer::BeginRendering(const RenderingInfo& _internalRenderingInfo)
     {
         vk::RenderingInfo renderingInfo;
         renderingInfo.setLayerCount(_internalRenderingInfo.layers);
-        renderingInfo.setRenderArea({ vk::Offset2D {}, vk::Extent2D { _internalRenderingInfo.extent.x(), _internalRenderingInfo.extent.y() } });
+        renderingInfo.setRenderArea(vk::Rect2D {
+            vk::Offset2D {},
+            vk::Extent2D { _internalRenderingInfo.extent.x(), _internalRenderingInfo.extent.y() }
+        });
         renderingInfo.setColorAttachmentCount(static_cast<uint32_t>(_internalRenderingInfo.colorAttachments.size()));
 
         vk::RenderingAttachmentInfo depthAttachment;
@@ -134,13 +187,19 @@ namespace cp
             vk::RenderingAttachmentInfo attachmentDescription;
 
             vk::ClearValue clearValue;
-            clearValue.color.setUint32(attachment.clearValue.ToRGBA8().ToUInt32Array());
+            const ColorRGBA8 rgba8 = attachment.clearValue.ToRGBA8();
+            clearValue.color.setFloat32({
+                rgba8.Red() / 255.0f,
+                rgba8.Green() / 255.0f,
+                rgba8.Blue() / 255.0f,
+                rgba8.Alpha() / 255.0f
+            });
 
             auto* texture = static_cast<Texture*>(attachment.texture);
 
             CP_EXPECT_MSG(
                 texture->GetTextureInfo().usage == TextureUsage::ColorAttachment,
-                "Depth attachment does not have a ColorAttachment usage"
+                "Color attachment does not have a ColorAttachment usage"
             );
 
             attachmentDescription.setImageView(texture->GetImageView());
@@ -155,7 +214,12 @@ namespace cp
         renderingInfo.setColorAttachmentCount(static_cast<uint32_t>(renderingAttachments.size()));
         renderingInfo.setPColorAttachments(renderingAttachments.data());
 
-        commandBuffer.beginRendering(renderingInfo);
+
+
+        commandBuffer.beginRendering(
+            renderingInfo,
+            commandAllocator.GetDevice().GetPhysicalDevice().GetInstance().GetDispatchLoaderDynamic()
+        );
     }
 
     void CommandBuffer::EndRendering()
@@ -183,6 +247,71 @@ namespace cp
         scissor.setExtent(vk::Extent2D { _rectangle.extent.x(), _rectangle.extent.y() });
 
         commandBuffer.setScissor(0, 1, &scissor);
+    }
+
+    void CommandBuffer::BindPipeline(IPipeline& _pipeline)
+    {
+        auto& pipeline = static_cast<Pipeline&>(_pipeline);
+        currentPipeline = &pipeline;
+        
+        vk::PipelineBindPoint bindPoint = _pipeline.GetType() == PipelineType::Graphics
+            ? vk::PipelineBindPoint::eGraphics
+            : vk::PipelineBindPoint::eCompute;
+
+        commandBuffer.bindPipeline(bindPoint, pipeline.GetHandle());
+    }
+
+    void CommandBuffer::BindDescriptorSet(uint32_t _binding, IDescriptorSet& _set)
+    {
+        CP_ENSURE_MSG(currentPipeline != nullptr, "No pipeline is currently bound. Call BindPipeline before BindDescriptorSet.");
+
+        auto& descriptorSet = static_cast<DescriptorSet&>(_set);
+        
+        auto& layout = static_cast<const PipelineLayout&>(
+            currentPipeline->GetType() == PipelineType::Graphics 
+                ? *std::get<const GraphicsPipelineInfo>(currentPipeline->GetInfo()).layout
+                : *std::get<const ComputePipelineInfo>(currentPipeline->GetInfo()).layout
+        );
+
+        vk::PipelineBindPoint bindPoint = currentPipeline->GetType() == PipelineType::Graphics
+            ? vk::PipelineBindPoint::eGraphics
+            : vk::PipelineBindPoint::eCompute;
+
+        commandBuffer.bindDescriptorSets(
+            bindPoint,
+            layout.GetHandle(),
+            _binding,
+            1,
+            &descriptorSet.GetHandle(),
+            0,
+            nullptr
+        );
+    }
+
+    void CommandBuffer::BindVertexBuffer(uint32_t _binding, IBuffer& _vertexBuffer)
+    {
+        auto& buffer = static_cast<Buffer&>(_vertexBuffer);
+        vk::DeviceSize offset = 0;
+
+        commandBuffer.bindVertexBuffers(_binding, 1, &buffer.GetHandle(), &offset);
+    }
+
+    void CommandBuffer::BindIndexBuffer(IBuffer& _indexBuffer, IndexType _indexType)
+    {
+        auto& buffer = static_cast<Buffer&>(_indexBuffer);
+        vk::IndexType indexType = EnumCast<vk::IndexType>(_indexType);
+
+        commandBuffer.bindIndexBuffer(buffer.GetHandle(), 0, indexType);
+    }
+
+    void CommandBuffer::Draw(
+        uint32_t _vertexCount,
+        uint32_t _instanceCount,
+        uint32_t _firstVertex,
+        uint32_t _firstInstance
+    )
+    {
+        commandBuffer.draw(_vertexCount, _instanceCount, _firstVertex, _firstInstance);
     }
 
     void CommandBuffer::Initialize()

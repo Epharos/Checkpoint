@@ -18,6 +18,9 @@ namespace cp
     class ICommandBuffer;
     class ISwapchain;
     class ITimelineSemaphore;
+    class IShaderModule;
+    class IPipelineLayout;
+    class IPipeline;
 
     struct FrameContext
     {
@@ -77,6 +80,9 @@ namespace cp
 
         std::shared_ptr<cp::ITexture> texture;
         std::shared_ptr<cp::ITexture> depthTexture;
+        std::shared_ptr<IShaderModule> triangleShaderModule;
+        std::shared_ptr<IPipelineLayout> trianglePipelineLayout;
+        std::shared_ptr<IPipeline> trianglePipeline;
 
     };
 }

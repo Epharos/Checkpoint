@@ -6,8 +6,14 @@ add_library(RHI_Vulkan STATIC
 	"Private/Core/Device.cpp"
 	"Private/Rendering/Surface.cpp"
 	"Private/Rendering/Swapchain.cpp"
+	"Private/Rendering/ShaderModule.cpp"
+	"Private/Rendering/PipelineLayout.cpp"
+	"Private/Rendering/Pipeline.cpp"
 
-	 
+	"Private/Data/Buffer.cpp"
+	"Private/Data/Sampler.cpp"
+	"Private/Data/DescriptorSetLayout.cpp"
+	"Private/Data/DescriptorSet.cpp"
 	"Private/Data/Texture.cpp"
 	"Private/Utilities/MemoryHelper.cpp"
 

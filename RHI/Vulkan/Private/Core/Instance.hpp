@@ -15,9 +15,10 @@ namespace cp
 		[[nodiscard]] vk::Instance& GetHandle();
 		[[nodiscard]] const vk::Instance& GetHandle() const;
 
+		[[nodiscard]] vk::detail::DispatchLoaderDynamic& GetDispatchLoaderDynamic() { return dispatchLoaderDynamic; }
 	private:
 		void Initialize();
-		void Cleanup();
+		void Cleanup() const;
 
 		void ValidateExtensionsAndLayers(const std::vector<const char*>& _extensions, const std::vector<const char*>& _layers) const;
 

@@ -38,6 +38,17 @@ namespace cp
         AllCommands = 1 << 12
     };
 
+    constexpr PipelineStage operator|(PipelineStage lhs, PipelineStage rhs)
+    {
+        return static_cast<PipelineStage>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
+    }
+
+    constexpr PipelineStage& operator|=(PipelineStage& lhs, const PipelineStage rhs)
+    {
+        lhs = static_cast<PipelineStage>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
+        return lhs;
+    }
+
     enum class Access : uint32_t
     {
         None = 1 << 0,
@@ -59,4 +70,15 @@ namespace cp
         TransferRead = 1 << 10,
         TransferWrite = 1 << 11,
     };
+
+    constexpr Access operator|(Access lhs, Access rhs)
+    {
+        return static_cast<Access>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
+    }
+
+    constexpr Access& operator|=(Access& lhs, const Access rhs)
+    {
+        lhs = static_cast<Access>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
+        return lhs;
+    }
 }

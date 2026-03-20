@@ -9,8 +9,57 @@
 #include "../../Common/Private/Data/Viewport.hpp"
 #include "../../RHI/Private/Synchro/IBarrier.hpp"
 
+#include <filesystem>
+#include <fstream>
+#include <string_view>
+#include <vector>
+
 namespace cp
 {
+    namespace
+    {
+        std::filesystem::path FindFileInParentTree(const std::string_view _fileName)
+        {
+            std::filesystem::path currentPath = std::filesystem::current_path();
+            const std::filesystem::path fileNamePath(_fileName);
+
+            while (!currentPath.empty())
+            {
+                const std::filesystem::path candidatePath = currentPath / fileNamePath;
+                if (std::filesystem::exists(candidatePath))
+                {
+                    return candidatePath;
+                }
+
+                const std::filesystem::path parentPath = currentPath.parent_path();
+                if (parentPath == currentPath)
+                {
+                    break;
+                }
+
+                currentPath = parentPath;
+            }
+
+            return {};
+        }
+
+        std::vector<uint8_t> LoadBinaryFile(const std::filesystem::path& _path)
+        {
+            std::ifstream file(_path, std::ios::binary | std::ios::ate);
+            CP_EXPECT_MSG(file.is_open(), "Failed to open file");
+
+            const std::streamsize fileSize = file.tellg();
+            CP_EXPECT_MSG(fileSize > 0, "Shader file is empty");
+
+            std::vector<uint8_t> data(static_cast<size_t>(fileSize));
+            file.seekg(0, std::ios::beg);
+            file.read(reinterpret_cast<char*>(data.data()), fileSize);
+            CP_EXPECT_MSG(file.good(), "Failed to read shader binary file");
+
+            return data;
+        }
+    }
+
     FrameContext::FrameContext(RenderingHardwareInterface& _rhi) : swapchainImageIndex(0)
     {
         for (size_t i = 0; i < commandAllocators.size(); ++i)
@@ -74,7 +123,7 @@ namespace cp
 
             const TextureBarrierInfo toColorAttachment
             {
-                .texture = *texture,
+                .texture = swapchain->GetSwapchainImage(context.swapchainImageIndex),
                 .srcLayout = TextureLayout::Undefined,
                 .dstLayout = TextureLayout::AttachmentOptimal,
                 .srcStage = PipelineStage::Top,
@@ -108,6 +157,8 @@ namespace cp
             cp::DepthStencilAttachmentInfo depthStencilAttachmentInfo
             {
                 .texture = depthTexture.get(),
+                .depthLoadOp = LoadOp::Clear,
+                .depthStoreOp = StoreOp::Store,
                 .clearValue = cp::ClearDepthStencil {
                     .depth = 0.5f,
                     .stencil = 0
@@ -116,8 +167,10 @@ namespace cp
 
             cp::ColorAttachmentInfo colorAttachment
             {
-                .texture = texture.get(),
-                .clearValue = cp::Color(cp::ColorRGBA8(127))
+                .texture = &swapchain->GetSwapchainImage(context.swapchainImageIndex),
+                .loadOp = LoadOp::Clear,
+                .storeOp = StoreOp::Store,
+                .clearValue = cp::Color(cp::ColorRGBA8(255, 255, 0, 255))
             };
 
             cp::RenderingInfo renderingInfo
@@ -131,7 +184,12 @@ namespace cp
                 .depthStencilAttachment = depthStencilAttachmentInfo
             };
 
-            cmdBuffer.SetViewport(cp::Viewport{ 0.f, 0.f, 1.f, 1.f });
+            cmdBuffer.SetViewport(cp::Viewport{ 
+                0.f, 
+                0.f, 
+                static_cast<float>(rendererInfo.extent.x()), 
+                static_cast<float>(rendererInfo.extent.y()) 
+            });
             cmdBuffer.SetScissor(cp::Rectangle2D{
                 cp::Extent2D{0, 0},
                 cp::Extent2D{
@@ -142,16 +200,19 @@ namespace cp
 
             cmdBuffer.BeginRendering(renderingInfo);
 
+            cmdBuffer.BindPipeline(*trianglePipeline);
+            cmdBuffer.Draw(3, 1, 0, 0);
+
             cmdBuffer.EndRendering();
 
             TextureBarrierInfo swapchainPresentLayoutBarrier
             {
                 .texture = swapchain->GetSwapchainImage(context.swapchainImageIndex),
-                .srcLayout = TextureLayout::Undefined,
+                .srcLayout = TextureLayout::AttachmentOptimal,
                 .dstLayout = TextureLayout::Present,
-                .srcStage = PipelineStage::Top,
+                .srcStage = PipelineStage::ColorAttachment,
                 .dstStage = PipelineStage::Bottom,
-                .srcAccess = Access::None,
+                .srcAccess = Access::ColorAttachmentWrite,
                 .dstAccess = Access::None,
                 .baseMip = 0,
                 .mipCount = 1,
@@ -286,6 +347,45 @@ namespace cp
             texture = renderingHardwareInterface.CreateTexture(textureInfo, TextureLayout::Undefined);
             depthTexture = renderingHardwareInterface.CreateTexture(depthTextureInfo, TextureLayout::Undefined);
         }
+
+        const std::filesystem::path triangleShaderPath = FindFileInParentTree("Triangle.spv");
+        CP_EXPECT_MSG(!triangleShaderPath.empty(), "Could not find Triangle.spv from current working directory hierarchy");
+
+        const std::vector<uint8_t> shaderBytecode = LoadBinaryFile(triangleShaderPath);
+
+        const ShaderModuleInfo shaderModuleInfo
+        {
+            .stages = ShaderStage::Vertex | ShaderStage::Fragment,
+            .bytecode = ShaderBytecode{
+                .format = ShaderBinaryFormat::SpirV,
+                .data = shaderBytecode.data(),
+                .sizeBytes = shaderBytecode.size()
+            }
+        };
+
+        triangleShaderModule = renderingHardwareInterface.GetDevice().CreateShaderModule(shaderModuleInfo);
+
+        const PipelineLayoutInfo pipelineLayoutInfo {};
+        trianglePipelineLayout = renderingHardwareInterface.GetDevice().CreatePipelineLayout(pipelineLayoutInfo);
+
+        const GraphicsPipelineInfo graphicsPipelineInfo
+        {
+            .layout = trianglePipelineLayout,
+            .shaderModule = triangleShaderModule,
+            .stageMains = {
+                { ShaderStage::Vertex, "vertexMain" },
+                { ShaderStage::Fragment, "fragmentMain" },
+            },
+            .vertexInput = VertexInputState{},
+            .topology = PrimitiveTopology::TriangleList,
+            .rasterization = RasterizationState{},
+            .depthStencil = DepthStencilState{},
+            .blendAttachments = {},
+            .colorAttachmentFormats = { Format::R8G8B8A8_UNORM },
+            .depthStencilFormat = Format::D24_UNORM_S8_UINT
+        };
+
+        trianglePipeline = renderingHardwareInterface.GetDevice().CreateGraphicsPipeline(graphicsPipelineInfo);
     }
 
     void Renderer::Cleanup() const

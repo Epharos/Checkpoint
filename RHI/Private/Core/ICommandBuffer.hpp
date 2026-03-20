@@ -52,7 +52,7 @@ namespace cp
 
     struct ColorAttachmentInfo
     {
-        ITexture* texture;
+        ITexture* texture = nullptr;
         uint32_t mipLevel = 0;
         uint32_t arrayLayer = 0;
 
@@ -64,7 +64,7 @@ namespace cp
 
     struct DepthStencilAttachmentInfo
     {
-        ITexture* texture;
+        ITexture* texture = nullptr;
         uint32_t mipLevel = 0;
         uint32_t arrayLayer = 0;
 
@@ -94,7 +94,7 @@ namespace cp
         ICommandBuffer(ICommandAllocator& _commandAllocator) {};
         virtual ~ICommandBuffer() = default;
 
-        virtual CommandBufferType GetType() const = 0;
+        [[nodiscard]] virtual CommandBufferType GetType() const = 0;
 
         /**
         * @brief Begins recording commands into this command buffer.
@@ -134,17 +134,17 @@ namespace cp
         virtual void SetViewport(const Viewport& _viewport) = 0;
         virtual void SetScissor(const Rectangle2D &_rectangle) = 0;
 
-        // virtual void BindPipeline(IPipeline* _pipeline) = 0;
-        // virtual void BindDescriptorSet(uint32_t _binding, IDescriptorSet* _set) = 0;
-        // virtual void BindVertexBuffer(uint32_t _binding, IBuffer* _vertexBuffer) = 0;
-        // virtual void BindIndexBuffer(IBuffer* _indexBuffer, IndexType _indexType) = 0;
+        virtual void BindPipeline(IPipeline& _pipeline) = 0;
+        virtual void BindDescriptorSet(uint32_t _binding, IDescriptorSet& _set) = 0;
+        virtual void BindVertexBuffer(uint32_t _binding, IBuffer& _vertexBuffer) = 0;
+        virtual void BindIndexBuffer(IBuffer& _indexBuffer, IndexType _indexType) = 0;
 
-        // virtual void Draw(
-        //     uint32_t _vertexCount,
-        //     uint32_t _instanceCount,
-        //     uint32_t _firstVertex,
-        //     uint32_t _firstInstance
-        // ) = 0;
+        virtual void Draw(
+            uint32_t _vertexCount,
+            uint32_t _instanceCount,
+            uint32_t _firstVertex,
+            uint32_t _firstInstance
+        ) = 0;
         //
         // virtual void DrawIndexed(
         //     uint32_t _indexCount,

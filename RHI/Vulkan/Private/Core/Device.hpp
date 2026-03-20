@@ -58,6 +58,13 @@ namespace cp
 			TextureLayout _initialLayout
 		) override;
 
+		std::shared_ptr<IShaderModule> CreateShaderModule(const ShaderModuleInfo& _info) override;
+		std::shared_ptr<IDescriptorSetLayout> CreateDescriptorSetLayout(const DescriptorSetLayoutInfo& _info) override;
+		std::shared_ptr<IPipelineLayout> CreatePipelineLayout(const PipelineLayoutInfo& _info) override;
+
+		std::shared_ptr<IPipeline> CreateGraphicsPipeline(const GraphicsPipelineInfo& _info) override;
+		std::shared_ptr<IPipeline> CreateComputePipeline(const ComputePipelineInfo& _info) override;
+
 	private: // Initialization and cleanup
 		void Initialize();
 

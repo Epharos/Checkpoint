@@ -37,7 +37,16 @@ namespace cp
 
     struct BufferBarrierInfo
     {
-        // TODO : Buffers
+        IBuffer& buffer;
+
+        PipelineStage srcStage;
+        PipelineStage dstStage;
+
+        Access srcAccess;
+        Access dstAccess;
+
+        uint64_t offsetBytes;
+        uint64_t sizeBytes;
     };
 
     class IBarrier
