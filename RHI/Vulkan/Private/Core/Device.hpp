@@ -53,14 +53,13 @@ namespace cp
 		[[nodiscard]] const VulkanQueueFamilies& GetQueueFamilies() const { return families; }
 
 	public: // Resource creation
-		std::shared_ptr<ITexture> CreateTexture(
-			const TextureInfo& _info,
-			TextureLayout _initialLayout
-		) override;
+		std::shared_ptr<ITexture> CreateTexture(const TextureInfo& _info) override;
+		std::shared_ptr<IBuffer> CreateBuffer(const BufferInfo& _info) override;
 
 		std::shared_ptr<IShaderModule> CreateShaderModule(const ShaderModuleInfo& _info) override;
 		std::shared_ptr<IDescriptorSetLayout> CreateDescriptorSetLayout(const DescriptorSetLayoutInfo& _info) override;
 		std::shared_ptr<IPipelineLayout> CreatePipelineLayout(const PipelineLayoutInfo& _info) override;
+		std::shared_ptr<IDescriptorSet> CreateDescriptorSet(const IDescriptorSetLayout& _descriptorSetLayout) override;
 
 		std::shared_ptr<IPipeline> CreateGraphicsPipeline(const GraphicsPipelineInfo& _info) override;
 		std::shared_ptr<IPipeline> CreateComputePipeline(const ComputePipelineInfo& _info) override;

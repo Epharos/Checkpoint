@@ -55,6 +55,8 @@ namespace cp
 			case TextureUsage::ColorAttachment: return vk::ImageUsageFlagBits::eColorAttachment;
 			case TextureUsage::DepthStencilAttachment: return vk::ImageUsageFlagBits::eDepthStencilAttachment;
 			case TextureUsage::Storage: return vk::ImageUsageFlagBits::eStorage;
+			case TextureUsage::TransferSrc: return vk::ImageUsageFlagBits::eTransferSrc;
+			case TextureUsage::TransferDst: return vk::ImageUsageFlagBits::eTransferDst;
 		}
 
 		throw std::logic_error("Unrecognized texture usage!");
@@ -63,7 +65,7 @@ namespace cp
 	template<>
 	inline vk::ImageUsageFlags EnumBitsCast<vk::ImageUsageFlags, TextureUsage>(const TextureUsage _usage)
 	{
-		return ConvertBitField<vk::ImageUsageFlags, vk::ImageUsageFlagBits, TextureUsage, 4>(_usage);
+		return ConvertBitField<vk::ImageUsageFlags, vk::ImageUsageFlagBits, TextureUsage, 6>(_usage);
 	}
 
 	template<>

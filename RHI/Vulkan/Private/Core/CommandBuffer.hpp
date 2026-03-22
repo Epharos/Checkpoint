@@ -96,6 +96,12 @@ namespace cp
         //
         // void Dispatch(uint32_t _groupCountX, uint32_t _groupCountY, uint32_t _groupCountZ) override;
 
+        void CopyBufferToTexture(
+            IBuffer& _srcBuffer,
+            ITexture& _dstTexture,
+            const BufferTextureCopyRegion& _region
+        ) override;
+
     public:
         void Initialize();
         void Cleanup() const;

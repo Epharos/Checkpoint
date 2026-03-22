@@ -10,6 +10,7 @@
 #include <../../../Common/Public/Common/Core/Profiling.hpp>
 
 #include "Core/CommandAllocator.hpp"
+#include "Data/Sampler.hpp"
 #include "Synchro/TimelineSemaphore.hpp"
 
 namespace cp
@@ -126,11 +127,25 @@ namespace cp
 		return *device;
 	}
 
-	std::shared_ptr<ITexture> VulkanRHI::CreateTexture(const TextureInfo& _info, TextureLayout _initialLayout)
+	std::shared_ptr<ITexture> VulkanRHI::CreateTexture(const TextureInfo& _info)
 	{
 		CP_EXPECT_MSG(device, "Logical device must be created before creating a texture");
 
-		return device->CreateTexture(_info, _initialLayout);
+		return device->CreateTexture(_info);
+	}
+
+	std::shared_ptr<IBuffer> VulkanRHI::CreateBuffer(const BufferInfo& _info)
+	{
+		CP_EXPECT_MSG(device, "Logical device must be created before creating a buffer");
+
+		return device->CreateBuffer(_info);
+	}
+
+	std::shared_ptr<ISampler> VulkanRHI::CreateSampler(const SamplerInfo& _info)
+	{
+		CP_EXPECT_MSG(device, "Logical device must be created before creating a buffer");
+
+		return std::make_shared<Sampler>(_info, *device);
 	}
 
 	std::unique_ptr<ITimelineSemaphore> VulkanRHI::CreateTimelineSemaphore()

@@ -22,7 +22,7 @@ namespace cp
 {
     namespace
     {
-        void AddTextureBarrier(const TextureBarrierInfo& _barrierInfo, vk::CommandBuffer _commandBuffer)
+        void AddTextureBarrier(const TextureBarrierInfo& _barrierInfo, const vk::CommandBuffer& _commandBuffer)
         {
             vk::ImageMemoryBarrier2 barrierInfo;
 
@@ -39,7 +39,7 @@ namespace cp
             barrierInfo.setSrcStageMask(EnumBitsCast<vk::PipelineStageFlags2>(_barrierInfo.srcStage));
             barrierInfo.setDstStageMask(EnumBitsCast<vk::PipelineStageFlags2>(_barrierInfo.dstStage));
 
-            vk::ImageSubresourceRange subresourceRange
+            const vk::ImageSubresourceRange subresourceRange
             {
                 EnumBitsCast<vk::ImageAspectFlags>(texture.GetTextureInfo().aspect),
                 _barrierInfo.baseMip,
@@ -59,7 +59,7 @@ namespace cp
             _barrierInfo.texture.UpdateLayout(_barrierInfo.dstLayout);
         }
 
-        void AddBufferBarrier(const BufferBarrierInfo& _barrierInfo, vk::CommandBuffer _commandBuffer)
+        void AddBufferBarrier(const BufferBarrierInfo& _barrierInfo, const vk::CommandBuffer& _commandBuffer)
         {
             vk::BufferMemoryBarrier2 barrierInfo;
 
@@ -312,6 +312,47 @@ namespace cp
     )
     {
         commandBuffer.draw(_vertexCount, _instanceCount, _firstVertex, _firstInstance);
+    }
+
+    void CommandBuffer::CopyBufferToTexture(
+        IBuffer& _srcBuffer,
+        ITexture& _dstTexture,
+        const BufferTextureCopyRegion& _region)
+    {
+        auto& srcBuffer = static_cast<Buffer&>(_srcBuffer);
+        auto& dstTexture = static_cast<Texture&>(_dstTexture);
+
+        vk::BufferImageCopy copyRegion;
+        copyRegion.setBufferOffset(_region.bufferOffset);
+        copyRegion.setBufferRowLength(_region.bufferRowLength);
+        copyRegion.setBufferImageHeight(_region.bufferImageHeight);
+
+        vk::ImageSubresourceLayers subresource;
+        subresource.setAspectMask(EnumBitsCast<vk::ImageAspectFlags>(dstTexture.GetTextureInfo().aspect));
+        subresource.setMipLevel(_region.mipLevel);
+        subresource.setBaseArrayLayer(_region.baseArrayLayer);
+        subresource.setLayerCount(_region.layerCount);
+        copyRegion.setImageSubresource(subresource);
+
+        copyRegion.setImageOffset(vk::Offset3D(
+            _region.textureOffset.x(),
+            _region.textureOffset.y(),
+            _region.textureOffset.z()
+        ));
+
+        copyRegion.setImageExtent(vk::Extent3D(
+            _region.textureExtent.x(),
+            _region.textureExtent.y(),
+            _region.textureExtent.z()
+        ));
+
+        commandBuffer.copyBufferToImage(
+            srcBuffer.GetHandle(),
+            dstTexture.GetImage(),
+            vk::ImageLayout::eTransferDstOptimal,
+            1,
+            &copyRegion
+        );
     }
 
     void CommandBuffer::Initialize()

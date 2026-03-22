@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include <../../../Common/Public/Common/Core/Macros.hpp>
+#include <Common/Core/Macros.hpp>
 
 #if defined(CP_PLATFORM_WINDOWS)
 #define VK_USE_PLATFORM_WIN32_KHR
@@ -16,4 +16,4 @@
 	CP_ENSURE_MSG(result == vk::Result::eSuccess, ("Vulkan error: " + static_cast<size_t>(result))); \
 }
 
-constinit static const char* VulkanRHI_Label = "RHI (Vulkan)";
+constinit static auto VulkanRHI_Label = "RHI (Vulkan)";

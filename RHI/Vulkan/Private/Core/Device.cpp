@@ -8,12 +8,15 @@
 #include "PhysicalDevice.hpp"
 #include "Queue.hpp"
 #include "../Data/Texture.hpp"
+#include "../Data/Buffer.hpp"
 #include "../Data/DescriptorSetLayout.hpp"
 #include "../Rendering/ShaderModule.hpp"
 #include "../Rendering/PipelineLayout.hpp"
 #include "../Rendering/Pipeline.hpp"
 
 #include <set>
+
+#include "../Data/DescriptorSet.hpp"
 
 namespace cp
 {
@@ -210,9 +213,14 @@ namespace cp
 		return commandPools[static_cast<size_t>(_queueType)][_index];
 	}
 
-	std::shared_ptr<ITexture> Device::CreateTexture(const TextureInfo& _info, TextureLayout _initialLayout)
+	std::shared_ptr<ITexture> Device::CreateTexture(const TextureInfo& _info)
 	{
-		return std::make_shared<Texture>(logger, _info, *this, _initialLayout);
+		return std::make_shared<Texture>(logger, _info, *this);
+	}
+
+	std::shared_ptr<IBuffer> Device::CreateBuffer(const BufferInfo& _info)
+	{
+		return std::make_shared<Buffer>(logger, _info, *this);
 	}
 
 	std::shared_ptr<IShaderModule> Device::CreateShaderModule(const ShaderModuleInfo& _info)
@@ -228,6 +236,11 @@ namespace cp
 	std::shared_ptr<IPipelineLayout> Device::CreatePipelineLayout(const PipelineLayoutInfo& _info)
 	{
 		return std::make_shared<PipelineLayout>(_info, *this);
+	}
+
+	std::shared_ptr<IDescriptorSet> Device::CreateDescriptorSet(const IDescriptorSetLayout &_descriptorSetLayout)
+	{
+		return std::make_shared<DescriptorSet>(_descriptorSetLayout, *this);
 	}
 
 	std::shared_ptr<IPipeline> Device::CreateGraphicsPipeline(const GraphicsPipelineInfo& _info)

@@ -12,8 +12,12 @@ namespace cp
 	class ICommandAllocator;
 	class ITimelineSemaphore;
 	class ITexture;
+	class IBuffer;
+	class ISampler;
 
 	struct TextureInfo;
+	struct BufferInfo;
+	struct SamplerInfo;
 	struct InstanceInfo;
 	struct SwapchainInfo;
 
@@ -22,7 +26,9 @@ namespace cp
 	class RenderingHardwareInterface
 	{
 	public:
-		RenderingHardwareInterface(const std::shared_ptr<ILogger> &_logger);
+		explicit RenderingHardwareInterface(const std::shared_ptr<ILogger> &_logger)
+			: logger(_logger) {}
+
 		virtual ~RenderingHardwareInterface() = default;
 
 		virtual IInstance& CreateInstance(const InstanceInfo& _info) = 0;
@@ -31,7 +37,9 @@ namespace cp
 
 		virtual std::unique_ptr<ISwapchain> CreateSwapchain(const SwapchainInfo& _info) = 0;
 
-		virtual std::shared_ptr<ITexture> CreateTexture(const TextureInfo& _info, TextureLayout _initialLayout) = 0;
+		virtual std::shared_ptr<ITexture> CreateTexture(const TextureInfo& _info) = 0;
+		virtual std::shared_ptr<IBuffer> CreateBuffer(const BufferInfo& _info) = 0;
+		virtual std::shared_ptr<ISampler> CreateSampler(const SamplerInfo& _info) = 0;
 
 		virtual std::unique_ptr<ITimelineSemaphore> CreateTimelineSemaphore() = 0;
 
@@ -47,7 +55,7 @@ namespace cp
 		static constexpr const char* RHI_Label = "RHI";
 
 	protected:
-		[[nodiscard]] ILogger& GetLogger() const;
+		[[nodiscard]] ILogger& GetLogger() const { return *logger; }
 
 	private:
 		std::shared_ptr<ILogger> logger;

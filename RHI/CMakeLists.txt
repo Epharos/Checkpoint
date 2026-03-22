@@ -1,7 +1,6 @@
 add_library(RHI_Core STATIC
-	"Private/RenderingHardwareInterface.cpp"
 
-	"Private/Core/IInstance.cpp"
+        "Private/Core/IInstance.cpp"
 	"Private/Core/IPhysicalDevice.cpp"
 	"Private/Core/IDevice.cpp"
 	"Private/Core/ICommandBuffer.hpp"

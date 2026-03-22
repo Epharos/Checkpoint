@@ -14,6 +14,9 @@ namespace cp
 		ColorAttachment = 1 << 1,
 		DepthStencilAttachment = 1 << 2,
 		Storage = 1 << 3,
+
+		TransferSrc = 1 << 4,
+		TransferDst = 1 << 5,
 	};
 
 	constexpr TextureUsage operator|(TextureUsage _lhs, TextureUsage _rhs)
@@ -95,7 +98,7 @@ namespace cp
 	class ITexture
 	{
 	public:
-		explicit ITexture(const TextureInfo& _info, TextureLayout _initialLayout = TextureLayout::Undefined);
+		explicit ITexture(const TextureInfo& _info);
 		virtual ~ITexture() = default;
 
 		/**
@@ -117,6 +120,6 @@ namespace cp
 	protected:
 		const TextureInfo info;
 
-		TextureLayout layout;
+		TextureLayout layout = TextureLayout::Undefined;
 	};
 }

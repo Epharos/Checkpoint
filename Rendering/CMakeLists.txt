@@ -12,4 +12,5 @@ target_link_libraries(Rendering
     PUBLIC
         Common
         RHI_Core
+        Resources
 )

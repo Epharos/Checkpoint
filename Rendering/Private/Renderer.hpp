@@ -9,6 +9,8 @@
 
 #include <RHI/Data.hpp>
 
+#include <Resources/AssetHandle.hpp>
+
 
 namespace cp
 {
@@ -84,5 +86,10 @@ namespace cp
         std::shared_ptr<IPipelineLayout> trianglePipelineLayout;
         std::shared_ptr<IPipeline> trianglePipeline;
 
+        std::shared_ptr<IDescriptorSetLayout> triangleDescriptorSetLayout;
+        std::shared_ptr<IDescriptorSet> triangleDescriptorSet;
+
+        AssetHandle<ITexture> logoTexture;
+        std::shared_ptr<ISampler> logoSampler;
     };
 }

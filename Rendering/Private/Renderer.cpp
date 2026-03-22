@@ -1,65 +1,23 @@
 #include "Renderer.hpp"
 
-#include <RHI/RenderingHardwareInterface.hpp>
-#include <RHI/Core.hpp>
-#include <RHI/Rendering.hpp>
-#include <RHI/Synchro.hpp>
-
-#include "../../Common/Private/Data/Rectangle.hpp"
-#include "../../Common/Private/Data/Viewport.hpp"
-#include "../../RHI/Private/Synchro/IBarrier.hpp"
-
 #include <filesystem>
-#include <fstream>
 #include <string_view>
 #include <vector>
 
+#include <RHI/RenderingHardwareInterface.hpp>
+#include <RHI/Core.hpp>
+#include <RHI/Data.hpp>
+#include <RHI/Rendering.hpp>
+#include <RHI/Synchro.hpp>
+
+#include <Common/Data/Rectangle.hpp>
+#include <Common/Data/Viewport.hpp>
+#include <Common/IO/FileHelper.hpp>
+
+#include <Resources/AssetRegistry.hpp>
+
 namespace cp
 {
-    namespace
-    {
-        std::filesystem::path FindFileInParentTree(const std::string_view _fileName)
-        {
-            std::filesystem::path currentPath = std::filesystem::current_path();
-            const std::filesystem::path fileNamePath(_fileName);
-
-            while (!currentPath.empty())
-            {
-                const std::filesystem::path candidatePath = currentPath / fileNamePath;
-                if (std::filesystem::exists(candidatePath))
-                {
-                    return candidatePath;
-                }
-
-                const std::filesystem::path parentPath = currentPath.parent_path();
-                if (parentPath == currentPath)
-                {
-                    break;
-                }
-
-                currentPath = parentPath;
-            }
-
-            return {};
-        }
-
-        std::vector<uint8_t> LoadBinaryFile(const std::filesystem::path& _path)
-        {
-            std::ifstream file(_path, std::ios::binary | std::ios::ate);
-            CP_EXPECT_MSG(file.is_open(), "Failed to open file");
-
-            const std::streamsize fileSize = file.tellg();
-            CP_EXPECT_MSG(fileSize > 0, "Shader file is empty");
-
-            std::vector<uint8_t> data(static_cast<size_t>(fileSize));
-            file.seekg(0, std::ios::beg);
-            file.read(reinterpret_cast<char*>(data.data()), fileSize);
-            CP_EXPECT_MSG(file.good(), "Failed to read shader binary file");
-
-            return data;
-        }
-    }
-
     FrameContext::FrameContext(RenderingHardwareInterface& _rhi) : swapchainImageIndex(0)
     {
         for (size_t i = 0; i < commandAllocators.size(); ++i)
@@ -201,7 +159,8 @@ namespace cp
             cmdBuffer.BeginRendering(renderingInfo);
 
             cmdBuffer.BindPipeline(*trianglePipeline);
-            cmdBuffer.Draw(3, 1, 0, 0);
+            cmdBuffer.BindDescriptorSet(0, *triangleDescriptorSet);
+            cmdBuffer.Draw(6, 1, 0, 0);
 
             cmdBuffer.EndRendering();
 
@@ -344,12 +303,12 @@ namespace cp
                 .aspect = cp::TextureAspect::DepthStencil
             };
 
-            texture = renderingHardwareInterface.CreateTexture(textureInfo, TextureLayout::Undefined);
-            depthTexture = renderingHardwareInterface.CreateTexture(depthTextureInfo, TextureLayout::Undefined);
+            texture = renderingHardwareInterface.CreateTexture(textureInfo);
+            depthTexture = renderingHardwareInterface.CreateTexture(depthTextureInfo);
         }
 
-        const std::filesystem::path triangleShaderPath = FindFileInParentTree("Triangle.spv");
-        CP_EXPECT_MSG(!triangleShaderPath.empty(), "Could not find Triangle.spv from current working directory hierarchy");
+        const std::filesystem::path triangleShaderPath = FindFileInParentTree("Logo.spv");
+        CP_EXPECT_MSG(!triangleShaderPath.empty(), "Could not find Logo.spv from current working directory hierarchy");
 
         const std::vector<uint8_t> shaderBytecode = LoadBinaryFile(triangleShaderPath);
 
@@ -365,7 +324,40 @@ namespace cp
 
         triangleShaderModule = renderingHardwareInterface.GetDevice().CreateShaderModule(shaderModuleInfo);
 
-        const PipelineLayoutInfo pipelineLayoutInfo {};
+        const DescriptorSetLayoutInfo descriptorSetLayoutInfo
+        {
+            .bindings = {
+                DescriptorBinding {
+                    .binding = 0,
+                    .type = DescriptorType::CombinedImageSampler,
+                    .count = 1,
+                    .visibility = ShaderStage::Fragment
+                }
+            }
+        };
+
+        triangleDescriptorSetLayout = renderingHardwareInterface.GetDevice().CreateDescriptorSetLayout(descriptorSetLayoutInfo);
+
+        const PipelineLayoutInfo pipelineLayoutInfo {
+            .setLayouts = { triangleDescriptorSetLayout }
+        };
+
+        auto& textureManager = AssetRegistry::Instance().Get<ITexture>();
+        logoTexture = textureManager.Load(FindFileInParentTree("logo.png"));
+
+        logoSampler = renderingHardwareInterface.CreateSampler(SamplerInfo{});
+
+        triangleDescriptorSet = renderingHardwareInterface.GetDevice().CreateDescriptorSet(*triangleDescriptorSetLayout);
+
+        const DescriptorTextureBinding textureBinding {
+            .binding = 0,
+            .texture = logoTexture.Get(),
+            .layout = TextureLayout::ShaderReadOnly,
+            .sampler = logoSampler.get()
+        };
+
+        triangleDescriptorSet->UpdateTextures({ textureBinding });
+
         trianglePipelineLayout = renderingHardwareInterface.GetDevice().CreatePipelineLayout(pipelineLayoutInfo);
 
         const GraphicsPipelineInfo graphicsPipelineInfo

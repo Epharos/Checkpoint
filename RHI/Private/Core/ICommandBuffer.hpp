@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Common/Data/Color.hpp>
-#include <Common/Data/Extent.hpp>
+#include <Common/Data/Offset.hpp>
 
 namespace cp
 {
@@ -10,9 +10,24 @@ namespace cp
     class IPipeline;
     class IDescriptorSet;
     class IBuffer;
+    class ITexture;
 
     struct Viewport;
     struct Rectangle2D;
+
+    struct BufferTextureCopyRegion
+    {
+        uint64_t bufferOffset = 0;
+        uint32_t bufferRowLength = 0;
+        uint32_t bufferImageHeight = 0;
+
+        uint32_t mipLevel = 0;
+        uint32_t baseArrayLayer = 0;
+        uint32_t layerCount = 1;
+
+        Offset3D<int32_t> textureOffset { 0, 0, 0 };
+        Extent3D<uint32_t> textureExtent { 0, 0, 0 };
+    };
 
     enum class CommandBufferType
     {
@@ -166,6 +181,18 @@ namespace cp
 
         // Copy
 
-        // TODO : Add copy buffers and textures methods
+        /**
+        * @brief Copies data from a buffer to a texture.
+        *        The texture must be in TransferDst layout and the buffer must have TransferSrc usage.
+        *
+        * @param _srcBuffer Source buffer containing pixel data
+        * @param _dstTexture Destination texture
+        * @param _region Description of the copy region (offset, extent, mip level, array layer)
+        */
+        virtual void CopyBufferToTexture(
+            IBuffer& _srcBuffer,
+            ITexture& _dstTexture,
+            const BufferTextureCopyRegion& _region
+        ) = 0;
     };
 }

@@ -104,8 +104,8 @@ namespace cp
 		vk::SurfaceFormatKHR selectedSurfaceFormat;
 		vk::PresentModeKHR selectedPresentMode;
 
-		vk::Semaphore* imageAvailableBinarySemaphore = nullptr;
-		vk::Semaphore* renderFinishedBinarySemaphore = nullptr;
+		std::vector<vk::Semaphore> imageAvailableBinarySemaphore;
+		std::vector<vk::Semaphore> renderFinishedBinarySemaphore;
 
 		uint32_t imageIndex{};
 		uint32_t acquireSemaphoreIndex{};

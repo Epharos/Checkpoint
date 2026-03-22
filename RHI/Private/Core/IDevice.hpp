@@ -5,6 +5,7 @@
 
 namespace cp
 {
+	class IDescriptorSet;
 
 	class ILogger;
 	enum class QueueType : uint8_t;
@@ -13,6 +14,10 @@ namespace cp
 	struct TextureInfo;
 	class ITexture;
 	enum class TextureLayout : uint32_t;
+
+	// Data / Buffers
+	struct BufferInfo;
+	class IBuffer;
 
 	// Pipeline / Shaders
 	struct ShaderModuleInfo;
@@ -50,10 +55,17 @@ namespace cp
 		* @brief Creates a texture and allocates GPU memory for it.
 		*
 		* @param _info The description of the texture to create (type, format, extent, usage, ...).
-		* @param _initialLayout The initial layout the texture will be considered to be in.
 		* @return A shared pointer to the created texture.
 		*/
-		virtual std::shared_ptr<ITexture> CreateTexture(const TextureInfo& _info, TextureLayout _initialLayout) = 0;
+		virtual std::shared_ptr<ITexture> CreateTexture(const TextureInfo& _info) = 0;
+
+		/**
+		* @brief Creates a buffer and allocates GPU memory for it.
+		*
+		* @param _info The description of the buffer to create (size, usage, CPU visibility).
+		* @return A shared pointer to the created buffer.
+		*/
+		virtual std::shared_ptr<IBuffer> CreateBuffer(const BufferInfo& _info) = 0;
 
 		/**
 		 * @brief Creates a shader module from backend-specific bytecode (SPIR-V, DXIL, ...).
@@ -64,6 +76,8 @@ namespace cp
 		 * @brief Creates a descriptor set layout (Vulkan) / root parameter table description (DX12).
 		 */
 		virtual std::shared_ptr<IDescriptorSetLayout> CreateDescriptorSetLayout(const DescriptorSetLayoutInfo& _info) = 0;
+
+		virtual std::shared_ptr<IDescriptorSet> CreateDescriptorSet(const IDescriptorSetLayout& _descriptorSetLayout) = 0;
 
 		/**
 		 * @brief Creates a pipeline layout (Vulkan VkPipelineLayout / DX12 RootSignature).

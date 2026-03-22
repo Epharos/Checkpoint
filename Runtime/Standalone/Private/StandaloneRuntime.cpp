@@ -1,6 +1,7 @@
 #include <Common/Core/Macros.hpp>
 #include <Common/Core/Log.hpp>
 #include <Common/Async/JobSystem.hpp>
+#include <Common/IO/FileHelper.hpp>
 
 #include <RHI/RenderingHardwareInterface.hpp>
 #include <RHI/Core.hpp>
@@ -10,6 +11,7 @@
 
 #include <GLFWWindow.hpp> // TMP
 
+#include <Resources/AssetRegistry.hpp>
 #include "../../../Rendering/Private/Renderer.hpp"
 
 int main(int argc, char** argv)
@@ -39,7 +41,7 @@ int main(int argc, char** argv)
     compositeLogger->Log(CP_LOG_EVENT(
         cp::ILogger::Info,
         InitLabel,
-        cp::Message::Create("Job system initialized with {} workers", cp::JobSystem::GetInstance().GetWorkerCount())
+        cp::Message::Create("Job System initialized with {} workers", cp::JobSystem::GetInstance().GetWorkerCount())
     ));
 
     ////////////////////////////
@@ -58,6 +60,14 @@ int main(int argc, char** argv)
     cp::IInstance& rhiInstance = rhi->CreateInstance(instanceInfo);
     cp::IPhysicalDevice& physicalDevice = rhi->CreatePhysicalDevice();
     cp::IDevice& device = rhi->CreateDevice();
+
+    ////////////////////////////
+    /// Initialize Asset Registry
+    ////////////////////////////
+
+    cp::AssetRegistry::Instance().Initialize(*rhi);
+
+    compositeLogger->Log(CP_LOG_EVENT(cp::ILogger::Info, InitLabel, cp::Message::Create("Asset Registry initialized")));
 
     ////////////////////////////
     /// Setup Window

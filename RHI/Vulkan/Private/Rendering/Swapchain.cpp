@@ -269,20 +269,20 @@ namespace cp
 
 		swapchainImages.clear();
 
-		if (imageAvailableBinarySemaphore != nullptr)
+		if (!imageAvailableBinarySemaphore.empty())
 		{
 			for (size_t i = 0; i < info.imageCount; ++i)
 				device.GetHandle().destroySemaphore(imageAvailableBinarySemaphore[i]);
 
-			delete [] imageAvailableBinarySemaphore;
+			imageAvailableBinarySemaphore.clear();
 		}
 
-		if (renderFinishedBinarySemaphore != nullptr)
+		if (!renderFinishedBinarySemaphore.empty())
 		{
 			for (size_t i = 0; i < info.imageCount; ++i)
 				device.GetHandle().destroySemaphore(renderFinishedBinarySemaphore[i]);
 
-			delete [] renderFinishedBinarySemaphore;
+			renderFinishedBinarySemaphore.clear();
 		}
 	}
 
@@ -350,26 +350,13 @@ namespace cp
 
 	void Swapchain::CreateSynchronizationPrimitives()
 	{
-		if (imageAvailableBinarySemaphore != nullptr)
-		{
-			for (size_t i = 0; i < info.imageCount; ++i)
-				device.GetHandle().destroySemaphore(imageAvailableBinarySemaphore[i]);
+		CP_EXPECT_MSG(imageAvailableBinarySemaphore.empty(), "Binary semaphore for image availability is not empty");
+		CP_EXPECT_MSG(renderFinishedBinarySemaphore.empty(), "Binary semaphore for render state is not empty");
 
-			delete [] imageAvailableBinarySemaphore;
-		}
+		constexpr vk::SemaphoreCreateInfo semaphoreCreateInfo = {};
 
-		if (renderFinishedBinarySemaphore != nullptr)
-		{
-			for (size_t i = 0; i < info.imageCount; ++i)
-				device.GetHandle().destroySemaphore(renderFinishedBinarySemaphore[i]);
-
-			delete [] renderFinishedBinarySemaphore;
-		}
-
-		vk::SemaphoreCreateInfo semaphoreCreateInfo = {};
-
-		imageAvailableBinarySemaphore = new vk::Semaphore[info.imageCount];
-		renderFinishedBinarySemaphore = new vk::Semaphore[info.imageCount];
+		imageAvailableBinarySemaphore.resize(info.imageCount);
+		renderFinishedBinarySemaphore.resize(info.imageCount);
 
 		for (size_t i = 0; i < info.imageCount; ++i)
 		{

@@ -15,7 +15,7 @@ namespace cp
 	class VulkanRHI final : public RenderingHardwareInterface
 	{
 	public:
-		VulkanRHI(const std::shared_ptr<cp::ILogger> &_logger);
+		explicit VulkanRHI(const std::shared_ptr<cp::ILogger> &_logger);
 		~VulkanRHI() override = default;
 
 		IInstance& CreateInstance(const InstanceInfo& _info) override;
@@ -32,11 +32,13 @@ namespace cp
 		[[nodiscard]] IDevice& GetDevice() override;
 		[[nodiscard]] const IDevice& GetDevice() const override;
 
-		std::shared_ptr<ITexture> CreateTexture(const TextureInfo &_info, TextureLayout _initialLayout) override;
-
 		std::unique_ptr<ITimelineSemaphore> CreateTimelineSemaphore() override;
 
 		std::unique_ptr<ICommandAllocator> CreateCommandAllocator(IQueue& _queue) override;
+
+		std::shared_ptr<ITexture> CreateTexture(const TextureInfo &_info) override;
+		std::shared_ptr<IBuffer> CreateBuffer(const BufferInfo &_info) override;
+		std::shared_ptr<ISampler> CreateSampler(const SamplerInfo& _info) override;
 
 	private:	
 		std::unique_ptr<Instance> instance = nullptr;

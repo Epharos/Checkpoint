@@ -94,10 +94,10 @@ namespace cp
 		}
 	}
 
-	Texture::Texture(ILogger& _logger, const TextureInfo& _info, Device& _device, TextureLayout _initialLayout)
-		: ITexture(_info, _initialLayout), device(_device), logger(_logger)
+	Texture::Texture(ILogger& _logger, const TextureInfo& _info, Device& _device)
+		: ITexture(_info), device(_device), logger(_logger)
 	{
-		resource = std::make_unique<TextureResource>(_info, _device, _initialLayout);
+		resource = std::make_unique<TextureResource>(_info, _device);
 
 		Initiate();
 
@@ -111,8 +111,8 @@ namespace cp
 		CP_ENSURE_MSG(resource, "Could not create texture");
 	}
 
-	Texture::Texture(ILogger& _logger, vk::Image& _image, const TextureInfo& _info, Device& _device, TextureLayout _initialLayout)
-		: ITexture(_info, _initialLayout), device(_device), logger(_logger)
+	Texture::Texture(ILogger& _logger, vk::Image& _image, const TextureInfo& _info, Device& _device)
+		: ITexture(_info), device(_device), logger(_logger)
 	{
 		resource = std::make_unique<TextureResource>(_image, _device);
 

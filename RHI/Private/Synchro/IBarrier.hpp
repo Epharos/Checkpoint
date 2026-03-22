@@ -8,6 +8,7 @@ namespace cp
     enum class Access : uint32_t;
     enum class PipelineStage : uint32_t;
     class ITexture;
+    class IBuffer;
 
     enum class BarrierType : uint32_t
     {
@@ -55,10 +56,10 @@ namespace cp
         explicit IBarrier(const TextureBarrierInfo& _barrierInfo) : type(BarrierType::Texture), textureBarrierInfo(_barrierInfo) {}
         explicit IBarrier(const BufferBarrierInfo& _barrierInfo) : type(BarrierType::Buffer), bufferBarrierInfo(_barrierInfo) {}
 
-        BarrierType GetType() const { return type; }
+        [[nodiscard]] BarrierType GetType() const { return type; }
 
-        TextureBarrierInfo GetTextureBarrierInfo() const { return textureBarrierInfo; }
-        BufferBarrierInfo GetBufferBarrierInfo() const { return bufferBarrierInfo; }
+        [[nodiscard]] TextureBarrierInfo GetTextureBarrierInfo() const { return textureBarrierInfo; }
+        [[nodiscard]] BufferBarrierInfo GetBufferBarrierInfo() const { return bufferBarrierInfo; }
 
     protected:
 
@@ -69,7 +70,5 @@ namespace cp
             TextureBarrierInfo textureBarrierInfo;
             BufferBarrierInfo bufferBarrierInfo;
         };
-
-
     };
 }

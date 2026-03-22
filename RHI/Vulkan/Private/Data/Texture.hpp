@@ -62,8 +62,7 @@ namespace cp
 			ILogger& _logger,
 			vk::Image& _image,
 			const TextureInfo& _info,
-			Device& _device,
-			TextureLayout _initialLayout = TextureLayout::Undefined
+			Device& _device
 		);
 
 		/**
@@ -76,8 +75,7 @@ namespace cp
 		Texture(
 			ILogger& _logger,
 			const TextureInfo& _info,
-			Device& _device,
-			TextureLayout _initialLayout = TextureLayout::Undefined
+			Device& _device
 		);
 
 		~Texture() override;
