@@ -3,7 +3,7 @@
 #include <array>
 #include <cstdlib>
 
-#include "../Utilities/Concepts.hpp"
+#include "../Core/Concepts.hpp"
 
 namespace cp
 {

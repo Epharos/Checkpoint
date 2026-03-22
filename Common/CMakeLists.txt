@@ -1,13 +1,11 @@
 add_library(Common STATIC
-    "Private/Assert.hpp"
-
-    "Private/Utilities/Clock.cpp"
-    "Private/Utilities/TerminalFormattingHelper.cpp"
+    "Private/Util/Clock.cpp"
+    "Private/Util/TerminalFormattingHelper.cpp"
 
     "Private/Log/ILogger.cpp"
-    "Private/Log/CompositeLogger.cpp"
-    "Private/Log/ConsoleLogger.cpp" 
-    "Private/Log/FileLogger.cpp"
+    "Private/Log/Loggers/CompositeLogger.cpp"
+    "Private/Log/Loggers/ConsoleLogger.cpp"
+    "Private/Log/Loggers/FileLogger.cpp"
     
     "Private/Log/Message.cpp" 
     "Private/Log/Components/ComponentTypeId.hpp"
@@ -22,8 +20,11 @@ add_library(Common STATIC
 
     "Private/Profiler/ScopedProfiler.cpp"
     "Private/Profiler/ProfilerTracker.cpp"
-        Private/Data/Color.hpp
-        Private/Data/Viewport.hpp
+
+    "Private/Data/Color.hpp"
+    "Private/Data/Viewport.hpp"
+
+    "Private/Async/JobSystem.cpp"
 )
 
 target_include_directories(Common PUBLIC

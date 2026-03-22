@@ -2,9 +2,9 @@
 
 // === Base Loggers ===
 #include "../../../Private/Log/ILogger.hpp"
-#include "../../../Private/Log/CompositeLogger.hpp"
-#include "../../../Private/Log/ConsoleLogger.hpp"
-#include "../../../Private/Log/FileLogger.hpp"
+#include "../../../Private/Log/Loggers/CompositeLogger.hpp"
+#include "../../../Private/Log/Loggers/ConsoleLogger.hpp"
+#include "../../../Private/Log/Loggers/FileLogger.hpp"
 
 // === Message Components ===
 #include "../../../Private/Log/Components/ComponentTypeId.hpp"

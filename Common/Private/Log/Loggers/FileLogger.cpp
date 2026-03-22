@@ -3,8 +3,8 @@
 #include <syncstream>
 #include <sstream>
 
-#include "Visitors/IMessageVisitor.hpp"
-#include "Message.hpp"
+#include "../Visitors/IMessageVisitor.hpp"
+#include "../Message.hpp"
 
 namespace cp
 {

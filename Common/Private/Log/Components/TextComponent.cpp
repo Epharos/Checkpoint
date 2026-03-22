@@ -2,7 +2,7 @@
 
 #include "../Visitors/IMessageVisitor.hpp"
 
-#include "../../Assert.hpp"
+#include "../../Core/Assert.hpp"
 
 
 namespace cp

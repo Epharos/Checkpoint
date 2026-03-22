@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ILogger.hpp"
+#include "../ILogger.hpp"
 
 #include <fstream>
 #include <string>

@@ -1,5 +1,6 @@
 #include <Common/Core/Macros.hpp>
 #include <Common/Core/Log.hpp>
+#include <Common/Async/JobSystem.hpp>
 
 #include <RHI/RenderingHardwareInterface.hpp>
 #include <RHI/Core.hpp>
@@ -17,6 +18,7 @@ int main(int argc, char** argv)
     /// Setup Loggers
     ////////////////////////////
     constexpr const char* InitLabel = "Init";
+    constexpr const char* CleanupLabel = "Cleanup";
 
     const std::shared_ptr<cp::IMessageVisitor> messageVisitor = std::make_shared<cp::ConsoleVisitor>();
     const std::shared_ptr<cp::IMessageVisitor> fileMessageVisitor = std::make_shared<cp::FileVisitor>();
@@ -28,6 +30,17 @@ int main(int argc, char** argv)
     compositeLogger->AddLogger(fileLogger);
 
     compositeLogger->Log(CP_LOG_EVENT(cp::ILogger::Info, InitLabel, cp::Message::Create("Hello, World!")));
+
+    ////////////////////////////
+    /// Initialize JobSystem
+    ////////////////////////////
+    cp::JobSystem::Initialize(std::thread::hardware_concurrency() / 2);
+
+    compositeLogger->Log(CP_LOG_EVENT(
+        cp::ILogger::Info,
+        InitLabel,
+        cp::Message::Create("Job system initialized with {} workers", cp::JobSystem::GetInstance().GetWorkerCount())
+    ));
 
     ////////////////////////////
     /// Setup RHI (Instance, Devices)
@@ -85,6 +98,26 @@ int main(int argc, char** argv)
         renderer.Render();
         renderer.EndFrame();
     }
+
+    ////////////////////////////
+    /// Cleanup
+    ////////////////////////////
+    compositeLogger->Log(CP_LOG_EVENT(
+        cp::ILogger::Info,
+        CleanupLabel,
+        cp::Message::Create("Waiting for background jobs to complete...")
+    ));
+
+    cp::JobSystem::GetInstance().Wait();
+
+    compositeLogger->Log(CP_LOG_EVENT(
+        cp::ILogger::Info,
+        CleanupLabel,
+        cp::Message::Create("All background jobs completed")
+    ));
+    
+    cp::JobSystem::Shutdown();
+    compositeLogger->Log(CP_LOG_EVENT(cp::ILogger::Info, CleanupLabel, cp::Message::Create("JobSystem shut down")));
 
     return 0;
 }

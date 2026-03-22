@@ -4,7 +4,7 @@
 
 #include "CommandBuffer.hpp"
 #include "Device.hpp"
-#include "../../../../Common/Private/Assert.hpp"
+#include "Common/Core/Assert.hpp"
 
 namespace cp
 {

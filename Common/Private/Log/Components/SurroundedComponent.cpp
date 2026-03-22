@@ -2,7 +2,7 @@
 
 #include "../Message.hpp"
 
-#include "../../Assert.hpp"
+#include "../../Core/Assert.hpp"
 
 namespace cp
 {

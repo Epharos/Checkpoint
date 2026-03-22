@@ -2,7 +2,7 @@
 
 #include "TimelineSemaphore.hpp"
 
-#include "../../../../Common/Private/Assert.hpp"
+#include "Common/Core/Assert.hpp"
 #include "../Core/Device.hpp"
 #include "../Core/Queue.hpp"
 

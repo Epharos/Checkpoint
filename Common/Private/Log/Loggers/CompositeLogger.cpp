@@ -1,7 +1,5 @@
 #include "CompositeLogger.hpp"
 
-#include "../Assert.hpp"
-
 namespace cp
 {
 	CompositeLogger::CompositeLogger() : ILogger(nullptr)
