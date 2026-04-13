@@ -1,10 +1,13 @@
 #pragma once
 
+#include <optional>
+
 #include <Common/Data/Color.hpp>
 #include <Common/Data/Offset.hpp>
 
 namespace cp
 {
+    enum class Filter : uint8_t;
     class ICommandAllocator;
     class IBarrier;
     class IPipeline;
@@ -27,6 +30,34 @@ namespace cp
 
         Offset3D<int32_t> textureOffset { 0, 0, 0 };
         Extent3D<uint32_t> textureExtent { 0, 0, 0 };
+    };
+
+    struct TextureCopyRegion
+    {
+        uint32_t srcMipLevel = 0;
+        uint32_t srcBaseArrayLayer = 0;
+        uint32_t srcLayerCount = 1;
+        Offset3D<int32_t> srcOffset { 0, 0, 0 };
+
+        uint32_t dstMipLevel = 0;
+        uint32_t dstBaseArrayLayer = 0;
+        uint32_t dstLayerCount = 1;
+        Offset3D<int32_t> dstOffset { 0, 0, 0 };
+
+        Extent3D<uint32_t> extent { 0, 0, 0 };
+    };
+
+    struct TextureBlitRegion
+    {
+        uint32_t srcMipLevel = 0;
+        uint32_t srcBaseArrayLayer = 0;
+        uint32_t srcLayerCount = 1;
+        Offset3D<int32_t> srcOffsets[2] { Offset3D{ 0, 0, 0 }, Offset3D{ 0, 0, 0 } };
+
+        uint32_t dstMipLevel = 0;
+        uint32_t dstBaseArrayLayer = 0;
+        uint32_t dstLayerCount = 1;
+        Offset3D<int32_t> dstOffsets[2] { Offset3D{ 0, 0, 0 }, Offset3D{ 0, 0, 0 } };
     };
 
     enum class CommandBufferType
@@ -160,7 +191,7 @@ namespace cp
             uint32_t _firstVertex,
             uint32_t _firstInstance
         ) = 0;
-        //
+
         // virtual void DrawIndexed(
         //     uint32_t _indexCount,
         //     uint32_t _instanceCount,
@@ -169,15 +200,15 @@ namespace cp
         //     uint32_t _firstInstance
         // ) = 0;
         //
-        // // TODO : Add indirect draw methods
-        //
-        // // Compute
-        //
-        // virtual void Dispatch(
-        //     uint32_t _groupCountX,
-        //     uint32_t _groupCountY,
-        //     uint32_t _groupCountZ
-        // ) = 0;
+        // TODO : Add indirect draw methods
+
+        // Compute
+
+        virtual void Dispatch(
+            uint32_t _groupCountX,
+            uint32_t _groupCountY,
+            uint32_t _groupCountZ
+        ) = 0;
 
         // Copy
 
@@ -193,6 +224,38 @@ namespace cp
             IBuffer& _srcBuffer,
             ITexture& _dstTexture,
             const BufferTextureCopyRegion& _region
+        ) = 0;
+
+        /**
+        * @brief Copies image data from one texture to another.
+        *        Both textures must have compatible formats.
+        *        Source texture must be in TransferSrc layout, destination in TransferDst layout.
+        *
+        * @param _srcTexture Source texture
+        * @param _dstTexture Destination texture
+        * @param _region Description of the copy region (offsets, extents, mip levels, array layers)
+        */
+        virtual void CopyTexture(
+            ITexture& _srcTexture,
+            ITexture& _dstTexture,
+            const TextureCopyRegion& _region
+        ) = 0;
+
+        /**
+        * @brief Blits (copies with potential scaling and filtering) from one texture to another.
+        *        Can perform scaling, format conversion, and filtering.
+        *        Source texture must be in TransferSrc layout, destination in TransferDst layout.
+        *
+        * @param _srcTexture Source texture
+        * @param _dstTexture Destination texture
+        * @param _region Description of the blit region (source and destination offsets for scaling)
+        * @param _filter Filter to use for scaling (Nearest or Linear)
+        */
+        virtual void BlitTexture(
+            ITexture& _srcTexture,
+            ITexture& _dstTexture,
+            const TextureBlitRegion& _region,
+            Filter _filter
         ) = 0;
     };
 }

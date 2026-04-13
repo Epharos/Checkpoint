@@ -24,8 +24,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++")
 
-option(EDITOR_BUILD "Editor Build" ON) # Enable editor build by default
-
 #########################
 # External Dependencies #
 #########################
@@ -90,9 +88,6 @@ FetchContent_MakeAvailable(nlohmann_json)
 # Project subdirs #
 ###################
 
-# add_subdirectory(Core)
-# add_subdirectory(EngineWidgets) #Temporary
-
 add_subdirectory(Common) # Common structures and methods : Math, Allocators, Data Structures, Etc.
 add_subdirectory(RHI) # Rendering Hardware Interface : Vulkan and DirectX12 backends
 add_subdirectory(RHI/Vulkan) # Vulkan RHI backend
@@ -105,7 +100,6 @@ add_subdirectory(ECS) # Entity Component System
 add_subdirectory(Builder) # Executable Builder module : Turning project files into a runnable executable
 add_subdirectory(Runtime/Standalone) # Standalone Runtime module : Game loop, Etc.
 add_subdirectory(Launcher) # Editor launcher module : Starts the editor with a selected project
-add_subdirectory(TEST) # Test executable
 
 function(copy_to_build TARGET)
     foreach(PATH IN LISTS ARGN)

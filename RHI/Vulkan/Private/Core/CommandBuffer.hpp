@@ -93,13 +93,26 @@ namespace cp
         //     uint32_t _firstVertex,
         //     uint32_t _firstInstance
         // ) override;
-        //
-        // void Dispatch(uint32_t _groupCountX, uint32_t _groupCountY, uint32_t _groupCountZ) override;
+
+        void Dispatch(uint32_t _groupCountX, uint32_t _groupCountY, uint32_t _groupCountZ) override;
 
         void CopyBufferToTexture(
             IBuffer& _srcBuffer,
             ITexture& _dstTexture,
             const BufferTextureCopyRegion& _region
+        ) override;
+
+        void CopyTexture(
+            ITexture& _srcTexture,
+            ITexture& _dstTexture,
+            const TextureCopyRegion& _region
+        ) override;
+
+        void BlitTexture(
+            ITexture& _srcTexture,
+            ITexture& _dstTexture,
+            const TextureBlitRegion& _region,
+            Filter _filter
         ) override;
 
     public:

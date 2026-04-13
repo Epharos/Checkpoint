@@ -24,7 +24,7 @@ namespace cp
 		[[nodiscard]] bool IsValid() const { return resource != nullptr; }
 		explicit operator bool() const { return IsValid(); }
 
-		[[nodiscard]] const std::string& GetAssetID() const { return assetID; }
+		[[nodiscard]] std::string_view GetAssetID() const { return assetID; }
 
 		std::shared_ptr<TResource> GetSharedPtr() const { return resource; }
 

@@ -11,9 +11,12 @@
 
 #include <Resources/AssetHandle.hpp>
 
+#include "FrameGraph/FrameGraph.hpp"
+
 
 namespace cp
 {
+    enum class QueueType : uint8_t;
     enum class Format : uint32_t;
     class RenderingHardwareInterface;
     class ICommandAllocator;
@@ -31,6 +34,9 @@ namespace cp
         std::array<std::vector<std::unique_ptr<ICommandBuffer>>, 3> commandBuffers;
 
         uint64_t swapchainImageIndex;
+
+        [[nodiscard]] ICommandAllocator& GetCommandAllocator(QueueType _queueType) const;
+        [[nodiscard]] ICommandBuffer& GetCommandBuffer(QueueType _queueType, size_t _index = 0) const;
 
         explicit FrameContext(RenderingHardwareInterface& _rhi);
     };
@@ -50,7 +56,7 @@ namespace cp
         ~Renderer();
 
     public:
-        void Resize(const Extent2D<int>& _newExtent) const;
+        void Resize(const Extent2D<int>& _newExtent);
 
     public:
         void BeginFrame();
@@ -64,32 +70,45 @@ namespace cp
         void CreateFrameContext();
         void CreateSwapchain();
         void CreateInFlightFrameSemaphore();
+        
+        void BuildFrameGraph();
+        void BlitFinalRenderingToSwapchain(const FrameContext& _context) const;
 
     protected:
         std::vector<FrameContext> frameContext;
 
         std::unique_ptr<ISwapchain> swapchain;
         std::unique_ptr<ITimelineSemaphore> inFlightFrameSemaphore;
-        uint64_t* frameSignalValue;
+        uint64_t* frameSignalValue = nullptr;
         uint64_t frameGlobalIndex = 0;
 
         RendererInfo& rendererInfo;
         RenderingHardwareInterface& renderingHardwareInterface;
 
         uint32_t frameIndex = 0;
+        
+        // FrameGraph
+        FrameGraph frameGraph;
 
-        // tmp
+        // Rendering resources
+        std::shared_ptr<ITexture> texture;
+        std::shared_ptr<ITexture> depthTexture;
 
-        std::shared_ptr<cp::ITexture> texture;
-        std::shared_ptr<cp::ITexture> depthTexture;
-        std::shared_ptr<IShaderModule> triangleShaderModule;
-        std::shared_ptr<IPipelineLayout> trianglePipelineLayout;
-        std::shared_ptr<IPipeline> trianglePipeline;
+        std::shared_ptr<IShaderModule> logoShaderModule;
+        std::shared_ptr<IPipelineLayout> logoPipelineLayout;
+        std::shared_ptr<IPipeline> logoPipeline;
 
-        std::shared_ptr<IDescriptorSetLayout> triangleDescriptorSetLayout;
-        std::shared_ptr<IDescriptorSet> triangleDescriptorSet;
+        std::shared_ptr<IDescriptorSetLayout> logoDescriptorSetLayout;
+        std::shared_ptr<IDescriptorSet> logoDescriptorSet;
 
         AssetHandle<ITexture> logoTexture;
         std::shared_ptr<ISampler> logoSampler;
+
+        std::shared_ptr<IShaderModule> negativeShaderModule;
+        std::shared_ptr<IPipelineLayout> negativePipelineLayout;
+        std::shared_ptr<IPipeline> negativePipeline;
+
+        std::shared_ptr<IDescriptorSetLayout> negativeDescriptorSetLayout;
+        std::shared_ptr<IDescriptorSet> negativeDescriptorSet;
     };
 }

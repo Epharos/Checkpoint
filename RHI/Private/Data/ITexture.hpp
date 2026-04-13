@@ -30,6 +30,17 @@ namespace cp
 		return _lhs;
 	}
 
+	constexpr TextureUsage operator&(TextureUsage _lhs, TextureUsage _rhs)
+	{
+		return static_cast<TextureUsage>(static_cast<uint32_t>(_lhs) & static_cast<uint32_t>(_rhs));
+	}
+
+	constexpr TextureUsage& operator&=(TextureUsage& _lhs, const TextureUsage _rhs)
+	{
+		_lhs = _lhs & _rhs;
+		return _lhs;
+	}
+
 	enum class TextureAspect : uint32_t
 	{
 		None = 0,
@@ -116,6 +127,8 @@ namespace cp
 		* @param _layout The new layout of the texture.
 		*/
 		void UpdateLayout(TextureLayout _layout);
+
+		[[nodiscard]] const TextureInfo& GetTextureInfo() const { return info; }
 
 	protected:
 		const TextureInfo info;

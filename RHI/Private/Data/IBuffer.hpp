@@ -54,6 +54,8 @@ namespace cp
 		virtual void* Map() = 0;
 		virtual void Unmap() = 0;
 
+		[[nodiscard]] const BufferInfo& GetBufferInfo() const { return info; };
+
 	protected:
 		const BufferInfo& info;
 	};

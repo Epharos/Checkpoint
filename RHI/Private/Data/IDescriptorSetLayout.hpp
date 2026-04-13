@@ -39,6 +39,6 @@ namespace cp
 		virtual ~IDescriptorSetLayout() = default;
 
 	protected:
-		const DescriptorSetLayoutInfo& info;
+		const DescriptorSetLayoutInfo info;
 	};
 }

@@ -1,0 +1,241 @@
+#pragma once
+
+#include <memory>
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <limits>
+
+#include "FramegraphResource.hpp"
+
+namespace cp
+{
+    class IRenderPass;
+
+    /**
+     * @brief Builder for declaring resources in a render pass.
+     * 
+     * Used during the Setup() phase of render passes to:
+     * - Create new transient resources
+     * - Import external resources
+     * - Declare read/write dependencies
+     * 
+     * Example usage in a render pass:
+     * @code
+     * void Setup(FrameGraphBuilder& builder) override
+     * {
+     *     // Create a new color target
+     *     data.colorOutput = builder.CreateTexture("ColorTarget", colorInfo);
+     *     builder.UseTexture(data.colorOutput, {
+     *         .layout = TextureLayout::ColorAttachment,
+     *         .stage = PipelineStage::ColorAttachment,
+     *         .access = Access::ColorAttachmentWrite
+     *     }, ResourceAccess::WriteOnly);
+     *     
+     *     // Read from a previous resource
+     *     builder.UseTexture(data.sceneColor, {
+     *         .layout = TextureLayout::ShaderReadOnly,
+     *         .stage = PipelineStage::FragmentShader,
+     *         .access = Access::ShaderRead
+     *     }, ResourceAccess::ReadOnly);
+     * }
+     * @endcode
+     */
+    class FrameGraphBuilder
+    {
+    public:
+        FrameGraphBuilder();
+        ~FrameGraphBuilder() = default;
+
+        struct TextureSynchronization
+        {
+            TextureLayout layout = TextureLayout::Undefined;
+            PipelineStage stage = PipelineStage::AllCommands;
+            Access access = Access::None;
+            uint32_t baseMip = 0;
+            uint32_t mipCount = 1;
+            uint32_t baseLayer = 0;
+            uint32_t layerCount = 1;
+        };
+
+        struct BufferSynchronization
+        {
+            PipelineStage stage = PipelineStage::AllCommands;
+            Access access = Access::None;
+            uint64_t offsetBytes = 0;
+            uint64_t sizeBytes = std::numeric_limits<uint64_t>::max();
+        };
+
+        /**
+         * @brief Create a new transient texture managed by the framegraph.
+         * @param _name Resource name for debugging
+         * @param _info Texture description
+         * @return Handle to the created resource
+         */
+        FramegraphResourceHandle* CreateTexture(const std::string& _name, const TextureInfo& _info);
+
+        /**
+         * @brief Create a new transient buffer managed by the framegraph.
+         * @param _name Resource name for debugging
+         * @param _info Buffer description
+         * @return Handle to the created resource
+         */
+        FramegraphResourceHandle* CreateBuffer(const std::string& _name, const BufferInfo& _info);
+
+        /**
+         * @brief Import an external texture (e.g., swapchain image).
+         * @param _name Resource name for debugging
+         * @param _texture Existing texture
+         * @return Handle to the imported resource
+         */
+        FramegraphResourceHandle* ImportTexture(const std::string& _name, std::shared_ptr<ITexture> _texture);
+
+        /**
+         * @brief Import an external buffer.
+         * @param _name Resource name for debugging
+         * @param _buffer Existing buffer
+         * @return Handle to the imported resource
+         */
+        FramegraphResourceHandle* ImportBuffer(const std::string& _name, std::shared_ptr<IBuffer> _buffer);
+
+        /**
+         * @brief Declare the final synchronization state expected after the last pass touching a texture.
+         * @param _handle Handle to the texture resource
+         * @param _sync Final synchronization state for external usage after framegraph execution
+         */
+        void SetTextureFinalState(const FramegraphResourceHandle* _handle, const TextureSynchronization& _sync);
+
+        /**
+         * @brief Declare the final synchronization state expected after the last pass touching a buffer.
+         * @param _handle Handle to the buffer resource
+         * @param _sync Final synchronization state for external usage after framegraph execution
+         */
+        void SetBufferFinalState(const FramegraphResourceHandle* _handle, const BufferSynchronization& _sync);
+
+        /**
+         * @brief Use a texture by name in this pass with explicit access mode.
+         * @param _name Resource name
+         * @param _sync Synchronization state describing how this pass uses this texture
+         * @param _access Access mode: read, write, or read-write
+         * @return Handle to the resource, or nullptr if not found
+         */
+        FramegraphResourceHandle* UseTexture(
+            const std::string& _name,
+            const TextureSynchronization& _sync,
+            ResourceUsage _access = ResourceUsage::ReadOnly
+        );
+
+        /**
+         * @brief Use a texture handle in this pass with explicit access mode.
+         * @param _handle Handle to the texture resource
+         * @param _sync Synchronization state describing how this pass uses this texture
+         * @param _access Access mode: read, write, or read-write
+         * @return The same handle
+         */
+        FramegraphResourceHandle* UseTexture(
+            FramegraphResourceHandle* _handle,
+            const TextureSynchronization& _sync,
+            ResourceUsage _access = ResourceUsage::ReadOnly
+        );
+
+        /**
+         * @brief Use a buffer by name in this pass with explicit access mode.
+         * @param _name Resource name
+         * @param _sync Synchronization state describing how this pass uses this buffer
+         * @param _access Access mode: read, write, or read-write
+         * @return Handle to the resource, or nullptr if not found
+         */
+        FramegraphResourceHandle* UseBuffer(
+            const std::string& _name,
+            const BufferSynchronization& _sync,
+            ResourceUsage _access = ResourceUsage::ReadOnly
+        );
+
+        /**
+         * @brief Use a buffer handle in this pass with explicit access mode.
+         * @param _handle Handle to the buffer resource
+         * @param _sync Synchronization state describing how this pass uses this buffer
+         * @param _access Access mode: read, write, or read-write
+         * @return The same handle
+         */
+        FramegraphResourceHandle* UseBuffer(
+            FramegraphResourceHandle* _handle,
+            const BufferSynchronization& _sync,
+            ResourceUsage _access = ResourceUsage::ReadOnly
+        );
+
+        /**
+         * @brief Get a resource handle by name without declaring usage.
+         * @param _name Resource name
+         * @return Handle to the resource, or nullptr if not found
+         * 
+         * Useful when you need the handle but will declare usage later,
+         * or when looking up resources from other passes.
+         */
+        FramegraphResourceHandle* GetResourceHandle(const std::string& _name);
+
+        /**
+         * @brief Mark the pass currently declaring resources.
+         * Must be called before read/write declarations for that pass.
+         */
+        void BeginPassSetup(IRenderPass* _pass);
+
+        /**
+         * @brief Clear the current pass setup context.
+         */
+        void EndPassSetup();
+
+        /**
+         * @brief Get all resources created/imported by this builder.
+         */
+        [[nodiscard]] std::vector<std::unique_ptr<FramegraphResource>>& GetResources() { return resources; }
+
+        /**
+         * @brief Get resource by name.
+         */
+        [[nodiscard]] FramegraphResource* GetResourceByName(const std::string& _name);
+
+        struct TextureResourceAccess
+        {
+            IRenderPass* pass = nullptr;
+            FramegraphResource* resource = nullptr;
+            TextureSynchronization sync {};
+            bool isWrite = false;
+        };
+
+        struct BufferResourceAccess
+        {
+            IRenderPass* pass = nullptr;
+            FramegraphResource* resource = nullptr;
+            BufferSynchronization sync {};
+            bool isWrite = false;
+        };
+
+        [[nodiscard]] const std::vector<TextureResourceAccess>& GetTextureAccesses() const { return textureAccesses; }
+        [[nodiscard]] const std::vector<BufferResourceAccess>& GetBufferAccesses() const { return bufferAccesses; }
+        [[nodiscard]] const std::unordered_map<FramegraphResource*, TextureSynchronization>& GetTextureFinalStates() const { return textureFinalStates; }
+        [[nodiscard]] const std::unordered_map<FramegraphResource*, BufferSynchronization>& GetBufferFinalStates() const { return bufferFinalStates; }
+
+        /**
+         * @brief Clear all resources (used during reset).
+         */
+        void Clear();
+
+    private:
+        void ReadTexture(const FramegraphResourceHandle* _handle, const TextureSynchronization& _sync);
+        void WriteTexture(const FramegraphResourceHandle* _handle, const TextureSynchronization& _sync);
+        void ReadBuffer(const FramegraphResourceHandle* _handle, const BufferSynchronization& _sync);
+        void WriteBuffer(const FramegraphResourceHandle* _handle, const BufferSynchronization& _sync);
+
+        std::vector<std::unique_ptr<FramegraphResource>> resources;
+        std::unordered_map<std::string, FramegraphResource*> resourceMap;
+        std::vector<std::unique_ptr<FramegraphResourceHandle>> handles;
+        std::unordered_map<std::string, FramegraphResourceHandle*> handleMap;
+
+        std::vector<TextureResourceAccess> textureAccesses;
+        std::vector<BufferResourceAccess> bufferAccesses;
+        std::unordered_map<FramegraphResource*, TextureSynchronization> textureFinalStates;
+        std::unordered_map<FramegraphResource*, BufferSynchronization> bufferFinalStates;
+        IRenderPass* currentSetupPass = nullptr;
+    };
+}

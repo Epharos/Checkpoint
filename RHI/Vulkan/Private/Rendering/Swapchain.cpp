@@ -313,7 +313,11 @@ namespace cp
 			static_cast<uint32_t>(info.extent.y())
 		});
 		createInfo.setImageArrayLayers(1);
-		createInfo.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
+		createInfo.setImageUsage(
+			vk::ImageUsageFlagBits::eColorAttachment |
+			vk::ImageUsageFlagBits::eTransferSrc |
+			vk::ImageUsageFlagBits::eTransferDst
+		);
 
 		const VulkanQueueFamilies& queues = device.GetQueueFamilies();
 

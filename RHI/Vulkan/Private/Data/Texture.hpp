@@ -89,8 +89,6 @@ namespace cp
 		[[nodiscard]] vk::DeviceMemory& GetMemory() { return resource->GetMemory(); }
 		[[nodiscard]] const vk::DeviceMemory& GetMemory() const { return resource->GetMemory(); }
 
-		[[nodiscard]] const TextureInfo& GetTextureInfo() const { return info; }
-
 	private:
 		void Initiate();
 		void Cleanup() const;

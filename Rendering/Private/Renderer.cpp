@@ -11,13 +11,30 @@
 #include <RHI/Synchro.hpp>
 
 #include <Common/Data/Rectangle.hpp>
-#include <Common/Data/Viewport.hpp>
 #include <Common/IO/FileHelper.hpp>
 
 #include <Resources/AssetRegistry.hpp>
 
+#include "FrameGraph/NegativePFX.hpp"
+#include "FrameGraph/SceneRenderPass.hpp"
+
 namespace cp
 {
+    ICommandAllocator& FrameContext::GetCommandAllocator(QueueType _queueType) const
+    {
+        return *commandAllocators[static_cast<int>(_queueType)];
+    }
+
+    ICommandBuffer& FrameContext::GetCommandBuffer(QueueType _queueType, const size_t _index) const
+    {
+        CP_EXPECT_MSG(
+            _index < commandBuffers[static_cast<int>(_queueType)].size(),
+            "_index must be contained within the amount of allocated command buffers for this queue"
+        );
+
+        return *commandBuffers[static_cast<int>(_queueType)][_index];
+    }
+
     FrameContext::FrameContext(RenderingHardwareInterface& _rhi) : swapchainImageIndex(0)
     {
         for (size_t i = 0; i < commandAllocators.size(); ++i)
@@ -26,9 +43,12 @@ namespace cp
                 _rhi.GetDevice().GetQueue(static_cast<QueueType>(i), 0)
             );
 
-            // TODO : Add support for multi queue
-
-            commandBuffers[i].emplace_back(std::move(commandAllocators[i]->Allocate()));
+            // Create multiple command buffers for framegraph passes
+            constexpr size_t maxCommandBuffers = 16;
+            for (size_t j = 0; j < maxCommandBuffers; ++j)
+            {
+                commandBuffers[i].emplace_back(std::move(commandAllocators[i]->Allocate()));
+            }
         }
     }
 
@@ -43,9 +63,12 @@ namespace cp
         Cleanup();
     }
 
-    void Renderer::Resize(const Extent2D<int>& _newExtent) const
+    void Renderer::Resize(const Extent2D<int>& _newExtent)
     {
         CP_EXPECT_MSG(swapchain, "Cannot resize the Renderer without a created swapchain");
+
+        // Wait for GPU to complete all work
+        renderingHardwareInterface.GetDevice().WaitIdle();
 
         rendererInfo.extent = _newExtent;
         swapchain->Resize(rendererInfo.extent);
@@ -54,6 +77,11 @@ namespace cp
             rendererInfo.extent == swapchain->GetImageExtent(),
             "Swapchain extent does not match Renderer extent"
         );
+
+        // Re-compile the framegraph with new dimensions
+        // ClearResources keeps the passes, only re-creates resources
+        frameGraph.ClearResources();
+        frameGraph.Compile(renderingHardwareInterface);
     }
 
     void Renderer::BeginFrame()
@@ -62,9 +90,9 @@ namespace cp
 
         inFlightFrameSemaphore->WaitCPU(frameSignalValue[frameIndex]);
 
-        for (size_t i = 0 ; i < context.commandAllocators.size() ; ++i)
+        for (const auto & commandAllocator : context.commandAllocators)
         {
-            context.commandAllocators[i]->Reset();
+            commandAllocator->Reset();
         }
 
         context.swapchainImageIndex = swapchain->AcquireNextImage();
@@ -74,153 +102,161 @@ namespace cp
     {
         FrameContext& context = frameContext[frameIndex];
 
-        // tmp
+        // Execute the framegraph
+        frameGraph.Execute(context);
+
+        // Blit the final rendering to the swapchain
+        BlitFinalRenderingToSwapchain(context);
+    }
+
+    void Renderer::BuildFrameGraph()
+    {
+        const Extent2D<uint32_t> renderExtent{
+            static_cast<uint32_t>(rendererInfo.extent.x()),
+            static_cast<uint32_t>(rendererInfo.extent.y())
+        };
+
+        // Create the main scene rendering pass
+        auto* scenePass = frameGraph.AddPassTyped(std::make_unique<SceneRenderPass>());
+        auto* negativePFXPass = frameGraph.AddPassTyped(std::make_unique<NegativePostFX>());
+
+        // Configure the pass with our rendering resources
+        scenePass->GetData().pipeline = logoPipeline;
+        scenePass->GetData().descriptorSet = logoDescriptorSet;
+        scenePass->GetData().renderExtent = renderExtent;
+
+        negativePFXPass->GetData().pipeline = negativePipeline;
+        negativePFXPass->GetData().descriptorSet = negativeDescriptorSet;
+        negativePFXPass->GetData().renderExtent = renderExtent;
+    }
+
+    void Renderer::BlitFinalRenderingToSwapchain(const FrameContext& _context) const
+    {
+        ITexture* finalRendering = frameGraph.GetFinalRendering();
+        if (!finalRendering)
         {
-            ICommandBuffer& cmdBuffer = *context.commandBuffers[0][0];
-            cmdBuffer.Begin();
-
-            const TextureBarrierInfo toColorAttachment
-            {
-                .texture = swapchain->GetSwapchainImage(context.swapchainImageIndex),
-                .srcLayout = TextureLayout::Undefined,
-                .dstLayout = TextureLayout::AttachmentOptimal,
-                .srcStage = PipelineStage::Top,
-                .dstStage = PipelineStage::ColorAttachment,
-                .srcAccess = Access::None,
-                .dstAccess = Access::ColorAttachmentWrite,
-                .baseMip = 0,
-                .mipCount = 1,
-                .baseLayer = 0,
-                .layerCount = 1
-            };
-
-            const TextureBarrierInfo toDepthAttachment
-            {
-                .texture = *depthTexture,
-                .srcLayout = TextureLayout::Undefined,
-                .dstLayout = TextureLayout::AttachmentOptimal,
-                .srcStage = PipelineStage::Top,
-                .dstStage = PipelineStage::EarlyDepth,
-                .srcAccess = Access::None,
-                .dstAccess = Access::DepthStencilWrite,
-                .baseMip = 0,
-                .mipCount = 1,
-                .baseLayer = 0,
-                .layerCount = 1
-            };
-
-            cmdBuffer.AddBarrier(IBarrier { toColorAttachment });
-            cmdBuffer.AddBarrier(IBarrier { toDepthAttachment });
-
-            cp::DepthStencilAttachmentInfo depthStencilAttachmentInfo
-            {
-                .texture = depthTexture.get(),
-                .depthLoadOp = LoadOp::Clear,
-                .depthStoreOp = StoreOp::Store,
-                .clearValue = cp::ClearDepthStencil {
-                    .depth = 0.5f,
-                    .stencil = 0
-                },
-            };
-
-            cp::ColorAttachmentInfo colorAttachment
-            {
-                .texture = &swapchain->GetSwapchainImage(context.swapchainImageIndex),
-                .loadOp = LoadOp::Clear,
-                .storeOp = StoreOp::Store,
-                .clearValue = cp::Color(cp::ColorRGBA8(255, 255, 0, 255))
-            };
-
-            cp::RenderingInfo renderingInfo
-            {
-                .extent = Extent2D{
-                    static_cast<uint32_t>(rendererInfo.extent.x()),
-                    static_cast<uint32_t>(rendererInfo.extent.y())
-                },
-                .layers = 1,
-                .colorAttachments = { colorAttachment },
-                .depthStencilAttachment = depthStencilAttachmentInfo
-            };
-
-            cmdBuffer.SetViewport(cp::Viewport{ 
-                0.f, 
-                0.f, 
-                static_cast<float>(rendererInfo.extent.x()), 
-                static_cast<float>(rendererInfo.extent.y()) 
-            });
-            cmdBuffer.SetScissor(cp::Rectangle2D{
-                cp::Extent2D{0, 0},
-                cp::Extent2D{
-                    static_cast<uint32_t>(rendererInfo.extent.x()),
-                    static_cast<uint32_t>(rendererInfo.extent.y())
-                }
-            });
-
-            cmdBuffer.BeginRendering(renderingInfo);
-
-            cmdBuffer.BindPipeline(*trianglePipeline);
-            cmdBuffer.BindDescriptorSet(0, *triangleDescriptorSet);
-            cmdBuffer.Draw(6, 1, 0, 0);
-
-            cmdBuffer.EndRendering();
-
-            TextureBarrierInfo swapchainPresentLayoutBarrier
-            {
-                .texture = swapchain->GetSwapchainImage(context.swapchainImageIndex),
-                .srcLayout = TextureLayout::AttachmentOptimal,
-                .dstLayout = TextureLayout::Present,
-                .srcStage = PipelineStage::ColorAttachment,
-                .dstStage = PipelineStage::Bottom,
-                .srcAccess = Access::ColorAttachmentWrite,
-                .dstAccess = Access::None,
-                .baseMip = 0,
-                .mipCount = 1,
-                .baseLayer = 0,
-                .layerCount = 1
-            };
-
-            cmdBuffer.AddBarrier(IBarrier { swapchainPresentLayoutBarrier } );
-
-            cmdBuffer.End();
+            return;  // No final rendering produced
         }
+
+        ITexture& swapchainImage = swapchain->GetSwapchainImage(_context.swapchainImageIndex);
+
+        // Get a command buffer for the blit operation
+        // Use index = frameGraph.GetPassCount() to get the next available buffer
+        ICommandBuffer& cmd = _context.GetCommandBuffer(
+            QueueType::Graphics,
+            static_cast<uint32_t>(frameGraph.GetPassCount())
+        );
+
+        cmd.Begin();
+
+        // Transition swapchain: Undefined -> TransferDst
+        const TextureBarrierInfo swapchainToTransferDst{
+            .texture = swapchainImage,
+            .srcLayout = TextureLayout::Undefined,
+            .dstLayout = TextureLayout::TransferDst,
+            .srcStage = PipelineStage::Top,
+            .dstStage = PipelineStage::Transfer,
+            .srcAccess = Access::None,
+            .dstAccess = Access::TransferWrite,
+            .baseMip = 0,
+            .mipCount = 1,
+            .baseLayer = 0,
+            .layerCount = 1
+        };
+
+        cmd.AddBarrier(IBarrier{ swapchainToTransferDst });
+
+        // Get texture extents
+        const auto& finalInfo = finalRendering->GetTextureInfo();
+        const auto& swapchainInfo = swapchainImage.GetTextureInfo();
+
+        // Setup blit region to copy entire texture
+        const TextureBlitRegion blitRegion {
+            .srcMipLevel = 0,
+            .srcBaseArrayLayer = 0,
+            .srcLayerCount = 1,
+            .srcOffsets = {
+                Offset3D{ 0, 0, 0 },
+                Offset3D{ static_cast<int32_t>(finalInfo.extent.x()), static_cast<int32_t>(finalInfo.extent.y()), 1 }
+            },
+            .dstMipLevel = 0,
+            .dstBaseArrayLayer = 0,
+            .dstLayerCount = 1,
+            .dstOffsets = {
+                Offset3D{ 0, 0, 0 },
+                Offset3D{ static_cast<int32_t>(swapchainInfo.extent.x()), static_cast<int32_t>(swapchainInfo.extent.y()), 1 }
+            }
+        };
+
+        // Blit finalRendering to swapchain with linear filtering
+        cmd.BlitTexture(*finalRendering, swapchainImage, blitRegion, Filter::Linear);
+
+        // Transition swapchain: TransferDst -> Present
+        const TextureBarrierInfo swapchainToPresent{
+            .texture = swapchainImage,
+            .srcLayout = TextureLayout::TransferDst,
+            .dstLayout = TextureLayout::Present,
+            .srcStage = PipelineStage::Transfer,
+            .dstStage = PipelineStage::Bottom,
+            .srcAccess = Access::TransferWrite,
+            .dstAccess = Access::None,
+            .baseMip = 0,
+            .mipCount = 1,
+            .baseLayer = 0,
+            .layerCount = 1
+        };
+
+        cmd.AddBarrier(IBarrier{ swapchainToPresent });
+
+        cmd.End();
     }
 
     void Renderer::EndFrame()
     {
-        FrameContext& context = frameContext[frameIndex];
+        const FrameContext& context = frameContext[frameIndex];
 
-        uint64_t signalValue = ++frameGlobalIndex;
+        const uint64_t signalValue = ++frameGlobalIndex;
 
+        // Collect all command buffers to submit
+        std::vector<ICommandBuffer*> commandBuffersToSubmit;
+
+        // Add framegraph command buffers
+        const size_t passCount = frameGraph.GetPassCount();
+        for (size_t i = 0; i < passCount; ++i)
         {
-            cp::ICommandBuffer& cmdBuffer = *context.commandBuffers[0][0];
-
-            SubmitInfo::SignalInfo inFlightFrameSignalInfo
-            {
-                .semaphore = inFlightFrameSemaphore.get(),
-                .value = signalValue
-            };
-
-            SubmitInfo::SignalInfo renderFinishedSignalInfo
-            {
-                .semaphore = &swapchain->GetRenderFinishedSemaphore(),
-                .value = signalValue
-            };
-
-            SubmitInfo::WaitInfo imageAvailableWaitInfo
-            {
-                .semaphore = &swapchain->GetImageAvailableSemaphore(),
-                .value = swapchain->GetLastImageAvailableSignalValue()
-            };
-
-            const SubmitInfo submitInfo
-            {
-                .commandBuffers = { &cmdBuffer },
-                .waitInfos = { imageAvailableWaitInfo },
-                .signalInfos = { inFlightFrameSignalInfo, renderFinishedSignalInfo },
-            };
-
-            renderingHardwareInterface.GetDevice().GetQueue(QueueType::Graphics, 0).Submit(submitInfo);
+            commandBuffersToSubmit.push_back(&context.GetCommandBuffer(QueueType::Graphics, static_cast<uint32_t>(i)));
         }
+
+        // Add blit command buffer
+        commandBuffersToSubmit.push_back(&context.GetCommandBuffer(QueueType::Graphics, static_cast<uint32_t>(passCount)));
+
+        // Setup submit info
+        SubmitInfo::SignalInfo inFlightFrameSignalInfo
+        {
+            .semaphore = inFlightFrameSemaphore.get(),
+            .value = signalValue
+        };
+
+        SubmitInfo::SignalInfo renderFinishedSignalInfo
+        {
+            .semaphore = &swapchain->GetRenderFinishedSemaphore(),
+            .value = signalValue
+        };
+
+        SubmitInfo::WaitInfo imageAvailableWaitInfo
+        {
+            .semaphore = &swapchain->GetImageAvailableSemaphore(),
+            .value = swapchain->GetLastImageAvailableSignalValue()
+        };
+
+        const SubmitInfo submitInfo
+        {
+            .commandBuffers = commandBuffersToSubmit,
+            .waitInfos = { imageAvailableWaitInfo },
+            .signalInfos = { inFlightFrameSignalInfo, renderFinishedSignalInfo },
+        };
+
+        renderingHardwareInterface.GetDevice().GetQueue(QueueType::Graphics, 0).Submit(submitInfo);
 
         frameSignalValue[frameIndex] = signalValue;
 
@@ -307,24 +343,39 @@ namespace cp
             depthTexture = renderingHardwareInterface.CreateTexture(depthTextureInfo);
         }
 
-        const std::filesystem::path triangleShaderPath = FindFileInParentTree("Logo.spv");
-        CP_EXPECT_MSG(!triangleShaderPath.empty(), "Could not find Logo.spv from current working directory hierarchy");
+        const std::filesystem::path logoShaderPath = FindFileInParentTree("Logo.spv");
+        CP_ASSERT_MSG(!logoShaderPath.empty(), "Could not find Logo.spv from current working directory hierarchy");
 
-        const std::vector<uint8_t> shaderBytecode = LoadBinaryFile(triangleShaderPath);
+        const std::filesystem::path negativeShaderPath = FindFileInParentTree("NegativePFX.spv");
+        CP_ASSERT_MSG(!negativeShaderPath.empty(), "Could not find NegativePFX.spv from current working directory hierarchy");
 
-        const ShaderModuleInfo shaderModuleInfo
+        const std::vector<uint8_t> logoShaderBytecode = LoadBinaryFile(logoShaderPath);
+        const std::vector<uint8_t> negativeShaderBytecode = LoadBinaryFile(negativeShaderPath);
+
+        const ShaderModuleInfo logoShaderModuleInfo
         {
             .stages = ShaderStage::Vertex | ShaderStage::Fragment,
-            .bytecode = ShaderBytecode{
+            .bytecode = ShaderBytecode {
                 .format = ShaderBinaryFormat::SpirV,
-                .data = shaderBytecode.data(),
-                .sizeBytes = shaderBytecode.size()
+                .data = logoShaderBytecode.data(),
+                .sizeBytes = logoShaderBytecode.size()
             }
         };
 
-        triangleShaderModule = renderingHardwareInterface.GetDevice().CreateShaderModule(shaderModuleInfo);
+        const ShaderModuleInfo negativeShaderModuleInfo
+        {
+            .stages = ShaderStage::Compute,
+            .bytecode = ShaderBytecode {
+                .format = ShaderBinaryFormat::SpirV,
+                .data = negativeShaderBytecode.data(),
+                .sizeBytes = negativeShaderBytecode.size()
+            }
+        };
 
-        const DescriptorSetLayoutInfo descriptorSetLayoutInfo
+        logoShaderModule = renderingHardwareInterface.GetDevice().CreateShaderModule(logoShaderModuleInfo);
+        negativeShaderModule = renderingHardwareInterface.GetDevice().CreateShaderModule(negativeShaderModuleInfo);
+
+        const DescriptorSetLayoutInfo logoDescriptorSetLayoutInfo
         {
             .bindings = {
                 DescriptorBinding {
@@ -336,18 +387,27 @@ namespace cp
             }
         };
 
-        triangleDescriptorSetLayout = renderingHardwareInterface.GetDevice().CreateDescriptorSetLayout(descriptorSetLayoutInfo);
-
-        const PipelineLayoutInfo pipelineLayoutInfo {
-            .setLayouts = { triangleDescriptorSetLayout }
+        const DescriptorSetLayoutInfo negativeDescriptorSetLayoutInfo
+        {
+            .bindings = {
+                DescriptorBinding {
+                    .binding = 0,
+                    .type = DescriptorType::StorageTexture,
+                    .count = 1,
+                    .visibility = ShaderStage::Compute
+                }
+            }
         };
+
+        logoDescriptorSetLayout = renderingHardwareInterface.GetDevice().CreateDescriptorSetLayout(logoDescriptorSetLayoutInfo);
+        negativeDescriptorSetLayout = renderingHardwareInterface.GetDevice().CreateDescriptorSetLayout(negativeDescriptorSetLayoutInfo);
+
+        logoDescriptorSet = renderingHardwareInterface.GetDevice().CreateDescriptorSet(*logoDescriptorSetLayout);
+        negativeDescriptorSet = renderingHardwareInterface.GetDevice().CreateDescriptorSet(*negativeDescriptorSetLayout);
 
         auto& textureManager = AssetRegistry::Instance().Get<ITexture>();
         logoTexture = textureManager.Load(FindFileInParentTree("logo.png"));
-
         logoSampler = renderingHardwareInterface.CreateSampler(SamplerInfo{});
-
-        triangleDescriptorSet = renderingHardwareInterface.GetDevice().CreateDescriptorSet(*triangleDescriptorSetLayout);
 
         const DescriptorTextureBinding textureBinding {
             .binding = 0,
@@ -356,14 +416,23 @@ namespace cp
             .sampler = logoSampler.get()
         };
 
-        triangleDescriptorSet->UpdateTextures({ textureBinding });
+        logoDescriptorSet->UpdateTextures({ textureBinding });
 
-        trianglePipelineLayout = renderingHardwareInterface.GetDevice().CreatePipelineLayout(pipelineLayoutInfo);
+        const PipelineLayoutInfo logoPipelineLayoutInfo {
+            .setLayouts = { logoDescriptorSetLayout }
+        };
+
+        const PipelineLayoutInfo negativePipelineLayoutInfo {
+            .setLayouts = { negativeDescriptorSetLayout }
+        };
+
+        logoPipelineLayout = renderingHardwareInterface.GetDevice().CreatePipelineLayout(logoPipelineLayoutInfo);
+        negativePipelineLayout = renderingHardwareInterface.GetDevice().CreatePipelineLayout(negativePipelineLayoutInfo);
 
         const GraphicsPipelineInfo graphicsPipelineInfo
         {
-            .layout = trianglePipelineLayout,
-            .shaderModule = triangleShaderModule,
+            .layout = logoPipelineLayout,
+            .shaderModule = logoShaderModule,
             .stageMains = {
                 { ShaderStage::Vertex, "vertexMain" },
                 { ShaderStage::Fragment, "fragmentMain" },
@@ -377,7 +446,19 @@ namespace cp
             .depthStencilFormat = Format::D24_UNORM_S8_UINT
         };
 
-        trianglePipeline = renderingHardwareInterface.GetDevice().CreateGraphicsPipeline(graphicsPipelineInfo);
+        const ComputePipelineInfo negativeComputePipelineInfo
+        {
+            .layout = negativePipelineLayout,
+            .computeShader = negativeShaderModule,
+            .mainMethodName = "MainCS"
+        };
+
+        logoPipeline = renderingHardwareInterface.GetDevice().CreateGraphicsPipeline(graphicsPipelineInfo);
+        negativePipeline = renderingHardwareInterface.GetDevice().CreateComputePipeline(negativeComputePipelineInfo);
+        
+        // Build and compile the framegraph
+        BuildFrameGraph();
+        frameGraph.Compile(renderingHardwareInterface);
     }
 
     void Renderer::Cleanup() const

@@ -198,7 +198,7 @@ namespace cp
             auto* texture = static_cast<Texture*>(attachment.texture);
 
             CP_EXPECT_MSG(
-                texture->GetTextureInfo().usage == TextureUsage::ColorAttachment,
+                (texture->GetTextureInfo().usage & TextureUsage::ColorAttachment) == TextureUsage::ColorAttachment,
                 "Color attachment does not have a ColorAttachment usage"
             );
 
@@ -314,6 +314,11 @@ namespace cp
         commandBuffer.draw(_vertexCount, _instanceCount, _firstVertex, _firstInstance);
     }
 
+    void CommandBuffer::Dispatch(uint32_t _groupCountX, uint32_t _groupCountY, uint32_t _groupCountZ)
+    {
+        commandBuffer.dispatch(_groupCountX, _groupCountY, _groupCountZ);
+    }
+
     void CommandBuffer::CopyBufferToTexture(
         IBuffer& _srcBuffer,
         ITexture& _dstTexture,
@@ -352,6 +357,122 @@ namespace cp
             vk::ImageLayout::eTransferDstOptimal,
             1,
             &copyRegion
+        );
+    }
+
+    void CommandBuffer::CopyTexture(
+        ITexture& _srcTexture,
+        ITexture& _dstTexture,
+        const TextureCopyRegion& _region)
+    {
+        auto& srcTexture = static_cast<Texture&>(_srcTexture);
+        auto& dstTexture = static_cast<Texture&>(_dstTexture);
+
+        vk::ImageCopy copyRegion;
+
+        vk::ImageSubresourceLayers srcSubresource;
+        srcSubresource.setAspectMask(EnumBitsCast<vk::ImageAspectFlags>(srcTexture.GetTextureInfo().aspect));
+        srcSubresource.setMipLevel(_region.srcMipLevel);
+        srcSubresource.setBaseArrayLayer(_region.srcBaseArrayLayer);
+        srcSubresource.setLayerCount(_region.srcLayerCount);
+        copyRegion.setSrcSubresource(srcSubresource);
+
+        copyRegion.setSrcOffset(vk::Offset3D(
+            _region.srcOffset.x(),
+            _region.srcOffset.y(),
+            _region.srcOffset.z()
+        ));
+
+        vk::ImageSubresourceLayers dstSubresource;
+        dstSubresource.setAspectMask(EnumBitsCast<vk::ImageAspectFlags>(dstTexture.GetTextureInfo().aspect));
+        dstSubresource.setMipLevel(_region.dstMipLevel);
+        dstSubresource.setBaseArrayLayer(_region.dstBaseArrayLayer);
+        dstSubresource.setLayerCount(_region.dstLayerCount);
+        copyRegion.setDstSubresource(dstSubresource);
+
+        copyRegion.setDstOffset(vk::Offset3D(
+            _region.dstOffset.x(),
+            _region.dstOffset.y(),
+            _region.dstOffset.z()
+        ));
+
+        copyRegion.setExtent(vk::Extent3D(
+            _region.extent.x(),
+            _region.extent.y(),
+            _region.extent.z()
+        ));
+
+        commandBuffer.copyImage(
+            srcTexture.GetImage(),
+            vk::ImageLayout::eTransferSrcOptimal,
+            dstTexture.GetImage(),
+            vk::ImageLayout::eTransferDstOptimal,
+            1,
+            &copyRegion
+        );
+    }
+
+    void CommandBuffer::BlitTexture(
+        ITexture& _srcTexture,
+        ITexture& _dstTexture,
+        const TextureBlitRegion& _region,
+        Filter _filter)
+    {
+        auto& srcTexture = static_cast<Texture&>(_srcTexture);
+        auto& dstTexture = static_cast<Texture&>(_dstTexture);
+
+        vk::ImageBlit blitRegion;
+
+        vk::ImageSubresourceLayers srcSubresource;
+        srcSubresource.setAspectMask(EnumBitsCast<vk::ImageAspectFlags>(srcTexture.GetTextureInfo().aspect));
+        srcSubresource.setMipLevel(_region.srcMipLevel);
+        srcSubresource.setBaseArrayLayer(_region.srcBaseArrayLayer);
+        srcSubresource.setLayerCount(_region.srcLayerCount);
+        blitRegion.setSrcSubresource(srcSubresource);
+
+        std::array<vk::Offset3D, 2> srcOffsets = {
+            vk::Offset3D(
+                _region.srcOffsets[0].x(),
+                _region.srcOffsets[0].y(),
+                _region.srcOffsets[0].z()
+            ),
+            vk::Offset3D(
+                _region.srcOffsets[1].x(),
+                _region.srcOffsets[1].y(),
+                _region.srcOffsets[1].z()
+            )
+        };
+        blitRegion.setSrcOffsets(srcOffsets);
+
+        vk::ImageSubresourceLayers dstSubresource;
+        dstSubresource.setAspectMask(EnumBitsCast<vk::ImageAspectFlags>(dstTexture.GetTextureInfo().aspect));
+        dstSubresource.setMipLevel(_region.dstMipLevel);
+        dstSubresource.setBaseArrayLayer(_region.dstBaseArrayLayer);
+        dstSubresource.setLayerCount(_region.dstLayerCount);
+        blitRegion.setDstSubresource(dstSubresource);
+
+        std::array<vk::Offset3D, 2> dstOffsets = {
+            vk::Offset3D(
+                _region.dstOffsets[0].x(),
+                _region.dstOffsets[0].y(),
+                _region.dstOffsets[0].z()
+            ),
+            vk::Offset3D(
+                _region.dstOffsets[1].x(),
+                _region.dstOffsets[1].y(),
+                _region.dstOffsets[1].z()
+            )
+        };
+        blitRegion.setDstOffsets(dstOffsets);
+
+        commandBuffer.blitImage(
+            srcTexture.GetImage(),
+            vk::ImageLayout::eTransferSrcOptimal,
+            dstTexture.GetImage(),
+            vk::ImageLayout::eTransferDstOptimal,
+            1,
+            &blitRegion,
+            EnumCast<vk::Filter>(_filter)
         );
     }
 
