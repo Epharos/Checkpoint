@@ -53,6 +53,13 @@ namespace cp
 			return *std::any_cast<std::shared_ptr<AssetManager<TResource>>>(it->second);
 		}
 
+		void Cleanup()
+		{
+			std::lock_guard<std::mutex> lock(mutex);
+
+			managers.clear();
+		}
+
 	private:
 		AssetRegistry() = default;
 		~AssetRegistry() = default;
