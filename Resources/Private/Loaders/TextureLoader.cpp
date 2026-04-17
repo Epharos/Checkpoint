@@ -2,12 +2,11 @@
 #include <RHI/RenderingHardwareInterface.hpp>
 #include <RHI/Core.hpp>
 #include <RHI/Synchro.hpp>
-#include <Common/IO//FileHelper.hpp>
+#include <Common/IO/FileHelper.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include <stdexcept>
 #include <cstring>
 
 namespace cp
@@ -118,7 +117,6 @@ namespace cp
 				{ semaphore.get(), 1 }
 			},
 		};
-
 
 		graphicsQueue.Submit(submitInfo);
 
