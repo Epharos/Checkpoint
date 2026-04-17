@@ -1,6 +1,6 @@
 #include "Renderer.hpp"
 
-#include <filesystem>
+#include <algorithm>
 #include <string_view>
 #include <vector>
 
@@ -10,13 +10,10 @@
 #include <RHI/Rendering.hpp>
 #include <RHI/Synchro.hpp>
 
+#include <Common/Core/Registry.hpp>
 #include <Common/Data/Rectangle.hpp>
-#include <Common/IO/FileHelper.hpp>
 
-#include <Resources/AssetRegistry.hpp>
-
-#include "FrameGraph/NegativePFX.hpp"
-#include "FrameGraph/SceneRenderPass.hpp"
+#include "Resources/AssetRegistry.hpp"
 
 namespace cp
 {
@@ -78,10 +75,73 @@ namespace cp
             "Swapchain extent does not match Renderer extent"
         );
 
-        // Re-compile the framegraph with new dimensions
-        // ClearResources keeps the passes, only re-creates resources
-        frameGraph.ClearResources();
-        frameGraph.Compile(renderingHardwareInterface);
+        RebuildFrameGraph();
+    }
+
+    bool Renderer::AddFrameGraphPass(std::string _passTypeName, const bool _recompile)
+    {
+        if (_passTypeName.empty())
+        {
+            return false;
+        }
+
+        if (
+            std::find(
+                frameGraphPassTypeNames.begin(),
+                frameGraphPassTypeNames.end(),
+                _passTypeName
+            ) != frameGraphPassTypeNames.end()
+        )
+        {
+            return false;
+        }
+
+        frameGraphPassTypeNames.push_back(std::move(_passTypeName));
+
+        if (_recompile && frameGraph.IsCompiled())
+        {
+            RecompileFrameGraph();
+        }
+
+        return true;
+    }
+
+    bool Renderer::RemoveFrameGraphPass(const std::string_view _passTypeName, const bool _recompile)
+    {
+        if (_passTypeName.empty())
+        {
+            return false;
+        }
+
+        const auto it =
+            std::find(frameGraphPassTypeNames.begin(), frameGraphPassTypeNames.end(), _passTypeName);
+
+        if (it == frameGraphPassTypeNames.end())
+        {
+            return false;
+        }
+
+        frameGraphPassTypeNames.erase(it);
+
+        if (_recompile && frameGraph.IsCompiled())
+        {
+            RecompileFrameGraph();
+        }
+
+        return true;
+    }
+
+    void Renderer::RecompileFrameGraph()
+    {
+        renderingHardwareInterface.GetDevice().WaitIdle();
+        RebuildFrameGraph();
+    }
+
+    void Renderer::ResetFrameGraph()
+    {
+        renderingHardwareInterface.GetDevice().WaitIdle();
+        frameGraph.Reset();
+        frameGraphPassTypeNames.clear();
     }
 
     void Renderer::BeginFrame()
@@ -101,11 +161,7 @@ namespace cp
     void Renderer::Render()
     {
         FrameContext& context = frameContext[frameIndex];
-
-        // Execute the framegraph
         frameGraph.Execute(context);
-
-        // Blit the final rendering to the swapchain
         BlitFinalRenderingToSwapchain(context);
     }
 
@@ -116,18 +172,34 @@ namespace cp
             static_cast<uint32_t>(rendererInfo.extent.y())
         };
 
-        // Create the main scene rendering pass
-        auto* scenePass = frameGraph.AddPassTyped(std::make_unique<SceneRenderPass>());
-        auto* negativePFXPass = frameGraph.AddPassTyped(std::make_unique<NegativePostFX>());
+        CP_EXPECT_MSG(rendererInfo.registryManager != nullptr, "RendererInfo.registryManager must be provided");
+        const Registry<IRenderPass>* passRegistry =
+            rendererInfo.registryManager->Find<IRenderPass>("Renderpass");
+        CP_EXPECT_MSG(passRegistry != nullptr, "Render pass registry 'Renderpass' is missing");
 
-        // Configure the pass with our rendering resources
-        scenePass->GetData().pipeline = logoPipeline;
-        scenePass->GetData().descriptorSet = logoDescriptorSet;
-        scenePass->GetData().renderExtent = renderExtent;
+        const RenderPassInitContext initContext {
+            .rhi = renderingHardwareInterface,
+            .assetRegistry = AssetRegistry::Instance(),
+            .renderExtent = renderExtent,
+        };
 
-        negativePFXPass->GetData().pipeline = negativePipeline;
-        negativePFXPass->GetData().descriptorSet = negativeDescriptorSet;
-        negativePFXPass->GetData().renderExtent = renderExtent;
+        auto addConfiguredPass = [&](const std::string_view _passTypeName)
+        {
+            CP_EXPECT_MSG(passRegistry->Contains(_passTypeName), "Requested render pass type is not registered");
+            std::unique_ptr<IRenderPass> pass = passRegistry->Create(_passTypeName);
+            CP_EXPECT_MSG(pass != nullptr, "Registry returned a null render pass instance");
+
+            auto* configurable = dynamic_cast<IConfigurableRenderPass*>(pass.get());
+            CP_EXPECT_MSG(configurable != nullptr, "Registered render pass does not implement IConfigurableRenderPass");
+            configurable->Configure(initContext);
+
+            frameGraph.AddPass(std::move(pass));
+        };
+
+        for (const std::string& passTypeName : frameGraphPassTypeNames)
+        {
+            addConfiguredPass(passTypeName);
+        }
     }
 
     void Renderer::BlitFinalRenderingToSwapchain(const FrameContext& _context) const
@@ -305,158 +377,13 @@ namespace cp
         {
             frameSignalValue[i] = 0;
         }
+    }
 
-        // TMP
+    void Renderer::RebuildFrameGraph()
+    {
+        CP_EXPECT_MSG(!frameGraphPassTypeNames.empty(), "Cannot build framegraph without registered pass types");
 
-        {
-            const cp::TextureInfo textureInfo
-            {
-                .type = cp::TextureType::Texture2D,
-                .extent = cp::Extent3D<uint32_t>{
-                    static_cast<uint32_t>(rendererInfo.extent.x()),
-                    static_cast<uint32_t>(rendererInfo.extent.y()),
-                    1
-                },
-                .mipLevels = 1,
-                .arrayLayers = 1,
-                .format = cp::Format::R8G8B8A8_UNORM,
-                .usage = cp::TextureUsage::ColorAttachment,
-                .aspect = cp::TextureAspect::Color
-            };
-
-            const cp::TextureInfo depthTextureInfo
-            {
-                .type = cp::TextureType::Texture2D,
-                .extent = cp::Extent3D<uint32_t>{
-                    static_cast<uint32_t>(rendererInfo.extent.x()),
-                    static_cast<uint32_t>(rendererInfo.extent.y()),
-                    1
-                },
-                .mipLevels = 1,
-                .arrayLayers = 1,
-                .format = cp::Format::D24_UNORM_S8_UINT,
-                .usage = cp::TextureUsage::DepthStencilAttachment,
-                .aspect = cp::TextureAspect::DepthStencil
-            };
-
-            texture = renderingHardwareInterface.CreateTexture(textureInfo);
-            depthTexture = renderingHardwareInterface.CreateTexture(depthTextureInfo);
-        }
-
-        const std::filesystem::path logoShaderPath = FindFileInParentTree("Logo.spv");
-        CP_ASSERT_MSG(!logoShaderPath.empty(), "Could not find Logo.spv from current working directory hierarchy");
-
-        const std::filesystem::path negativeShaderPath = FindFileInParentTree("NegativePFX.spv");
-        CP_ASSERT_MSG(!negativeShaderPath.empty(), "Could not find NegativePFX.spv from current working directory hierarchy");
-
-        const std::vector<uint8_t> logoShaderBytecode = LoadBinaryFile(logoShaderPath);
-        const std::vector<uint8_t> negativeShaderBytecode = LoadBinaryFile(negativeShaderPath);
-
-        const ShaderModuleInfo logoShaderModuleInfo
-        {
-            .stages = ShaderStage::Vertex | ShaderStage::Fragment,
-            .bytecode = ShaderBytecode {
-                .format = ShaderBinaryFormat::SpirV,
-                .data = logoShaderBytecode.data(),
-                .sizeBytes = logoShaderBytecode.size()
-            }
-        };
-
-        const ShaderModuleInfo negativeShaderModuleInfo
-        {
-            .stages = ShaderStage::Compute,
-            .bytecode = ShaderBytecode {
-                .format = ShaderBinaryFormat::SpirV,
-                .data = negativeShaderBytecode.data(),
-                .sizeBytes = negativeShaderBytecode.size()
-            }
-        };
-
-        logoShaderModule = renderingHardwareInterface.GetDevice().CreateShaderModule(logoShaderModuleInfo);
-        negativeShaderModule = renderingHardwareInterface.GetDevice().CreateShaderModule(negativeShaderModuleInfo);
-
-        const DescriptorSetLayoutInfo logoDescriptorSetLayoutInfo
-        {
-            .bindings = {
-                DescriptorBinding {
-                    .binding = 0,
-                    .type = DescriptorType::CombinedImageSampler,
-                    .count = 1,
-                    .visibility = ShaderStage::Fragment
-                }
-            }
-        };
-
-        const DescriptorSetLayoutInfo negativeDescriptorSetLayoutInfo
-        {
-            .bindings = {
-                DescriptorBinding {
-                    .binding = 0,
-                    .type = DescriptorType::StorageTexture,
-                    .count = 1,
-                    .visibility = ShaderStage::Compute
-                }
-            }
-        };
-
-        logoDescriptorSetLayout = renderingHardwareInterface.GetDevice().CreateDescriptorSetLayout(logoDescriptorSetLayoutInfo);
-        negativeDescriptorSetLayout = renderingHardwareInterface.GetDevice().CreateDescriptorSetLayout(negativeDescriptorSetLayoutInfo);
-
-        logoDescriptorSet = renderingHardwareInterface.GetDevice().CreateDescriptorSet(*logoDescriptorSetLayout);
-        negativeDescriptorSet = renderingHardwareInterface.GetDevice().CreateDescriptorSet(*negativeDescriptorSetLayout);
-
-        auto& textureManager = AssetRegistry::Instance().Get<ITexture>();
-        logoTexture = textureManager.Load(FindFileInParentTree("logo.png"));
-        logoSampler = renderingHardwareInterface.CreateSampler(SamplerInfo{});
-
-        const DescriptorTextureBinding textureBinding {
-            .binding = 0,
-            .texture = logoTexture.Get(),
-            .layout = TextureLayout::ShaderReadOnly,
-            .sampler = logoSampler.get()
-        };
-
-        logoDescriptorSet->UpdateTextures({ textureBinding });
-
-        const PipelineLayoutInfo logoPipelineLayoutInfo {
-            .setLayouts = { logoDescriptorSetLayout }
-        };
-
-        const PipelineLayoutInfo negativePipelineLayoutInfo {
-            .setLayouts = { negativeDescriptorSetLayout }
-        };
-
-        logoPipelineLayout = renderingHardwareInterface.GetDevice().CreatePipelineLayout(logoPipelineLayoutInfo);
-        negativePipelineLayout = renderingHardwareInterface.GetDevice().CreatePipelineLayout(negativePipelineLayoutInfo);
-
-        const GraphicsPipelineInfo graphicsPipelineInfo
-        {
-            .layout = logoPipelineLayout,
-            .shaderModule = logoShaderModule,
-            .stageMains = {
-                { ShaderStage::Vertex, "vertexMain" },
-                { ShaderStage::Fragment, "fragmentMain" },
-            },
-            .vertexInput = VertexInputState{},
-            .topology = PrimitiveTopology::TriangleList,
-            .rasterization = RasterizationState{},
-            .depthStencil = DepthStencilState{},
-            .blendAttachments = {},
-            .colorAttachmentFormats = { Format::R8G8B8A8_UNORM },
-            .depthStencilFormat = Format::D24_UNORM_S8_UINT
-        };
-
-        const ComputePipelineInfo negativeComputePipelineInfo
-        {
-            .layout = negativePipelineLayout,
-            .computeShader = negativeShaderModule,
-            .mainMethodName = "MainCS"
-        };
-
-        logoPipeline = renderingHardwareInterface.GetDevice().CreateGraphicsPipeline(graphicsPipelineInfo);
-        negativePipeline = renderingHardwareInterface.GetDevice().CreateComputePipeline(negativeComputePipelineInfo);
-        
-        // Build and compile the framegraph
+        frameGraph.Reset();
         BuildFrameGraph();
         frameGraph.Compile(renderingHardwareInterface);
     }

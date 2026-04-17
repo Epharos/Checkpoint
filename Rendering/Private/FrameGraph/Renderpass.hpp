@@ -3,12 +3,29 @@
 #include <string>
 #include <string_view>
 
+#include <Common/Data/Extent.hpp>
+
 namespace cp
 {
+    class AssetRegistry;
     class FrameGraphBuilder;
     class FrameGraph;
     class ICommandBuffer;
+    class RenderingHardwareInterface;
     struct FrameContext;
+
+    struct RenderPassInitContext
+    {
+        RenderingHardwareInterface& rhi;
+        AssetRegistry& assetRegistry;
+        Extent2D<uint32_t> renderExtent;
+    };
+
+    struct IConfigurableRenderPass
+    {
+        virtual void Configure(const RenderPassInitContext& _context) = 0;
+        virtual ~IConfigurableRenderPass() = default;
+    };
 
     /**
      * @brief Execution context passed to render passes, providing access to command buffers.

@@ -1,15 +1,14 @@
 #pragma once
 
 #include <array>
-#include <vector>
 #include <memory>
-#include <cstdint>
+#include <string>
+#include <string_view>
+#include <vector>
 
 #include <Common/Data/Extent.hpp>
 
 #include <RHI/Data.hpp>
-
-#include <Resources/AssetHandle.hpp>
 
 #include "FrameGraph/FrameGraph.hpp"
 
@@ -23,9 +22,7 @@ namespace cp
     class ICommandBuffer;
     class ISwapchain;
     class ITimelineSemaphore;
-    class IShaderModule;
-    class IPipelineLayout;
-    class IPipeline;
+    class RegistryManager;
 
     struct FrameContext
     {
@@ -47,6 +44,7 @@ namespace cp
         Extent2D<int> extent;
         Format imageFormat;
         void* nativeWindowHandle;
+        RegistryManager* registryManager = nullptr;
     };
 
     class Renderer
@@ -57,6 +55,10 @@ namespace cp
 
     public:
         void Resize(const Extent2D<int>& _newExtent);
+        bool AddFrameGraphPass(std::string _passTypeName, bool _recompile = false);
+        bool RemoveFrameGraphPass(std::string_view _passTypeName, bool _recompile = false);
+        void RecompileFrameGraph();
+        void ResetFrameGraph();
 
     public:
         void BeginFrame();
@@ -70,7 +72,8 @@ namespace cp
         void CreateFrameContext();
         void CreateSwapchain();
         void CreateInFlightFrameSemaphore();
-        
+
+        void RebuildFrameGraph();
         void BuildFrameGraph();
         void BlitFinalRenderingToSwapchain(const FrameContext& _context) const;
 
@@ -86,29 +89,8 @@ namespace cp
         RenderingHardwareInterface& renderingHardwareInterface;
 
         uint32_t frameIndex = 0;
-        
-        // FrameGraph
+
+        std::vector<std::string> frameGraphPassTypeNames;
         FrameGraph frameGraph;
-
-        // Rendering resources
-        std::shared_ptr<ITexture> texture;
-        std::shared_ptr<ITexture> depthTexture;
-
-        std::shared_ptr<IShaderModule> logoShaderModule;
-        std::shared_ptr<IPipelineLayout> logoPipelineLayout;
-        std::shared_ptr<IPipeline> logoPipeline;
-
-        std::shared_ptr<IDescriptorSetLayout> logoDescriptorSetLayout;
-        std::shared_ptr<IDescriptorSet> logoDescriptorSet;
-
-        AssetHandle<ITexture> logoTexture;
-        std::shared_ptr<ISampler> logoSampler;
-
-        std::shared_ptr<IShaderModule> negativeShaderModule;
-        std::shared_ptr<IPipelineLayout> negativePipelineLayout;
-        std::shared_ptr<IPipeline> negativePipeline;
-
-        std::shared_ptr<IDescriptorSetLayout> negativeDescriptorSetLayout;
-        std::shared_ptr<IDescriptorSet> negativeDescriptorSet;
     };
 }
