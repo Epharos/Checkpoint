@@ -100,6 +100,7 @@ add_subdirectory(ECS) # Entity Component System
 add_subdirectory(Builder) # Executable Builder module : Turning project files into a runnable executable
 add_subdirectory(Runtime/Standalone) # Standalone Runtime module : Game loop, Etc.
 add_subdirectory(Launcher) # Editor launcher module : Starts the editor with a selected project
+add_subdirectory(ExamplePlugin) # Example Plugin : used to test features
 
 function(copy_to_build TARGET)
     foreach(PATH IN LISTS ARGN)
