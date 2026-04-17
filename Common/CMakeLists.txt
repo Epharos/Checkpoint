@@ -25,6 +25,10 @@ add_library(Common STATIC
     "Private/Data/Viewport.hpp"
 
     "Private/Async/JobSystem.cpp"
+
+    "Private/Plugin/PluginHost.cpp"
+    "Private/Plugin/PluginAPI.hpp"
+    "Private/Plugin/PluginHost.hpp"
 )
 
 target_include_directories(Common PUBLIC
