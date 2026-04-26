@@ -1,4 +1,7 @@
 add_library(Common STATIC
+    "Private/Containers/SparseMap.hpp"
+    "Private/Containers/SparseSet.hpp"
+    "Private/Serialization/ISerializer.hpp"
     "Private/Util/Clock.cpp"
     "Private/Util/TerminalFormattingHelper.cpp"
 
@@ -29,6 +32,8 @@ add_library(Common STATIC
     "Private/Plugin/PluginHost.cpp"
     "Private/Plugin/PluginAPI.hpp"
     "Private/Plugin/PluginHost.hpp"
+
+    "Public/Common/Serialization/ISerializer.hpp"
 )
 
 target_include_directories(Common PUBLIC

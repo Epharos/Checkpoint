@@ -12,6 +12,7 @@ namespace cp
         bool PushBack(const T& item)
         {
             std::lock_guard lock(mutex);
+
             if (
                 const size_t next = (head + 1) % Capacity;
                 next != tail

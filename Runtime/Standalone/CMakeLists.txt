@@ -10,6 +10,7 @@ target_include_directories(Runtime_Standalone
 target_link_libraries(Runtime_Standalone
     PUBLIC
         Common
+        ECS
         Platform_GLFW # By the end it should be just Platform and load the corresponding platform dynamically
         RHI_Vulkan # By the end it should be just RHI and load the corresponding RHI dynamically
         Rendering
