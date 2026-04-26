@@ -28,4 +28,5 @@ target_link_libraries(Rendering
         Common
         RHI_Core
         Resources
+        ECS
 )

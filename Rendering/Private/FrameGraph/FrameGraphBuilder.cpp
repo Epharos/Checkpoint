@@ -278,6 +278,20 @@ namespace cp
         return (it != resourceMap.end()) ? it->second : nullptr;
     }
 
+    bool FrameGraphBuilder::HasCpuResource(const std::string& _name) const
+    {
+        CP_EXPECT_MSG(!_name.empty(), "CPU resource name cannot be empty");
+        return cpuResources.contains(_name);
+    }
+
+    void FrameGraphBuilder::RemoveCpuResource(const std::string& _name)
+    {
+        CP_EXPECT_MSG(!_name.empty(), "CPU resource name cannot be empty");
+
+        cpuResources.erase(_name);
+        cpuResourceTypes.erase(_name);
+    }
+
     void FrameGraphBuilder::Clear()
     {
         resources.clear();
@@ -288,6 +302,8 @@ namespace cp
         bufferAccesses.clear();
         textureFinalStates.clear();
         bufferFinalStates.clear();
+        cpuResources.clear();
+        cpuResourceTypes.clear();
         currentSetupPass = nullptr;
     }
 }

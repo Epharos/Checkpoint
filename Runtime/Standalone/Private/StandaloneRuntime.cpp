@@ -364,8 +364,8 @@ int main(int argc, char** argv)
         .extent = windowInfo.extent,
         .imageFormat = cp::Format::R8G8B8A8_UNORM,
         .nativeWindowHandle = window.GetNativeWindowHandle(),
-        .registryManager = &registryManager
         .registryManager = &registryManager,
+        .ecsWorld = &ecsWorld
     };
 
     cp::Renderer renderer { renderInfo, *rhi };

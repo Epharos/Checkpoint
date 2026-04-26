@@ -10,6 +10,8 @@
 #include <RHI/Rendering.hpp>
 #include <RHI/Synchro.hpp>
 
+#include <ECS/World.hpp>
+
 #include <Common/Core/Registry.hpp>
 #include <Common/Data/Rectangle.hpp>
 
@@ -171,6 +173,13 @@ namespace cp
             static_cast<uint32_t>(rendererInfo.extent.x()),
             static_cast<uint32_t>(rendererInfo.extent.y())
         };
+
+        if (rendererInfo.ecsWorld != nullptr)
+        {
+            std::shared_ptr<ecs::World> ecsWorldRef(rendererInfo.ecsWorld, [](ecs::World*) {});
+            // Deleter should do nothing as the shared_ptr is not the actual owner of the ECS World
+            frameGraph.ShareCpuResource<ecs::World>("ECS.World", std::move(ecsWorldRef));
+        }
 
         CP_EXPECT_MSG(rendererInfo.registryManager != nullptr, "RendererInfo.registryManager must be provided");
         const Registry<IRenderPass>* passRegistry =

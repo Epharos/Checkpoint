@@ -15,6 +15,11 @@
 
 namespace cp
 {
+    namespace ecs
+    {
+        class World;
+    }
+
     enum class QueueType : uint8_t;
     enum class Format : uint32_t;
     class RenderingHardwareInterface;
@@ -45,6 +50,7 @@ namespace cp
         Format imageFormat;
         void* nativeWindowHandle;
         RegistryManager* registryManager = nullptr;
+        ecs::World* ecsWorld = nullptr;
     };
 
     class Renderer

@@ -5,6 +5,11 @@
 #include <vector>
 #include <unordered_map>
 #include <limits>
+#include <typeindex>
+#include <type_traits>
+#include <utility>
+
+#include <Common/Core/Assert.hpp>
 
 #include "FramegraphResource.hpp"
 
@@ -97,6 +102,80 @@ namespace cp
          * @return Handle to the imported resource
          */
         FramegraphResourceHandle* ImportBuffer(const std::string& _name, std::shared_ptr<IBuffer> _buffer);
+
+        /**
+         * @brief Share an existing CPU-side resource by name.
+         * @tparam T Resource type
+         * @param _name Resource name for retrieval
+         * @param _resource Shared resource instance
+         */
+        template<typename T>
+        void ShareCpuResource(const std::string& _name, std::shared_ptr<T> _resource)
+        {
+            static_assert(!std::is_void_v<T>, "CPU resource type cannot be void");
+            CP_EXPECT_MSG(!_name.empty(), "CPU resource name cannot be empty");
+            CP_EXPECT_MSG(_resource != nullptr, "Cannot share null CPU resource");
+
+            const auto existing = cpuResourceTypes.find(_name);
+            if (existing != cpuResourceTypes.end())
+            {
+                CP_ASSERT_MSG(existing->second == std::type_index(typeid(T)), "CPU resource already exists with a different type");
+            }
+
+            cpuResources.insert_or_assign(_name, std::move(_resource));
+            cpuResourceTypes.insert_or_assign(_name, std::type_index(typeid(T)));
+        }
+
+        /**
+         * @brief Construct and share a CPU-side resource by name.
+         * @tparam T Resource type
+         * @tparam Args Constructor args
+         * @param _name Resource name for retrieval
+         * @param _args Constructor args forwarded to T
+         * @return Shared pointer to the stored resource
+         */
+        template<typename T, typename... Args>
+        std::shared_ptr<T> EmplaceCpuResource(const std::string& _name, Args&&... _args)
+        {
+            std::shared_ptr<T> resource = std::make_shared<T>(std::forward<Args>(_args)...);
+            ShareCpuResource(_name, resource);
+            return resource;
+        }
+
+        /**
+         * @brief Retrieve a shared CPU-side resource by name.
+         * @tparam T Expected resource type
+         * @param _name Resource name
+         * @return Shared pointer to resource, nullptr if not found
+         */
+        template<typename T>
+        [[nodiscard]] std::shared_ptr<T> GetCpuResource(const std::string& _name) const
+        {
+            static_assert(!std::is_void_v<T>, "CPU resource type cannot be void");
+            CP_EXPECT_MSG(!_name.empty(), "CPU resource name cannot be empty");
+
+            const auto it = cpuResources.find(_name);
+            if (it == cpuResources.end())
+            {
+                return nullptr;
+            }
+
+            const auto typeIt = cpuResourceTypes.find(_name);
+            CP_ASSERT_MSG(typeIt != cpuResourceTypes.end(), "CPU resource type metadata is missing");
+            CP_ASSERT_MSG(typeIt->second == std::type_index(typeid(T)), "Requested CPU resource type does not match stored type");
+
+            return std::static_pointer_cast<T>(it->second);
+        }
+
+        /**
+         * @brief Check if a CPU-side resource exists.
+         */
+        [[nodiscard]] bool HasCpuResource(const std::string& _name) const;
+
+        /**
+         * @brief Remove a shared CPU-side resource.
+         */
+        void RemoveCpuResource(const std::string& _name);
 
         /**
          * @brief Declare the final synchronization state expected after the last pass touching a texture.
@@ -236,6 +315,8 @@ namespace cp
         std::vector<BufferResourceAccess> bufferAccesses;
         std::unordered_map<FramegraphResource*, TextureSynchronization> textureFinalStates;
         std::unordered_map<FramegraphResource*, BufferSynchronization> bufferFinalStates;
+        std::unordered_map<std::string, std::shared_ptr<void>> cpuResources;
+        std::unordered_map<std::string, std::type_index> cpuResourceTypes;
         IRenderPass* currentSetupPass = nullptr;
     };
 }

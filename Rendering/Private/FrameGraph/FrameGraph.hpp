@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "Renderpass.hpp"
 #include "FrameGraphBuilder.hpp"
@@ -188,6 +189,49 @@ namespace cp
          * Useful for debugging or accessing intermediate results.
          */
         [[nodiscard]] FramegraphResource* GetResource(const std::string& _name);
+
+        /**
+         * @brief Share an existing CPU-side resource within this framegraph.
+         */
+        template<typename T>
+        void ShareCpuResource(const std::string& _name, std::shared_ptr<T> _resource)
+        {
+            builder.ShareCpuResource(_name, std::move(_resource));
+        }
+
+        /**
+         * @brief Construct and share a CPU-side resource within this framegraph.
+         */
+        template<typename T, typename... Args>
+        std::shared_ptr<T> EmplaceCpuResource(const std::string& _name, Args&&... _args)
+        {
+            return builder.EmplaceCpuResource<T>(_name, std::forward<Args>(_args)...);
+        }
+
+        /**
+         * @brief Retrieve a shared CPU-side resource by name.
+         */
+        template<typename T>
+        [[nodiscard]] std::shared_ptr<T> GetCpuResource(const std::string& _name) const
+        {
+            return builder.GetCpuResource<T>(_name);
+        }
+
+        /**
+         * @brief Check if a CPU-side resource exists.
+         */
+        [[nodiscard]] bool HasCpuResource(const std::string& _name) const
+        {
+            return builder.HasCpuResource(_name);
+        }
+
+        /**
+         * @brief Remove a shared CPU-side resource.
+         */
+        void RemoveCpuResource(const std::string& _name)
+        {
+            builder.RemoveCpuResource(_name);
+        }
 
         /**
          * @brief Check if the framegraph is compiled and ready for execution.
