@@ -30,8 +30,8 @@ namespace cp
 			.usage = BufferUsage::TransferSrc,
 			.cpuVisible = true
 		};
-		
-		auto stagingBuffer = rhi.CreateBuffer(stagingBufferInfo);
+
+		const auto stagingBuffer = rhi.CreateBuffer(stagingBufferInfo);
 
 		void* mappedMemory = stagingBuffer->Map();
 		if (!mappedMemory)
@@ -59,8 +59,8 @@ namespace cp
 		auto texture = rhi.CreateTexture(textureInfo);
 
 		auto& graphicsQueue = rhi.GetDevice().GetQueue(QueueType::Graphics, 0);
-		auto commandAllocator = rhi.CreateCommandAllocator(graphicsQueue);
-		auto cmdBuffer = commandAllocator->Allocate();
+		const auto commandAllocator = rhi.CreateCommandAllocator(graphicsQueue);
+		const auto cmdBuffer = commandAllocator->Allocate();
 
 		cmdBuffer->Begin();
 
@@ -77,7 +77,7 @@ namespace cp
 			.baseLayer = 0,
 			.layerCount = 1
 		};
-		cmdBuffer->AddBarrier(IBarrier { toTransferDst });
+		cmdBuffer->AddBarrier(toTransferDst);
 
 		const BufferTextureCopyRegion copyRegion{
 			.bufferOffset = 0,
@@ -104,7 +104,7 @@ namespace cp
 			.baseLayer = 0,
 			.layerCount = 1
 		};
-		cmdBuffer->AddBarrier(IBarrier{toShaderReadOnly});
+		cmdBuffer->AddBarrier(toShaderReadOnly);
 
 		cmdBuffer->End();
 
