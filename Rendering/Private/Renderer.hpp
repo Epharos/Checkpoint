@@ -91,7 +91,7 @@ namespace cp
         uint64_t* frameSignalValue = nullptr;
         uint64_t frameGlobalIndex = 0;
 
-        RendererInfo& rendererInfo;
+        RendererInfo rendererInfo;
         RenderingHardwareInterface& renderingHardwareInterface;
 
         uint32_t frameIndex = 0;
