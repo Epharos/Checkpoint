@@ -1,5 +1,8 @@
 add_library(ExamplePlugin SHARED
     "Private/ExamplePlugin.cpp"
+    "Private/Components/RenderingComponents.hpp"
+    "Private/Components/RenderingComponentRegistrars.hpp"
+    "Private/RenderPasses/OpaqueMaterialPass.hpp"
 )
 
 target_include_directories(ExamplePlugin
@@ -10,8 +13,11 @@ target_include_directories(ExamplePlugin
 target_link_libraries(ExamplePlugin
     PUBLIC
         Common
+        ECS
         Rendering
         RHI_Core
+    PRIVATE
+        glm::glm
 )
 
 if(TARGET Runtime_Standalone)
