@@ -10,11 +10,13 @@
 namespace cp
 {
 	class RegistryManager;
+	class AssetRegistry;
 
 	struct PluginHostContext
 	{
 		ILogger* mainLogger = nullptr;
 		RegistryManager* registryManager = nullptr;
+		AssetRegistry* assetRegistry = nullptr;
 	};
 
 	using PluginRegisterFn = bool(*)(PluginHostContext& _context);
