@@ -1,4 +1,5 @@
 add_executable(Runtime_Standalone
+    "Private/StandaloneApplication.cpp"
     "Private/StandaloneRuntime.cpp"
 )
 
