@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <system_error>
 #include <vector>
 
 namespace cp
@@ -49,5 +50,31 @@ namespace cp
         }
 
         return {};
+    }
+
+    inline std::filesystem::path GetRelativePath(
+        const std::filesystem::path& _path
+    )
+    {
+        if (_path.empty())
+        {
+            return {};
+        }
+
+        const std::filesystem::path currentPath = std::filesystem::current_path();
+        std::filesystem::path absolutePath = std::filesystem::absolute(_path);
+
+        std::error_code ec;
+        std::filesystem::path relativePath = std::filesystem::relative(absolutePath, currentPath, ec);
+        if (ec || relativePath.empty())
+        {
+            relativePath = absolutePath.lexically_relative(currentPath);
+            if (relativePath.empty())
+            {
+                return absolutePath;
+            }
+        }
+
+        return relativePath;
     }
 }
