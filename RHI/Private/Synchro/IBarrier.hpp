@@ -53,8 +53,8 @@ namespace cp
     class IBarrier
     {
     public:
-        explicit IBarrier(const TextureBarrierInfo& _barrierInfo) : type(BarrierType::Texture), textureBarrierInfo(_barrierInfo) {}
-        explicit IBarrier(const BufferBarrierInfo& _barrierInfo) : type(BarrierType::Buffer), bufferBarrierInfo(_barrierInfo) {}
+        IBarrier(const TextureBarrierInfo& _barrierInfo) : type(BarrierType::Texture), textureBarrierInfo(_barrierInfo) {}
+        IBarrier(const BufferBarrierInfo& _barrierInfo) : type(BarrierType::Buffer), bufferBarrierInfo(_barrierInfo) {}
 
         [[nodiscard]] BarrierType GetType() const { return type; }
 

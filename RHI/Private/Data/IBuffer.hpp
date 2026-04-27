@@ -57,6 +57,6 @@ namespace cp
 		[[nodiscard]] const BufferInfo& GetBufferInfo() const { return info; };
 
 	protected:
-		const BufferInfo& info;
+		const BufferInfo info;
 	};
 }
