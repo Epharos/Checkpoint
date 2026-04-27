@@ -132,6 +132,13 @@ namespace cp::ecs
         [[maybe_unused]] Archetype& init = GetOrCreateArchetype({});
     }
 
+    void World::ClearComponentTypes()
+    {
+        componentTypeByGuid.clear();
+        componentTypeByTypeIndex.clear();
+        componentTypes.clear();
+    }
+
     void World::SetRequiredPlugins(std::vector<std::string> _pluginNames)
     {
         requiredPlugins = std::move(_pluginNames);

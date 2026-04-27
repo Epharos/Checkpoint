@@ -67,6 +67,7 @@ namespace cp::ecs
 
         void ReserveEntities(size_t count);
         void Clear();
+        void ClearComponentTypes();
 
         template<MutableComponent Component, typename... Args>
         Component& AddComponent(Entity _entity, Args&&... _args);
