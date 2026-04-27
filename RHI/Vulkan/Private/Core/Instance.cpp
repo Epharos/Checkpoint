@@ -43,6 +43,8 @@ namespace cp
 
 		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Instance created successfully")));
 
+		CreateDynamicLoader();
+
 		if (instanceInfo.enableValidationLayers)
 		{
 			if (!CreateDebugMessenger())
@@ -158,10 +160,14 @@ namespace cp
 		return instance != VK_NULL_HANDLE;
 	}
 
+	void Instance::CreateDynamicLoader()
+	{
+		dispatchLoaderDynamic = vk::detail::DispatchLoaderDynamic(instance, vkGetInstanceProcAddr);
+	}
+
 	bool Instance::CreateDebugMessenger()
 	{
 		CP_PROFILE_SCOPE_NAMED("VulkanInstance#Create Debug Messenger");
-		dispatchLoaderDynamic = vk::detail::DispatchLoaderDynamic(instance, vkGetInstanceProcAddr);
 
 		vk::PFN_DebugUtilsMessengerCallbackEXT callback = reinterpret_cast<vk::PFN_DebugUtilsMessengerCallbackEXT>(cp::Instance::DebugLayerCallback);
 

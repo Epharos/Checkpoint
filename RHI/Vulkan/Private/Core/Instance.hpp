@@ -23,6 +23,9 @@ namespace cp
 		void ValidateExtensionsAndLayers(const std::vector<const char*>& _extensions, const std::vector<const char*>& _layers) const;
 
 		bool CreateInstance();
+
+		void CreateDynamicLoader();
+
 		bool CreateDebugMessenger();
 
 		static VKAPI_ATTR vk::Bool32 VKAPI_PTR DebugLayerCallback(
