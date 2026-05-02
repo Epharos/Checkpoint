@@ -120,6 +120,7 @@ namespace cp::ecs
 
         void SetStartupSystems(std::vector<TypeGuid> _systemGuids);
         [[nodiscard]] const std::vector<TypeGuid>& GetStartupSystems() const;
+        [[nodiscard]] std::vector<Entity> GetAliveEntities() const;
 
         [[nodiscard]] bool SerializeBinary(ISerializer& _serializer) const;
         [[nodiscard]] bool DeserializeBinary(IDeserializer& _deserializer);

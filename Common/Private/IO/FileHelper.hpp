@@ -53,7 +53,8 @@ namespace cp
     }
 
     inline std::filesystem::path GetRelativePath(
-        const std::filesystem::path& _path
+        const std::filesystem::path& _path,
+        const std::filesystem::path& _currentPath = std::filesystem::current_path()
     )
     {
         if (_path.empty())
@@ -61,14 +62,13 @@ namespace cp
             return {};
         }
 
-        const std::filesystem::path currentPath = std::filesystem::current_path();
         std::filesystem::path absolutePath = std::filesystem::absolute(_path);
 
         std::error_code ec;
-        std::filesystem::path relativePath = std::filesystem::relative(absolutePath, currentPath, ec);
+        std::filesystem::path relativePath = std::filesystem::relative(absolutePath, _currentPath, ec);
         if (ec || relativePath.empty())
         {
-            relativePath = absolutePath.lexically_relative(currentPath);
+            relativePath = absolutePath.lexically_relative(_currentPath);
             if (relativePath.empty())
             {
                 return absolutePath;

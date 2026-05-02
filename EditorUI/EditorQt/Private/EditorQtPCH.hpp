@@ -1,0 +1,42 @@
+#pragma once
+
+#include <algorithm>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
+#include <filesystem>
+
+#include <QApplication>
+#include <QWidget>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QTreeWidget>
+#include <QTreeWidgetItem>
+#include <QMenu>
+#include <QAction>
+#include <QMenuBar>
+#include <QMainWindow>
+#include <QDockWidget>
+#include <QTabWidget>
+#include <QLineEdit>
+#include <QLabel>
+#include <QTextEdit>
+#include <QComboBox>
+#include <QSpinBox>
+#include <QDoubleSpinBox>
+#include <QCheckBox>
+#include <QPushButton>
+#include <QStackedWidget>
+#include <QStandardItem>
+#include <QStandardItemModel>
+#include <QSplitter>
+#include <QFileDialog>
+
+#include <EditorUI/EditorUI.hpp>

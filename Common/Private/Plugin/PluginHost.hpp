@@ -37,7 +37,10 @@ namespace cp
 			std::string name;
 			std::filesystem::path path;
 			void* nativeHandle = nullptr;
-			PluginShutdownFn shutdownPlugin = nullptr;
+			PluginShutdownRuntimeFn shutdownRuntime = nullptr;
+			PluginShutdownEditorFn shutdownEditor = nullptr;
+			bool runtimeRegistered = false;
+			bool editorRegistered = false;
 		};
 
 		PluginHostContext context;

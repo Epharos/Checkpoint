@@ -215,27 +215,48 @@ namespace cp
 			return false;
 		}
 
-		if (descriptor->registerPlugin == nullptr)
+		if (descriptor->registerRuntime == nullptr)
 		{
-			lastError = "Plugin descriptor has no register function: " + _path.string();
+			lastError = "Plugin descriptor has no runtime register function: " + _path.string();
 			std::string closeError;
 			[[maybe_unused]] bool flag = CloseLibrary(nativeHandle, closeError);
 			return false;
 		}
 
-		if (!descriptor->registerPlugin(context))
+		if (!descriptor->registerRuntime(context.runtimeContext))
 		{
-			lastError = "Plugin registration failed: " + _path.string();
+			lastError = "Plugin runtime registration failed: " + _path.string();
 			std::string closeError;
 			[[maybe_unused]] bool flag = CloseLibrary(nativeHandle, closeError);
 			return false;
+		}
+
+		bool editorRegistered = false;
+		if (context.loadProfile == PluginHostLoadProfile::RuntimeThenEditor && descriptor->registerEditor != nullptr)
+		{
+			if (!descriptor->registerEditor(context.editorContext))
+			{
+				lastError = "Plugin editor registration failed: " + _path.string();
+				if (descriptor->shutdownRuntime != nullptr)
+				{
+					descriptor->shutdownRuntime(context.runtimeContext);
+				}
+				std::string closeError;
+				[[maybe_unused]] bool flag = CloseLibrary(nativeHandle, closeError);
+				return false;
+			}
+
+			editorRegistered = true;
 		}
 
 		LoadedPlugin loadedPlugin;
 		loadedPlugin.name = descriptor->name != nullptr ? descriptor->name : _path.stem().string();
 		loadedPlugin.path = _path;
 		loadedPlugin.nativeHandle = nativeHandle;
-		loadedPlugin.shutdownPlugin = descriptor->shutdownPlugin;
+		loadedPlugin.shutdownRuntime = descriptor->shutdownRuntime;
+		loadedPlugin.shutdownEditor = descriptor->shutdownEditor;
+		loadedPlugin.runtimeRegistered = true;
+		loadedPlugin.editorRegistered = editorRegistered;
 		plugins.emplace_back(std::move(loadedPlugin));
 
 		return true;
@@ -299,9 +320,14 @@ namespace cp
 			return false;
 		}
 
-		if (pluginIterator->shutdownPlugin != nullptr)
+		if (pluginIterator->editorRegistered && pluginIterator->shutdownEditor != nullptr)
 		{
-			pluginIterator->shutdownPlugin(context);
+			pluginIterator->shutdownEditor(context.editorContext);
+		}
+
+		if (pluginIterator->runtimeRegistered && pluginIterator->shutdownRuntime != nullptr)
+		{
+			pluginIterator->shutdownRuntime(context.runtimeContext);
 		}
 
 		if (!CloseLibrary(pluginIterator->nativeHandle, lastError))
@@ -320,9 +346,14 @@ namespace cp
 
 		for (auto pluginIterator = plugins.rbegin(); pluginIterator != plugins.rend(); ++pluginIterator)
 		{
-			if (pluginIterator->shutdownPlugin != nullptr)
+			if (pluginIterator->editorRegistered && pluginIterator->shutdownEditor != nullptr)
 			{
-				pluginIterator->shutdownPlugin(context);
+				pluginIterator->shutdownEditor(context.editorContext);
+			}
+
+			if (pluginIterator->runtimeRegistered && pluginIterator->shutdownRuntime != nullptr)
+			{
+				pluginIterator->shutdownRuntime(context.runtimeContext);
 			}
 
 			std::string closeError;

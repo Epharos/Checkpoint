@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string_view>
 
 #include "../Log/ILogger.hpp"
@@ -12,27 +13,51 @@ namespace cp
 	class RegistryManager;
 	class AssetRegistry;
 
-	struct PluginHostContext
+	struct PluginRuntimeContext
 	{
 		ILogger* mainLogger = nullptr;
 		RegistryManager* registryManager = nullptr;
 		AssetRegistry* assetRegistry = nullptr;
 	};
 
-	using PluginRegisterFn = bool(*)(PluginHostContext& _context);
-	using PluginShutdownFn = void(*)(PluginHostContext& _context);
+	struct PluginEditorContext
+	{
+		ILogger* mainLogger = nullptr;
+		RegistryManager* registryManager = nullptr;
+		AssetRegistry* assetRegistry = nullptr;
+	};
+
+	using PluginRegisterRuntimeFn = bool(*)(PluginRuntimeContext& _context);
+	using PluginShutdownRuntimeFn = void(*)(PluginRuntimeContext& _context);
+	using PluginRegisterEditorFn = bool(*)(PluginEditorContext& _context);
+	using PluginShutdownEditorFn = void(*)(PluginEditorContext& _context);
+
+	enum class PluginHostLoadProfile : uint8_t
+	{
+		RuntimeOnly,
+		RuntimeThenEditor
+	};
+
+	struct PluginHostContext
+	{
+		PluginHostLoadProfile loadProfile = PluginHostLoadProfile::RuntimeOnly;
+		PluginRuntimeContext runtimeContext{};
+		PluginEditorContext editorContext{};
+	};
 
 	struct PluginDescriptor
 	{
 		uint32_t apiVersion = 0;
 		const char* name = nullptr;
-		PluginRegisterFn registerPlugin = nullptr;
-		PluginShutdownFn shutdownPlugin = nullptr;
+		PluginRegisterRuntimeFn registerRuntime = nullptr;
+		PluginShutdownRuntimeFn shutdownRuntime = nullptr;
+		PluginRegisterEditorFn registerEditor = nullptr;
+		PluginShutdownEditorFn shutdownEditor = nullptr;
 	};
 
 	using PluginEntryFn = const PluginDescriptor* (*)();
 
-	inline constexpr uint32_t PluginApiVersion = 1;
+	inline constexpr uint32_t PluginApiVersion = 2;
 	inline constexpr std::string_view PluginEntryPointName = "CP_GetPluginDescriptor";
 }
 
@@ -42,14 +67,16 @@ namespace cp
 	#define CP_PLUGIN_EXPORT extern "C"
 #endif
 
-#define CP_DECLARE_PLUGIN(_name, _registerFn, _shutdownFn)                              \
+#define CP_DECLARE_PLUGIN(_name, _registerRuntimeFn, _shutdownRuntimeFn, _registerEditorFn, _shutdownEditorFn) \
 	CP_PLUGIN_EXPORT const cp::PluginDescriptor* CP_GetPluginDescriptor()               \
 	{                                                                                   \
 		static const cp::PluginDescriptor descriptor{                                   \
 			cp::PluginApiVersion,                                                       \
 			_name,                                                                      \
-			_registerFn,                                                                \
-			_shutdownFn                                                                 \
+			_registerRuntimeFn,                                                         \
+			_shutdownRuntimeFn,                                                         \
+			_registerEditorFn,                                                          \
+			_shutdownEditorFn                                                           \
 		};                                                                              \
 		return &descriptor;                                                             \
 	}

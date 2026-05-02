@@ -3,7 +3,7 @@
 #include <iostream>
 #include <ECS/ECS.hpp>
 
-#include "../Components/RenderingComponentRegistrars.hpp"
+#include "../Components/Components.hpp"
 
 namespace cp
 {
@@ -26,8 +26,8 @@ namespace cp
         {
             _world.RunSystem(
                 ecs::ReadAccess<MeshRenderer>{},
-                ecs::WriteAccess<Transform3D>{},
-                [_deltaTime](const ecs::Entity _entity, const MeshRenderer& _meshRenderer, Transform3D& _transform)
+                ecs::WriteAccess<Transform>{},
+                [_deltaTime](const ecs::Entity _entity, const MeshRenderer& _meshRenderer, Transform& _transform)
                 {
                     _transform.yaw += _deltaTime * 90.f;
                 }

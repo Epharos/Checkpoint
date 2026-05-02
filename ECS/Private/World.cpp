@@ -159,6 +159,22 @@ namespace cp::ecs
         return startupSystems;
     }
 
+    std::vector<Entity> World::GetAliveEntities() const
+    {
+        std::vector<Entity> aliveEntities;
+        aliveEntities.reserve(entityRecords.size());
+        for (size_t i = 0; i < entityRecords.size(); ++i)
+        {
+            const Entity candidate{static_cast<uint32_t>(i), entityRecords[i].generation};
+            if (IsAlive(candidate))
+            {
+                aliveEntities.push_back(candidate);
+            }
+        }
+
+        return aliveEntities;
+    }
+
     ComponentTypeId World::RegisterComponentType(const ComponentTypeInfo& _info)
     {
         const auto componentId = static_cast<ComponentTypeId>(componentTypes.size());
@@ -418,16 +434,7 @@ namespace cp::ecs
             _serializer.WritePod(systemGuid);
         }
 
-        std::vector<Entity> aliveEntities;
-        aliveEntities.reserve(entityRecords.size());
-        for (size_t i = 0; i < entityRecords.size(); ++i)
-        {
-            const Entity candidate{static_cast<uint32_t>(i), entityRecords[i].generation};
-            if (IsAlive(candidate))
-            {
-                aliveEntities.push_back(candidate);
-            }
-        }
+        const std::vector<Entity> aliveEntities = GetAliveEntities();
 
         _serializer.WritePod(static_cast<uint32_t>(aliveEntities.size()));
         for (const Entity entity : aliveEntities)

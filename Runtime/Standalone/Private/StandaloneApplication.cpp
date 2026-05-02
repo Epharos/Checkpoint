@@ -3,6 +3,7 @@
 #include <Common/Async/JobSystem.hpp>
 #include <Common/Core/Macros.hpp>
 #include <Common/IO/FileHelper.hpp>
+#include <Common/Plugin/PluginRegistryNames.hpp>
 #include <Common/Util/Clock.hpp>
 
 #include <RHI/Core.hpp>
@@ -20,8 +21,6 @@
 #include <span>
 #include <thread>
 #include <vector>
-
-#include "../../../ExamplePlugin/Private/Components/RenderingComponentRegistrars.hpp"
 
 namespace
 {
@@ -196,18 +195,26 @@ namespace cp
 
     void StandaloneApplication::InitRegistry()
     {
-        registryManager.GetOrCreate<IRenderPass>("Renderpass");
-        registryManager.GetOrCreate<ecs::ISystem>("EcsSystem");
-        registryManager.GetOrCreate<ecs::IComponentRegistrar>("EcsComponent");
+        registryManager.GetOrCreate<IRenderPass>(std::string(cp::RenderPassRegistryName));
+        registryManager.GetOrCreate<ecs::ISystem>(std::string(cp::EcsSystemRegistryName));
+        registryManager.GetOrCreate<ecs::IComponentRegistrar>(std::string(cp::EcsComponentRegistryName));
     }
 
     void StandaloneApplication::InitPlugins(int argc, char** argv)
     {
         PluginHostContext pluginHostContext
         {
-            .mainLogger = compositeLogger.get(),
-            .registryManager = &registryManager,
-            .assetRegistry = &AssetRegistry::Instance(),
+            .loadProfile = PluginHostLoadProfile::RuntimeOnly,
+            .runtimeContext = PluginRuntimeContext{
+                .mainLogger = compositeLogger.get(),
+                .registryManager = &registryManager,
+                .assetRegistry = &AssetRegistry::Instance()
+            },
+            .editorContext = PluginEditorContext{
+                .mainLogger = compositeLogger.get(),
+                .registryManager = &registryManager,
+                .assetRegistry = &AssetRegistry::Instance()
+            }
         };
 
         pluginHost = std::make_unique<PluginHost>(pluginHostContext);
@@ -326,7 +333,7 @@ namespace cp
     void StandaloneApplication::RegisterPluginComponents()
     {
         if (const Registry<ecs::IComponentRegistrar>* componentRegistry =
-            registryManager.Find<ecs::IComponentRegistrar>("EcsComponent"))
+            registryManager.Find<ecs::IComponentRegistrar>(cp::EcsComponentRegistryName))
         {
             for (const std::string& registrarName : componentRegistry->Names())
             {
@@ -338,13 +345,13 @@ namespace cp
 
     void StandaloneApplication::InitEcsWorld()
     {
-        const std::filesystem::path worldPath = FindFileInParentTree("Suzanne.ecsbin");
+        const std::filesystem::path worldPath = FindFileInParentTree("Scene.ecsbin");
         if (worldPath.empty())
         {
             compositeLogger->Log(CP_LOG_EVENT(
                 ILogger::Warning,
                 InitLabel,
-                Message::Create("ECS world file not found: Suzanne.ecsbin")
+                Message::Create("ECS world file not found: Scene.ecsbin")
             ));
             return;
         }
@@ -388,7 +395,7 @@ namespace cp
         }
 
         if (Registry<ecs::ISystem>* ecsSystemRegistry =
-            registryManager.Find<ecs::ISystem>("EcsSystem"))
+            registryManager.Find<ecs::ISystem>(cp::EcsSystemRegistryName))
         {
             for (const ecs::TypeGuid systemGuid : ecsWorld.GetStartupSystems())
             {

@@ -27,7 +27,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "../Components/RenderingComponents.hpp"
+#include "../Components/Components.hpp"
 
 namespace cp
 {
@@ -280,9 +280,9 @@ namespace cp
 
             std::unordered_map<std::string, Batch> batches;
             data.ecsWorld->RunSystem(
-                ecs::ReadAccess<MeshRenderer, Transform3D>{},
+                ecs::ReadAccess<MeshRenderer, Transform>{},
                 ecs::WriteAccess<>{},
-                [&batches](const MeshRenderer& _meshRenderer, const Transform3D& _transform)
+                [&batches](const MeshRenderer& _meshRenderer, const Transform& _transform)
                 {
                     if (!_meshRenderer.visible || !_meshRenderer.meshId.IsValid())
                     {
@@ -314,12 +314,12 @@ namespace cp
             }
 
             Camera cameraComponent{};
-            Transform3D cameraTransform{};
+            Transform cameraTransform{};
             bool hasPrimaryCamera = false;
             data.ecsWorld->RunSystem(
-                ecs::ReadAccess<Camera, Transform3D>{},
+                ecs::ReadAccess<Camera, Transform>{},
                 ecs::WriteAccess<>{},
-                [&cameraComponent, &cameraTransform, &hasPrimaryCamera](const Camera& _camera, const Transform3D& _transform)
+                [&cameraComponent, &cameraTransform, &hasPrimaryCamera](const Camera& _camera, const Transform& _transform)
                 {
                     if (hasPrimaryCamera)
                     {
@@ -439,7 +439,7 @@ namespace cp
         }
 
     private:
-        static glm::mat4 BuildModelMatrix(const Transform3D& _transform)
+        static glm::mat4 BuildModelMatrix(const Transform& _transform)
         {
             glm::mat4 model(1.0f);
             model = glm::translate(model, glm::vec3(_transform.x, _transform.y, _transform.z));
@@ -450,7 +450,7 @@ namespace cp
             return model;
         }
 
-        static glm::mat4 BuildViewMatrix(const Transform3D& _transform)
+        static glm::mat4 BuildViewMatrix(const Transform& _transform)
         {
             glm::mat4 cameraWorld(1.0f);
             cameraWorld = glm::translate(cameraWorld, glm::vec3(_transform.x, _transform.y, _transform.z));

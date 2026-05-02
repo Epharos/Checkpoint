@@ -22,7 +22,7 @@ project(
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++")
+# set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++")
 
 #########################
 # External Dependencies #
@@ -100,6 +100,8 @@ add_subdirectory(ECS) # Entity Component System
 add_subdirectory(Builder) # Executable Builder module : Turning project files into a runnable executable
 add_subdirectory(Runtime/Standalone) # Standalone Runtime module : Game loop, Etc.
 add_subdirectory(Launcher) # Editor launcher module : Starts the editor with a selected project
+add_subdirectory(EditorUI) # Editor UI abstraction layer and backends
+add_subdirectory(Editor) # Editor module : orchestrates editor tools and UI composition
 add_subdirectory(ExamplePlugin) # Example Plugin : used to test features
 
 function(copy_to_build TARGET)

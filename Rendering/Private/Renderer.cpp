@@ -69,13 +69,8 @@ namespace cp
         // Wait for GPU to complete all work
         renderingHardwareInterface.GetDevice().WaitIdle();
 
-        rendererInfo.extent = _newExtent;
-        swapchain->Resize(rendererInfo.extent);
-
-        CP_ASSERT_MSG(
-            rendererInfo.extent == swapchain->GetImageExtent(),
-            "Swapchain extent does not match Renderer extent"
-        );
+        swapchain->Resize(_newExtent);
+        rendererInfo.extent = swapchain->GetImageExtent();
 
         RebuildFrameGraph();
     }
