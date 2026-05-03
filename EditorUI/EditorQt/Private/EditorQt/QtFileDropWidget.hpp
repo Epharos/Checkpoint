@@ -24,7 +24,7 @@ namespace cp::editorqt
 			  placeholderText("Drop mesh file here...")
 		{
 			setAcceptDrops(true);
-			setStyleSheet("border: 2px dashed #888; border-radius: 4px; background-color: #f5f5f5;");
+			setStyleSheet("border: 2px dashed #888; border-radius: 4px; background-color: #f5f5f5; color: #21242c;");
 			setMinimumHeight(32);
 
 			layout->setContentsMargins(8, 4, 8, 4);
@@ -127,7 +127,7 @@ namespace cp::editorqt
 			if (_event->mimeData()->hasUrls())
 			{
 				_event->acceptProposedAction();
-				setStyleSheet("border: 2px solid #4CAF50; border-radius: 4px; background-color: #e8f5e9;");
+				setStyleSheet("border: 2px solid #4CAF50; border-radius: 4px; background-color: #e8f5e9; color: #21242c;");
 			}
 		}
 
@@ -136,7 +136,7 @@ namespace cp::editorqt
 			if (_event)
 			{
 				_event->accept();
-				setStyleSheet("border: 2px dashed #888; border-radius: 4px; background-color: #f5f5f5;");
+				setStyleSheet("border: 2px dashed #888; border-radius: 4px; background-color: #f5f5f5; color: #21242c;");
 			}
 		}
 
@@ -147,7 +147,7 @@ namespace cp::editorqt
 				return;
 			}
 
-			setStyleSheet("border: 2px dashed #888; border-radius: 4px; background-color: #f5f5f5;");
+			setStyleSheet("border: 2px dashed #888; border-radius: 4px; background-color: #f5f5f5; color: #21242c;");
 
 			if (!_event->mimeData()->hasUrls())
 			{
