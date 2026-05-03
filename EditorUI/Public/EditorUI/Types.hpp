@@ -117,6 +117,11 @@ namespace cp::editorui
 			String,
 			Vec3
 		};
+		enum class InputType : std::uint8_t
+		{
+			Default,
+			FilePath
+		};
 		struct Vec3
 		{
 			double x = 0.0;
@@ -125,6 +130,7 @@ namespace cp::editorui
 		};
 		using Value = std::variant<bool, std::int64_t, double, std::string, Vec3>;
 		ValueType valueType = ValueType::String;
+		InputType inputType = InputType::Default;
 		Value value = std::string{};
 		bool readOnly = true;
 	};

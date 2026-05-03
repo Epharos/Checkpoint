@@ -87,9 +87,11 @@ namespace cp::editorui
 	{
 	public:
 		using FieldEditedHandler = std::function<void(std::string_view, std::string_view, const InspectorField::Value&)>;
+		using AddComponentMenuHandler = std::function<std::shared_ptr<IContextMenu>()>;
 
 		virtual void SetSections(std::vector<InspectorSection> _sections) = 0;
 		virtual void SetFieldEditedHandler(FieldEditedHandler _handler) = 0;
+		virtual void SetAddComponentMenuHandler(AddComponentMenuHandler _handler) = 0;
 		virtual void Clear() = 0;
 	};
 

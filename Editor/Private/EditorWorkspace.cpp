@@ -693,6 +693,7 @@ namespace cp::editor
 									.id = authoredField.id,
 									.label = authoredField.label,
 									.valueType = ToEditorInspectorValueType(authoredField.valueType),
+									.inputType = static_cast<cp::editorui::InspectorField::InputType>(authoredField.inputType),
 									.value = ToEditorInspectorValue(authoredField.value),
 									.readOnly = authoredField.readOnly
 								});
@@ -762,6 +763,24 @@ namespace cp::editor
 			}
 
 			refreshInspectorView();
+		});
+
+		inspectorView->SetAddComponentMenuHandler([this, sceneState, selectedEntityResolver, componentAuthoringBindings]() -> std::shared_ptr<cp::editorui::IContextMenu>
+		{
+			const auto menu = backend->CreateContextMenu("inspector.addComponent");
+			const std::optional<cp::ecs::Entity> selectedEntity = selectedEntityResolver();
+			
+			if (selectedEntity.has_value() && !componentAuthoringBindings->empty())
+			{
+				for (ComponentAuthoringBinding& binding : *componentAuthoringBindings)
+				{
+					const bool hasComponent = binding.authoring->HasComponent(*ecsWorld, selectedEntity.value());
+					binding.addAction->SetEnabled(!hasComponent);
+					menu->AddAction(binding.addAction);
+				}
+			}
+			
+			return menu;
 		});
 
 		const auto loadScene = [this, sceneState, activeScenePath, refreshHierarchyView, refreshInspectorView](const std::filesystem::path& _scenePath) -> bool
@@ -885,7 +904,7 @@ namespace cp::editor
 			refreshInspectorView();
 		});
 
-		hierarchyView->SetContextMenuHandler([this, sceneState, createEntityAction, selectedEntityResolver, componentAuthoringBindings](const cp::editorui::EntityId _entityId)
+		hierarchyView->SetContextMenuHandler([this, sceneState, createEntityAction](const cp::editorui::EntityId _entityId)
 		{
 			sceneState->contextEntityId = _entityId;
 			sceneState->selectedEntityId = _entityId;
@@ -893,19 +912,6 @@ namespace cp::editor
 
 			const auto menu = backend->CreateContextMenu("hierarchy.context");
 			menu->AddAction(createEntityAction);
-			const std::optional<cp::ecs::Entity> selectedEntity = selectedEntityResolver();
-			if (selectedEntity.has_value() && !componentAuthoringBindings->empty())
-			{
-				menu->AddSeparator();
-				for (ComponentAuthoringBinding& binding : *componentAuthoringBindings)
-				{
-					const bool hasComponent = binding.authoring->HasComponent(*ecsWorld, selectedEntity.value());
-					binding.addAction->SetEnabled(!hasComponent);
-					binding.removeAction->SetEnabled(hasComponent);
-					menu->AddAction(binding.addAction);
-					menu->AddAction(binding.removeAction);
-				}
-			}
 			return menu;
 		});
 

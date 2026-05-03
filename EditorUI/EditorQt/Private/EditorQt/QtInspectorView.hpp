@@ -1,11 +1,15 @@
 #pragma once
 
 #include "EditorQtCommon.hpp"
+#include "QtContextMenu.hpp"
+#include "QtFileDropWidget.hpp"
 
 #include <QCheckBox>
 #include <QDoubleSpinBox>
 #include <QSignalBlocker>
 #include <QSpinBox>
+#include <QPushButton>
+#include <QVBoxLayout>
 
 #include <algorithm>
 #include <limits>
@@ -17,12 +21,32 @@ namespace cp::editorqt
 	public:
 		explicit QtInspectorView(std::string _id)
 			: QtWidgetBase(std::move(_id)),
-			  tree(new QTreeWidget())
+			  mainWidget(new QWidget()),
+			  tree(new QTreeWidget()),
+			  addComponentButton(new QPushButton("Add Component"))
 		{
 			tree->setObjectName(ToQString(GetId()));
 			tree->setColumnCount(2);
 			tree->setHeaderLabels(QStringList{ "Property", "Value" });
 			tree->header()->setStretchLastSection(true);
+
+			auto* layout = new QVBoxLayout(mainWidget.get());
+			layout->setContentsMargins(0, 0, 0, 0);
+			layout->setSpacing(4);
+			layout->addWidget(addComponentButton.get());
+			layout->addWidget(tree.get());
+
+			QObject::connect(addComponentButton.get(), &QPushButton::customContextMenuRequested, [this](const QPoint& _position)
+			{
+				ShowAddComponentMenu(_position);
+			});
+
+			QObject::connect(addComponentButton.get(), &QPushButton::clicked, [this]()
+			{
+				ShowAddComponentMenu(addComponentButton->rect().bottomLeft());
+			});
+
+			addComponentButton->setContextMenuPolicy(Qt::CustomContextMenu);
 		}
 
 		[[nodiscard]] std::string_view GetId() const override { return QtWidgetBase::GetId(); }
@@ -59,6 +83,11 @@ namespace cp::editorqt
 			fieldEditedHandler = std::move(_handler);
 		}
 
+		void SetAddComponentMenuHandler(AddComponentMenuHandler _handler) override
+		{
+			addComponentMenuHandler = std::move(_handler);
+		}
+
 		void Clear() override
 		{
 			tree->clear();
@@ -66,7 +95,7 @@ namespace cp::editorqt
 
 		[[nodiscard]] QWidget* GetQWidget() const override
 		{
-			return tree.get();
+			return mainWidget.get();
 		}
 
 	private:
@@ -180,6 +209,21 @@ namespace cp::editorqt
 			const std::string& _sectionId,
 			const cp::editorui::InspectorField& _field)
 		{
+			if (_field.inputType == cp::editorui::InspectorField::InputType::FilePath && !_field.readOnly)
+			{
+				auto* dropWidget = new cp::editorqt::QtFileDropWidget(tree.get());
+				if (const std::string* value = std::get_if<std::string>(&_field.value))
+				{
+					dropWidget->SetFilePath(std::filesystem::path(*value));
+				}
+				dropWidget->SetFileDropCallback([this, sectionId = _sectionId, fieldId = _field.id](const std::filesystem::path& _path)
+				{
+					EmitFieldEdited(sectionId, fieldId, _path.string());
+				});
+				tree->setItemWidget(&_item, 1, dropWidget);
+				return;
+			}
+
 			auto* edit = new QLineEdit(tree.get());
 			edit->setEnabled(!_field.readOnly);
 			if (const std::string* value = std::get_if<std::string>(&_field.value))
@@ -241,8 +285,29 @@ namespace cp::editorqt
 			QObject::connect(zSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), tree.get(), [emitVec](double) { emitVec(); });
 		}
 
+		void ShowAddComponentMenu(const QPoint& _position)
+		{
+			if (!addComponentMenuHandler)
+			{
+				return;
+			}
+
+			const auto menu = addComponentMenuHandler();
+			const auto qtMenu = std::dynamic_pointer_cast<QtContextMenu>(menu);
+			if (!qtMenu)
+			{
+				return;
+			}
+
+			const QPoint globalPos = addComponentButton->mapToGlobal(_position);
+			qtMenu->Exec(globalPos);
+		}
+
+		std::unique_ptr<QWidget> mainWidget;
 		std::unique_ptr<QTreeWidget> tree;
+		std::unique_ptr<QPushButton> addComponentButton;
 		FieldEditedHandler fieldEditedHandler;
+		AddComponentMenuHandler addComponentMenuHandler;
 		bool applyingSections = false;
 	};
 }

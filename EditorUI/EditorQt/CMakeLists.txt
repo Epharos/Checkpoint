@@ -9,6 +9,7 @@ add_library(EditorUI_EditorQt STATIC
     "Private/EditorQt/QtSceneHierarchyView.hpp"
     "Private/EditorQt/QtAssetExplorerView.hpp"
     "Private/EditorQt/QtConsoleView.hpp"
+    "Private/EditorQt/QtFileDropWidget.hpp"
     "Private/EditorQt/QtInspectorView.hpp"
     "Private/EditorQt/QtViewportWidget.hpp"
     "Private/EditorQt/QtToolBar.hpp"

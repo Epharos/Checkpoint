@@ -14,6 +14,12 @@ namespace cp::ecs
 
 namespace cp
 {
+	enum class AuthoringInputType : uint8_t
+	{
+		Default,
+		FilePath
+	};
+
 	enum class AuthoringValueType : uint8_t
 	{
 		Bool,
@@ -37,6 +43,7 @@ namespace cp
 		std::string id;
 		std::string label;
 		AuthoringValueType valueType = AuthoringValueType::String;
+		AuthoringInputType inputType = AuthoringInputType::Default;
 		AuthoringValue value = std::string{};
 		bool readOnly = false;
 	};

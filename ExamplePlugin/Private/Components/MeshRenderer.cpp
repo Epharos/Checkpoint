@@ -104,15 +104,16 @@ namespace cp
 						.valueType = cp::AuthoringValueType::Bool,
 						.value = renderer.visible
 					},
-					cp::AuthoringFieldDescriptor{
-						.id = "meshPath",
-						.label = "Mesh Asset",
-						.valueType = cp::AuthoringValueType::String,
-						.value = renderer.meshId.IsValid()
-							? GetRelativePath(renderer.meshId.GetAssetID()).string()
-							: std::string{},
-						.readOnly = true
-					}
+				cp::AuthoringFieldDescriptor{
+					.id = "meshPath",
+					.label = "Mesh Asset",
+					.valueType = cp::AuthoringValueType::String,
+					.inputType = cp::AuthoringInputType::FilePath,
+					.value = renderer.meshId.IsValid()
+						? GetRelativePath(renderer.meshId.GetAssetID()).string()
+						: std::string{},
+					.readOnly = false
+				}
 				}
 			}
 		};
@@ -133,8 +134,37 @@ namespace cp
 
 		if (_fieldId == "meshPath")
 		{
-			_outError = "Mesh asset path is read-only in this iteration.";
-			return false;
+			const std::string* stringValue = std::get_if<std::string>(&_value);
+			if (stringValue == nullptr)
+			{
+				_outError = "Mesh asset path expects a string value.";
+				return false;
+			}
+
+			auto& renderer = _world.GetComponent<MeshRenderer>(_entity);
+			
+			if (stringValue->empty())
+			{
+				renderer.meshId = AssetHandle<Mesh>{};
+				return true;
+			}
+
+			auto& meshManager = cp::GetComponentRegistrationContext().GetAssetRegistry().Get<Mesh>();
+			const auto meshPath = FindFileInParentTree(*stringValue);
+			if (!std::filesystem::exists(meshPath))
+			{
+				_outError = "Mesh file not found: " + *stringValue;
+				return false;
+			}
+
+			renderer.meshId = meshManager.Load(meshPath);
+			if (!renderer.meshId.IsValid())
+			{
+				_outError = "Failed to load mesh: " + *stringValue;
+				return false;
+			}
+
+			return true;
 		}
 
 		const bool* boolValue = std::get_if<bool>(&_value);
