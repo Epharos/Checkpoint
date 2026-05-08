@@ -109,6 +109,25 @@ namespace cp::editorui
 		virtual void SetFrameHandler(FrameHandler _handler) = 0;
 	};
 
+	class ISceneConfigView : public IWidget
+	{
+	public:
+		struct RegistryEntry
+		{
+			std::string name;
+			bool enabled = false;
+		};
+
+		using ApplyHandler = std::function<void(
+			std::vector<std::string> _enabledPassNames,
+			std::vector<std::string> _enabledSystemNames
+		)>;
+
+		virtual void SetRenderPassEntries(std::vector<RegistryEntry> _entries) = 0;
+		virtual void SetSystemEntries(std::vector<RegistryEntry> _entries) = 0;
+		virtual void SetApplyHandler(ApplyHandler _handler) = 0;
+	};
+
 	class IFileDialog : public IWidget
 	{
 	public:

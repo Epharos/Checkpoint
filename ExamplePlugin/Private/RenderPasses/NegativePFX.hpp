@@ -10,8 +10,7 @@
 #include <RHI/Data.hpp>
 #include <RHI/Rendering.hpp>
 
-#include <Rendering/FrameGraph/Renderpass.hpp>
-#include <Rendering/FrameGraph/FrameGraphBuilder.hpp>
+#include <Rendering/FrameGraph/FrameGraph.hpp>
 
 namespace cp
 {
@@ -80,6 +79,11 @@ namespace cp
                 .mainMethodName = "MainCS"
             };
             data.pipeline = _context.rhi.GetDevice().CreateComputePipeline(computePipelineInfo);
+        }
+
+        void DeclareDependencies(FrameGraph& _framegraph) override
+        {
+            _framegraph.AddPassDependencyIfPresent(GetName(), "OpaqueMaterialPass");
         }
 
         void Setup(FrameGraphBuilder &_builder) override

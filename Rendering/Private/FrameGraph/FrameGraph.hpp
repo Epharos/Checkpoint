@@ -124,16 +124,18 @@ namespace cp
 
         /**
          * @brief Compile the framegraph.
-         * 
+         *
          * Performs the following steps:
-         * 1. Setup: Calls Setup() on all passes to declare resources
-         * 2. PreCompile: Calls OnPreCompile() on all passes for runtime adjustments
-         * 3. Allocation: Allocates GPU memory for all transient resources
-         * 4. PostCompile: Calls OnPostCompile() on all passes
-         * 
+         * 1. DeclareDependencies: Passes declare explicit execution dependencies on other passes
+         * 2. DeclareResources: Passes register the resources they create or import
+         * 3. Setup: Passes declare read/write usage of the now-existing resources
+         * 4. PreCompile: Passes perform runtime adjustments via OnPreCompile()
+         * 5. Allocation: GPU memory is allocated for all transient resources
+         * 6. PostCompile: Passes finalize setup via OnPostCompile()
+         *
          * After compilation, the framegraph is ready for execution.
          * Can only be called once (call Reset() first to recompile).
-         * 
+         *
          * @param _rhi The rendering hardware interface for resource allocation
          */
         void Compile(RenderingHardwareInterface& _rhi);
@@ -266,7 +268,17 @@ namespace cp
 
     private:
         /**
-         * @brief Phase 1: Call Setup() on all passes.
+         * @brief Phase 1: Call DeclareDependencies() on all passes to register explicit ordering.
+         */
+        void DeclarePassDependenciesPhase();
+
+        /**
+         * @brief Phase 2: Call DeclareResources() on all passes so every resource is registered.
+         */
+        void DeclareResourcesPhase();
+
+        /**
+         * @brief Phase 2: Call Setup() on all passes to declare resource usage.
          */
         void SetupPhase();
 

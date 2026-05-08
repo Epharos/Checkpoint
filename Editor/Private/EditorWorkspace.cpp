@@ -1,14 +1,19 @@
 #include "../Public/Editor/EditorWorkspace.hpp"
 
-#include <Common/Data/Extent.hpp>
 #include <Common/Plugin/ComponentAuthoring.hpp>
 #include <Common/Plugin/PluginHost.hpp>
 #include <Common/Plugin/PluginRegistryNames.hpp>
 
 #include <ECS/ECS.hpp>
+
 #include <Rendering/Renderer.hpp>
+#include <Rendering/Scene/FrameGraphConfig.hpp>
+
+#include <Runtime/Scene/Scene.hpp>
+
 #include <Resources/AssetRegistry.hpp>
 #include <Resources/Mesh.hpp>
+
 #include <VulkanRHI.hpp>
 
 namespace cp::editor
@@ -327,10 +332,10 @@ namespace cp::editor
 
 	EditorWorkspace::~EditorWorkspace()
 	{
-		if (ecsWorld != nullptr)
+		if (scene != nullptr)
 		{
-			ecsWorld->Clear();
-			ecsWorld->ClearComponentTypes();
+			scene->GetWorld().ClearComponentTypes();
+			scene->Clear();
 		}
 
 		if (renderer != nullptr)
@@ -374,7 +379,8 @@ namespace cp::editor
 		registryManager->GetOrCreate<cp::ecs::ISystem>(std::string(cp::EcsSystemRegistryName));
 		registryManager->GetOrCreate<cp::ecs::IComponentRegistrar>(std::string(cp::EcsComponentRegistryName));
 		registryManager->GetOrCreate<cp::IComponentAuthoring>(std::string(cp::EcsComponentAuthoringRegistryName));
-		ecsWorld = std::make_unique<cp::ecs::World>();
+		scene = std::make_unique<cp::runtime::Scene>();
+		scene->Initialize("NewScene");
 
 		cp::editorui::ApplicationWindowConfig windowConfig;
 		windowConfig.title = _config.windowTitle;
@@ -440,6 +446,10 @@ namespace cp::editor
 		const auto inspectorPanel = dockHost->CreatePanel({ "inspector", "Inspector" });
 		inspectorView = backend->CreateInspectorView("inspector");
 		inspectorPanel->SetContent(inspectorView);
+
+		const auto sceneConfigPanel = dockHost->CreatePanel({ "sceneConfig", "Scene Config" });
+		sceneConfigView = backend->CreateSceneConfigView("sceneConfig");
+		sceneConfigPanel->SetContent(sceneConfigView);
 
 		const auto viewportPanel = dockHost->CreatePanel({ "viewport", "Viewport", false, true });
 		viewportView = backend->CreateViewportWidget({ "mainViewport" });
@@ -532,11 +542,11 @@ namespace cp::editor
 			for (const std::string& registrarName : componentRegistry->Names())
 			{
 				const std::unique_ptr<cp::ecs::IComponentRegistrar> registrar = componentRegistry->Create(registrarName);
-				registrar->Register(*ecsWorld);
+				registrar->Register(scene->GetWorld());
 			}
 		}
 
-		ecsWorld->SetRequiredPlugins(pluginHost->GetLoadedPluginNames());
+		scene->GetWorld().SetRequiredPlugins(pluginHost->GetLoadedPluginNames());
 		const auto componentAuthoringBindings = std::make_shared<std::vector<ComponentAuthoringBinding>>();
 		if (const cp::Registry<cp::IComponentAuthoring>* componentAuthoringRegistry =
 			registryManager->Find<cp::IComponentAuthoring>(cp::EcsComponentAuthoringRegistryName))
@@ -601,8 +611,8 @@ namespace cp::editor
 		const auto sceneState = std::make_shared<EditorSceneState>();
 		const auto activeScenePath = std::make_shared<std::filesystem::path>(
 			!_config.projectRootPath.empty()
-				? _config.projectRootPath / "Scene.ecsbin"
-				: std::filesystem::current_path() / "Scene.ecsbin");
+				? _config.projectRootPath / "Scene.scene"
+				: std::filesystem::current_path() / "Scene.scene");
 
 		const auto refreshHierarchyView = [this, sceneState]()
 		{
@@ -664,7 +674,7 @@ namespace cp::editor
 								.id = "alive",
 								.label = "Alive",
 								.valueType = cp::editorui::InspectorField::ValueType::Bool,
-								.value = ecsWorld->IsAlive(entity),
+								.value = scene->GetWorld().IsAlive(entity),
 								.readOnly = true
 							}
 						}
@@ -673,13 +683,13 @@ namespace cp::editor
 					for (size_t authoringIndex = 0; authoringIndex < componentAuthoringBindings->size(); ++authoringIndex)
 					{
 						const ComponentAuthoringBinding& binding = componentAuthoringBindings->at(authoringIndex);
-						if (!binding.authoring->HasComponent(*ecsWorld, entity))
+						if (!binding.authoring->HasComponent(scene->GetWorld(), entity))
 						{
 							continue;
 						}
 
 						const std::vector<cp::AuthoringSectionDescriptor> authoredSections =
-							binding.authoring->BuildSections(*ecsWorld, entity);
+							binding.authoring->BuildSections(scene->GetWorld(), entity);
 						for (const cp::AuthoringSectionDescriptor& authoredSection : authoredSections)
 						{
 							cp::editorui::InspectorSection inspectorSection;
@@ -707,6 +717,49 @@ namespace cp::editor
 
 			inspectorView->SetSections(std::move(sections));
 		};
+
+		const auto refreshSceneConfigView = [this]()
+		{
+			std::vector<cp::editorui::ISceneConfigView::RegistryEntry> passEntries;
+			const auto& activePasses = scene->GetActivePassNames();
+			if (const auto* passReg = registryManager->Find<cp::IRenderPass>(cp::RenderPassRegistryName))
+			{
+				for (const auto& name : passReg->Names())
+				{
+					const bool enabled = std::find(activePasses.begin(), activePasses.end(), name) != activePasses.end();
+					passEntries.push_back({ name, enabled });
+				}
+			}
+			sceneConfigView->SetRenderPassEntries(std::move(passEntries));
+
+			std::vector<cp::editorui::ISceneConfigView::RegistryEntry> systemEntries;
+			const auto& enabledSystems = scene->GetEnabledSystemGuids();
+			if (const auto* sysReg = registryManager->Find<cp::ecs::ISystem>(cp::EcsSystemRegistryName))
+			{
+				for (const auto& name : sysReg->Names())
+				{
+					const bool enabled = std::find(enabledSystems.begin(), enabledSystems.end(), name) != enabledSystems.end();
+					systemEntries.push_back({ name, enabled });
+				}
+			}
+			sceneConfigView->SetSystemEntries(std::move(systemEntries));
+		};
+
+		sceneConfigView->SetApplyHandler([this](
+			std::vector<std::string> _passNames,
+			std::vector<std::string> _systemNames)
+		{
+			const auto passCount   = _passNames.size();
+			const auto systemCount = _systemNames.size();
+			scene->SetActivePassNames(std::move(_passNames));
+			scene->SetEnabledSystemGuids(std::move(_systemNames));
+			if (renderer)
+				cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
+			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Scene",
+				cp::Message::Create("Applied scene config: {} pass(es), {} system(s)", passCount, systemCount)));
+		});
+
+		refreshSceneConfigView();
 
 		const auto selectedEntityResolver = [sceneState]() -> std::optional<cp::ecs::Entity>
 		{
@@ -753,7 +806,7 @@ namespace cp::editor
 
 			ComponentAuthoringBinding& binding = componentAuthoringBindings->at(authoringIndex);
 			std::string error;
-			if (!binding.authoring->ApplyValue(*ecsWorld, selectedEntity.value(), _fieldId, ToAuthoringValue(_value), error))
+			if (!binding.authoring->ApplyValue(scene->GetWorld(), selectedEntity.value(), _fieldId, ToAuthoringValue(_value), error))
 			{
 				logger->Log(CP_LOG_EVENT(
 					cp::ILogger::Warning,
@@ -774,7 +827,7 @@ namespace cp::editor
 			{
 				for (ComponentAuthoringBinding& binding : *componentAuthoringBindings)
 				{
-					const bool hasComponent = binding.authoring->HasComponent(*ecsWorld, selectedEntity.value());
+					const bool hasComponent = binding.authoring->HasComponent(scene->GetWorld(), selectedEntity.value());
 					binding.addAction->SetEnabled(!hasComponent);
 					menu->AddAction(binding.addAction);
 				}
@@ -783,38 +836,41 @@ namespace cp::editor
 			return menu;
 		});
 
-		const auto loadScene = [this, sceneState, activeScenePath, refreshHierarchyView, refreshInspectorView](const std::filesystem::path& _scenePath) -> bool
+		const auto loadScene = [this, sceneState, activeScenePath, refreshHierarchyView, refreshInspectorView, refreshSceneConfigView](const std::filesystem::path& _scenePath) -> bool
 		{
-			const std::vector<uint8_t> worldBytes = LoadBinaryFile(_scenePath);
-			if (worldBytes.empty())
+			const std::vector<uint8_t> sceneBytes = LoadBinaryFile(_scenePath);
+			if (sceneBytes.empty())
 			{
-				logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "ECS", cp::Message::Create("ECS world file is empty: {}", _scenePath.string())));
+				logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "Scene", cp::Message::Create("Scene file is empty: {}", _scenePath.string())));
 				return false;
 			}
 
-			MemoryDeserializer deserializer(worldBytes);
-			if (!ecsWorld->DeserializeBinary(deserializer))
+			MemoryDeserializer deserializer(sceneBytes);
+			if (!scene->DeserializeFrom(deserializer))
 			{
-				logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "ECS", cp::Message::Create("Failed to deserialize ECS world '{}'", _scenePath.string())));
+				logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "Scene", cp::Message::Create("Failed to deserialize scene '{}'", _scenePath.string())));
 				return false;
 			}
+
+			if (renderer)
+				cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
 
 			const std::vector<std::string> loadedPluginNames = pluginHost != nullptr
 				                                               ? pluginHost->GetLoadedPluginNames()
 				                                               : std::vector<std::string>{};
-			for (const std::string& requiredPlugin : ecsWorld->GetRequiredPlugins())
+			for (const std::string& requiredPlugin : scene->GetWorld().GetRequiredPlugins())
 			{
 				const bool isLoaded = std::find(loadedPluginNames.begin(), loadedPluginNames.end(), requiredPlugin) != loadedPluginNames.end();
 				if (!isLoaded)
 				{
-					logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "ECS", cp::Message::Create("Scene requires missing plugin '{}'", requiredPlugin)));
+					logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "Scene", cp::Message::Create("Scene requires missing plugin '{}'", requiredPlugin)));
 				}
 			}
 
 			sceneState->hierarchyNodes.clear();
 			sceneState->entityLookup.clear();
 
-			std::vector<cp::ecs::Entity> entities = ecsWorld->GetAliveEntities();
+			std::vector<cp::ecs::Entity> entities = scene->GetWorld().GetAliveEntities();
 			std::sort(entities.begin(), entities.end(), [](const cp::ecs::Entity& _lhs, const cp::ecs::Entity& _rhs)
 			{
 				return _lhs.index < _rhs.index;
@@ -838,32 +894,33 @@ namespace cp::editor
 			*activeScenePath = _scenePath;
 			refreshHierarchyView();
 			refreshInspectorView();
-			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "ECS", cp::Message::Create("Loaded scene '{}'", _scenePath.string())));
+			refreshSceneConfigView();
+			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Scene", cp::Message::Create("Loaded scene '{}'", _scenePath.string())));
 			return true;
 		};
 
 		const auto saveScene = [this, activeScenePath]() -> bool
 		{
 			MemorySerializer serializer;
-			if (!ecsWorld->SerializeBinary(serializer))
+			if (!scene->SerializeTo(serializer))
 			{
-				logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "ECS", cp::Message::Create("Failed to serialize ECS scene")));
+				logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "Scene", cp::Message::Create("Failed to serialize scene")));
 				return false;
 			}
 
 			if (!SaveBinaryFile(*activeScenePath, serializer.bytes))
 			{
-				logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "ECS", cp::Message::Create("Failed to save scene '{}'", activeScenePath->string())));
+				logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "Scene", cp::Message::Create("Failed to save scene '{}'", activeScenePath->string())));
 				return false;
 			}
 
-			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "ECS", cp::Message::Create("Saved scene '{}'", activeScenePath->string())));
+			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Scene", cp::Message::Create("Saved scene '{}'", activeScenePath->string())));
 			return true;
 		};
 
 		const auto createEntity = [this, sceneState, refreshHierarchyView, refreshInspectorView]()
 		{
-			const cp::ecs::Entity entity = ecsWorld->CreateEntity();
+			const cp::ecs::Entity entity = scene->GetWorld().CreateEntity();
 			const cp::editorui::EntityId entityId = ToEditorEntityId(entity);
 
 			sceneState->entityLookup[entityId] = entity;
@@ -933,7 +990,7 @@ namespace cp::editor
 					return;
 				}
 
-				if (bindingPtr->authoring->HasComponent(*ecsWorld, selectedEntity.value()))
+				if (bindingPtr->authoring->HasComponent(scene->GetWorld(), selectedEntity.value()))
 				{
 					logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "ECS", cp::Message::Create("{} already exists on entity {}", bindingPtr->authoring->Name(), selectedEntity->index)));
 					sceneState->contextEntityId.reset();
@@ -941,7 +998,7 @@ namespace cp::editor
 					return;
 				}
 
-				if (bindingPtr->authoring->AddComponent(*ecsWorld, selectedEntity.value()))
+				if (bindingPtr->authoring->AddComponent(scene->GetWorld(), selectedEntity.value()))
 				{
 					logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "ECS", cp::Message::Create("Added {} to entity {}", bindingPtr->authoring->Name(), selectedEntity->index)));
 				}
@@ -964,7 +1021,7 @@ namespace cp::editor
 					return;
 				}
 
-				if (!bindingPtr->authoring->HasComponent(*ecsWorld, selectedEntity.value()))
+				if (!bindingPtr->authoring->HasComponent(scene->GetWorld(), selectedEntity.value()))
 				{
 					logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "ECS", cp::Message::Create("{} does not exist on entity {}", bindingPtr->authoring->Name(), selectedEntity->index)));
 					sceneState->contextEntityId.reset();
@@ -972,7 +1029,7 @@ namespace cp::editor
 					return;
 				}
 
-				if (bindingPtr->authoring->RemoveComponent(*ecsWorld, selectedEntity.value()))
+				if (bindingPtr->authoring->RemoveComponent(scene->GetWorld(), selectedEntity.value()))
 				{
 					logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "ECS", cp::Message::Create("Removed {} from entity {}", bindingPtr->authoring->Name(), selectedEntity->index)));
 				}
@@ -992,7 +1049,7 @@ namespace cp::editor
 			fileDialog->SetMode(cp::editorui::IFileDialog::Mode::OpenFile);
 			fileDialog->SetTitle("Load Scene");
 			fileDialog->SetDirectory(activeScenePath->parent_path());
-			fileDialog->SetFilter("ECS Binary Files (*.ecsbin);;All Files (*)");
+			fileDialog->SetFilter("Scene Files (*.scene);;All Files (*)");
 
 			if (fileDialog->Execute())
 			{
@@ -1013,7 +1070,7 @@ namespace cp::editor
 			fileDialog->SetTitle("Save Scene");
 			fileDialog->SetDirectory(activeScenePath->parent_path());
 			fileDialog->SetDefaultFileName(activeScenePath->filename().string());
-			fileDialog->SetFilter("ECS Binary Files (*.ecsbin);;All Files (*)");
+			fileDialog->SetFilter("Scene Files (*.scene);;All Files (*)");
 
 			if (fileDialog->Execute())
 			{
@@ -1035,7 +1092,7 @@ namespace cp::editor
 		{
 			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Assets", cp::Message::Create("Opening '{}'", _path.string())));
 
-			if (_path.extension() == ".ecsbin")
+			if (_path.extension() == ".scene")
 			{
 				loadScene(_path);
 				return;
@@ -1082,11 +1139,10 @@ namespace cp::editor
 			rendererInfo.imageFormat = cp::Format::R8G8B8A8_UNORM;
 			rendererInfo.nativeWindowHandle = const_cast<void*>(nativeHandle);
 			rendererInfo.registryManager = registryManager.get();
-			rendererInfo.ecsWorld = ecsWorld.get();
+			rendererInfo.ecsWorld = &scene->GetWorld();
 
 			renderer = std::make_unique<cp::Renderer>(rendererInfo, *rhi);
-			renderer->AddFrameGraphPass("OpaqueMaterialPass");
-			renderer->RecompileFrameGraph();
+			cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
 
 			viewportView->SetResizeHandler([this](const int _width, const int _height)
 			{
@@ -1119,6 +1175,7 @@ namespace cp::editor
 		dockHost->DockPanel(hierarchyPanel, { cp::editorui::DockArea::Left });
 		dockHost->DockPanel(assetsPanel, { cp::editorui::DockArea::Left, "hierarchy", true });
 		dockHost->DockPanel(inspectorPanel, { cp::editorui::DockArea::Right });
+		dockHost->DockPanel(sceneConfigPanel, { cp::editorui::DockArea::Right, "inspector", true });
 		dockHost->DockPanel(viewportPanel, { cp::editorui::DockArea::Center });
 		dockHost->DockPanel(consolePanel, { cp::editorui::DockArea::Bottom });
 

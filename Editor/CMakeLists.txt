@@ -19,6 +19,7 @@ target_link_libraries(Editor
         Common
         ECS
         Rendering
+        Runtime
         Resources
         RHI_Core
         RHI_Vulkan

@@ -127,10 +127,17 @@ namespace cp
                     const bool hasWriteHazard =
                         (earlierUsage & ResourceUsage::WriteOnly) != ResourceUsage::None
                         || (laterUsage & ResourceUsage::WriteOnly) != ResourceUsage::None;
-                    if (hasWriteHazard)
+                    if (!hasWriteHazard)
                     {
-                        _dependencyManager.AddDependency(laterPass, earlierPass);
+                        continue;
                     }
+
+                    if (_dependencyManager.HasDependencyPath(earlierPass, laterPass))
+                    {
+                        continue;
+                    }
+
+                    _dependencyManager.AddDependency(laterPass, earlierPass);
                 }
             }
         }
@@ -207,7 +214,13 @@ namespace cp
 
         barrierManager.Clear();
 
-        // Phase 1: Setup - Passes declare their resources
+        // Phase 1: DeclareDependencies - Passes register explicit execution ordering
+        DeclarePassDependenciesPhase();
+
+        // Phase 2: DeclareResources - All passes register their created/imported resources
+        DeclareResourcesPhase();
+
+        // Phase 3: Setup - Passes declare how they use the now-existing resources
         SetupPhase();
 
         // Build dependency graph from explicit + inferred resource dependencies
@@ -294,7 +307,7 @@ namespace cp
 
     void FrameGraph::Execute(FrameContext& _frameContext) const
     {
-        CP_EXPECT_MSG(isCompiled, "Cannot execute uncompiled framegraph. Call Compile() first.");
+        if (!isCompiled) return;
 
         // Execute each pass in scheduled order
         CP_EXPECT_MSG(
@@ -358,6 +371,24 @@ namespace cp
         }
 
         return passes[_index].get();
+    }
+
+    void FrameGraph::DeclarePassDependenciesPhase()
+    {
+        for (const auto& pass : passes)
+        {
+            pass->DeclareDependencies(*this);
+        }
+    }
+
+    void FrameGraph::DeclareResourcesPhase()
+    {
+        for (const auto& pass : passes)
+        {
+            builder.BeginPassSetup(pass.get());
+            pass->DeclareResources(builder);
+            builder.EndPassSetup();
+        }
     }
 
     void FrameGraph::SetupPhase()

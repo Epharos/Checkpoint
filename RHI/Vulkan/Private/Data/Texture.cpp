@@ -101,12 +101,12 @@ namespace cp
 
 		Initiate();
 
-		_logger.Log(CP_LOG_EVENT(ILogger::Info, VulkanRHI_Label, cp::Message::Create<TextComponent>(
-			"Created texture (dim: {}x{}x{} format: {})", 
-			info.extent.x(), 
-			info.extent.y(), 
-			info.extent.z(),
-			to_string(info.format))));
+		// _logger.Log(CP_LOG_EVENT(ILogger::Info, VulkanRHI_Label, cp::Message::Create<TextComponent>(
+		// 	"Created texture (dim: {}x{}x{} format: {})",
+		// 	info.extent.x(),
+		// 	info.extent.y(),
+		// 	info.extent.z(),
+		// 	to_string(info.format))));
 
 		CP_ENSURE_MSG(resource, "Could not create texture");
 	}
@@ -118,7 +118,7 @@ namespace cp
 
 		Initiate();
 
-		_logger.Log(CP_LOG_EVENT(ILogger::Info, VulkanRHI_Label, cp::Message::Create<TextComponent>("Texture access created")));
+		// _logger.Log(CP_LOG_EVENT(ILogger::Info, VulkanRHI_Label, cp::Message::Create<TextComponent>("Texture access created")));
 
 		CP_ENSURE_MSG(resource, "Could not store texture");
 	}

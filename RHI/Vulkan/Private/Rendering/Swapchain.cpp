@@ -397,9 +397,9 @@ namespace cp
 			"The swapchain object stores a different count of image than what is returned by the vkSwapchain"
 		);
 
-		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>(
-			"Swapchain was created with {} images", swapchainImages.size()
-			)));
+		// logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>(
+		// 	"Swapchain was created with {} images", swapchainImages.size()
+		// 	)));
 	}
 
 	void Swapchain::QuerySurfaceProperties()

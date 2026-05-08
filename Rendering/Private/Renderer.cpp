@@ -191,10 +191,10 @@ namespace cp
         {
             CP_EXPECT_MSG(passRegistry->Contains(_passTypeName), "Requested render pass type is not registered");
             std::unique_ptr<IRenderPass> pass = passRegistry->Create(_passTypeName);
-            CP_EXPECT_MSG(pass != nullptr, "Registry returned a null render pass instance");
+            CP_ASSERT_MSG(pass != nullptr, "Registry returned a null render pass instance");
 
             auto* configurable = dynamic_cast<IConfigurableRenderPass*>(pass.get());
-            CP_EXPECT_MSG(configurable != nullptr, "Registered render pass does not implement IConfigurableRenderPass");
+            CP_ASSERT_MSG(configurable != nullptr, "Registered render pass does not implement IConfigurableRenderPass");
             configurable->Configure(initContext);
 
             frameGraph.AddPass(std::move(pass));
@@ -385,7 +385,10 @@ namespace cp
 
     void Renderer::RebuildFrameGraph()
     {
-        CP_EXPECT_MSG(!frameGraphPassTypeNames.empty(), "Cannot build framegraph without registered pass types");
+        if (frameGraphPassTypeNames.empty())
+        {
+            return;
+        }
 
         frameGraph.Reset();
         BuildFrameGraph();

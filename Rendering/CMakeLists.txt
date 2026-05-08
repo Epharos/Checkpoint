@@ -16,6 +16,9 @@ add_library(Rendering STATIC
         Private/FrameGraph/PassDependencyManager.hpp
 
         Public/Rendering/Renderer.hpp
+
+        Public/Rendering/Scene/FrameGraphConfig.hpp
+        Private/Scene/FrameGraphConfig.cpp
 )
 
 target_include_directories(Rendering

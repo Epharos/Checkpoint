@@ -16,9 +16,9 @@ namespace cp
 	class RegistryManager;
 }
 
-namespace cp::ecs
+namespace cp::runtime
 {
-	class World;
+	class Scene;
 }
 
 namespace cp::editor
@@ -50,6 +50,7 @@ namespace cp::editor
 		std::shared_ptr<cp::editorui::IAssetExplorerView> assetView;
 		std::shared_ptr<cp::editorui::IConsoleView> consoleView;
 		std::shared_ptr<cp::editorui::IInspectorView> inspectorView;
+		std::shared_ptr<cp::editorui::ISceneConfigView> sceneConfigView;
 		std::shared_ptr<cp::editorui::IViewportWidget> viewportView;
 
 		std::vector<cp::editorui::ConsoleEntry> consoleEntries;
@@ -57,7 +58,7 @@ namespace cp::editor
 		std::unique_ptr<cp::PluginHost> pluginHost;
 
 		std::unique_ptr<cp::RegistryManager> registryManager;
-		std::unique_ptr<cp::ecs::World> ecsWorld;
+		std::unique_ptr<cp::runtime::Scene> scene;
 		std::unique_ptr<cp::RenderingHardwareInterface> rhi;
 		std::unique_ptr<cp::Renderer> renderer;
 		bool assetRegistryInitialized = false;

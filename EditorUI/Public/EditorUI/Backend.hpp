@@ -52,6 +52,7 @@ namespace cp::editorui
 		virtual std::shared_ptr<IInspectorView> CreateInspectorView(std::string _id) = 0;
 		virtual std::shared_ptr<IViewportWidget> CreateViewportWidget(const ViewportCreateInfo& _createInfo) = 0;
 		virtual std::shared_ptr<ISearchBox> CreateSearchBox(std::string _id) = 0;
+		virtual std::shared_ptr<ISceneConfigView> CreateSceneConfigView(std::string _id) = 0;
 		virtual std::shared_ptr<IContextMenu> CreateContextMenu(std::string _id) = 0;
 		virtual std::shared_ptr<IFileDialog> CreateFileDialog(std::string _id) = 0;
 	};

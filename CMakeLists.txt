@@ -98,6 +98,7 @@ add_subdirectory(Resources) # Asset management : Loading, Caching, Etc.
 add_subdirectory(Rendering)  # Rendering module : Framegraph, Materials, Etc.
 add_subdirectory(ECS) # Entity Component System
 add_subdirectory(Builder) # Executable Builder module : Turning project files into a runnable executable
+add_subdirectory(Runtime) # Common Runtime structures (Scene)
 add_subdirectory(Runtime/Standalone) # Standalone Runtime module : Game loop, Etc.
 add_subdirectory(Launcher) # Editor launcher module : Starts the editor with a selected project
 add_subdirectory(EditorUI) # Editor UI abstraction layer and backends

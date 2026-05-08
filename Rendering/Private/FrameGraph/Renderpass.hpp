@@ -95,8 +95,34 @@ namespace cp
     struct IRenderPass
     {
         /**
-         * @brief Called when the pass is added to the framegraph to declare resources used.
-         * @param _builder The framegraph builder for resource declaration.
+         * @brief Called first during compilation to declare execution dependencies on other passes.
+         *
+         * Use _framegraph.AddPassDependencyIfPresent(GetName(), "OtherPassName") to express that
+         * this pass must run after another pass. AddPassDependencyIfPresent is safe when the other
+         * pass may be absent from the framegraph.
+         *
+         * @param _framegraph The framegraph being compiled.
+         */
+        virtual void DeclareDependencies(FrameGraph& _framegraph) {}
+
+        /**
+         * @brief Called first during compilation to declare resources created or imported by this pass.
+         *
+         * Only CreateTexture, CreateBuffer, ImportTexture, and ImportBuffer may be called here.
+         * All passes have DeclareResources called before any pass has Setup called, so every
+         * resource is guaranteed to exist when Setup runs.
+         *
+         * @param _builder The framegraph builder for resource creation/import.
+         */
+        virtual void DeclareResources(FrameGraphBuilder& _builder) {}
+
+        /**
+         * @brief Called after all DeclareResources calls to declare read/write usage of resources.
+         *
+         * Only UseTexture and UseBuffer may be called here. All resources created by any pass
+         * are already registered at this point.
+         *
+         * @param _builder The framegraph builder for resource usage declaration.
          */
         virtual void Setup(FrameGraphBuilder& _builder) = 0;
 
@@ -135,6 +161,8 @@ namespace cp
     class RenderPass : public IRenderPass
     {
     public:
+        void DeclareDependencies(FrameGraph& _framegraph) override {}
+        void DeclareResources(FrameGraphBuilder& _builder) override {}
         void Setup(FrameGraphBuilder &_builder) override = 0;
         void OnPreCompile(FrameGraph &_framegraph) override {}
         void OnPostCompile(FrameGraph &_framegraph) override {}

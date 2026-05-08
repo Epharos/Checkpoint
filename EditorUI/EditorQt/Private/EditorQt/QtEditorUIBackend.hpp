@@ -10,6 +10,7 @@
 #include "QtFileDialog.hpp"
 #include "QtInspectorView.hpp"
 #include "QtSceneHierarchyView.hpp"
+#include "QtSceneConfigView.hpp"
 #include "QtSearchBox.hpp"
 #include "QtTheme.hpp"
 #include "QtViewportWidget.hpp"
@@ -79,6 +80,11 @@ namespace cp::editorqt
 		std::shared_ptr<cp::editorui::ISearchBox> CreateSearchBox(std::string _id) override
 		{
 			return std::make_shared<QtSearchBox>(std::move(_id));
+		}
+
+		std::shared_ptr<cp::editorui::ISceneConfigView> CreateSceneConfigView(std::string _id) override
+		{
+			return std::make_shared<QtSceneConfigView>(std::move(_id));
 		}
 
 		std::shared_ptr<cp::editorui::IContextMenu> CreateContextMenu(std::string _id) override

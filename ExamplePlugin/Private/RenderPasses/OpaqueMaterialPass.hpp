@@ -172,7 +172,7 @@ namespace cp
             data.pipeline = _context.rhi.GetDevice().CreateGraphicsPipeline(graphicsPipelineInfo);
         }
 
-        void Setup(FrameGraphBuilder& _builder) override
+        void DeclareResources(FrameGraphBuilder& _builder) override
         {
             const TextureInfo finalInfo{
                 .type = TextureType::Texture2D,
@@ -183,9 +183,22 @@ namespace cp
                 .usage = TextureUsage::ColorAttachment | TextureUsage::Storage | TextureUsage::TransferSrc,
                 .aspect = TextureAspect::Color,
             };
-
             data.finalRendering = _builder.CreateTexture("FinalRendering", finalInfo);
 
+            const TextureInfo depthBufferInfo{
+                .type = TextureType::Texture2D,
+                .extent = Extent3D<uint32_t>{ data.renderExtent.x(), data.renderExtent.y(), 1 },
+                .mipLevels = 1,
+                .arrayLayers = 1,
+                .format = Format::D32_FLOAT,
+                .usage = TextureUsage::DepthStencilAttachment,
+                .aspect = TextureAspect::Depth,
+            };
+            data.depthBuffer = _builder.CreateTexture("DepthBuffer", depthBufferInfo);
+        }
+
+        void Setup(FrameGraphBuilder& _builder) override
+        {
             _builder.UseTexture(data.finalRendering, {
                 .layout = TextureLayout::ColorAttachment,
                 .stage = PipelineStage::ColorAttachment,
@@ -197,18 +210,6 @@ namespace cp
                 .stage = PipelineStage::Transfer,
                 .access = Access::TransferRead
             });
-
-            const TextureInfo depthBufferInfo {
-                .type = TextureType::Texture2D,
-                .extent = Extent3D<uint32_t>{ data.renderExtent.x(), data.renderExtent.y(), 1 },
-                .mipLevels = 1,
-                .arrayLayers = 1,
-                .format = Format::D32_FLOAT,
-                .usage = TextureUsage::DepthStencilAttachment,
-                .aspect = TextureAspect::Depth,
-            };
-
-            data.depthBuffer = _builder.CreateTexture("DepthBuffer", depthBufferInfo);
 
             _builder.UseTexture(data.depthBuffer, {
                 .layout = TextureLayout::DepthStencilAttachment,

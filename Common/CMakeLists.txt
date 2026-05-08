@@ -34,6 +34,7 @@ add_library(Common STATIC
     "Private/Plugin/PluginHost.hpp"
 
     "Public/Common/Serialization/ISerializer.hpp"
+    "Public/Common/Scene/SceneDescription.hpp"
 )
 
 target_include_directories(Common PUBLIC
