@@ -100,6 +100,7 @@ add_subdirectory(ECS) # Entity Component System
 add_subdirectory(Builder) # Executable Builder module : Turning project files into a runnable executable
 add_subdirectory(Runtime) # Common Runtime structures (Scene)
 add_subdirectory(Runtime/Standalone) # Standalone Runtime module : Game loop, Etc.
+add_subdirectory(Runtime/Editor) # Editor Runtime module : in-editor play mode
 add_subdirectory(Launcher) # Editor launcher module : Starts the editor with a selected project
 add_subdirectory(EditorUI) # Editor UI abstraction layer and backends
 add_subdirectory(Editor) # Editor module : orchestrates editor tools and UI composition

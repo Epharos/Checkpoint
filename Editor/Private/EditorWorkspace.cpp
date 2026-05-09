@@ -10,11 +10,14 @@
 #include <Rendering/Scene/FrameGraphConfig.hpp>
 
 #include <Runtime/Scene/Scene.hpp>
+#include <RuntimeEditorApplication.hpp>
 
 #include <Resources/AssetRegistry.hpp>
 #include <Resources/Mesh.hpp>
 
 #include <VulkanRHI.hpp>
+
+#include <filesystem>
 
 namespace cp::editor
 {
@@ -332,6 +335,12 @@ namespace cp::editor
 
 	EditorWorkspace::~EditorWorkspace()
 	{
+		if (runtimeApp != nullptr)
+		{
+			runtimeApp->Stop();
+			runtimeApp.reset();
+		}
+
 		if (scene != nullptr)
 		{
 			scene->GetWorld().ClearComponentTypes();
@@ -408,7 +417,9 @@ namespace cp::editor
 		const auto undoAction = RegisterAction(actions, { "edit.undo", "Undo", "", "", cp::editorui::Shortcut{ "Ctrl+Z" } });
 		const auto redoAction = RegisterAction(actions, { "edit.redo", "Redo", "", "", cp::editorui::Shortcut{ "Ctrl+Y" } });
 		const auto buildAction = RegisterAction(actions, { "project.build", "Build", "Compile the project." });
-		const auto runAction = RegisterAction(actions, { "project.run", "Run", "Launch runtime." });
+		runAction = RegisterAction(actions, { "project.run", "Run", "Launch runtime." });
+		stopAction = RegisterAction(actions, { "project.stop", "Stop", "Stop runtime." });
+		stopAction->SetEnabled(false);
 		const auto createEntityAction = RegisterAction(actions, { "hierarchy.createEntity", "Create Entity" });
 		const auto toolTranslateAction = RegisterAction(actions, { "viewport.tool.translate", "Translate", "", "", std::nullopt, true, true });
 		const auto toolRotateAction = RegisterAction(actions, { "viewport.tool.rotate", "Rotate", "", "", std::nullopt, true, false });
@@ -428,6 +439,7 @@ namespace cp::editor
 		const auto mainToolBar = window->AddToolBar("main");
 		mainToolBar->AddAction(buildAction);
 		mainToolBar->AddAction(runAction);
+		mainToolBar->AddAction(stopAction);
 
 		const auto hierarchyPanel = dockHost->CreatePanel({ "hierarchy", "Hierarchy" });
 		hierarchyView = backend->CreateSceneHierarchyView("sceneHierarchy");
@@ -592,9 +604,78 @@ namespace cp::editor
 		{
 			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Build", cp::Message::Create("Build requested from editor")));
 		});
-		runAction->SetTriggeredHandler([this]()
+		runAction->SetTriggeredHandler([this, _config]()
 		{
-			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Run", cp::Message::Create("Run requested from editor")));
+			if (runtimeApp != nullptr)
+			{
+				return;
+			}
+
+			// Serialize the current scene to a backup file
+			runtimeBackupPath = (!_config.projectRootPath.empty()
+				? _config.projectRootPath
+				: std::filesystem::current_path()) / ".runtime_backup.scene";
+
+			MemorySerializer backupSerializer;
+			if (!scene->SerializeTo(backupSerializer))
+			{
+				logger->Log(CP_LOG_EVENT(cp::ILogger::Error, "Run",
+					cp::Message::Create("Failed to serialize scene for runtime backup")));
+				return;
+			}
+
+			if (!SaveBinaryFile(runtimeBackupPath, backupSerializer.bytes))
+			{
+				logger->Log(CP_LOG_EVENT(cp::ILogger::Error, "Run",
+					cp::Message::Create("Failed to save runtime backup to '{}'", runtimeBackupPath.string())));
+				return;
+			}
+
+			// Deserialize a fresh copy of the scene for the runtime
+			auto runtimeScene = std::make_unique<cp::runtime::Scene>();
+			if (const cp::Registry<cp::ecs::IComponentRegistrar>* componentRegistry =
+				registryManager->Find<cp::ecs::IComponentRegistrar>(cp::EcsComponentRegistryName))
+			{
+				for (const std::string& registrarName : componentRegistry->Names())
+				{
+					const std::unique_ptr<cp::ecs::IComponentRegistrar> registrar = componentRegistry->Create(registrarName);
+					registrar->Register(runtimeScene->GetWorld());
+				}
+			}
+
+			const std::vector<uint8_t> runtimeBytes(
+				reinterpret_cast<const uint8_t*>(backupSerializer.bytes.data()),
+				reinterpret_cast<const uint8_t*>(backupSerializer.bytes.data() + backupSerializer.bytes.size())
+			);
+			MemoryDeserializer runtimeDeserializer(runtimeBytes);
+			if (!runtimeScene->DeserializeFrom(runtimeDeserializer))
+			{
+				logger->Log(CP_LOG_EVENT(cp::ILogger::Error, "Run",
+					cp::Message::Create("Failed to deserialize runtime scene copy")));
+				return;
+			}
+
+			runtimeApp = std::make_unique<cp::runtime::RuntimeEditorApplication>(
+				*rhi, logger, std::move(runtimeScene), *registryManager
+			);
+			runtimeApp->SetOnStoppedCallback([this]()
+			{
+				// Called from runtime thread — IsRunning() will be false,
+				// the frame handler will detect this and call OnRuntimeStopped() on the main thread.
+			});
+			runtimeApp->Start();
+
+			runAction->SetEnabled(false);
+			stopAction->SetEnabled(true);
+			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Run", cp::Message::Create("Runtime started")));
+		});
+		stopAction->SetTriggeredHandler([this]()
+		{
+			if (runtimeApp == nullptr)
+			{
+				return;
+			}
+			OnRuntimeStopped();
 		});
 
 		auto setViewportTool = [viewport = viewportView, toolTranslateAction, toolRotateAction, toolScaleAction](const cp::editorui::ViewportTool _tool)
@@ -899,6 +980,8 @@ namespace cp::editor
 			return true;
 		};
 
+		loadSceneDelegate = loadScene;
+
 		const auto saveScene = [this, activeScenePath]() -> bool
 		{
 			MemorySerializer serializer;
@@ -1155,6 +1238,12 @@ namespace cp::editor
 			});
 			viewportView->SetFrameHandler([this]()
 			{
+				// Detect when the runtime window is closed by the user
+				if (runtimeApp != nullptr && !runtimeApp->IsRunning())
+				{
+					OnRuntimeStopped();
+				}
+
 				if (!renderer)
 				{
 					return;
@@ -1180,5 +1269,28 @@ namespace cp::editor
 		dockHost->DockPanel(consolePanel, { cp::editorui::DockArea::Bottom });
 
 		window->Show();
+	}
+
+	void EditorWorkspace::OnRuntimeStopped()
+	{
+		if (runtimeApp == nullptr)
+		{
+			return;
+		}
+
+		runtimeApp->Stop();
+		runtimeApp.reset();
+
+		runAction->SetEnabled(true);
+		stopAction->SetEnabled(false);
+
+		if (loadSceneDelegate && !runtimeBackupPath.empty() && std::filesystem::exists(runtimeBackupPath))
+		{
+			loadSceneDelegate(runtimeBackupPath);
+			std::filesystem::remove(runtimeBackupPath);
+		}
+
+		runtimeBackupPath.clear();
+		logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Run", cp::Message::Create("Runtime stopped, scene restored")));
 	}
 }

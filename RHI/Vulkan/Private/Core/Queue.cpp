@@ -10,13 +10,9 @@ namespace cp
 	Queue::Queue(const vk::Queue _queue, const uint32_t _familyIndex, const QueueType _type)
 		: queue(_queue), familyIndex(_familyIndex), type(_type)
 	{
-
 	}
 
-	Queue::~Queue()
-	{
-
-	}
+	Queue::~Queue() = default;
 
 	void Queue::Submit(const SubmitInfo& _submitInfo)
 	{
@@ -73,11 +69,77 @@ namespace cp
 		submitInfo.setPSignalSemaphores(signalSemaphores.data());
 		submitInfo.setPNext(&timelineSemaphoreSubmitInfo);
 
+		std::lock_guard<std::mutex> lock(submitMutex);
 		queue.submit(submitInfo);
 	}
 
 	void Queue::WaitIdle()
 	{
+		std::lock_guard<std::mutex> lock(submitMutex);
 		queue.waitIdle();
+	}
+
+	void Queue::SubmitBinaryToTimeline(
+		const vk::Semaphore _binaryWait,
+		const vk::Semaphore _timelineSignal,
+		const uint64_t _timelineSignalValue
+	)
+	{
+		constexpr uint64_t waitValue = 0;
+		const uint64_t signalValue = _timelineSignalValue;
+
+		vk::TimelineSemaphoreSubmitInfo timelineInfo;
+		timelineInfo.setWaitSemaphoreValueCount(1);
+		timelineInfo.setPWaitSemaphoreValues(&waitValue);
+		timelineInfo.setSignalSemaphoreValueCount(1);
+		timelineInfo.setPSignalSemaphoreValues(&signalValue);
+
+		constexpr vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eTopOfPipe;
+
+		vk::SubmitInfo submitInfo;
+		submitInfo.setPNext(&timelineInfo);
+		submitInfo.setWaitSemaphoreCount(1);
+		submitInfo.setPWaitSemaphores(&_binaryWait);
+		submitInfo.setPWaitDstStageMask(&waitStage);
+		submitInfo.setSignalSemaphoreCount(1);
+		submitInfo.setPSignalSemaphores(&_timelineSignal);
+
+		std::lock_guard<std::mutex> lock(submitMutex);
+		queue.submit(submitInfo);
+	}
+
+	void Queue::SubmitTimelineToBinary(
+		const vk::Semaphore _timelineWait,
+		const uint64_t _timelineWaitValue,
+		const vk::Semaphore _binarySignal
+	)
+	{
+		const uint64_t waitValue = _timelineWaitValue;
+		constexpr uint64_t signalValue = 0;
+
+		vk::TimelineSemaphoreSubmitInfo timelineInfo;
+		timelineInfo.setWaitSemaphoreValueCount(1);
+		timelineInfo.setPWaitSemaphoreValues(&waitValue);
+		timelineInfo.setSignalSemaphoreValueCount(1);
+		timelineInfo.setPSignalSemaphoreValues(&signalValue);
+
+		constexpr vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eAllCommands;
+
+		vk::SubmitInfo submitInfo;
+		submitInfo.setPNext(&timelineInfo);
+		submitInfo.setWaitSemaphoreCount(1);
+		submitInfo.setPWaitSemaphores(&_timelineWait);
+		submitInfo.setPWaitDstStageMask(&waitStage);
+		submitInfo.setSignalSemaphoreCount(1);
+		submitInfo.setPSignalSemaphores(&_binarySignal);
+
+		std::lock_guard<std::mutex> lock(submitMutex);
+		queue.submit(submitInfo);
+	}
+
+	vk::Result Queue::Present(const vk::PresentInfoKHR& _presentInfo)
+	{
+		std::lock_guard<std::mutex> lock(submitMutex);
+		return queue.presentKHR(_presentInfo);
 	}
 }

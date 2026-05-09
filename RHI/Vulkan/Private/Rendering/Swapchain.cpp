@@ -74,64 +74,6 @@ namespace cp
 
 			return _availableFormats[0]; // If the desired format isn't available, just pick the first one
 		}
-
-		void BridgeBinaryToTimeline(
-			const vk::Queue queue,
-			const vk::Semaphore binaryWait,
-			const vk::Semaphore timelineSignal,
-			const uint64_t timelineSignalValue
-		)
-		{
-			constexpr uint64_t waitValue = 0;
-			const uint64_t signalValue = timelineSignalValue;
-
-			vk::TimelineSemaphoreSubmitInfo timelineInfo;
-			timelineInfo.setWaitSemaphoreValueCount(1);
-			timelineInfo.setPWaitSemaphoreValues(&waitValue);
-			timelineInfo.setSignalSemaphoreValueCount(1);
-			timelineInfo.setPSignalSemaphoreValues(&signalValue);
-
-			constexpr vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eTopOfPipe;
-
-			vk::SubmitInfo submitInfo;
-			submitInfo.setPNext(&timelineInfo);
-			submitInfo.setWaitSemaphoreCount(1);
-			submitInfo.setPWaitSemaphores(&binaryWait);
-			submitInfo.setPWaitDstStageMask(&waitStage);
-			submitInfo.setSignalSemaphoreCount(1);
-			submitInfo.setPSignalSemaphores(&timelineSignal);
-
-			queue.submit(submitInfo);
-		}
-
-		void BridgeTimelineToBinary(
-			const vk::Queue queue,
-			const vk::Semaphore timelineWait,
-			const uint64_t timelineWaitValue,
-			const vk::Semaphore binarySignal
-		)
-		{
-			const uint64_t waitValue = timelineWaitValue;
-			constexpr uint64_t signalValue = 0;
-
-			vk::TimelineSemaphoreSubmitInfo timelineInfo;
-			timelineInfo.setWaitSemaphoreValueCount(1);
-			timelineInfo.setPWaitSemaphoreValues(&waitValue);
-			timelineInfo.setSignalSemaphoreValueCount(1);
-			timelineInfo.setPSignalSemaphoreValues(&signalValue);
-
-			constexpr vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eAllCommands;
-
-			vk::SubmitInfo submitInfo;
-			submitInfo.setPNext(&timelineInfo);
-			submitInfo.setWaitSemaphoreCount(1);
-			submitInfo.setPWaitSemaphores(&timelineWait);
-			submitInfo.setPWaitDstStageMask(&waitStage);
-			submitInfo.setSignalSemaphoreCount(1);
-			submitInfo.setPSignalSemaphores(&binarySignal);
-
-			queue.submit(submitInfo);
-		}
 	}
 
 	Swapchain::Swapchain(ILogger& _logger, const SwapchainInfo& _info, Device& _device)
@@ -151,8 +93,7 @@ namespace cp
 
 		CP_EXPECT_MSG(renderFinishedTimelineSemaphore, "No Render Finished Timeline semaphore setup");
 
-		BridgeTimelineToBinary(
-			graphicsQueue.GetHandle(),
+		graphicsQueue.SubmitTimelineToBinary(
 			reinterpret_cast<TimelineSemaphore&>(*renderFinishedTimelineSemaphore).GetHandle(),
 			_synchronizationSignalValue,
 			renderFinishedBinarySemaphore[_synchronizationSignalValue % info.imageCount]
@@ -169,7 +110,7 @@ namespace cp
 
 		try
 		{
-			result = graphicsQueue.GetHandle().presentKHR(presentInfo);
+			result = graphicsQueue.Present(presentInfo);
 		}
 		catch (vk::OutOfDateKHRError&)
 		{
@@ -233,8 +174,7 @@ namespace cp
 				imageAvailableBinarySemaphore[acquireSemaphoreIndex])
 			.value;
 
-			BridgeBinaryToTimeline(
-				reinterpret_cast<Queue&>(device.GetQueue(QueueType::Graphics, 0)).GetHandle(),
+			reinterpret_cast<Queue&>(device.GetQueue(QueueType::Graphics, 0)).SubmitBinaryToTimeline(
 				imageAvailableBinarySemaphore[acquireSemaphoreIndex],
 				reinterpret_cast<TimelineSemaphore&>(*imageAvailableTimelineSemaphore).GetHandle(),
 				++lastImageAvailableSignalValue

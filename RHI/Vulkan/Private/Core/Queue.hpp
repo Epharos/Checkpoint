@@ -4,7 +4,7 @@
 
 #include <RHI/Core.hpp>
 
-#include <optional>
+#include <mutex>
 
 namespace cp
 {
@@ -30,21 +30,26 @@ namespace cp
 		void WaitIdle() override;
 
 		[[nodiscard]] QueueType GetType() const override { return type; }
-		
-		[[nodiscard]] vk::Queue& GetHandle() { return queue; }
-		[[nodiscard]] const vk::Queue& GetHandle() const { return queue; }
 
-		/**
-		* @brief Returns the Vulkan queue family index this queue belongs to.
-		*        Required when creating resources that must be used on a specific family (e.g. command pools).
-		*
-		* @return The queue family index.
-		*/
 		[[nodiscard]] uint32_t GetFamilyIndex() const { return familyIndex; }
+
+		// Locked bridge submits — used by the Swapchain to synchronize binary/timeline semaphores
+		void SubmitBinaryToTimeline(
+			vk::Semaphore _binaryWait,
+			vk::Semaphore _timelineSignal,
+			uint64_t _timelineSignalValue
+		);
+		void SubmitTimelineToBinary(
+			vk::Semaphore _timelineWait,
+			uint64_t _timelineWaitValue,
+			vk::Semaphore _binarySignal
+		);
+		vk::Result Present(const vk::PresentInfoKHR& _presentInfo);
 
 	private:
 		vk::Queue queue;
 		uint32_t familyIndex;
 		QueueType type;
+		std::mutex submitMutex;
 	};
 }

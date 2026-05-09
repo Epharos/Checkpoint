@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -19,6 +20,7 @@ namespace cp
 namespace cp::runtime
 {
 	class Scene;
+	class RuntimeEditorApplication;
 }
 
 namespace cp::editor
@@ -40,6 +42,7 @@ namespace cp::editor
 
 	private:
 		void AppendConsoleEntry(cp::editorui::ConsoleEntry _entry);
+		void OnRuntimeStopped();
 
 		std::shared_ptr<cp::editorui::IEditorUIBackend> backend;
 		std::shared_ptr<cp::editorui::IApplicationWindow> window;
@@ -62,5 +65,12 @@ namespace cp::editor
 		std::unique_ptr<cp::RenderingHardwareInterface> rhi;
 		std::unique_ptr<cp::Renderer> renderer;
 		bool assetRegistryInitialized = false;
+
+		// Runtime play mode
+		std::unique_ptr<cp::runtime::RuntimeEditorApplication> runtimeApp;
+		std::filesystem::path runtimeBackupPath;
+		std::shared_ptr<cp::editorui::IAction> runAction;
+		std::shared_ptr<cp::editorui::IAction> stopAction;
+		std::function<bool(const std::filesystem::path&)> loadSceneDelegate;
 	};
 }
