@@ -104,16 +104,16 @@ namespace cp
 						.valueType = cp::AuthoringValueType::Bool,
 						.value = renderer.visible
 					},
-				cp::AuthoringFieldDescriptor{
-					.id = "meshPath",
-					.label = "Mesh Asset",
-					.valueType = cp::AuthoringValueType::String,
-					.inputType = cp::AuthoringInputType::FilePath,
-					.value = renderer.meshId.IsValid()
-						? GetRelativePath(renderer.meshId.GetAssetID()).string()
-						: std::string{},
-					.readOnly = false
-				}
+					cp::AuthoringFieldDescriptor{
+						.id = "meshPath",
+						.label = "Mesh Asset",
+						.valueType = cp::AuthoringValueType::String,
+						.inputType = cp::AuthoringInputType::FilePath,
+						.value = renderer.meshId.IsValid()
+							? GetRelativePath(renderer.meshId.GetAssetID()).string()
+							: std::string{},
+						.readOnly = false
+					}
 				}
 			}
 		};
@@ -124,7 +124,8 @@ namespace cp
 		const cp::ecs::Entity& _entity,
 		const std::string_view _fieldId,
 		const cp::AuthoringValue& _value,
-		std::string& _outError) const
+		std::string& _outError
+	) const
 	{
 		if (!HasComponent(_world, _entity))
 		{

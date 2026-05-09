@@ -7,6 +7,8 @@
 #include "RenderPasses/NegativePFX.hpp"
 
 #include "Components/Components.hpp"
+#include "Systems/PhysicsSystem.hpp"
+#include "Systems/ShooterSystem.hpp"
 #include "Systems/SpinSystem.hpp"
 
 namespace
@@ -35,7 +37,17 @@ namespace
 				cp::ecs::GuidToRegistryKey(cp::SpinSystemGuid)
 			);
 
-		return spinSystemRegistered;
+		const bool shootSystemRegistered =
+			ecsSystemRegistry.RegisterType<cp::ShooterSystem>(
+				cp::ecs::GuidToRegistryKey(cp::ShooterSystemGuid)
+			);
+
+		const bool physicsSystemRegistered =
+			ecsSystemRegistry.RegisterType<cp::PhysicsSystem>(
+				cp::ecs::GuidToRegistryKey(cp::PhysicsSystemGuid)
+			);
+
+		return spinSystemRegistered && shootSystemRegistered && physicsSystemRegistered;
 	}
 
 	bool RegisterComponents(cp::Registry<cp::ecs::IComponentRegistrar> &ecsComponentRegistry)
@@ -52,10 +64,20 @@ namespace
 			ecsComponentRegistry.RegisterType<cp::MeshRendererRegistrar>(
 				cp::ecs::GuidToRegistryKey(cp::MeshRendererGuid)
 			);
+		const bool spawnerComponentRegistered =
+			ecsComponentRegistry.RegisterType<cp::SpawnerRegistrar>(
+				cp::ecs::GuidToRegistryKey(cp::SpawnerGuid)
+			);
+		const bool rigidbodyComponentRegistered =
+			ecsComponentRegistry.RegisterType<cp::RigidBodyRegistrar>(
+				cp::ecs::GuidToRegistryKey(cp::RigidBodyGuid)
+			);
 
 		return transformComponentRegistered
 			&& cameraComponentRegistered
-			&& meshRendererComponentRegistered;
+			&& meshRendererComponentRegistered
+			&& spawnerComponentRegistered
+			&& rigidbodyComponentRegistered;
 	}
 }
 
@@ -107,6 +129,8 @@ void ShutdownExamplePluginRuntime(cp::PluginRuntimeContext& _context)
 			_context.registryManager->Find<cp::ecs::ISystem>(cp::EcsSystemRegistryName))
 		{
 			ecsSystemRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::SpinSystemGuid));
+			ecsSystemRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::ShooterSystemGuid));
+			ecsSystemRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::PhysicsSystemGuid));
 		}
 
 		if (cp::Registry<cp::ecs::IComponentRegistrar>* ecsComponentRegistry =
@@ -115,6 +139,8 @@ void ShutdownExamplePluginRuntime(cp::PluginRuntimeContext& _context)
 			ecsComponentRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::TransformGuid));
 			ecsComponentRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::CameraGuid));
 			ecsComponentRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::MeshRendererGuid));
+			ecsComponentRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::SpawnerGuid));
+			ecsComponentRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::RigidBodyGuid));
 		}
 	}
 

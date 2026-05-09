@@ -16,10 +16,16 @@ namespace
 			componentAuthoringRegistry.RegisterType<cp::CameraAuthoring>(cp::ecs::GuidToRegistryKey(cp::CameraGuid));
 		const bool meshRendererAuthoringRegistered =
 			componentAuthoringRegistry.RegisterType<cp::MeshRendererAuthoring>(cp::ecs::GuidToRegistryKey(cp::MeshRendererGuid));
+		const bool spawnerAuthoringRegistered =
+			componentAuthoringRegistry.RegisterType<cp::SpawnerAuthoring>(cp::ecs::GuidToRegistryKey(cp::SpawnerGuid));
+		const bool rigidBodyAuthoringRegistered =
+			componentAuthoringRegistry.RegisterType<cp::RigidBodyAuthoring>(cp::ecs::GuidToRegistryKey(cp::RigidBodyGuid));
 
 		return transformAuthoringRegistered
 			&& cameraAuthoringRegistered
-			&& meshRendererAuthoringRegistered;
+			&& meshRendererAuthoringRegistered
+			&& spawnerAuthoringRegistered
+			&& rigidBodyAuthoringRegistered;
 	}
 }
 
@@ -46,5 +52,7 @@ void ShutdownExamplePluginEditor(cp::PluginEditorContext& _context)
 		componentAuthoringRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::TransformGuid));
 		componentAuthoringRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::CameraGuid));
 		componentAuthoringRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::MeshRendererGuid));
+		componentAuthoringRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::SpawnerGuid));
+		componentAuthoringRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::RigidBodyGuid));
 	}
 }

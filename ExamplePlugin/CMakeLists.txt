@@ -10,6 +10,10 @@ add_library(ExamplePlugin SHARED
     "Private/Components/Camera.cpp"
     "Private/Components/MeshRenderer.hpp"
     "Private/Components/MeshRenderer.cpp"
+    "Private/Components/Spawner.hpp"
+    "Private/Components/Spawner.cpp"
+    "Private/Components/RigidBody.hpp"
+    "Private/Components/RigidBody.cpp"
     "Private/RenderPasses/OpaqueMaterialPass.hpp"
     "Private/ExamplePluginPCH.hpp"
 )
