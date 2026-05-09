@@ -54,6 +54,9 @@ build/
 
 TO_INCLUDE_IN_BUILD/*.dll
 TO_INCLUDE_IN_BUILD/platforms
+
+ExampleProject
+
 /vc140.pdb
 
 .idea

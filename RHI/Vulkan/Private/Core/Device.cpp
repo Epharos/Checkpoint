@@ -45,10 +45,17 @@ namespace cp
 		CreateCommandPools();
 
 		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Logical device created successfully")));
-		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Graphics Queue Family: {}", families.graphics)));
-		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Present Queue Family: {}", families.present)));
-		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Compute Queue Family: {}", families.compute)));
-		logger.Log(CP_LOG_EVENT(cp::ILogger::Info, VulkanRHI_Label, cp::Message::Create<cp::TextComponent>("Transfer Queue Family: {}", families.transfer)));
+		logger.Log(CP_LOG_EVENT(
+			cp::ILogger::Info,
+			VulkanRHI_Label,
+			cp::Message::Create<cp::TextComponent>(
+				"Queues: G: {}, P: {}, C: {}, T: {}",
+				families.graphics,
+				families.present,
+				families.compute,
+				families.transfer
+			)
+		));
 	}
 
 	void Device::CleanupCommandPools() const
