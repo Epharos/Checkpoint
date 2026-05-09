@@ -115,6 +115,7 @@ namespace cp::editorui
 		struct RegistryEntry
 		{
 			std::string name;
+			std::string key;  // registry key (GUID); if empty, name is used as key
 			bool enabled = false;
 		};
 

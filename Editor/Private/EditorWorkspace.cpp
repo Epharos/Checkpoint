@@ -808,7 +808,7 @@ namespace cp::editor
 				for (const auto& name : passReg->Names())
 				{
 					const bool enabled = std::find(activePasses.begin(), activePasses.end(), name) != activePasses.end();
-					passEntries.push_back({ name, enabled });
+					passEntries.push_back({ name, "", enabled });
 				}
 			}
 			sceneConfigView->SetRenderPassEntries(std::move(passEntries));
@@ -817,10 +817,12 @@ namespace cp::editor
 			const auto& enabledSystems = scene->GetEnabledSystemGuids();
 			if (const auto* sysReg = registryManager->Find<cp::ecs::ISystem>(cp::EcsSystemRegistryName))
 			{
-				for (const auto& name : sysReg->Names())
+				for (const auto& registryKey : sysReg->Names())
 				{
-					const bool enabled = std::find(enabledSystems.begin(), enabledSystems.end(), name) != enabledSystems.end();
-					systemEntries.push_back({ name, enabled });
+					const bool enabled = std::find(enabledSystems.begin(), enabledSystems.end(), registryKey) != enabledSystems.end();
+					auto instance = sysReg->Create(registryKey);
+					std::string displayName = instance ? std::string(instance->Name()) : registryKey;
+					systemEntries.push_back({ std::move(displayName), registryKey, enabled });
 				}
 			}
 			sceneConfigView->SetSystemEntries(std::move(systemEntries));

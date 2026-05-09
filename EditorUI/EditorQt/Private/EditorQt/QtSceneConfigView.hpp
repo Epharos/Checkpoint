@@ -50,7 +50,7 @@ namespace cp::editorqt
 				{
 					QListWidgetItem* item = passList->item(i);
 					if (item->checkState() == Qt::Checked)
-						enabledPasses.push_back(ToStdString(item->text()));
+						enabledPasses.push_back(ToStdString(item->data(Qt::UserRole).toString()));
 				}
 
 				std::vector<std::string> enabledSystems;
@@ -58,7 +58,7 @@ namespace cp::editorqt
 				{
 					QListWidgetItem* item = systemList->item(i);
 					if (item->checkState() == Qt::Checked)
-						enabledSystems.push_back(ToStdString(item->text()));
+						enabledSystems.push_back(ToStdString(item->data(Qt::UserRole).toString()));
 				}
 
 				applyHandler(std::move(enabledPasses), std::move(enabledSystems));
@@ -79,6 +79,8 @@ namespace cp::editorqt
 				auto* item = new QListWidgetItem(ToQString(entry.name), passList);
 				item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
 				item->setCheckState(entry.enabled ? Qt::Checked : Qt::Unchecked);
+				const QString key = entry.key.empty() ? ToQString(entry.name) : ToQString(entry.key);
+				item->setData(Qt::UserRole, key);
 			}
 		}
 
@@ -90,6 +92,8 @@ namespace cp::editorqt
 				auto* item = new QListWidgetItem(ToQString(entry.name), systemList);
 				item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
 				item->setCheckState(entry.enabled ? Qt::Checked : Qt::Unchecked);
+				const QString key = entry.key.empty() ? ToQString(entry.name) : ToQString(entry.key);
+				item->setData(Qt::UserRole, key);
 			}
 		}
 
