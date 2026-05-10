@@ -44,6 +44,8 @@ namespace cp
 			imageCreateInfo.setUsage(EnumBitsCast<vk::ImageUsageFlags, TextureUsage>(_info.usage));
 			imageCreateInfo.setSharingMode(vk::SharingMode::eExclusive);
 			imageCreateInfo.setInitialLayout(EnumCast<vk::ImageLayout, TextureLayout>(_initialLayout));
+			if (_info.type == TextureType::TextureCube)
+				imageCreateInfo.setFlags(vk::ImageCreateFlagBits::eCubeCompatible);
 
 			CP_VK_CHECK(_device.GetHandle().createImage(&imageCreateInfo, nullptr, &_image));
 			CP_ENSURE_MSG(_image != VK_NULL_HANDLE, "Image was not initialized");

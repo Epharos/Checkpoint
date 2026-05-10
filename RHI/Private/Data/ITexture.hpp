@@ -88,6 +88,7 @@ namespace cp
 		Texture2D,
 		Texture3D,
 		Texture2DArray,
+		TextureCube,
 
 		Count,
 	};

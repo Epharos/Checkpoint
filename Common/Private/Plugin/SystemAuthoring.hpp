@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Common/Authoring.hpp>
+#include <ECS/TypeGuid.hpp>
 
 #include <string_view>
 #include <vector>

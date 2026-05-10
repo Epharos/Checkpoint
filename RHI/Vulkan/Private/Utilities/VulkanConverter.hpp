@@ -116,6 +116,7 @@ namespace cp
 			case TextureType::Texture2D: return vk::ImageViewType::e2D;
 			case TextureType::Texture3D: return vk::ImageViewType::e3D;
 			case TextureType::Texture2DArray: return vk::ImageViewType::e2DArray;
+			case TextureType::TextureCube: return vk::ImageViewType::eCube;
 			default: throw std::logic_error("Unrecognized texture type!");
 		}
 	}

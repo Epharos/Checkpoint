@@ -2,6 +2,7 @@ add_library(Resources STATIC
 	"Private/AssetRegistry.cpp"
 	"Private/Loaders/TextureLoader.cpp"
 	"Private/Loaders/MeshLoader.cpp"
+	"Private/Loaders/CubemapLoader.cpp"
 )
 
 target_include_directories(Resources 
