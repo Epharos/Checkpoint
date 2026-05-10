@@ -15,6 +15,10 @@ add_library(ExamplePlugin SHARED
     "Private/Components/RigidBody.hpp"
     "Private/Components/RigidBody.cpp"
     "Private/RenderPasses/OpaqueMaterialPass.hpp"
+    "Private/RenderPasses/NegativePFX.hpp"
+    "Private/RenderPasses/NegativePostFXAuthoring.hpp"
+    "Private/Systems/SpinSystem.hpp"
+    "Private/Systems/SpinSystemAuthoring.hpp"
     "Private/ExamplePluginPCH.hpp"
 )
 
