@@ -1,9 +1,11 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 #include <Common/Data/Extent.hpp>
@@ -66,6 +68,32 @@ namespace cp
         void RecompileFrameGraph();
         void ResetFrameGraph();
 
+        /**
+         * @brief Inject pass state blobs to be restored on the next framegraph rebuild.
+         *
+         * Typically called before RecompileFrameGraph() when loading a scene, so that
+         * freshly-created pass instances receive their previously serialized state.
+         *
+         * @param _blobs Map of registry serialized bytes per type-name.
+         */
+        void SetPendingPassBlobs(std::unordered_map<std::string, std::vector<std::byte>> _blobs);
+
+        /**
+         * @brief Serialize the current state of all live pass instances.
+         *
+         * Useful just before saving a scene: the editor workspace calls this, stores the
+         * result in the Scene description, then serializes the scene.
+         *
+         * @return Map of registry serialized bytes per type-name (only non-empty blobs).
+         */
+        [[nodiscard]] std::unordered_map<std::string, std::vector<std::byte>> SnapshotPassBlobs() const;
+
+        /**
+         * @brief Return a pointer to the live pass instance for the given registry type-name.
+         * @return Pointer to the pass, or nullptr if not found / framegraph not compiled.
+         */
+        [[nodiscard]] IRenderPass* FindActivePass(std::string_view _passTypeName);
+
     public:
         void BeginFrame();
         void Render();
@@ -97,6 +125,10 @@ namespace cp
         uint32_t frameIndex = 0;
 
         std::vector<std::string> frameGraphPassTypeNames;
+
+        std::unordered_map<std::string, std::vector<std::byte>> pendingPassBlobs;
+        std::unordered_map<std::string, IRenderPass*> activePassByTypeName;
+
         FrameGraph frameGraph;
     };
 }

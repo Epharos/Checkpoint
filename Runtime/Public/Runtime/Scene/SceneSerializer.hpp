@@ -23,6 +23,12 @@ namespace cp::runtime
             cp::ILogger* _logger = nullptr
         );
 
+        [[nodiscard]] static bool LoadSceneFromFile(
+            Scene& _scene,
+            const std::filesystem::path& _filePath,
+            cp::ILogger* _logger = nullptr
+        );
+
         [[nodiscard]] static bool SaveSceneToFile(
             const Scene& _scene,
             const std::filesystem::path& _filePath,

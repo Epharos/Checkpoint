@@ -1,7 +1,12 @@
 #include <Common/Plugin/PluginAPI.hpp>
 #include <Common/Plugin/PluginRegistryNames.hpp>
+#include <Common/Plugin/SystemAuthoring.hpp>
+#include <Common/Plugin/RenderPassAuthoring.hpp>
 
 #include "Components/Components.hpp"
+#include "Systems/PhysicsSystemAuthoring.hpp"
+#include "Systems/SpinSystemAuthoring.hpp"
+#include "RenderPasses/NegativePostFXAuthoring.hpp"
 
 namespace
 {
@@ -21,11 +26,28 @@ namespace
 		const bool rigidBodyAuthoringRegistered =
 			componentAuthoringRegistry.RegisterType<cp::RigidBodyAuthoring>(cp::ecs::GuidToRegistryKey(cp::RigidBodyGuid));
 
+		cp::Registry<cp::ISystemAuthoring>& systemAuthoringRegistry =
+			_registryManager.GetOrCreate<cp::ISystemAuthoring>(std::string(cp::EcsSystemAuthoringRegistryName));
+
+		const bool spinSystemAuthoringRegistered =
+			systemAuthoringRegistry.RegisterType<cp::SpinSystemAuthoring>(cp::ecs::GuidToRegistryKey(cp::SpinSystemGuid));
+		const bool physicsSystemAuthoringRegistered =
+			systemAuthoringRegistry.RegisterType<cp::PhysicsSystemAuthoring>(cp::ecs::GuidToRegistryKey(cp::PhysicsSystemGuid));
+
+		cp::Registry<cp::IRenderPassAuthoring>& renderPassAuthoringRegistry =
+			_registryManager.GetOrCreate<cp::IRenderPassAuthoring>(std::string(cp::RenderPassAuthoringRegistryName));
+
+		const bool negativePostFXAuthoringRegistered =
+			renderPassAuthoringRegistry.RegisterType<cp::NegativePostFXAuthoring>(std::string(cp::NegativePostFXTypeName));
+
 		return transformAuthoringRegistered
 			&& cameraAuthoringRegistered
 			&& meshRendererAuthoringRegistered
 			&& spawnerAuthoringRegistered
-			&& rigidBodyAuthoringRegistered;
+			&& rigidBodyAuthoringRegistered
+			&& spinSystemAuthoringRegistered
+			&& physicsSystemAuthoringRegistered
+			&& negativePostFXAuthoringRegistered;
 	}
 }
 
@@ -54,5 +76,18 @@ void ShutdownExamplePluginEditor(cp::PluginEditorContext& _context)
 		componentAuthoringRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::MeshRendererGuid));
 		componentAuthoringRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::SpawnerGuid));
 		componentAuthoringRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::RigidBodyGuid));
+	}
+
+	if (cp::Registry<cp::ISystemAuthoring>* systemAuthoringRegistry =
+		_context.registryManager->Find<cp::ISystemAuthoring>(cp::EcsSystemAuthoringRegistryName))
+	{
+		systemAuthoringRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::SpinSystemGuid));
+		systemAuthoringRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::PhysicsSystemGuid));
+	}
+
+	if (cp::Registry<cp::IRenderPassAuthoring>* renderPassAuthoringRegistry =
+		_context.registryManager->Find<cp::IRenderPassAuthoring>(cp::RenderPassAuthoringRegistryName))
+	{
+		renderPassAuthoringRegistry->Unregister(std::string(cp::NegativePostFXTypeName));
 	}
 }

@@ -115,6 +115,12 @@ namespace cp
 		catch (vk::OutOfDateKHRError&)
 		{
 			Recreate();
+			return;
+		}
+		catch (vk::SurfaceLostKHRError&)
+		{
+			Cleanup();
+			return;
 		}
 
 		if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
@@ -140,7 +146,14 @@ namespace cp
 		imageAvailableTimelineSemaphore = std::make_unique<TimelineSemaphore>(device);
 		renderFinishedTimelineSemaphore = std::make_unique<TimelineSemaphore>(device);
 
-		QuerySurfaceProperties();
+		try
+		{
+			QuerySurfaceProperties();
+		}
+		catch (vk::SurfaceLostKHRError&)
+		{
+			return;
+		}
 
 		SelectSwapchainProperties();
 
@@ -187,6 +200,11 @@ namespace cp
 			Recreate();
 			return static_cast<uint32_t>(-1);
 		}
+		catch (vk::SurfaceLostKHRError&)
+		{
+			Cleanup();
+			return static_cast<uint32_t>(-1);
+		}
 
 		imageIndex = result;
 
@@ -205,7 +223,11 @@ namespace cp
 	{
 		device.WaitIdle();
 
-		if (swapchain != VK_NULL_HANDLE) device.GetHandle().destroySwapchainKHR(swapchain);
+		if (swapchain != VK_NULL_HANDLE)
+		{
+			device.GetHandle().destroySwapchainKHR(swapchain);
+			swapchain = VK_NULL_HANDLE;
+		}
 
 		swapchainImages.clear();
 

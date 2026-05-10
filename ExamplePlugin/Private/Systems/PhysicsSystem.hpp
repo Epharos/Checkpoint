@@ -8,13 +8,24 @@ namespace cp
 {
     inline constexpr ecs::TypeGuid PhysicsSystemGuid = ecs::MakeTypeGuid("ExamplePlugin.PhysicsSystem");
 
-    inline constexpr float gravity = -9.8f;
-
     class PhysicsSystem final : public ecs::ISystem
     {
     public:
         [[nodiscard]] ecs::TypeGuid SystemGuid() const override { return PhysicsSystemGuid; }
         [[nodiscard]] std::string_view Name() const override { return "PhysicsSystem"; }
+
+        [[nodiscard]] float GetGravity() const { return gravity; }
+        void SetGravity(float _gravity) { gravity = _gravity; }
+
+        void Serialize(cp::ISerializer& _serializer) const override
+        {
+            _serializer.WritePod(gravity);
+        }
+
+        void Deserialize(cp::IDeserializer& _deserializer) override
+        {
+            [[maybe_unused]] bool flag = _deserializer.ReadPod(gravity);
+        }
 
         void Run(
             ecs::World& _world,
@@ -25,7 +36,7 @@ namespace cp
             _world.RunSystem(
                 ecs::ReadAccess<>{},
                 ecs::WriteAccess<Transform, RigidBody>{},
-                [_deltaTime, &_commandBuffer](const ecs::Entity _entity, Transform& _transform, RigidBody& _rigidbody) {
+                [_deltaTime, &_commandBuffer, this](const ecs::Entity _entity, Transform& _transform, RigidBody& _rigidbody) {
                     _rigidbody.speedY += gravity * _deltaTime;
 
                     _transform.x += _rigidbody.speedX * _deltaTime;
@@ -34,5 +45,8 @@ namespace cp
                 }
             );
         }
+
+    protected:
+        float gravity = -9.8f;
     };
 }

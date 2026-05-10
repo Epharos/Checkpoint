@@ -4,6 +4,7 @@
 #include <string_view>
 
 #include <Common/Data/Extent.hpp>
+#include <Common/Serialization/ISerializer.hpp>
 
 namespace cp
 {
@@ -94,6 +95,23 @@ namespace cp
 
     struct IRenderPass
     {
+        /**
+         * @brief Serialize the pass's hot parameters (state that survives framegraph rebuilds).
+         *
+         * Called automatically before a framegraph rebuild so the new instance can restore
+         * the same state via Deserialize().  The default no-op is correct for passes that
+         * expose no authored parameters.
+         */
+        virtual void Serialize(cp::ISerializer& _serializer) const {}
+
+        /**
+         * @brief Restore hot parameters from a previously serialized blob.
+         *
+         * Called on a freshly-created pass instance before Configure() so authored values
+         * set in the editor are preserved across framegraph rebuilds and scene loads.
+         */
+        virtual void Deserialize(cp::IDeserializer& _deserializer) {}
+
         /**
          * @brief Called first during compilation to declare execution dependencies on other passes.
          *

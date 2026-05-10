@@ -1,6 +1,8 @@
 #include "../Public/Editor/EditorWorkspace.hpp"
 
 #include <Common/Plugin/ComponentAuthoring.hpp>
+#include <Common/Plugin/RenderPassAuthoring.hpp>
+#include <Common/Plugin/SystemAuthoring.hpp>
 #include <Common/Plugin/PluginHost.hpp>
 #include <Common/Plugin/PluginRegistryNames.hpp>
 
@@ -229,6 +231,18 @@ namespace cp::editor
 			std::shared_ptr<cp::editorui::IAction> removeAction;
 		};
 
+		struct SystemAuthoringBinding
+		{
+			std::string registryKey;
+			std::unique_ptr<cp::ISystemAuthoring> authoring;
+		};
+
+		struct PassAuthoringBinding
+		{
+			std::string registryKey;
+			std::unique_ptr<cp::IRenderPassAuthoring> authoring;
+		};
+
 		struct EditorSceneState
 		{
 			std::vector<cp::editorui::SceneHierarchyNode> hierarchyNodes;
@@ -341,10 +355,10 @@ namespace cp::editor
 			runtimeApp.reset();
 		}
 
-		if (scene != nullptr)
+		if (viewportView != nullptr)
 		{
-			scene->GetWorld().ClearComponentTypes();
-			scene->Clear();
+			viewportView->SetFrameHandler(nullptr);
+			viewportView->SetResizeHandler(nullptr);
 		}
 
 		if (renderer != nullptr)
@@ -360,11 +374,39 @@ namespace cp::editor
 			assetRegistryInitialized = false;
 		}
 
+		if (scene != nullptr)
+		{
+			scene->GetWorld().ClearComponentTypes();
+			scene->Clear();
+		}
+
+		if (sceneConfigView != nullptr)
+		{
+			sceneConfigView->SetSelectionChangedHandler(nullptr);
+			sceneConfigView->SetParamFieldEditedHandler(nullptr);
+			sceneConfigView->SetApplyHandler(nullptr);
+		}
+		if (inspectorView != nullptr)
+		{
+			inspectorView->SetFieldEditedHandler(nullptr);
+			inspectorView->SetAddComponentMenuHandler(nullptr);
+		}
+		if (hierarchyView != nullptr)
+		{
+			hierarchyView->SetEntityActivatedHandler(nullptr);
+			hierarchyView->SetContextMenuHandler(nullptr);
+		}
+
+
+		loadSceneDelegate = nullptr;
+
 		if (pluginHost != nullptr)
 		{
 			pluginHost->UnloadAll();
 			pluginHost.reset();
 		}
+
+		registryManager.reset();
 	}
 
 	void EditorWorkspace::AppendConsoleEntry(cp::editorui::ConsoleEntry _entry)
@@ -388,6 +430,8 @@ namespace cp::editor
 		registryManager->GetOrCreate<cp::ecs::ISystem>(std::string(cp::EcsSystemRegistryName));
 		registryManager->GetOrCreate<cp::ecs::IComponentRegistrar>(std::string(cp::EcsComponentRegistryName));
 		registryManager->GetOrCreate<cp::IComponentAuthoring>(std::string(cp::EcsComponentAuthoringRegistryName));
+		registryManager->GetOrCreate<cp::ISystemAuthoring>(std::string(cp::EcsSystemAuthoringRegistryName));
+		registryManager->GetOrCreate<cp::IRenderPassAuthoring>(std::string(cp::RenderPassAuthoringRegistryName));
 		scene = std::make_unique<cp::runtime::Scene>();
 		scene->Initialize("NewScene");
 
@@ -577,6 +621,32 @@ namespace cp::editor
 					"Remove " + std::string(binding.authoring->Name())
 				});
 				componentAuthoringBindings->push_back(std::move(binding));
+			}
+		}
+
+		const auto systemAuthoringBindings = std::make_shared<std::vector<SystemAuthoringBinding>>();
+		if (const cp::Registry<cp::ISystemAuthoring>* sysAuthoringReg =
+			registryManager->Find<cp::ISystemAuthoring>(cp::EcsSystemAuthoringRegistryName))
+		{
+			for (const std::string& key : sysAuthoringReg->Names())
+			{
+				SystemAuthoringBinding binding;
+				binding.registryKey = key;
+				binding.authoring = sysAuthoringReg->Create(key);
+				systemAuthoringBindings->push_back(std::move(binding));
+			}
+		}
+
+		const auto passAuthoringBindings = std::make_shared<std::vector<PassAuthoringBinding>>();
+		if (const cp::Registry<cp::IRenderPassAuthoring>* passAuthoringReg =
+			registryManager->Find<cp::IRenderPassAuthoring>(cp::RenderPassAuthoringRegistryName))
+		{
+			for (const std::string& key : passAuthoringReg->Names())
+			{
+				PassAuthoringBinding binding;
+				binding.registryKey = key;
+				binding.authoring = passAuthoringReg->Create(key);
+				passAuthoringBindings->push_back(std::move(binding));
 			}
 		}
 
@@ -828,6 +898,143 @@ namespace cp::editor
 			sceneConfigView->SetSystemEntries(std::move(systemEntries));
 		};
 
+		auto toInspectorSections = [](const std::vector<cp::AuthoringSectionDescriptor>& _authored)
+		{
+			std::vector<cp::editorui::InspectorSection> result;
+			result.reserve(_authored.size());
+			for (const auto& s : _authored)
+			{
+				cp::editorui::InspectorSection section;
+				section.id = s.id;
+				section.title = s.title;
+				for (const auto& f : s.fields)
+				{
+					cp::editorui::InspectorField field;
+					field.id = f.id;
+					field.label = f.label;
+					field.valueType = ToEditorInspectorValueType(f.valueType);
+					field.inputType = (f.inputType == cp::AuthoringInputType::FilePath)
+						? cp::editorui::InspectorField::InputType::FilePath
+						: cp::editorui::InspectorField::InputType::Default;
+					field.value = ToEditorInspectorValue(f.value);
+					field.readOnly = f.readOnly;
+					section.fields.push_back(std::move(field));
+				}
+				result.push_back(std::move(section));
+			}
+			return result;
+		};
+
+		sceneConfigView->SetSelectionChangedHandler([this, systemAuthoringBindings, passAuthoringBindings, toInspectorSections](
+			std::string_view _key, bool _isPass)
+		{
+			if (_isPass)
+			{
+				const auto it = std::find_if(passAuthoringBindings->begin(), passAuthoringBindings->end(),
+					[&](const PassAuthoringBinding& b) { return b.registryKey == _key; });
+
+				if (it == passAuthoringBindings->end())
+				{
+					sceneConfigView->ClearParamSections();
+					return;
+				}
+
+				cp::IRenderPass* pass = renderer ? renderer->FindActivePass(_key) : nullptr;
+
+				if (!pass)
+				{
+					sceneConfigView->ClearParamSections();
+					return;
+				}
+
+				sceneConfigView->SetParamSections(it->authoring->Name(),
+					toInspectorSections(it->authoring->BuildSections(*pass)));
+			}
+			else
+			{
+				const auto it = std::find_if(systemAuthoringBindings->begin(), systemAuthoringBindings->end(),
+					[&](const SystemAuthoringBinding& b) { return b.registryKey == _key; });
+
+				if (it == systemAuthoringBindings->end())
+				{
+					sceneConfigView->ClearParamSections();
+					return;
+				}
+
+				cp::ecs::ISystem* system = scene->FindActiveSystem(_key);
+
+				if (!system)
+				{
+					sceneConfigView->ClearParamSections();
+					return;
+				}
+
+				sceneConfigView->SetParamSections(it->authoring->Name(),
+					toInspectorSections(it->authoring->BuildSections(*system)));
+			}
+		});
+
+		sceneConfigView->SetParamFieldEditedHandler([this, systemAuthoringBindings, passAuthoringBindings, toInspectorSections](
+			std::string_view _key, bool _isPass,
+			std::string_view _sectionId,
+			std::string_view _fieldId,
+			const cp::editorui::InspectorField::Value& _value)
+		{
+			std::string error;
+			if (_isPass)
+			{
+				const auto it = std::find_if(passAuthoringBindings->begin(), passAuthoringBindings->end(),
+					[&](const PassAuthoringBinding& b) { return b.registryKey == _key; });
+				if (it == passAuthoringBindings->end()) return;
+				cp::IRenderPass* pass = renderer ? renderer->FindActivePass(_key) : nullptr;
+				if (!pass)
+				{
+					logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "SceneConfig",
+						cp::Message::Create("Pass '{}' has no active instance: cannot apply field '{}'", _key, _fieldId)));
+					return;
+				}
+				if (!it->authoring->ApplyValue(*pass, _fieldId, ToAuthoringValue(_value), error))
+				{
+					logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "SceneConfig",
+						cp::Message::Create("Pass param '{}': {}", _fieldId, error)));
+				}
+				// Snapshot the updated pass state into the scene for persistence
+				{
+					MemorySerializer blobSerializer;
+					pass->Serialize(blobSerializer);
+					scene->SetPassBlob(std::string(_key), std::move(blobSerializer.bytes));
+				}
+				// Refresh params panel from the live instance
+				sceneConfigView->SetParamSections(it->authoring->Name(),
+					toInspectorSections(it->authoring->BuildSections(*pass)));
+			}
+			else
+			{
+				const auto it = std::find_if(systemAuthoringBindings->begin(), systemAuthoringBindings->end(),
+					[&](const SystemAuthoringBinding& b) { return b.registryKey == _key; });
+
+				if (it == systemAuthoringBindings->end()) return;
+
+
+				cp::ecs::ISystem* system = scene->FindActiveSystem(_key);
+				if (!system)
+				{
+					logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "SceneConfig",
+						cp::Message::Create("System '{}' has no active instance: cannot apply field '{}'", _key, _fieldId)));
+					return;
+				}
+
+				if (!it->authoring->ApplyValue(*system, _fieldId, ToAuthoringValue(_value), error))
+				{
+					logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "SceneConfig",
+						cp::Message::Create("System param '{}': {}", _fieldId, error)));
+				}
+
+				sceneConfigView->SetParamSections(it->authoring->Name(),
+					toInspectorSections(it->authoring->BuildSections(*system)));
+			}
+		});
+
 		sceneConfigView->SetApplyHandler([this](
 			std::vector<std::string> _passNames,
 			std::vector<std::string> _systemNames)
@@ -836,8 +1043,21 @@ namespace cp::editor
 			const auto systemCount = _systemNames.size();
 			scene->SetActivePassNames(std::move(_passNames));
 			scene->SetEnabledSystemGuids(std::move(_systemNames));
+
+			if (const cp::Registry<cp::ecs::ISystem>* sysReg =
+				registryManager->Find<cp::ecs::ISystem>(cp::EcsSystemRegistryName))
+			{
+				scene->InitializeSystems(*sysReg);
+			}
+
 			if (renderer)
+			{
+				for (const auto& [typeName, blob] : renderer->SnapshotPassBlobs())
+					scene->SetPassBlob(typeName, blob);
+
+				renderer->SetPendingPassBlobs(scene->GetPassBlobs());
 				cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
+			}
 			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Scene",
 				cp::Message::Create("Applied scene config: {} pass(es), {} system(s)", passCount, systemCount)));
 		});
@@ -936,7 +1156,16 @@ namespace cp::editor
 			}
 
 			if (renderer)
+			{
+				renderer->SetPendingPassBlobs(scene->GetPassBlobs());
 				cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
+			}
+
+			if (const cp::Registry<cp::ecs::ISystem>* sysReg =
+				registryManager->Find<cp::ecs::ISystem>(cp::EcsSystemRegistryName))
+			{
+				scene->InitializeSystems(*sysReg);
+			}
 
 			const std::vector<std::string> loadedPluginNames = pluginHost != nullptr
 				                                               ? pluginHost->GetLoadedPluginNames()
@@ -986,6 +1215,12 @@ namespace cp::editor
 
 		const auto saveScene = [this, activeScenePath]() -> bool
 		{
+			if (renderer)
+			{
+				for (const auto& [typeName, blob] : renderer->SnapshotPassBlobs())
+					scene->SetPassBlob(typeName, blob);
+			}
+
 			MemorySerializer serializer;
 			if (!scene->SerializeTo(serializer))
 			{

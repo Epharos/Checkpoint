@@ -56,13 +56,25 @@ namespace cp::runtime
         cp::ILogger* _logger
     )
     {
+        auto scene = std::make_unique<Scene>();
+        if (!LoadSceneFromFile(*scene, _filePath, _logger))
+            return nullptr;
+        return scene;
+    }
+
+    bool SceneSerializer::LoadSceneFromFile(
+        Scene& _scene,
+        const std::filesystem::path& _filePath,
+        cp::ILogger* _logger
+    )
+    {
         std::ifstream ifs(_filePath, std::ios::binary | std::ios::ate);
         if (!ifs.is_open())
         {
             if (_logger)
-                _logger->Log("SceneSerializer: failed to open file: " + _filePath.string(), cp::ILogger::Error);
+                _logger->Log(CP_LOG_EVENT(cp::ILogger::Error, "Scene Loader", cp::Message::Create("SceneSerializer: failed to open file: {}", _filePath.string())));
 
-            return nullptr;
+            return false;
         }
 
         std::vector<uint8_t> bytes(static_cast<size_t>(ifs.tellg()));
@@ -70,15 +82,15 @@ namespace cp::runtime
         ifs.read(reinterpret_cast<char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
 
         SpanDeserializer deserializer(bytes);
-        auto scene = std::make_unique<Scene>();
-        if (!scene->DeserializeFrom(deserializer))
+        if (!_scene.DeserializeFrom(deserializer))
         {
             if (_logger)
-                _logger->Log("SceneSerializer: failed to deserialize: " + _filePath.string(), cp::ILogger::Error);
+                _logger->Log(CP_LOG_EVENT(cp::ILogger::Error, "Scene Loader", cp::Message::Create("SceneSerializer: failed to deserialize: {}", _filePath.string())));
 
-            return nullptr;
+            return false;
         }
-        return scene;
+
+        return true;
     }
 
     bool SceneSerializer::SaveSceneToFile(

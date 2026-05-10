@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace cp::scene
@@ -22,7 +24,7 @@ namespace cp::scene
     struct SceneDescription
     {
         static constexpr uint32_t MAGIC = 0x53434E45; // "SCNE"
-        static constexpr uint32_t VERSION = 1;
+        static constexpr uint32_t VERSION = 4;
 
         std::string name;
         SceneGuid sceneGuid;
@@ -31,5 +33,7 @@ namespace cp::scene
 
         SystemsConfig systemsConfig;
         std::vector<std::string> activePassNames;
+
+        std::unordered_map<std::string, std::vector<std::byte>> passBlobs;
     };
 }

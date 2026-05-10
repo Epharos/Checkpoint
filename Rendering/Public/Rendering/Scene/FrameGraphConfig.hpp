@@ -22,6 +22,13 @@ namespace cp::rendering
         cp::IDeserializer& _deserializer
     );
 
+    /**
+     * @brief Reset the renderer's framegraph and rebuild it with the given active passes.
+     *
+     * Pass state blobs should be injected into the renderer BEFORE calling this function via
+     * Renderer::SetPendingPassBlobs(), so that the newly-created pass instances have their
+     * authored state restored during BuildFrameGraph().
+     */
     bool ApplyFrameGraphConfigToRenderer(
         cp::Renderer& _renderer,
         const std::vector<std::string>& _activePassNames

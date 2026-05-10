@@ -216,23 +216,21 @@ namespace cp::runtime
         rendererInfo.ecsWorld = &scene->GetWorld();
 
         auto renderer = std::make_unique<cp::Renderer>(rendererInfo, rhi);
+        renderer->SetPendingPassBlobs(scene->GetPassBlobs());
         cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
 
-        std::vector<std::unique_ptr<ecs::ISystem>> systems;
+        size_t systemCount = 0;
         if (const Registry<ecs::ISystem>* sysReg = registryManager.Find<ecs::ISystem>(EcsSystemRegistryName))
         {
+            systemCount = scene->InitializeSystems(*sysReg);
+
             for (const std::string& guid : scene->GetEnabledSystemGuids())
             {
-                if (!sysReg->Contains(guid))
+                if (!sysReg->Contains(guid) && logger)
                 {
-                    if (logger)
-                    {
-                        logger->Log(CP_LOG_EVENT(ILogger::Warning, RuntimeLabel,
-                            Message::Create("Missing ECS system for guid '{}'", guid)));
-                    }
-                    continue;
+                    logger->Log(CP_LOG_EVENT(ILogger::Warning, RuntimeLabel,
+                        Message::Create("Missing ECS system for guid '{}'", guid)));
                 }
-                systems.push_back(sysReg->Create(guid));
             }
         }
 
@@ -240,7 +238,7 @@ namespace cp::runtime
         {
             logger->Log(CP_LOG_EVENT(ILogger::Info, RuntimeLabel,
                 Message::Create("Runtime started ({} system(s), {} pass(es))",
-                    systems.size(), scene->GetActivePassNames().size())));
+                    systemCount, scene->GetActivePassNames().size())));
         }
 
         Clock deltaTimeClock;
@@ -250,9 +248,10 @@ namespace cp::runtime
         {
             const float deltaTime = static_cast<float>(deltaTimeClock.Restart());
 
-            for (const std::unique_ptr<ecs::ISystem>& system : systems)
+            for (const std::unique_ptr<ecs::ISystem>& system : scene->GetActiveSystems())
             {
-                system->Run(scene->GetWorld(), commandBuffer, deltaTime);
+                if (system)
+                    system->Run(scene->GetWorld(), commandBuffer, deltaTime);
             }
             commandBuffer.Playback(scene->GetWorld());
 
@@ -261,7 +260,7 @@ namespace cp::runtime
             renderer->EndFrame();
         }
 
-        systems.clear();
+        scene->ShutdownSystems();
         renderer->ResetFrameGraph();
         renderer.reset();
 

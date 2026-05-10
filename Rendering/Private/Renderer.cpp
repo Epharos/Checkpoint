@@ -1,6 +1,7 @@
 #include "Renderer.hpp"
 
 #include <algorithm>
+#include <cstring>
 #include <string_view>
 #include <vector>
 
@@ -14,8 +15,41 @@
 
 #include <Common/Core/Registry.hpp>
 #include <Common/Data/Rectangle.hpp>
+#include <Common/Serialization/ISerializer.hpp>
 
 #include "Resources/AssetRegistry.hpp"
+
+namespace
+{
+    class PassBlobSerializer final : public cp::ISerializer
+    {
+    public:
+        void Write(std::span<const std::byte> _bytes) override
+        {
+            bytes.insert(bytes.end(), _bytes.begin(), _bytes.end());
+        }
+        std::vector<std::byte> bytes;
+    };
+
+    class PassBlobDeserializer final : public cp::IDeserializer
+    {
+    public:
+        explicit PassBlobDeserializer(const std::vector<std::byte>& _bytes)
+            : data(_bytes), cursor(0) {}
+
+        bool Read(std::span<std::byte> _dst) override
+        {
+            if (cursor + _dst.size() > data.size()) return false;
+            std::memcpy(_dst.data(), data.data() + cursor, _dst.size());
+            cursor += _dst.size();
+            return true;
+        }
+
+    private:
+        const std::vector<std::byte>& data;
+        size_t cursor = 0;
+    };
+}
 
 namespace cp
 {
@@ -103,6 +137,32 @@ namespace cp
         return true;
     }
 
+    void Renderer::SetPendingPassBlobs(std::unordered_map<std::string, std::vector<std::byte>> _blobs)
+    {
+        pendingPassBlobs = std::move(_blobs);
+    }
+
+    std::unordered_map<std::string, std::vector<std::byte>> Renderer::SnapshotPassBlobs() const
+    {
+        std::unordered_map<std::string, std::vector<std::byte>> result;
+
+        for (const auto& [typeName, pass] : activePassByTypeName)
+        {
+            PassBlobSerializer blobSerializer;
+            pass->Serialize(blobSerializer);
+            if (!blobSerializer.bytes.empty())
+                result[typeName] = std::move(blobSerializer.bytes);
+        }
+
+        return result;
+    }
+
+    IRenderPass* Renderer::FindActivePass(std::string_view _passTypeName)
+    {
+        const auto it = activePassByTypeName.find(std::string(_passTypeName));
+        return it != activePassByTypeName.end() ? it->second : nullptr;
+    }
+
     bool Renderer::RemoveFrameGraphPass(const std::string_view _passTypeName, const bool _recompile)
     {
         if (_passTypeName.empty())
@@ -158,6 +218,10 @@ namespace cp
     void Renderer::Render()
     {
         FrameContext& context = frameContext[frameIndex];
+
+        if (context.swapchainImageIndex == static_cast<uint32_t>(-1))
+            return;
+
         frameGraph.Execute(context);
         BlitFinalRenderingToSwapchain(context);
     }
@@ -193,9 +257,18 @@ namespace cp
             std::unique_ptr<IRenderPass> pass = passRegistry->Create(_passTypeName);
             CP_ASSERT_MSG(pass != nullptr, "Registry returned a null render pass instance");
 
+            const auto blobIt = pendingPassBlobs.find(std::string(_passTypeName));
+            if (blobIt != pendingPassBlobs.end() && !blobIt->second.empty())
+            {
+                PassBlobDeserializer blobDeserializer(blobIt->second);
+                pass->Deserialize(blobDeserializer);
+            }
+
             auto* configurable = dynamic_cast<IConfigurableRenderPass*>(pass.get());
             CP_ASSERT_MSG(configurable != nullptr, "Registered render pass does not implement IConfigurableRenderPass");
             configurable->Configure(initContext);
+
+            activePassByTypeName[std::string(_passTypeName)] = pass.get();
 
             frameGraph.AddPass(std::move(pass));
         };
@@ -290,6 +363,12 @@ namespace cp
     void Renderer::EndFrame()
     {
         const FrameContext& context = frameContext[frameIndex];
+
+        if (context.swapchainImageIndex == static_cast<uint32_t>(-1))
+        {
+            frameIndex = (frameIndex + 1) % rendererInfo.frameCount;
+            return;
+        }
 
         const uint64_t signalValue = ++frameGlobalIndex;
 
@@ -390,9 +469,21 @@ namespace cp
             return;
         }
 
+        for (const auto& [typeName, pass] : activePassByTypeName)
+        {
+            PassBlobSerializer blobSerializer;
+            pass->Serialize(blobSerializer);
+            if (!blobSerializer.bytes.empty())
+                pendingPassBlobs[typeName] = std::move(blobSerializer.bytes);
+        }
+
+        activePassByTypeName.clear(); // pointers will be dangling after Reset
+
         frameGraph.Reset();
         BuildFrameGraph();
         frameGraph.Compile(renderingHardwareInterface);
+
+        pendingPassBlobs.clear();
     }
 
     void Renderer::Cleanup() const

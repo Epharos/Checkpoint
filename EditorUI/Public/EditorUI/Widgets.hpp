@@ -115,7 +115,7 @@ namespace cp::editorui
 		struct RegistryEntry
 		{
 			std::string name;
-			std::string key;  // registry key (GUID); if empty, name is used as key
+			std::string key;
 			bool enabled = false;
 		};
 
@@ -124,9 +124,23 @@ namespace cp::editorui
 			std::vector<std::string> _enabledSystemNames
 		)>;
 
+		using SelectionChangedHandler = std::function<void(std::string_view _key, bool _isPass)>;
+
+		using ParamFieldEditedHandler = std::function<void(
+			std::string_view _registryKey,
+			bool _isPass,
+			std::string_view _sectionId,
+			std::string_view _fieldId,
+			const InspectorField::Value& _value
+		)>;
+
 		virtual void SetRenderPassEntries(std::vector<RegistryEntry> _entries) = 0;
 		virtual void SetSystemEntries(std::vector<RegistryEntry> _entries) = 0;
 		virtual void SetApplyHandler(ApplyHandler _handler) = 0;
+		virtual void SetSelectionChangedHandler(SelectionChangedHandler _handler) = 0;
+		virtual void SetParamFieldEditedHandler(ParamFieldEditedHandler _handler) = 0;
+		virtual void SetParamSections(std::string_view _title, std::vector<InspectorSection> _sections) = 0;
+		virtual void ClearParamSections() = 0;
 	};
 
 	class IFileDialog : public IWidget

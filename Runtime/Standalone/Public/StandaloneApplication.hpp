@@ -5,6 +5,8 @@
 
 #include <Rendering/Renderer.hpp>
 
+#include <Runtime/Scene/Scene.hpp>
+
 // Temporarily include VulkanRHI, GLFWWindow
 
 #include <VulkanRHI.hpp>
@@ -14,8 +16,8 @@
 
 #include <ECS/ECS.hpp>
 
+#include <filesystem>
 #include <memory>
-#include <vector>
 
 namespace cp
 {
@@ -45,20 +47,21 @@ namespace cp
         void InitRenderer();
 
         void RegisterPluginComponents();
-        void InitEcsWorld();
+        void InitScene();
 
         std::shared_ptr<ILogger> compositeLogger;
         RegistryManager registryManager;
 
         std::unique_ptr<PluginHost> pluginHost;
 
-        ecs::World ecsWorld;
+        std::unique_ptr<runtime::Scene> scene;
         ecs::CommandBuffer ecsCommandBuffer;
-        std::vector<std::unique_ptr<ecs::ISystem>> ecsSystems;
 
         std::unique_ptr<RenderingHardwareInterface> rhi;
         std::unique_ptr<GLFWWindow> window;
         std::unique_ptr<Renderer> renderer;
+
+        std::filesystem::path scenePath;
 
         bool initialized = false;
         bool jobSystemInitialized = false;

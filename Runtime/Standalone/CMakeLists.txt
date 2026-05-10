@@ -16,4 +16,5 @@ target_link_libraries(Runtime_Standalone
         RHI_Vulkan # By the end it should be just RHI and load the corresponding RHI dynamically
         Rendering
         Resources
+        Runtime
 )

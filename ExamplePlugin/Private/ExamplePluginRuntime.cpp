@@ -14,7 +14,6 @@
 namespace
 {
 	inline constexpr std::string_view OpaqueMaterialPassTypeName = "OpaqueMaterialPass";
-	inline constexpr std::string_view NegativePostFXTypeName = "NegativePostFX";
 
 	bool RegisterPasses(cp::Registry<cp::IRenderPass> &renderPassRegistry)
 	{
@@ -24,7 +23,7 @@ namespace
 			);
 		const bool negativeRegistered =
 			renderPassRegistry.RegisterType<cp::NegativePostFX>(
-				std::string(NegativePostFXTypeName)
+				std::string(cp::NegativePostFXTypeName)
 			);
 
 		return opaqueRegistered && negativeRegistered;
@@ -122,7 +121,7 @@ void ShutdownExamplePluginRuntime(cp::PluginRuntimeContext& _context)
 			_context.registryManager->Find<cp::IRenderPass>(cp::RenderPassRegistryName))
 		{
 			renderPassRegistry->Unregister(OpaqueMaterialPassTypeName);
-			renderPassRegistry->Unregister(NegativePostFXTypeName);
+			renderPassRegistry->Unregister(cp::NegativePostFXTypeName);
 		}
 
 		if (cp::Registry<cp::ecs::ISystem>* ecsSystemRegistry =

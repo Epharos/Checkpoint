@@ -14,6 +14,8 @@
 
 namespace cp
 {
+    inline constexpr std::string_view NegativePostFXTypeName = "NegativePostFX";
+
     struct NegativePostFXData
     {
         FramegraphResourceHandle* finalRendering = nullptr;
@@ -32,6 +34,19 @@ namespace cp
         NegativePostFX()
         {
             name = "Negative Post-FX";
+        }
+
+        [[nodiscard]] bool GetEnabled() const { return enabled; }
+        void SetEnabled(bool _enabled) { enabled = _enabled; }
+
+        void Serialize(cp::ISerializer& _serializer) const override
+        {
+            _serializer.WritePod(enabled);
+        }
+
+        void Deserialize(cp::IDeserializer& _deserializer) override
+        {
+            [[maybe_unused]] bool ok = _deserializer.ReadPod(enabled);
         }
 
         void Configure(const RenderPassInitContext& _context) override
@@ -100,6 +115,9 @@ namespace cp
 
         void Execute(RenderPassExecutionContext &_context) override
         {
+            if (!enabled)
+                return;
+
             ICommandBuffer& cmd = _context; // For now we use the primary command buffer (graphics but supports everything)
 
             if (data.pipeline && data.descriptorSet)
@@ -125,5 +143,8 @@ namespace cp
         {
             data.finalRendering = nullptr;
         }
+
+    private:
+        bool enabled = true;
     };
 }
