@@ -2,8 +2,10 @@
 #include <Common/Plugin/PluginRegistryNames.hpp>
 #include <Common/Plugin/SystemAuthoring.hpp>
 #include <Common/Plugin/RenderPassAuthoring.hpp>
+#include <Common/Plugin/ViewportToolbarContribution.hpp>
 
 #include "Components/Components.hpp"
+#include "Components/TransformViewportToolbarContribution.hpp"
 #include "Systems/PhysicsSystemAuthoring.hpp"
 #include "Systems/SpinSystemAuthoring.hpp"
 #include "RenderPasses/NegativePostFXAuthoring.hpp"
@@ -43,6 +45,13 @@ namespace
 		const bool skyboxAuthoringRegistered =
 			renderPassAuthoringRegistry.RegisterType<cp::SkyboxAuthoring>(std::string(cp::SkyboxPassTypeName));
 
+		cp::Registry<cp::IViewportToolbarContribution>& viewportToolbarRegistry =
+			_registryManager.GetOrCreate<cp::IViewportToolbarContribution>(std::string(cp::ViewportToolbarContributionRegistryName));
+
+		const bool transformToolbarContributionRegistered =
+			viewportToolbarRegistry.RegisterType<cp::TransformViewportToolbarContribution>(
+				cp::ecs::GuidToRegistryKey(cp::TransformViewportToolbarContributionGuid));
+
 		return transformAuthoringRegistered
 			&& cameraAuthoringRegistered
 			&& meshRendererAuthoringRegistered
@@ -51,7 +60,8 @@ namespace
 			&& spinSystemAuthoringRegistered
 			&& physicsSystemAuthoringRegistered
 			&& negativePostFXAuthoringRegistered
-			&& skyboxAuthoringRegistered;
+			&& skyboxAuthoringRegistered
+			&& transformToolbarContributionRegistered;
 	}
 }
 
@@ -93,6 +103,12 @@ void ShutdownExamplePluginEditor(cp::PluginEditorContext& _context)
 		_context.registryManager->Find<cp::IRenderPassAuthoring>(cp::RenderPassAuthoringRegistryName))
 	{
 		renderPassAuthoringRegistry->Unregister(std::string(cp::NegativePostFXTypeName));
-			renderPassAuthoringRegistry->Unregister(std::string(cp::SkyboxPassTypeName));
+		renderPassAuthoringRegistry->Unregister(std::string(cp::SkyboxPassTypeName));
+	}
+
+	if (cp::Registry<cp::IViewportToolbarContribution>* viewportToolbarRegistry =
+		_context.registryManager->Find<cp::IViewportToolbarContribution>(cp::ViewportToolbarContributionRegistryName))
+	{
+		viewportToolbarRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::TransformViewportToolbarContributionGuid));
 	}
 }

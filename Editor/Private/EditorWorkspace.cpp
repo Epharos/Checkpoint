@@ -3,6 +3,7 @@
 #include <Common/Plugin/ComponentAuthoring.hpp>
 #include <Common/Plugin/RenderPassAuthoring.hpp>
 #include <Common/Plugin/SystemAuthoring.hpp>
+#include <Common/Plugin/ViewportToolbarContribution.hpp>
 #include <Common/Plugin/PluginHost.hpp>
 #include <Common/Plugin/PluginRegistryNames.hpp>
 
@@ -243,6 +244,13 @@ namespace cp::editor
 			std::unique_ptr<cp::IRenderPassAuthoring> authoring;
 		};
 
+		struct ToolbarContributionBinding
+		{
+			std::string registryKey;
+			std::unique_ptr<cp::IViewportToolbarContribution> contribution;
+			std::vector<std::shared_ptr<cp::editorui::IAction>> actions;
+		};
+
 		struct EditorSceneState
 		{
 			std::vector<cp::editorui::SceneHierarchyNode> hierarchyNodes;
@@ -440,6 +448,8 @@ namespace cp::editor
 		registryManager->GetOrCreate<cp::IComponentAuthoring>(std::string(cp::EcsComponentAuthoringRegistryName));
 		registryManager->GetOrCreate<cp::ISystemAuthoring>(std::string(cp::EcsSystemAuthoringRegistryName));
 		registryManager->GetOrCreate<cp::IRenderPassAuthoring>(std::string(cp::RenderPassAuthoringRegistryName));
+		registryManager->GetOrCreate<cp::IViewportToolbarContribution>(std::string(cp::ViewportToolbarContributionRegistryName));
+
 		scene = std::make_unique<cp::runtime::Scene>();
 		scene->Initialize("NewScene");
 
@@ -473,9 +483,6 @@ namespace cp::editor
 		stopAction = RegisterAction(actions, { "project.stop", "Stop", "Stop runtime." });
 		stopAction->SetEnabled(false);
 		const auto createEntityAction = RegisterAction(actions, { "hierarchy.createEntity", "Create Entity" });
-		const auto toolTranslateAction = RegisterAction(actions, { "viewport.tool.translate", "Translate", "", "", std::nullopt, true, true });
-		const auto toolRotateAction = RegisterAction(actions, { "viewport.tool.rotate", "Rotate", "", "", std::nullopt, true, false });
-		const auto toolScaleAction = RegisterAction(actions, { "viewport.tool.scale", "Scale", "", "", std::nullopt, true, false });
 
 		const auto menuBar = window->GetMenuBar();
 		const auto fileMenu = menuBar->AddMenu("file", "File");
@@ -520,9 +527,6 @@ namespace cp::editor
 		viewportPanel->SetContent(viewportView);
 
 		const auto viewportToolBar = viewportPanel->AddToolBar("viewport.tools");
-		viewportToolBar->AddAction(toolTranslateAction);
-		viewportToolBar->AddAction(toolRotateAction);
-		viewportToolBar->AddAction(toolScaleAction);
 
 		const auto consoleLogger = std::make_shared<cp::ConsoleLogger>(std::make_shared<cp::ConsoleVisitor>());
 		const auto editorConsoleLogger = std::make_shared<EditorConsoleLogger>(
@@ -658,6 +662,57 @@ namespace cp::editor
 			}
 		}
 
+		const auto toolbarContributionBindings = std::make_shared<std::vector<ToolbarContributionBinding>>();
+		if (const cp::Registry<cp::IViewportToolbarContribution>* contribRegistry =
+			registryManager->Find<cp::IViewportToolbarContribution>(cp::ViewportToolbarContributionRegistryName))
+		{
+			for (const std::string& key : contribRegistry->Names())
+			{
+				ToolbarContributionBinding binding;
+				binding.registryKey = key;
+				binding.contribution = contribRegistry->Create(key);
+
+				for (const cp::ViewportToolbarButtonDescriptor& desc : binding.contribution->GetButtons())
+				{
+					auto action = RegisterAction(actions, {
+						desc.id,
+						desc.label,
+						desc.tooltip,
+						"",
+						std::nullopt,
+						desc.checkable,
+						desc.checkedByDefault
+					});
+
+					binding.actions.push_back(action);
+					viewportToolBar->AddAction(action);
+				}
+
+				toolbarContributionBindings->push_back(std::move(binding));
+			}
+		}
+
+		for (ToolbarContributionBinding& binding : *toolbarContributionBindings)
+		{
+			cp::IViewportToolbarContribution* contrib = binding.contribution.get();
+			std::vector<std::shared_ptr<cp::editorui::IAction>> bindingActions = binding.actions;
+
+			for (const std::shared_ptr<cp::editorui::IAction>& action : binding.actions)
+			{
+				const std::string buttonId = std::string(action->GetId());
+				action->SetTriggeredHandler([contrib, buttonId, bindingActions]()
+				{
+					for (const std::shared_ptr<cp::editorui::IAction>& a : bindingActions)
+					{
+						if (a->IsCheckable())
+							a->SetChecked(a->GetId() == buttonId);
+					}
+
+					contrib->OnButtonTriggered(buttonId);
+				});
+			}
+		}
+
 		undoAction->SetEnabled(false);
 		redoAction->SetEnabled(false);
 		undoAction->SetTriggeredHandler([this, undoAction, redoAction]()
@@ -755,17 +810,6 @@ namespace cp::editor
 			}
 			OnRuntimeStopped();
 		});
-
-		auto setViewportTool = [viewport = viewportView, toolTranslateAction, toolRotateAction, toolScaleAction](const cp::editorui::ViewportTool _tool)
-		{
-			toolTranslateAction->SetChecked(_tool == cp::editorui::ViewportTool::Translate);
-			toolRotateAction->SetChecked(_tool == cp::editorui::ViewportTool::Rotate);
-			toolScaleAction->SetChecked(_tool == cp::editorui::ViewportTool::Scale);
-			viewport->SetActiveTool(_tool);
-		};
-		toolTranslateAction->SetTriggeredHandler([setViewportTool]() { setViewportTool(cp::editorui::ViewportTool::Translate); });
-		toolRotateAction->SetTriggeredHandler([setViewportTool]() { setViewportTool(cp::editorui::ViewportTool::Rotate); });
-		toolScaleAction->SetTriggeredHandler([setViewportTool]() { setViewportTool(cp::editorui::ViewportTool::Scale); });
 
 		const auto sceneState = std::make_shared<EditorSceneState>();
 		const auto activeScenePath = std::make_shared<std::filesystem::path>(
@@ -875,6 +919,34 @@ namespace cp::editor
 			}
 
 			inspectorView->SetSections(std::move(sections));
+		};
+
+
+		const auto refreshViewportToolbar = [this, sceneState, toolbarContributionBindings]()
+		{
+			for (const ToolbarContributionBinding& binding : *toolbarContributionBindings)
+			{
+				for (const std::shared_ptr<cp::editorui::IAction>& action : binding.actions)
+					action->SetVisible(false);
+			}
+
+			if (!sceneState->selectedEntityId.has_value())
+				return;
+
+			const auto entityIt = sceneState->entityLookup.find(sceneState->selectedEntityId.value());
+			if (entityIt == sceneState->entityLookup.end())
+				return;
+
+			const cp::ecs::Entity entity = entityIt->second;
+
+			for (const ToolbarContributionBinding& binding : *toolbarContributionBindings)
+			{
+				if (!binding.contribution->IsApplicable(scene->GetWorld(), entity))
+					continue;
+
+				for (const std::shared_ptr<cp::editorui::IAction>& action : binding.actions)
+					action->SetVisible(true);
+			}
 		};
 
 		const auto refreshSceneConfigView = [this]()
@@ -1147,7 +1219,7 @@ namespace cp::editor
 			return menu;
 		});
 
-		const auto loadScene = [this, sceneState, activeScenePath, refreshHierarchyView, refreshInspectorView, refreshSceneConfigView](const std::filesystem::path& _scenePath) -> bool
+		const auto loadScene = [this, sceneState, activeScenePath, refreshHierarchyView, refreshInspectorView, refreshViewportToolbar, refreshSceneConfigView](const std::filesystem::path& _scenePath) -> bool
 		{
 			const std::vector<uint8_t> sceneBytes = LoadBinaryFile(_scenePath);
 			if (sceneBytes.empty())
@@ -1214,6 +1286,7 @@ namespace cp::editor
 			*activeScenePath = _scenePath;
 			refreshHierarchyView();
 			refreshInspectorView();
+			refreshViewportToolbar();
 			refreshSceneConfigView();
 			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Scene", cp::Message::Create("Loaded scene '{}'", _scenePath.string())));
 			return true;
@@ -1246,7 +1319,7 @@ namespace cp::editor
 			return true;
 		};
 
-		const auto createEntity = [this, sceneState, refreshHierarchyView, refreshInspectorView]()
+		const auto createEntity = [this, sceneState, refreshHierarchyView, refreshInspectorView, refreshViewportToolbar]()
 		{
 			const cp::ecs::Entity entity = scene->GetWorld().CreateEntity();
 			const cp::editorui::EntityId entityId = ToEditorEntityId(entity);
@@ -1279,14 +1352,16 @@ namespace cp::editor
 			sceneState->contextEntityId.reset();
 			refreshHierarchyView();
 			refreshInspectorView();
+			refreshViewportToolbar();
 			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "ECS", cp::Message::Create("Created entity {}", entity.index)));
 		};
 
-		hierarchyView->SetEntityActivatedHandler([sceneState, refreshInspectorView](const cp::editorui::EntityId _entityId)
+		hierarchyView->SetEntityActivatedHandler([sceneState, refreshInspectorView, refreshViewportToolbar](const cp::editorui::EntityId _entityId)
 		{
 			sceneState->selectedEntityId = _entityId;
 			sceneState->contextEntityId.reset();
 			refreshInspectorView();
+			refreshViewportToolbar();
 		});
 
 		hierarchyView->SetContextMenuHandler([this, sceneState, createEntityAction](const cp::editorui::EntityId _entityId)
@@ -1308,7 +1383,7 @@ namespace cp::editor
 		for (ComponentAuthoringBinding& binding : *componentAuthoringBindings)
 		{
 			ComponentAuthoringBinding* bindingPtr = &binding;
-			binding.addAction->SetTriggeredHandler([this, sceneState, selectedEntityResolver, refreshInspectorView, bindingPtr]()
+			binding.addAction->SetTriggeredHandler([this, sceneState, selectedEntityResolver, refreshInspectorView, refreshViewportToolbar, bindingPtr]()
 			{
 				const std::optional<cp::ecs::Entity> selectedEntity = selectedEntityResolver();
 				if (!selectedEntity.has_value())
@@ -1337,9 +1412,10 @@ namespace cp::editor
 
 				sceneState->contextEntityId.reset();
 				refreshInspectorView();
+				refreshViewportToolbar();
 			});
 
-			binding.removeAction->SetTriggeredHandler([this, sceneState, selectedEntityResolver, refreshInspectorView, bindingPtr]()
+			binding.removeAction->SetTriggeredHandler([this, sceneState, selectedEntityResolver, refreshInspectorView, refreshViewportToolbar, bindingPtr]()
 			{
 				const std::optional<cp::ecs::Entity> selectedEntity = selectedEntityResolver();
 				if (!selectedEntity.has_value())
@@ -1368,6 +1444,7 @@ namespace cp::editor
 
 				sceneState->contextEntityId.reset();
 				refreshInspectorView();
+				refreshViewportToolbar();
 			});
 		}
 
@@ -1415,6 +1492,7 @@ namespace cp::editor
 
 		createEntity();
 		refreshInspectorView();
+		refreshViewportToolbar();
 
 		assetView->SetAssetOpenedHandler([this, activeScenePath, loadScene](const std::filesystem::path& _path)
 		{

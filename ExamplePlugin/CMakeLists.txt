@@ -6,6 +6,7 @@ add_library(ExamplePlugin SHARED
     "Private/Components/ComponentRegistrationContext.hpp"
     "Private/Components/Transform.hpp"
     "Private/Components/Transform.cpp"
+    "Private/Components/TransformViewportToolbarContribution.hpp"
     "Private/Components/Camera.hpp"
     "Private/Components/Camera.cpp"
     "Private/Components/MeshRenderer.hpp"

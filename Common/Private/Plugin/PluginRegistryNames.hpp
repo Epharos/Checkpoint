@@ -10,4 +10,5 @@ namespace cp
 	inline constexpr std::string_view EcsComponentAuthoringRegistryName = "EcsComponentAuthoring";
 	inline constexpr std::string_view EcsSystemAuthoringRegistryName = "EcsSystemAuthoring";
 	inline constexpr std::string_view RenderPassAuthoringRegistryName = "RenderPassAuthoring";
+	inline constexpr std::string_view ViewportToolbarContributionRegistryName = "ViewportToolbarContribution";
 }

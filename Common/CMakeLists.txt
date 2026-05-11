@@ -32,6 +32,7 @@ add_library(Common STATIC
     "Private/Plugin/PluginHost.cpp"
     "Private/Plugin/PluginAPI.hpp"
     "Private/Plugin/PluginHost.hpp"
+    "Private/Plugin/ViewportToolbarContribution.hpp"
 
     "Public/Common/Serialization/ISerializer.hpp"
     "Public/Common/Scene/SceneDescription.hpp"
