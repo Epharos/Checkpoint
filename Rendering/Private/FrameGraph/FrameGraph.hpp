@@ -10,6 +10,8 @@
 #include "FrameGraphBuilder.hpp"
 #include "BarrierManager.hpp"
 #include "PassDependencyManager.hpp"
+#include "../Camera.hpp"
+#include "../RendererEnvironment.hpp"
 
 namespace cp
 {
@@ -166,14 +168,20 @@ namespace cp
 
         /**
          * @brief Execute all render passes.
-         * @param _frameContext The frame context containing command buffers
-         * 
+         * @param _frameContext The frame context containing command buffers.
+         * @param _camera Camera data resolved by the renderer this frame.
+         * @param _environment Context in which the renderer is running.
+         *
          * Must be called after Compile().
          * Should be called once per frame.
-         * 
+         *
          * Executes all passes in order, using command buffers from the frame context.
          */
-        void Execute(FrameContext& _frameContext) const;
+        void Execute(
+            FrameContext& _frameContext,
+            const ResolvedCameraData& _camera,
+            RendererEnvironment _environment
+        ) const;
 
         /**
          * @brief Get the final rendering texture produced by the framegraph.

@@ -1,6 +1,8 @@
 add_library(Rendering STATIC
         Private/Renderer.cpp
         Private/Renderer.hpp
+        Private/Camera.hpp
+        Private/RendererEnvironment.hpp
 
         Private/FrameGraph/Renderpass.cpp
         Private/FrameGraph/Renderpass.hpp
@@ -16,6 +18,8 @@ add_library(Rendering STATIC
         Private/FrameGraph/PassDependencyManager.hpp
 
         Public/Rendering/Renderer.hpp
+        Public/Rendering/Camera.hpp
+        Public/Rendering/RendererEnvironment.hpp
 
         Public/Rendering/Scene/FrameGraphConfig.hpp
         Private/Scene/FrameGraphConfig.cpp
@@ -32,4 +36,5 @@ target_link_libraries(Rendering
         RHI_Core
         Resources
         ECS
+        glm::glm
 )

@@ -6,6 +6,9 @@
 #include <Common/Data/Extent.hpp>
 #include <Common/Serialization/ISerializer.hpp>
 
+#include "../Camera.hpp"
+#include "../RendererEnvironment.hpp"
+
 namespace cp
 {
     class AssetRegistry;
@@ -68,6 +71,8 @@ namespace cp
     {
         ICommandBuffer& primaryCmdBuffer;
         FrameContext& frameContext;
+        const ResolvedCameraData& camera;
+        RendererEnvironment environment;
 
         /**
          * @brief Implicit conversion to primary command buffer for simple passes.

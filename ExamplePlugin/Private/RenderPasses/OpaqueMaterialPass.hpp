@@ -27,6 +27,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <Rendering/Camera.hpp>
+
 #include "../Components/Components.hpp"
 
 namespace cp
@@ -314,31 +316,8 @@ namespace cp
                 return;
             }
 
-            Camera cameraComponent{};
-            Transform cameraTransform{};
-            bool hasPrimaryCamera = false;
-            data.ecsWorld->RunSystem(
-                ecs::ReadAccess<Camera, Transform>{},
-                ecs::WriteAccess<>{},
-                [&cameraComponent, &cameraTransform, &hasPrimaryCamera](const Camera& _camera, const Transform& _transform)
-                {
-                    if (hasPrimaryCamera)
-                    {
-                        return;
-                    }
-
-                    if (!_camera.enabled || !_camera.isPrimary)
-                    {
-                        return;
-                    }
-
-                    cameraComponent = _camera;
-                    cameraTransform = _transform;
-                    hasPrimaryCamera = true;
-                }
-            );
-
-            if (!hasPrimaryCamera)
+            const cp::ResolvedCameraData cameraData = ResolveCamera(_context);
+            if (!cameraData.isValid)
             {
                 cmd.EndRendering();
                 return;
@@ -348,17 +327,10 @@ namespace cp
                 sizeof(OpaqueMaterialPassData::CameraDataGpu),
                 BufferUsage::Uniform
             );
-            const glm::mat4 viewMatrix = BuildViewMatrix(cameraTransform);
-            const glm::mat4 projectionMatrix = BuildPerspectiveMatrix(
-                cameraComponent.fovYDegrees,
-                static_cast<float>(data.renderExtent.x()) / static_cast<float>(std::max(1u, data.renderExtent.y())),
-                cameraComponent.nearPlane,
-                cameraComponent.farPlane
-            );
-            const OpaqueMaterialPassData::CameraDataGpu cameraData{
-                .viewProjection = projectionMatrix * viewMatrix
+            const OpaqueMaterialPassData::CameraDataGpu cameraGpuData {
+                .viewProjection = cameraData.viewProjection
             };
-            if (!cameraBuffer || !UploadBytes(*cameraBuffer, &cameraData, sizeof(OpaqueMaterialPassData::CameraDataGpu)))
+            if (!cameraBuffer || !UploadBytes(*cameraBuffer, &cameraGpuData, sizeof(OpaqueMaterialPassData::CameraDataGpu)))
             {
                 cmd.EndRendering();
                 return;
@@ -440,6 +412,64 @@ namespace cp
         }
 
     private:
+        /**
+         * @brief Resolve camera data for this frame.
+         *
+         * In Editor mode the pre-computed data from the context is used directly.
+         * In Runtime / DevelopmentBuild modes the first enabled primary Camera
+         * entity is searched in the ECS world.
+         */
+        [[nodiscard]] cp::ResolvedCameraData ResolveCamera(
+            const cp::RenderPassExecutionContext& _context
+        ) const
+        {
+            if (_context.environment == cp::RendererEnvironment::Editor)
+                return _context.camera;
+
+            if (!data.ecsWorld)
+                return {};
+
+            Camera camComponent {};
+            Transform camTransform {};
+            bool found = false;
+
+            data.ecsWorld->RunSystem(
+                ecs::ReadAccess<Camera, Transform>{},
+                ecs::WriteAccess<>{},
+                [&](const Camera& _cam, const Transform& _t)
+                {
+                    if (found || !_cam.enabled || !_cam.isPrimary)
+                        return;
+                    camComponent = _cam;
+                    camTransform = _t;
+                    found = true;
+                }
+            );
+
+            if (!found)
+                return {};
+
+            const float aspect =
+                static_cast<float>(data.renderExtent.x()) /
+                static_cast<float>(std::max(1u, data.renderExtent.y()));
+
+            cp::ResolvedCameraData result;
+            result.view = BuildViewMatrix(camTransform);
+            result.projection = BuildPerspectiveMatrix(
+                camComponent.fovYDegrees,
+                aspect,
+                camComponent.nearPlane,
+                camComponent.farPlane
+            );
+            result.viewProjection = result.projection * result.view;
+            result.worldPosition = { camTransform.x, camTransform.y, camTransform.z };
+            result.nearPlane = camComponent.nearPlane;
+            result.farPlane = camComponent.farPlane;
+            result.fovYDegrees = camComponent.fovYDegrees;
+            result.isValid = true;
+            return result;
+        }
+
         static glm::mat4 BuildModelMatrix(const Transform& _transform)
         {
             glm::mat4 model(1.0f);

@@ -5,6 +5,9 @@
 #include <string_view>
 #include <vector>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <RHI/RenderingHardwareInterface.hpp>
 #include <RHI/Core.hpp>
 #include <RHI/Data.hpp>
@@ -214,6 +217,8 @@ namespace cp
         }
 
         context.swapchainImageIndex = swapchain->AcquireNextImage();
+
+        ResolveCamera();
     }
 
     void Renderer::Render()
@@ -223,7 +228,7 @@ namespace cp
         if (context.swapchainImageIndex == static_cast<uint32_t>(-1))
             return;
 
-        frameGraph.Execute(context);
+        frameGraph.Execute(context, resolvedCamera, rendererInfo.environment);
         BlitFinalRenderingToSwapchain(context);
     }
 
@@ -485,6 +490,47 @@ namespace cp
         frameGraph.Compile(renderingHardwareInterface);
 
         pendingPassBlobs.clear();
+    }
+
+    void Renderer::ResolveCamera()
+    {
+        resolvedCamera = ResolvedCameraData {};
+
+        if (rendererInfo.environment != RendererEnvironment::Editor)
+        {
+            return;
+        }
+
+        const float aspect =
+            static_cast<float>(rendererInfo.extent.x()) /
+            static_cast<float>(std::max(1, rendererInfo.extent.y()));
+
+        glm::mat4 world = glm::mat4(1.0f);
+        world = glm::translate(world, editorCamera.position);
+        world = glm::rotate(world, glm::radians(editorCamera.yaw),   glm::vec3(0.f, 1.f, 0.f));
+        world = glm::rotate(world, glm::radians(editorCamera.pitch), glm::vec3(1.f, 0.f, 0.f));
+
+        const float clampedAspect = aspect > std::numeric_limits<float>::epsilon() ? aspect : 1.0f;
+        const float clampedNear = std::max(0.001f, editorCamera.nearPlane);
+        const float clampedFar = std::max(clampedNear + 0.001f, editorCamera.farPlane);
+        const float clampedFov = std::max(1.0f, editorCamera.fovYDegrees);
+
+        glm::mat4 projection = glm::perspective(
+            glm::radians(clampedFov),
+            clampedAspect,
+            clampedNear,
+            clampedFar
+        );
+        projection[1][1] *= -1.0f;  // Flip Y for Vulkan NDC
+
+        resolvedCamera.view = glm::inverse(world);
+        resolvedCamera.projection = projection;
+        resolvedCamera.viewProjection = projection * resolvedCamera.view;
+        resolvedCamera.worldPosition = editorCamera.position;
+        resolvedCamera.nearPlane = editorCamera.nearPlane;
+        resolvedCamera.farPlane = editorCamera.farPlane;
+        resolvedCamera.fovYDegrees = editorCamera.fovYDegrees;
+        resolvedCamera.isValid = true;
     }
 
     void Renderer::Cleanup() const

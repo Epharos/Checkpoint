@@ -305,7 +305,11 @@ namespace cp
         isCompiled = false;
     }
 
-    void FrameGraph::Execute(FrameContext& _frameContext) const
+    void FrameGraph::Execute(
+        FrameContext& _frameContext,
+        const ResolvedCameraData& _camera,
+        const RendererEnvironment _environment
+    ) const
     {
         if (!isCompiled) return;
 
@@ -332,7 +336,9 @@ namespace cp
             RenderPassExecutionContext executionContext
             {
                 .primaryCmdBuffer = primaryCmd,
-                .frameContext = _frameContext
+                .frameContext = _frameContext,
+                .camera = _camera,
+                .environment = _environment
             };
 
             // Execute the pass

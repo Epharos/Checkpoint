@@ -12,6 +12,8 @@
 
 #include <RHI/Data.hpp>
 
+#include "Camera.hpp"
+#include "RendererEnvironment.hpp"
 #include "FrameGraph/FrameGraph.hpp"
 
 
@@ -53,6 +55,7 @@ namespace cp
         void* nativeWindowHandle;
         RegistryManager* registryManager = nullptr;
         ecs::World* ecsWorld = nullptr;
+        RendererEnvironment environment = RendererEnvironment::Runtime;
     };
 
     class Renderer
@@ -67,6 +70,33 @@ namespace cp
         bool RemoveFrameGraphPass(std::string_view _passTypeName, bool _recompile = false);
         void RecompileFrameGraph();
         void ResetFrameGraph();
+
+        /**
+         * @brief Return the rendering environment this renderer was created with.
+         */
+        [[nodiscard]] RendererEnvironment GetEnvironment() const { return rendererInfo.environment; }
+
+        /**
+         * @brief Return a mutable reference to the editor camera.
+         * Only meaningful when environment == RendererEnvironment::Editor.
+         */
+        [[nodiscard]] EditorCamera& GetEditorCamera() { return editorCamera; }
+
+        /**
+         * @brief Return a const reference to the editor camera.
+         */
+        [[nodiscard]] const EditorCamera& GetEditorCamera() const { return editorCamera; }
+
+        /**
+         * @brief Replace the editor camera state.
+         */
+        void SetEditorCamera(const EditorCamera& _camera) { editorCamera = _camera; }
+
+        /**
+         * @brief Return the camera data that was resolved at the last BeginFrame() call.
+         * Valid only after BeginFrame() has been called at least once.
+         */
+        [[nodiscard]] const ResolvedCameraData& GetResolvedCamera() const { return resolvedCamera; }
 
         /**
          * @brief Inject pass state blobs to be restored on the next framegraph rebuild.
@@ -111,7 +141,16 @@ namespace cp
         void BuildFrameGraph();
         void BlitFinalRenderingToSwapchain(const FrameContext& _context) const;
 
+        /**
+        * @brief Resolve camera data for the current frame based on the active environment.
+        * Result is stored in resolvedCamera and forwarded to all render passes this frame.
+        */
+        void ResolveCamera();
+
     protected:
+        EditorCamera editorCamera {};
+        ResolvedCameraData resolvedCamera {};
+
         std::vector<FrameContext> frameContext;
 
         std::unique_ptr<ISwapchain> swapchain;

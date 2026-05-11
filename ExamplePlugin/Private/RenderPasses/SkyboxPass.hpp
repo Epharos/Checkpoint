@@ -20,6 +20,7 @@
 #include <RHI/Rendering.hpp>
 #include <RHI/RenderingHardwareInterface.hpp>
 
+#include <Rendering/Camera.hpp>
 #include <Rendering/FrameGraph/FrameGraph.hpp>
 #include <Rendering/FrameGraph/FrameGraphBuilder.hpp>
 #include <Rendering/FrameGraph/Renderpass.hpp>
@@ -225,7 +226,7 @@ namespace cp
             if (!colorTarget || !depthTarget)
                 return;
 
-            if (!UpdateUbo())
+            if (!UpdateUbo(ResolveCamera(_context)))
                 return;
 
             const ColorAttachmentInfo colorAttachment {
@@ -282,52 +283,82 @@ namespace cp
         }
 
     private:
-        bool UpdateUbo()
+        /**
+         * @brief Resolve camera data for this frame.
+         *
+         * In Editor mode the pre-computed data from the context is used directly.
+         * In Runtime / DevelopmentBuild modes the first enabled primary Camera
+         * entity is searched in the ECS world.
+         */
+        [[nodiscard]] cp::ResolvedCameraData ResolveCamera(
+            const cp::RenderPassExecutionContext& _context
+        ) const
         {
-            if (!data.ecsWorld || !data.uboBuffer)
-                return false;
+            if (_context.environment == cp::RendererEnvironment::Editor)
+                return _context.camera;
 
-            Camera cameraComponent {};
-            Transform cameraTransform {};
-            bool hasPrimaryCamera = false;
+            if (!data.ecsWorld)
+                return {};
+
+            Camera camComponent {};
+            Transform camTransform {};
+            bool found = false;
 
             data.ecsWorld->RunSystem(
                 ecs::ReadAccess<Camera, Transform>{},
                 ecs::WriteAccess<>{},
                 [&](const Camera& _cam, const Transform& _t)
                 {
-                    if (hasPrimaryCamera || !_cam.enabled || !_cam.isPrimary)
+                    if (found || !_cam.enabled || !_cam.isPrimary)
                         return;
-                    cameraComponent = _cam;
-                    cameraTransform = _t;
-                    hasPrimaryCamera = true;
+
+                    camComponent = _cam;
+                    camTransform = _t;
+                    found = true;
                 }
             );
 
-            if (!hasPrimaryCamera)
+            if (!found)
+                return {};
+
+            const float aspect =
+                static_cast<float>(data.renderExtent.x()) /
+                static_cast<float>(std::max(1u, data.renderExtent.y()));
+
+            cp::ResolvedCameraData result;
+            result.view = BuildViewMatrix(camTransform);
+            result.projection = BuildPerspectiveMatrix(
+                camComponent.fovYDegrees,
+                aspect,
+                camComponent.nearPlane,
+                camComponent.farPlane
+            );
+            result.viewProjection = result.projection * result.view;
+            result.worldPosition = { camTransform.x, camTransform.y, camTransform.z };
+            result.nearPlane = camComponent.nearPlane;
+            result.farPlane = camComponent.farPlane;
+            result.fovYDegrees = camComponent.fovYDegrees;
+            result.isValid = true;
+            return result;
+        }
+
+        bool UpdateUbo(const cp::ResolvedCameraData& _camera) const
+        {
+            if (!data.uboBuffer || !_camera.isValid)
                 return false;
 
-            const float aspect = static_cast<float>(data.renderExtent.x())
-                               / static_cast<float>(std::max(1u, data.renderExtent.y()));
-
-            const glm::mat4 view = BuildViewMatrix(cameraTransform);
-            const glm::mat4 proj = BuildPerspectiveMatrix(
-                cameraComponent.fovYDegrees,
-                aspect,
-                cameraComponent.nearPlane,
-                cameraComponent.farPlane
-            );
-
-            glm::mat4 viewRotOnly = view;
+            glm::mat4 viewRotOnly = _camera.view;
             viewRotOnly[3] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
             const SkyboxPassData::SkyboxUboGpu uboData {
-                .invViewRotationProj = glm::inverse(proj * viewRotOnly)
+                .invViewRotationProj = glm::inverse(_camera.projection * viewRotOnly)
             };
 
             void* mapped = data.uboBuffer->Map();
+
             if (!mapped)
                 return false;
+
             std::memcpy(mapped, &uboData, sizeof(uboData));
             data.uboBuffer->Unmap();
             return true;

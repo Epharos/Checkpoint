@@ -1468,6 +1468,7 @@ namespace cp::editor
 			rendererInfo.nativeWindowHandle = const_cast<void*>(nativeHandle);
 			rendererInfo.registryManager = registryManager.get();
 			rendererInfo.ecsWorld = &scene->GetWorld();
+			rendererInfo.environment = cp::RendererEnvironment::Editor;
 
 			renderer = std::make_unique<cp::Renderer>(rendererInfo, *rhi);
 			cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
