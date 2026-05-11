@@ -176,7 +176,7 @@ namespace cp
 		cmdBuffer->End();
 
 		const auto semaphore = rhi.CreateTimelineSemaphore();
-		const SubmitInfo submitInfo{
+		const SubmitInfo submitInfo {
 			.commandBuffers = { cmdBuffer.get() },
 			.signalInfos = { { semaphore.get(), 1 } },
 		};
