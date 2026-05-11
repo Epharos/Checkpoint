@@ -197,6 +197,7 @@ namespace cp
     void Renderer::ResetFrameGraph()
     {
         renderingHardwareInterface.GetDevice().WaitIdle();
+        activePassByTypeName.clear();
         frameGraph.Reset();
         frameGraphPassTypeNames.clear();
     }

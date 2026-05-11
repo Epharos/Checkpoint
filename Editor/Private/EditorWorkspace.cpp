@@ -340,6 +340,7 @@ namespace cp::editor
 
 	EditorWorkspace::EditorWorkspace(std::shared_ptr<cp::editorui::IEditorUIBackend> _backend)
 		: backend(std::move(_backend))
+		, mainThreadId(std::this_thread::get_id())
 	{
 		if (!backend)
 		{
@@ -411,6 +412,13 @@ namespace cp::editor
 
 	void EditorWorkspace::AppendConsoleEntry(cp::editorui::ConsoleEntry _entry)
 	{
+		if (std::this_thread::get_id() != mainThreadId)
+		{
+			std::lock_guard lock(pendingEntriesMutex);
+			pendingConsoleEntries.push_back(std::move(_entry));
+			return;
+		}
+
 		consoleEntries.push_back(std::move(_entry));
 		if (consoleEntries.size() > 2000)
 		{
@@ -1475,6 +1483,19 @@ namespace cp::editor
 			});
 			viewportView->SetFrameHandler([this]()
 			{
+				{
+					std::vector<cp::editorui::ConsoleEntry> pending;
+					{
+						std::lock_guard lock(pendingEntriesMutex);
+						pending = std::move(pendingConsoleEntries);
+					}
+
+					for (auto& entry : pending)
+					{
+						AppendConsoleEntry(std::move(entry));
+					}
+				}
+
 				// Detect when the runtime window is closed by the user
 				if (runtimeApp != nullptr && !runtimeApp->IsRunning())
 				{

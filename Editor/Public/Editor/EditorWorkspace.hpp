@@ -3,7 +3,9 @@
 #include <filesystem>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <EditorUI/EditorUI.hpp>
@@ -57,6 +59,9 @@ namespace cp::editor
 		std::shared_ptr<cp::editorui::IViewportWidget> viewportView;
 
 		std::vector<cp::editorui::ConsoleEntry> consoleEntries;
+		std::vector<cp::editorui::ConsoleEntry> pendingConsoleEntries;
+		std::mutex pendingEntriesMutex;
+		std::thread::id mainThreadId;
 		std::shared_ptr<cp::ILogger> logger;
 		std::unique_ptr<cp::PluginHost> pluginHost;
 
