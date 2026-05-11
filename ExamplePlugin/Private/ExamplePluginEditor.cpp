@@ -7,6 +7,7 @@
 #include "Systems/PhysicsSystemAuthoring.hpp"
 #include "Systems/SpinSystemAuthoring.hpp"
 #include "RenderPasses/NegativePostFXAuthoring.hpp"
+#include "RenderPasses/SkyboxAuthoring.hpp"
 
 namespace
 {
@@ -39,6 +40,8 @@ namespace
 
 		const bool negativePostFXAuthoringRegistered =
 			renderPassAuthoringRegistry.RegisterType<cp::NegativePostFXAuthoring>(std::string(cp::NegativePostFXTypeName));
+		const bool skyboxAuthoringRegistered =
+			renderPassAuthoringRegistry.RegisterType<cp::SkyboxAuthoring>(std::string(cp::SkyboxPassTypeName));
 
 		return transformAuthoringRegistered
 			&& cameraAuthoringRegistered
@@ -47,7 +50,8 @@ namespace
 			&& rigidBodyAuthoringRegistered
 			&& spinSystemAuthoringRegistered
 			&& physicsSystemAuthoringRegistered
-			&& negativePostFXAuthoringRegistered;
+			&& negativePostFXAuthoringRegistered
+			&& skyboxAuthoringRegistered;
 	}
 }
 
@@ -89,5 +93,6 @@ void ShutdownExamplePluginEditor(cp::PluginEditorContext& _context)
 		_context.registryManager->Find<cp::IRenderPassAuthoring>(cp::RenderPassAuthoringRegistryName))
 	{
 		renderPassAuthoringRegistry->Unregister(std::string(cp::NegativePostFXTypeName));
+			renderPassAuthoringRegistry->Unregister(std::string(cp::SkyboxPassTypeName));
 	}
 }

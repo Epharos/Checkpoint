@@ -17,6 +17,8 @@ add_library(ExamplePlugin SHARED
     "Private/RenderPasses/OpaqueMaterialPass.hpp"
     "Private/RenderPasses/NegativePFX.hpp"
     "Private/RenderPasses/NegativePostFXAuthoring.hpp"
+    "Private/RenderPasses/SkyboxPass.hpp"
+    "Private/RenderPasses/SkyboxAuthoring.hpp"
     "Private/Systems/SpinSystem.hpp"
     "Private/Systems/SpinSystemAuthoring.hpp"
     "Private/ExamplePluginPCH.hpp"
@@ -37,6 +39,7 @@ target_link_libraries(ExamplePlugin
         ECS
         Rendering
         RHI_Core
+        Resources
     PRIVATE
         glm::glm
 )

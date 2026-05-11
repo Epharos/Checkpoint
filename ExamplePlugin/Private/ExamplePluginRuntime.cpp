@@ -5,6 +5,7 @@
 
 #include "RenderPasses/OpaqueMaterialPass.hpp"
 #include "RenderPasses/NegativePFX.hpp"
+#include "RenderPasses/SkyboxPass.hpp"
 
 #include "Components/Components.hpp"
 #include "Systems/PhysicsSystem.hpp"
@@ -25,8 +26,12 @@ namespace
 			renderPassRegistry.RegisterType<cp::NegativePostFX>(
 				std::string(cp::NegativePostFXTypeName)
 			);
+		const bool skyboxRegistered =
+			renderPassRegistry.RegisterType<cp::SkyboxPass>(
+				std::string(cp::SkyboxPassTypeName)
+			);
 
-		return opaqueRegistered && negativeRegistered;
+		return opaqueRegistered && negativeRegistered && skyboxRegistered;
 	}
 
 	bool RegisterSystems(cp::Registry<cp::ecs::ISystem> &ecsSystemRegistry)
@@ -122,6 +127,7 @@ void ShutdownExamplePluginRuntime(cp::PluginRuntimeContext& _context)
 		{
 			renderPassRegistry->Unregister(OpaqueMaterialPassTypeName);
 			renderPassRegistry->Unregister(cp::NegativePostFXTypeName);
+			renderPassRegistry->Unregister(cp::SkyboxPassTypeName);
 		}
 
 		if (cp::Registry<cp::ecs::ISystem>* ecsSystemRegistry =
