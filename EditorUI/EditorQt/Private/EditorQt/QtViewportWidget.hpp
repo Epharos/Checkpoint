@@ -15,12 +15,14 @@ namespace cp::editorqt
 			palette.setColor(QPalette::Window, QColor(22, 22, 26));
 			setPalette(palette);
 			setMouseTracking(true);
+			setFocusPolicy(Qt::StrongFocus);
 		}
 
 		std::function<void(int, int)> resizeHandler;
 		std::function<void(const cp::editorui::ViewportMouseEvent&)> mousePressHandler;
 		std::function<void(const cp::editorui::ViewportMouseEvent&)> mouseReleaseHandler;
 		std::function<void(int, int)> mouseMoveHandler;
+		std::function<void(std::string_view)> keyPressHandler;
 
 	protected:
 		void resizeEvent(QResizeEvent* _event) override
@@ -56,6 +58,17 @@ namespace cp::editorqt
 			if (mouseMoveHandler)
 			{
 				mouseMoveHandler(_event->pos().x(), _event->pos().y());
+			}
+		}
+
+		void keyPressEvent(QKeyEvent* _event) override
+		{
+			QWidget::keyPressEvent(_event);
+			if (keyPressHandler)
+			{
+				const QString keys = QKeySequence(_event->key() | _event->modifiers())
+					.toString(QKeySequence::PortableText);
+				keyPressHandler(keys.toStdString());
 			}
 		}
 
@@ -142,6 +155,11 @@ namespace cp::editorqt
 		void SetMouseMoveHandler(MouseMoveHandler _handler) override
 		{
 			surface->mouseMoveHandler = std::move(_handler);
+		}
+
+		void SetKeyPressHandler(KeyPressHandler _handler) override
+		{
+			surface->keyPressHandler = std::move(_handler);
 		}
 
 		[[nodiscard]] QWidget* GetQWidget() const override

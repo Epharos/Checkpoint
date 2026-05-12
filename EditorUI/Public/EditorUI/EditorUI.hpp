@@ -4,5 +4,6 @@
 #include <EditorUI/Commanding.hpp>
 #include <EditorUI/Containers.hpp>
 #include <EditorUI/FileDrop.hpp>
+#include <EditorUI/SettingsWindow.hpp>
 #include <EditorUI/Types.hpp>
 #include <EditorUI/Widgets.hpp>

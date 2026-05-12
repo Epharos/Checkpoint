@@ -10,6 +10,10 @@
 
 #include <EditorUI/EditorUI.hpp>
 
+#include <Common/Plugin/IEditorStateProvider.hpp>
+#include <Common/Plugin/IViewportController.hpp>
+#include <Common/Plugin/IKeybindRegistrar.hpp>
+
 namespace cp
 {
 	class ILogger;
@@ -17,6 +21,11 @@ namespace cp
 	class RenderingHardwareInterface;
 	class Renderer;
 	class RegistryManager;
+}
+
+namespace cp::editor
+{
+	class KeybindRegistry;
 }
 
 namespace cp::runtime
@@ -77,5 +86,12 @@ namespace cp::editor
 		std::shared_ptr<cp::editorui::IAction> runAction;
 		std::shared_ptr<cp::editorui::IAction> stopAction;
 		std::function<bool(const std::filesystem::path&)> loadSceneDelegate;
+
+		std::unique_ptr<KeybindRegistry> keybindRegistry;
+		std::filesystem::path keybindsConfigPath;
+
+		std::unique_ptr<cp::IEditorStateProvider> editorStateProvider;
+		std::unique_ptr<cp::IViewportController> viewportController;
+		std::unique_ptr<cp::IKeybindRegistrar> keybindRegistrar;
 	};
 }

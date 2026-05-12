@@ -2,6 +2,8 @@ add_executable(Editor
     "Private/EditorWorkspace.cpp"
     "Private/main.cpp"
     "Public/Editor/EditorWorkspace.hpp"
+    "Private/KeybindRegistry.hpp"
+    "Private/KeybindRegistry.cpp"
     "Private/EditorPCH.hpp"
 )
 
@@ -26,4 +28,5 @@ target_link_libraries(Editor
         RHI_Vulkan
         EditorUI
         EditorUI_EditorQt
+        nlohmann_json::nlohmann_json
 )

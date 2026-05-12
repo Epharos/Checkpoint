@@ -14,6 +14,7 @@
 #include "QtSearchBox.hpp"
 #include "QtTheme.hpp"
 #include "QtViewportWidget.hpp"
+#include "QtSettingsWindow.hpp"
 
 namespace cp::editorqt
 {
@@ -95,6 +96,18 @@ namespace cp::editorqt
 		std::shared_ptr<cp::editorui::IFileDialog> CreateFileDialog(std::string _id) override
 		{
 			return std::make_shared<QtFileDialog>(std::move(_id));
+		}
+
+		std::shared_ptr<cp::editorui::ISettingsWindow> CreateSettingsWindow() override
+		{
+			QWidget* parent = nullptr;
+
+			if (const QWidgetList topLevel = QApplication::topLevelWidgets(); !topLevel.isEmpty())
+			{
+				parent = topLevel.first();
+			}
+
+			return std::make_shared<QtSettingsWindow>(parent);
 		}
 
 	private:

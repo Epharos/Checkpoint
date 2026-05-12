@@ -53,6 +53,9 @@ namespace cp::editorui
 		virtual bool IsChecked() const = 0;
 		virtual void SetTriggeredHandler(TriggeredHandler _handler) = 0;
 		virtual void Trigger() = 0;
+
+		virtual void SetShortcut(std::optional<std::string> _chord) = 0;
+		virtual std::optional<std::string> GetShortcut() const = 0;
 	};
 
 	class ICommand

@@ -8,6 +8,7 @@
 #include <QDockWidget>
 #include <QHBoxLayout>
 #include <QHeaderView>
+#include <QKeyEvent>
 #include <QKeySequence>
 #include <QLineEdit>
 #include <QMainWindow>

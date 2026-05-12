@@ -83,7 +83,38 @@ bool RegisterExamplePluginEditor(cp::PluginEditorContext& _context)
 		return false;
 	}
 
-	return RegisterEditorDeclarations(*_context.registryManager);
+	if (!RegisterEditorDeclarations(*_context.registryManager))
+	{
+		return false;
+	}
+
+	if (_context.keybindRegistrar && _context.editorState && _context.viewportController)
+	{
+		_context.keybindRegistrar->Register(
+			{
+				.actionId = "viewport.focus_selected",
+				.displayName = "Focus Selected",
+				.category = "Viewport",
+				.defaultChord = "F",
+				.scope = "viewport"
+			},
+			[editorState = _context.editorState,
+			 viewportCtrl = _context.viewportController]()
+			{
+				const cp::ecs::Entity* entity = editorState->GetSelectedEntity();
+				if (entity == nullptr) return;
+
+				cp::ecs::World* world = editorState->GetWorld();
+				if (world == nullptr) return;
+
+				if (!world->HasComponent<cp::Transform>(*entity)) return;
+
+				const cp::Transform& t = world->GetComponent<cp::Transform>(*entity);
+				viewportCtrl->FocusOn(t.x, t.y, t.z, 5.f);
+			});
+	}
+
+	return true;
 }
 
 void ShutdownExamplePluginEditor(cp::PluginEditorContext& _context)
@@ -127,5 +158,10 @@ void ShutdownExamplePluginEditor(cp::PluginEditorContext& _context)
 		_context.registryManager->Find<cp::IGizmoContribution>(cp::GizmoContributionRegistryName))
 	{
 		gizmoRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::TransformGizmoContributionGuid));
+	}
+
+	if (_context.keybindRegistrar)
+	{
+		_context.keybindRegistrar->Unregister("viewport.focus_selected");
 	}
 }

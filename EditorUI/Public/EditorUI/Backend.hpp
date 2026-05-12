@@ -3,6 +3,7 @@
 #include <memory>
 
 #include <EditorUI/Containers.hpp>
+#include <EditorUI/SettingsWindow.hpp>
 
 namespace cp::editorui
 {
@@ -55,5 +56,6 @@ namespace cp::editorui
 		virtual std::shared_ptr<ISceneConfigView> CreateSceneConfigView(std::string _id) = 0;
 		virtual std::shared_ptr<IContextMenu> CreateContextMenu(std::string _id) = 0;
 		virtual std::shared_ptr<IFileDialog> CreateFileDialog(std::string _id) = 0;
+		virtual std::shared_ptr<ISettingsWindow> CreateSettingsWindow() = 0;
 	};
 }

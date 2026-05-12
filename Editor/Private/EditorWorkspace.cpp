@@ -1,11 +1,18 @@
 #include "../Public/Editor/EditorWorkspace.hpp"
 
+#include "KeybindRegistry.hpp"
+
 #include <Common/Plugin/ComponentAuthoring.hpp>
 #include <Common/Plugin/RenderPassAuthoring.hpp>
 #include <Common/Plugin/SystemAuthoring.hpp>
 #include <Common/Plugin/ViewportToolbarContribution.hpp>
 #include <Common/Plugin/PluginHost.hpp>
 #include <Common/Plugin/PluginRegistryNames.hpp>
+#include <Common/Plugin/IEditorStateProvider.hpp>
+#include <Common/Plugin/IViewportController.hpp>
+#include <Common/Plugin/IKeybindRegistrar.hpp>
+
+#include <Rendering/Camera.hpp>
 
 #include <ECS/ECS.hpp>
 
@@ -495,6 +502,37 @@ namespace cp::editor
 		stopAction = RegisterAction(actions, { "project.stop", "Stop", "Stop runtime." });
 		stopAction->SetEnabled(false);
 		const auto createEntityAction = RegisterAction(actions, { "hierarchy.createEntity", "Create Entity" });
+		const auto editorSettingsAction = RegisterAction(actions, { "editor.settings", "Settings" });
+
+		keybindRegistry = std::make_unique<KeybindRegistry>();
+
+		keybindRegistry->RegisterAction({
+			.actionId = "file.saveScene",
+			.displayName = "Save Scene",
+			.category = "File",
+			.defaultChord = "Ctrl+S",
+			.scope = std::string(KeybindScopeGlobal),
+			.handler = [saveSceneAction] { saveSceneAction->Trigger(); }
+		});
+		saveSceneAction->SetShortcut("Ctrl+S");
+
+		keybindRegistry->RegisterAction({
+			.actionId = "edit.undo",
+			.displayName = "Undo",
+			.category = "Edit",
+			.defaultChord = "Ctrl+Z",
+			.scope = std::string(KeybindScopeGlobal),
+			.handler = [undoAction] { undoAction->Trigger(); }
+		});
+
+		keybindRegistry->RegisterAction({
+			.actionId = "edit.redo",
+			.displayName = "Redo",
+			.category = "Edit",
+			.defaultChord = "Ctrl+Y",
+			.scope = std::string(KeybindScopeGlobal),
+			.handler = [redoAction] { redoAction->Trigger(); }
+		});
 
 		const auto menuBar = window->GetMenuBar();
 		const auto fileMenu = menuBar->AddMenu("file", "File");
@@ -506,6 +544,9 @@ namespace cp::editor
 		editMenu->AddAction(undoAction);
 		editMenu->AddAction(redoAction);
 		editMenu->AddAction(createEntityAction);
+
+		const auto editorMenu = menuBar->AddMenu("editor", "Editor");
+		editorMenu->AddAction(editorSettingsAction);
 
 		const auto mainToolBar = window->AddToolBar("main");
 		mainToolBar->AddAction(buildAction);
@@ -554,6 +595,89 @@ namespace cp::editor
 
 		logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Editor", cp::Message::Create("Editor workspace bootstrapped")));
 
+		const auto sceneState = std::make_shared<EditorSceneState>();
+
+		struct EditorStateProvider final : cp::IEditorStateProvider
+		{
+			cp::runtime::Scene* scene = nullptr;
+			std::shared_ptr<EditorSceneState> state;
+
+			cp::ecs::World* GetWorld() override
+			{
+				return scene ? &scene->GetWorld() : nullptr;
+			}
+
+			const cp::ecs::Entity* GetSelectedEntity() override
+			{
+				if (!state->selectedEntityId.has_value()) return nullptr;
+				const auto it = state->entityLookup.find(state->selectedEntityId.value());
+				if (it == state->entityLookup.end()) return nullptr;
+				selectedEntityStorage = it->second;
+				return &selectedEntityStorage;
+			}
+
+			cp::ecs::Entity selectedEntityStorage{};
+		};
+
+		struct ViewportController final : cp::IViewportController
+		{
+			cp::Renderer* renderer = nullptr;
+
+			void FocusOn(const float _x, const float _y, const float _z, const float _distance) override
+			{
+				if (!renderer) return;
+				cp::EditorCamera cam = renderer->GetEditorCamera();
+
+				const float pitch = cam.pitch;
+				const float yaw = cam.yaw;
+
+				const float cosPitch = std::cos(pitch);
+				const glm::vec3 forward = {
+					std::sin(yaw) * cosPitch,
+					std::sin(pitch),
+				   -std::cos(yaw) * cosPitch
+				};
+
+				cam.position = glm::vec3(_x, _y, _z) - forward * _distance;
+				renderer->SetEditorCamera(cam);
+			}
+		};
+
+		struct EditorKeybindRegistrar final : cp::IKeybindRegistrar
+		{
+			KeybindRegistry* registry = nullptr;
+
+			void Register(cp::KeybindDescriptor _desc, std::function<void()> _handler) override
+			{
+				registry->RegisterAction({
+					.actionId = std::move(_desc.actionId),
+					.displayName = std::move(_desc.displayName),
+					.category = std::move(_desc.category),
+					.defaultChord = std::move(_desc.defaultChord),
+					.scope = std::move(_desc.scope),
+					.handler = std::move(_handler)
+				});
+			}
+
+			void Unregister(std::string_view _actionId) override
+			{
+				registry->UnregisterAction(_actionId);
+			}
+		};
+
+		auto* editorStateProv = new EditorStateProvider();
+		editorStateProv->scene = scene.get();
+		editorStateProv->state = sceneState;
+		editorStateProvider.reset(editorStateProv);
+
+		auto* viewportCtrl = new ViewportController();
+		viewportCtrl->renderer = nullptr;
+		viewportController.reset(viewportCtrl);
+
+		auto* keybindReg = new EditorKeybindRegistrar();
+		keybindReg->registry = keybindRegistry.get();
+		keybindRegistrar.reset(keybindReg);
+
 		cp::PluginHostContext pluginHostContext
 		{
 			.loadProfile = cp::PluginHostLoadProfile::RuntimeThenEditor,
@@ -565,7 +689,10 @@ namespace cp::editor
 			.editorContext = cp::PluginEditorContext{
 				.mainLogger = logger.get(),
 				.registryManager = registryManager.get(),
-				.assetRegistry = &cp::AssetRegistry::Instance()
+				.assetRegistry = &cp::AssetRegistry::Instance(),
+				.editorState = editorStateProvider.get(),
+				.viewportController = viewportController.get(),
+				.keybindRegistrar = keybindRegistrar.get()
 			}
 		};
 		pluginHost = std::make_unique<cp::PluginHost>(pluginHostContext);
@@ -717,6 +844,42 @@ namespace cp::editor
 				gizmoContributionBindings->push_back(std::move(binding));
 			}
 		}
+
+		keybindsConfigPath = executableDirectory / "keybinds.json";
+		keybindRegistry->LoadFromFile(keybindsConfigPath);
+		for (const KeybindEntry& entry : keybindRegistry->GetEntries())
+		{
+			if (entry.scope == KeybindScopeGlobal && entry.currentChord != entry.defaultChord)
+			{
+				if (const auto action = actions->FindAction(entry.actionId))
+				{
+					action->SetShortcut(entry.currentChord.empty() ?
+						std::nullopt : std::optional<std::string>(entry.currentChord));
+				}
+			}
+		}
+
+		editorSettingsAction->SetTriggeredHandler([this]()
+		{
+			const auto settingsWin = backend->CreateSettingsWindow();
+			settingsWin->SetKeybindEntries(keybindRegistry->GetSettingsEntries());
+			settingsWin->SetApplyKeybindsHandler([this](std::vector<std::pair<std::string, std::string>> _changes)
+			{
+				const auto applied = keybindRegistry->ApplyChordChanges(_changes);
+
+				for (const auto& [actionId, chord] : applied)
+				{
+					if (const auto action = actions->FindAction(actionId))
+					{
+						action->SetShortcut(chord.empty() ? std::nullopt : std::optional<std::string>(chord));
+					}
+				}
+
+				keybindRegistry->SaveToFile(keybindsConfigPath);
+			});
+
+			settingsWin->Show();
+		});
 
 		const auto viewportExtent = std::make_shared<cp::Extent2D<uint32_t>>(cp::Extent2D<uint32_t>(1, 1));
 		const auto activeGizmoTool  = std::make_shared<std::string>();
@@ -886,7 +1049,6 @@ namespace cp::editor
 			OnRuntimeStopped();
 		});
 
-		const auto sceneState = std::make_shared<EditorSceneState>();
 		const auto activeScenePath = std::make_shared<std::filesystem::path>(
 			!_config.projectRootPath.empty()
 				? _config.projectRootPath / "Scene.scene"
@@ -914,13 +1076,6 @@ namespace cp::editor
 						.value = _config.projectRootPath.string(),
 						.readOnly = true
 					},
-					{
-						.id = "viewportTool",
-						.label = "Viewport Tool",
-						.valueType = cp::editorui::InspectorField::ValueType::String,
-						.value = std::string("Translate"),
-						.readOnly = true
-					}
 				}
 			});
 
@@ -1625,6 +1780,7 @@ namespace cp::editor
 
 			renderer = std::make_unique<cp::Renderer>(rendererInfo, *rhi);
 			cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
+			static_cast<ViewportController*>(viewportController.get())->renderer = renderer.get();
 
 			viewportView->SetResizeHandler([this, viewportExtent](const int _width, const int _height)
 			{
@@ -1757,6 +1913,11 @@ namespace cp::editor
 					(*activeGizmoContrib)->OnMouseRelease(_event.x, _event.y);
 					*activeGizmoContrib = nullptr;
 				}
+			});
+
+			viewportView->SetKeyPressHandler([this](const std::string_view _chord)
+			{
+				keybindRegistry->DispatchKeyPress(_chord, KeybindScopeViewport);
 			});
 
 			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Viewport", cp::Message::Create("Renderer attached to viewport surface")));

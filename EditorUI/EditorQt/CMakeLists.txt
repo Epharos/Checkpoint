@@ -22,6 +22,7 @@ add_library(EditorUI_EditorQt STATIC
     "Private/EditorQt/QtCommandStack.hpp"
     "Private/EditorQt/QtActionRegistry.hpp"
     "Private/EditorQt/QtApplicationWindow.hpp"
+    "Private/EditorQt/QtSettingsWindow.hpp"
     "Private/EditorQt/QtEditorUIBackend.hpp"
     "Public/EditorQt/EditorQtBackendFactory.hpp"
     "Private/EditorQtPCH.hpp"

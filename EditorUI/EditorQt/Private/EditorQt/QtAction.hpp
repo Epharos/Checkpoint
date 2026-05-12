@@ -107,6 +107,29 @@ namespace cp::editorqt
 			action->trigger();
 		}
 
+		void SetShortcut(std::optional<std::string> _chord) override
+		{
+			if (_chord.has_value())
+			{
+				descriptor.shortcut = cp::editorui::Shortcut{ *_chord };
+				action->setShortcut(QKeySequence(ToQString(*_chord)));
+				return;
+			}
+
+			descriptor.shortcut = std::nullopt;
+			action->setShortcut(QKeySequence());
+		}
+
+		[[nodiscard]] std::optional<std::string> GetShortcut() const override
+		{
+			if (descriptor.shortcut.has_value())
+			{
+				return descriptor.shortcut->chord;
+			}
+
+			return std::nullopt;
+		}
+
 	private:
 		cp::editorui::ActionDescriptor descriptor;
 		std::unique_ptr<QAction> action;

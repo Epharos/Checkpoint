@@ -7,6 +7,9 @@
 #include "../Core/Registry.hpp"
 
 #include "../../Public/Common/Core/Macros.hpp"
+#include "../../Public/Common/Plugin/IEditorStateProvider.hpp"
+#include "../../Public/Common/Plugin/IViewportController.hpp"
+#include "../../Public/Common/Plugin/IKeybindRegistrar.hpp"
 
 namespace cp
 {
@@ -25,6 +28,9 @@ namespace cp
 		ILogger* mainLogger = nullptr;
 		RegistryManager* registryManager = nullptr;
 		AssetRegistry* assetRegistry = nullptr;
+		IEditorStateProvider* editorState = nullptr;
+		IViewportController* viewportController = nullptr;
+		IKeybindRegistrar* keybindRegistrar = nullptr;
 	};
 
 	using PluginRegisterRuntimeFn = bool(*)(PluginRuntimeContext& _context);
