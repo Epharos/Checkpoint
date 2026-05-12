@@ -474,8 +474,14 @@ namespace cp::editor
 		scene = std::make_unique<cp::runtime::Scene>();
 		scene->Initialize("NewScene");
 
+		const std::string projectName = _config.projectRootPath.filename().string();
+		const auto refreshWindowTitle = [this, projectName]()
+		{
+			window->SetTitle("Checkpoint - " + projectName + " - " + scene->GetName());
+		};
+
 		cp::editorui::ApplicationWindowConfig windowConfig;
-		windowConfig.title = _config.windowTitle;
+		windowConfig.title = "Checkpoint - " + projectName + " - " + scene->GetName();
 
 		window = backend->CreateApplicationWindow(windowConfig);
 		const auto theme = backend->CreateTheme("CheckpointDark");
@@ -1451,7 +1457,7 @@ namespace cp::editor
 			return menu;
 		});
 
-		const auto loadScene = [this, sceneState, activeScenePath, refreshHierarchyView, refreshInspectorView, refreshViewportToolbar, refreshSceneConfigView](const std::filesystem::path& _scenePath) -> bool
+		const auto loadScene = [this, sceneState, activeScenePath, refreshHierarchyView, refreshInspectorView, refreshViewportToolbar, refreshSceneConfigView, refreshWindowTitle](const std::filesystem::path& _scenePath) -> bool
 		{
 			const std::vector<uint8_t> sceneBytes = LoadBinaryFile(_scenePath);
 			if (sceneBytes.empty())
@@ -1466,6 +1472,7 @@ namespace cp::editor
 				logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "Scene", cp::Message::Create("Failed to deserialize scene '{}'", _scenePath.string())));
 				return false;
 			}
+			scene->SetName(_scenePath.stem().string());
 
 			if (renderer)
 			{
@@ -1520,6 +1527,7 @@ namespace cp::editor
 			refreshInspectorView();
 			refreshViewportToolbar();
 			refreshSceneConfigView();
+			refreshWindowTitle();
 			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Scene", cp::Message::Create("Loaded scene '{}'", _scenePath.string())));
 			return true;
 		};
@@ -1919,7 +1927,7 @@ namespace cp::editor
 
 			viewportView->SetKeyPressHandler([this](const std::string_view _chord)
 			{
-				keybindRegistry->DispatchKeyPress(_chord, KeybindScopeViewport);
+				[[maybe_unused]] bool flag = keybindRegistry->DispatchKeyPress(_chord, KeybindScopeViewport);
 			});
 
 			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Viewport", cp::Message::Create("Renderer attached to viewport surface")));

@@ -24,7 +24,7 @@ namespace cp::scene
     struct SceneDescription
     {
         static constexpr uint32_t MAGIC = 0x53434E45; // "SCNE"
-        static constexpr uint32_t VERSION = 4;
+        static constexpr uint32_t VERSION = 5;
 
         std::string name;
         SceneGuid sceneGuid;

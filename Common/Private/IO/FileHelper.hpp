@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Common/Core/ProjectContext.hpp>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -29,7 +30,8 @@ namespace cp
 
     inline std::filesystem::path FindFileInParentTree(const std::string_view _fileName)
     {
-        std::filesystem::path currentPath = std::filesystem::current_path();
+        const std::filesystem::path& projectRoot = GetProjectRootPath();
+        std::filesystem::path currentPath = projectRoot.empty() ? std::filesystem::current_path() : projectRoot;
         const std::filesystem::path fileNamePath(_fileName);
 
         while (!currentPath.empty())
@@ -54,7 +56,7 @@ namespace cp
 
     inline std::filesystem::path GetRelativePath(
         const std::filesystem::path& _path,
-        const std::filesystem::path& _currentPath = std::filesystem::current_path()
+        const std::filesystem::path& _currentPath = {}
     )
     {
         if (_path.empty())
@@ -62,13 +64,18 @@ namespace cp
             return {};
         }
 
+        const std::filesystem::path& projectRoot = GetProjectRootPath();
+        const std::filesystem::path& effectiveBase = !_currentPath.empty()
+            ? _currentPath
+            : (!projectRoot.empty() ? projectRoot : std::filesystem::current_path());
+
         std::filesystem::path absolutePath = std::filesystem::absolute(_path);
 
         std::error_code ec;
-        std::filesystem::path relativePath = std::filesystem::relative(absolutePath, _currentPath, ec);
+        std::filesystem::path relativePath = std::filesystem::relative(absolutePath, effectiveBase, ec);
         if (ec || relativePath.empty())
         {
-            relativePath = absolutePath.lexically_relative(_currentPath);
+            relativePath = absolutePath.lexically_relative(effectiveBase);
             if (relativePath.empty())
             {
                 return absolutePath;

@@ -2,6 +2,8 @@
 
 #include <EditorQt/EditorQtBackendFactory.hpp>
 
+#include <Common/Core/ProjectContext.hpp>
+
 #include <exception>
 #include <filesystem>
 #include <iostream>
@@ -9,7 +11,11 @@
 
 int main(int argc, char** argv)
 {
-	std::puts("Plop");
+	if (argc < 2 || argv[1] == nullptr)
+	{
+		std::cerr << "Usage: Editor <project-directory>\n";
+		return 1;
+	}
 
 	try
 	{
@@ -18,16 +24,10 @@ int main(int argc, char** argv)
 		cp::editor::EditorWorkspace workspace(backend);
 
 		cp::editor::WorkspaceConfig config;
-		config.windowTitle = "Checkpoint Editor";
-		if (argc > 1 && argv[1] != nullptr)
-		{
-			config.projectRootPath = std::filesystem::absolute(argv[1]);
-		}
-		else
-		{
-			config.projectRootPath = std::filesystem::current_path();
-		}
-		if (argc > 0 && argv[0] != nullptr)
+		config.projectRootPath = std::filesystem::absolute(argv[1]);
+		cp::SetProjectRootPath(config.projectRootPath);
+
+		if (argv[0] != nullptr)
 		{
 			config.executablePath = std::filesystem::absolute(argv[0]);
 		}

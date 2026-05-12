@@ -38,7 +38,6 @@ namespace cp::editor
 {
 	struct WorkspaceConfig
 	{
-		std::string windowTitle = "Checkpoint Editor";
 		std::filesystem::path projectRootPath;
 		std::filesystem::path executablePath;
 	};

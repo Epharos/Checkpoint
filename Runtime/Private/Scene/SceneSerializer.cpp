@@ -90,6 +90,7 @@ namespace cp::runtime
             return false;
         }
 
+        _scene.SetName(_filePath.stem().string());
         return true;
     }
 

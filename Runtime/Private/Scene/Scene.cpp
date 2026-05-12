@@ -259,7 +259,6 @@ namespace cp::runtime
     {
         _serializer.WritePod(cp::scene::SceneDescription::MAGIC);
         _serializer.WritePod(cp::scene::SceneDescription::VERSION);
-        _serializer.WriteString(description.name);
         _serializer.WritePod(description.sceneGuid.high);
         _serializer.WritePod(description.sceneGuid.low);
         _serializer.WritePod(description.lastModified);
@@ -314,7 +313,6 @@ namespace cp::runtime
         if (!_deserializer.ReadPod(version))
             return false;
 
-        if (!_deserializer.ReadString(description.name)) return false;
         if (!_deserializer.ReadPod(description.sceneGuid.high)) return false;
         if (!_deserializer.ReadPod(description.sceneGuid.low)) return false;
         if (!_deserializer.ReadPod(description.lastModified)) return false;

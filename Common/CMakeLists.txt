@@ -34,6 +34,8 @@ add_library(Common STATIC
     "Private/Plugin/PluginHost.hpp"
     "Private/Plugin/ViewportToolbarContribution.hpp"
 
+    "Public/Common/Core/ProjectContext.hpp"
+
     "Public/Common/Plugin/IEditorStateProvider.hpp"
     "Public/Common/Plugin/IViewportController.hpp"
     "Public/Common/Plugin/IKeybindRegistrar.hpp"
