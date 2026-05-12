@@ -4,8 +4,11 @@
 #include <Common/Plugin/RenderPassAuthoring.hpp>
 #include <Common/Plugin/ViewportToolbarContribution.hpp>
 
+#include <Rendering/GizmoContribution.hpp>
+
 #include "Components/Components.hpp"
 #include "Components/TransformViewportToolbarContribution.hpp"
+#include "Gizmo/TransformGizmoContribution.hpp"
 #include "Systems/PhysicsSystemAuthoring.hpp"
 #include "Systems/SpinSystemAuthoring.hpp"
 #include "RenderPasses/NegativePostFXAuthoring.hpp"
@@ -52,6 +55,13 @@ namespace
 			viewportToolbarRegistry.RegisterType<cp::TransformViewportToolbarContribution>(
 				cp::ecs::GuidToRegistryKey(cp::TransformViewportToolbarContributionGuid));
 
+		cp::Registry<cp::IGizmoContribution>& gizmoRegistry =
+			_registryManager.GetOrCreate<cp::IGizmoContribution>(std::string(cp::GizmoContributionRegistryName));
+
+		const bool transformGizmoRegistered =
+			gizmoRegistry.RegisterType<cp::TransformGizmoContribution>(
+				cp::ecs::GuidToRegistryKey(cp::TransformGizmoContributionGuid));
+
 		return transformAuthoringRegistered
 			&& cameraAuthoringRegistered
 			&& meshRendererAuthoringRegistered
@@ -61,7 +71,8 @@ namespace
 			&& physicsSystemAuthoringRegistered
 			&& negativePostFXAuthoringRegistered
 			&& skyboxAuthoringRegistered
-			&& transformToolbarContributionRegistered;
+			&& transformToolbarContributionRegistered
+			&& transformGizmoRegistered;
 	}
 }
 
@@ -110,5 +121,11 @@ void ShutdownExamplePluginEditor(cp::PluginEditorContext& _context)
 		_context.registryManager->Find<cp::IViewportToolbarContribution>(cp::ViewportToolbarContributionRegistryName))
 	{
 		viewportToolbarRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::TransformViewportToolbarContributionGuid));
+	}
+
+	if (cp::Registry<cp::IGizmoContribution>* gizmoRegistry =
+		_context.registryManager->Find<cp::IGizmoContribution>(cp::GizmoContributionRegistryName))
+	{
+		gizmoRegistry->Unregister(cp::ecs::GuidToRegistryKey(cp::TransformGizmoContributionGuid));
 	}
 }

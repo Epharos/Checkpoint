@@ -25,6 +25,7 @@ namespace cp
         std::string tooltip;
         bool checkable = false;
         bool checkedByDefault = false;
+        bool isActiveTool = true;
     };
 
     /**

@@ -13,6 +13,7 @@
 #include <RHI/Data.hpp>
 
 #include "Camera.hpp"
+#include "DebugDraw.hpp"
 #include "RendererEnvironment.hpp"
 #include "FrameGraph/FrameGraph.hpp"
 
@@ -124,6 +125,24 @@ namespace cp
          */
         [[nodiscard]] IRenderPass* FindActivePass(std::string_view _passTypeName);
 
+        /**
+         * @brief Return a reference to the debug draw buffer for the current frame.
+         *
+         * Callers should write to this buffer before BeginFrame().
+         * The buffer is automatically cleared during EndFrame() so it
+         * starts empty at the beginning of every new frame cycle.
+         */
+        [[nodiscard]] DebugDrawBuffer& GetDebugDrawBuffer() { return *debugDrawBuffer; }
+
+        /**
+         * @brief Return a constant reference to the debug draw buffer for the current frame.
+         *
+         * Callers should write to this buffer before BeginFrame().
+         * The buffer is automatically cleared during EndFrame() so it
+         * starts empty at the beginning of every new frame cycle.
+         */
+        [[nodiscard]] const DebugDrawBuffer& GetDebugDrawBuffer() const { return *debugDrawBuffer; }
+
     public:
         void BeginFrame();
         void Render();
@@ -150,6 +169,7 @@ namespace cp
     protected:
         EditorCamera editorCamera {};
         ResolvedCameraData resolvedCamera {};
+        std::shared_ptr<DebugDrawBuffer> debugDrawBuffer = std::make_shared<DebugDrawBuffer>();
 
         std::vector<FrameContext> frameContext;
 

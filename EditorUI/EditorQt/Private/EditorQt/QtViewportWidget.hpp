@@ -14,9 +14,13 @@ namespace cp::editorqt
 			QPalette palette = this->palette();
 			palette.setColor(QPalette::Window, QColor(22, 22, 26));
 			setPalette(palette);
+			setMouseTracking(true);
 		}
 
 		std::function<void(int, int)> resizeHandler;
+		std::function<void(const cp::editorui::ViewportMouseEvent&)> mousePressHandler;
+		std::function<void(const cp::editorui::ViewportMouseEvent&)> mouseReleaseHandler;
+		std::function<void(int, int)> mouseMoveHandler;
 
 	protected:
 		void resizeEvent(QResizeEvent* _event) override
@@ -26,6 +30,44 @@ namespace cp::editorqt
 			{
 				resizeHandler(_event->size().width(), _event->size().height());
 			}
+		}
+
+		void mousePressEvent(QMouseEvent* _event) override
+		{
+			QWidget::mousePressEvent(_event);
+			if (mousePressHandler)
+			{
+				mousePressHandler(ToViewportMouseEvent(_event));
+			}
+		}
+
+		void mouseReleaseEvent(QMouseEvent* _event) override
+		{
+			QWidget::mouseReleaseEvent(_event);
+			if (mouseReleaseHandler)
+			{
+				mouseReleaseHandler(ToViewportMouseEvent(_event));
+			}
+		}
+
+		void mouseMoveEvent(QMouseEvent* _event) override
+		{
+			QWidget::mouseMoveEvent(_event);
+			if (mouseMoveHandler)
+			{
+				mouseMoveHandler(_event->pos().x(), _event->pos().y());
+			}
+		}
+
+	private:
+		static cp::editorui::ViewportMouseEvent ToViewportMouseEvent(const QMouseEvent* _event)
+		{
+			cp::editorui::MouseButton button = cp::editorui::MouseButton::Left;
+			if (_event->button() == Qt::RightButton)
+				button = cp::editorui::MouseButton::Right;
+			else if (_event->button() == Qt::MiddleButton)
+				button = cp::editorui::MouseButton::Middle;
+			return { _event->pos().x(), _event->pos().y(), button };
 		}
 	};
 
@@ -85,6 +127,21 @@ namespace cp::editorqt
 		void SetFrameHandler(FrameHandler _handler) override
 		{
 			frameHandler = std::move(_handler);
+		}
+
+		void SetMousePressHandler(MousePressHandler _handler) override
+		{
+			surface->mousePressHandler = std::move(_handler);
+		}
+
+		void SetMouseReleaseHandler(MouseReleaseHandler _handler) override
+		{
+			surface->mouseReleaseHandler = std::move(_handler);
+		}
+
+		void SetMouseMoveHandler(MouseMoveHandler _handler) override
+		{
+			surface->mouseMoveHandler = std::move(_handler);
 		}
 
 		[[nodiscard]] QWidget* GetQWidget() const override

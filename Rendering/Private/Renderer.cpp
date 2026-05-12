@@ -246,6 +246,8 @@ namespace cp
             frameGraph.ShareCpuResource<ecs::World>("ECS.World", std::move(ecsWorldRef));
         }
 
+        frameGraph.ShareCpuResource<DebugDrawBuffer>("DebugDraw.Buffer", debugDrawBuffer);
+
         CP_EXPECT_MSG(rendererInfo.registryManager != nullptr, "RendererInfo.registryManager must be provided");
         const Registry<IRenderPass>* passRegistry =
             rendererInfo.registryManager->Find<IRenderPass>("Renderpass");
@@ -424,6 +426,8 @@ namespace cp
         swapchain->Present(frameGlobalIndex);
 
         frameIndex = (frameIndex + 1) % rendererInfo.frameCount;
+
+        debugDrawBuffer->Clear();
     }
 
     void Renderer::CreateFrameContext()

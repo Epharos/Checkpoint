@@ -45,6 +45,20 @@ namespace cp::editorui
 		Scale
 	};
 
+	enum class MouseButton : std::uint8_t
+	{
+		Left,
+		Right,
+		Middle
+	};
+
+	struct ViewportMouseEvent
+	{
+		int x = 0;
+		int y = 0;
+		MouseButton button = MouseButton::Left;
+	};
+
 	enum class ThemeColorRole : std::uint8_t
 	{
 		WindowBackground,

@@ -2,6 +2,7 @@ add_library(Rendering STATIC
         Private/Renderer.cpp
         Private/Renderer.hpp
         Private/Camera.hpp
+        Private/DebugDraw.hpp
         Private/RendererEnvironment.hpp
 
         Private/FrameGraph/Renderpass.cpp
@@ -19,6 +20,8 @@ add_library(Rendering STATIC
 
         Public/Rendering/Renderer.hpp
         Public/Rendering/Camera.hpp
+        Public/Rendering/DebugDraw.hpp
+        Public/Rendering/GizmoContribution.hpp
         Public/Rendering/RendererEnvironment.hpp
 
         Public/Rendering/Scene/FrameGraphConfig.hpp

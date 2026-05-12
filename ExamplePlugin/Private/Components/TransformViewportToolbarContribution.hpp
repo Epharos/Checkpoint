@@ -21,9 +21,10 @@ namespace cp
         std::vector<ViewportToolbarButtonDescriptor> GetButtons() const override
         {
             return {
-                { "viewport.tool.translate", "Translate", "Switch to Translate mode", true, true  },
-                { "viewport.tool.rotate", "Rotate", "Switch to Rotate mode", true, false },
-                { "viewport.tool.scale", "Scale", "Switch to Scale mode", true, false },
+                { "viewport.tool.translate", "Translate", "Switch to Translate mode", true, true, true },
+                { "viewport.tool.rotate", "Rotate", "Switch to Rotate mode", true, false, true },
+                { "viewport.tool.scale", "Scale", "Switch to Scale mode", true, false, true },
+                { "viewport.gizmo.space", "World", "Toggle Local / World space", true, false, false },
             };
         }
 

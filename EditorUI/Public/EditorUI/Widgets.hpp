@@ -98,8 +98,11 @@ namespace cp::editorui
 	class IViewportWidget : public IWidget
 	{
 	public:
-		using ResizeHandler = std::function<void(int, int)>;
-		using FrameHandler = std::function<void()>;
+		using ResizeHandler       = std::function<void(int, int)>;
+		using FrameHandler        = std::function<void()>;
+		using MousePressHandler   = std::function<void(const ViewportMouseEvent&)>;
+		using MouseReleaseHandler = std::function<void(const ViewportMouseEvent&)>;
+		using MouseMoveHandler    = std::function<void(int x, int y)>;
 
 		virtual void SetActiveTool(ViewportTool _tool) = 0;
 		virtual ViewportTool GetActiveTool() const = 0;
@@ -107,6 +110,9 @@ namespace cp::editorui
 		virtual void* GetNativeRenderSurfaceHandle() const = 0;
 		virtual void SetResizeHandler(ResizeHandler _handler) = 0;
 		virtual void SetFrameHandler(FrameHandler _handler) = 0;
+		virtual void SetMousePressHandler(MousePressHandler _handler) = 0;
+		virtual void SetMouseReleaseHandler(MouseReleaseHandler _handler) = 0;
+		virtual void SetMouseMoveHandler(MouseMoveHandler _handler) = 0;
 	};
 
 	class ISceneConfigView : public IWidget

@@ -9,6 +9,7 @@
 
 #include <ECS/ECS.hpp>
 
+#include <Rendering/GizmoContribution.hpp>
 #include <Rendering/Renderer.hpp>
 #include <Rendering/Scene/FrameGraphConfig.hpp>
 
@@ -249,6 +250,13 @@ namespace cp::editor
 			std::string registryKey;
 			std::unique_ptr<cp::IViewportToolbarContribution> contribution;
 			std::vector<std::shared_ptr<cp::editorui::IAction>> actions;
+			std::vector<cp::ViewportToolbarButtonDescriptor> descriptors;
+		};
+
+		struct GizmoContributionBinding
+		{
+			std::string registryKey;
+			std::unique_ptr<cp::IGizmoContribution> contribution;
 		};
 
 		struct EditorSceneState
@@ -368,6 +376,9 @@ namespace cp::editor
 		{
 			viewportView->SetFrameHandler(nullptr);
 			viewportView->SetResizeHandler(nullptr);
+			viewportView->SetMousePressHandler(nullptr);
+			viewportView->SetMouseMoveHandler(nullptr);
+			viewportView->SetMouseReleaseHandler(nullptr);
 		}
 
 		if (renderer != nullptr)
@@ -449,6 +460,7 @@ namespace cp::editor
 		registryManager->GetOrCreate<cp::ISystemAuthoring>(std::string(cp::EcsSystemAuthoringRegistryName));
 		registryManager->GetOrCreate<cp::IRenderPassAuthoring>(std::string(cp::RenderPassAuthoringRegistryName));
 		registryManager->GetOrCreate<cp::IViewportToolbarContribution>(std::string(cp::ViewportToolbarContributionRegistryName));
+		registryManager->GetOrCreate<cp::IGizmoContribution>(std::string(cp::GizmoContributionRegistryName));
 
 		scene = std::make_unique<cp::runtime::Scene>();
 		scene->Initialize("NewScene");
@@ -685,6 +697,7 @@ namespace cp::editor
 					});
 
 					binding.actions.push_back(action);
+					binding.descriptors.push_back(desc);
 					viewportToolBar->AddAction(action);
 				}
 
@@ -692,24 +705,86 @@ namespace cp::editor
 			}
 		}
 
+		const auto gizmoContributionBindings = std::make_shared<std::vector<GizmoContributionBinding>>();
+		if (const cp::Registry<cp::IGizmoContribution>* gizmoRegistry =
+			registryManager->Find<cp::IGizmoContribution>(cp::GizmoContributionRegistryName))
+		{
+			for (const std::string& key : gizmoRegistry->Names())
+			{
+				GizmoContributionBinding binding;
+				binding.registryKey = key;
+				binding.contribution = gizmoRegistry->Create(key);
+				gizmoContributionBindings->push_back(std::move(binding));
+			}
+		}
+
+		const auto viewportExtent = std::make_shared<cp::Extent2D<uint32_t>>(cp::Extent2D<uint32_t>(1, 1));
+		const auto activeGizmoTool  = std::make_shared<std::string>();
+		const auto activeGizmoSpace = std::make_shared<cp::GizmoSpace>(cp::GizmoSpace::World);
+
+		for (const ToolbarContributionBinding& tb : *toolbarContributionBindings)
+		{
+			for (size_t i = 0; i < tb.actions.size(); ++i)
+			{
+				if (!tb.descriptors[i].isActiveTool) continue;
+
+				const std::shared_ptr<cp::editorui::IAction>& action = tb.actions[i];
+				if (action->IsCheckable() && action->IsChecked())
+				{
+					*activeGizmoTool = std::string(action->GetId());
+					break;
+				}
+			}
+
+			if (!activeGizmoTool->empty()) break;
+		}
+
 		for (ToolbarContributionBinding& binding : *toolbarContributionBindings)
 		{
 			cp::IViewportToolbarContribution* contrib = binding.contribution.get();
-			std::vector<std::shared_ptr<cp::editorui::IAction>> bindingActions = binding.actions;
 
-			for (const std::shared_ptr<cp::editorui::IAction>& action : binding.actions)
+			std::vector<std::shared_ptr<cp::editorui::IAction>> activeToolActions;
+			for (size_t i = 0; i < binding.actions.size(); ++i)
 			{
-				const std::string buttonId = std::string(action->GetId());
-				action->SetTriggeredHandler([contrib, buttonId, bindingActions]()
+				if (binding.descriptors[i].isActiveTool)
 				{
-					for (const std::shared_ptr<cp::editorui::IAction>& a : bindingActions)
-					{
-						if (a->IsCheckable())
-							a->SetChecked(a->GetId() == buttonId);
-					}
+					activeToolActions.push_back(binding.actions[i]);
+				}
+			}
 
-					contrib->OnButtonTriggered(buttonId);
-				});
+			for (size_t i = 0; i < binding.actions.size(); ++i)
+			{
+				const std::shared_ptr<cp::editorui::IAction>& action = binding.actions[i];
+				const bool isTool = binding.descriptors[i].isActiveTool;
+				const std::string buttonId = std::string(action->GetId());
+
+				if (isTool)
+				{
+					action->SetTriggeredHandler([contrib, buttonId, activeToolActions, activeGizmoTool]()
+					{
+						for (const std::shared_ptr<cp::editorui::IAction>& a : activeToolActions)
+						{
+							if (a->IsCheckable())
+							{
+								a->SetChecked(a->GetId() == buttonId);
+							}
+						}
+
+						*activeGizmoTool = buttonId;
+						contrib->OnButtonTriggered(buttonId);
+					});
+				}
+				else
+				{
+					action->SetTriggeredHandler([contrib, buttonId, action, activeGizmoSpace]()
+					{
+						const bool goLocal = (*activeGizmoSpace == cp::GizmoSpace::World);
+						*activeGizmoSpace  = goLocal ? cp::GizmoSpace::Local : cp::GizmoSpace::World;
+						action->SetChecked(goLocal);
+						action->SetText(goLocal ? "Local" : "World");
+						contrib->OnButtonTriggered(buttonId);
+					});
+				}
 			}
 		}
 
@@ -1551,7 +1626,7 @@ namespace cp::editor
 			renderer = std::make_unique<cp::Renderer>(rendererInfo, *rhi);
 			cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
 
-			viewportView->SetResizeHandler([this](const int _width, const int _height)
+			viewportView->SetResizeHandler([this, viewportExtent](const int _width, const int _height)
 			{
 				if (_width <= 0 || _height <= 0 || !renderer)
 				{
@@ -1559,8 +1634,11 @@ namespace cp::editor
 				}
 
 				renderer->Resize(cp::Extent2D<int>(_width, _height));
+				*viewportExtent = cp::Extent2D<uint32_t>(
+					static_cast<uint32_t>(_width),
+					static_cast<uint32_t>(_height));
 			});
-			viewportView->SetFrameHandler([this]()
+			viewportView->SetFrameHandler([this, sceneState, gizmoContributionBindings, viewportExtent, activeGizmoTool, activeGizmoSpace]()
 			{
 				{
 					std::vector<cp::editorui::ConsoleEntry> pending;
@@ -1586,9 +1664,99 @@ namespace cp::editor
 					return;
 				}
 
+				const cp::ResolvedCameraData& resolvedCam = renderer->GetResolvedCamera();
+				if (resolvedCam.isValid && sceneState->selectedEntityId.has_value())
+				{
+					const auto entityIt = sceneState->entityLookup.find(sceneState->selectedEntityId.value());
+					if (entityIt != sceneState->entityLookup.end())
+					{
+						const cp::ecs::Entity entity = entityIt->second;
+						cp::GizmoRenderContext gizmoCtx {
+							.debugDrawBuffer = renderer->GetDebugDrawBuffer(),
+							.camera = resolvedCam,
+							.viewport = *viewportExtent,
+							.activeTool = *activeGizmoTool,
+							.space = *activeGizmoSpace
+						};
+
+						for (GizmoContributionBinding& gizmoBinding : *gizmoContributionBindings)
+						{
+							if (gizmoBinding.contribution->IsApplicable(scene->GetWorld(), entity))
+							{
+								gizmoBinding.contribution->Render(gizmoCtx, scene->GetWorld(), entity);
+							}
+						}
+					}
+				}
+
 				renderer->BeginFrame();
 				renderer->Render();
 				renderer->EndFrame();
+			});
+
+			const auto activeGizmoContrib = std::make_shared<cp::IGizmoContribution*>(nullptr);
+
+			viewportView->SetMousePressHandler([this, sceneState, gizmoContributionBindings, viewportExtent, activeGizmoTool, activeGizmoSpace, activeGizmoContrib](
+				const cp::editorui::ViewportMouseEvent& _event)
+			{
+				if (_event.button != cp::editorui::MouseButton::Left) return;
+				if (!renderer) return;
+				if (!renderer->GetResolvedCamera().isValid) return;
+				if (!sceneState->selectedEntityId.has_value()) return;
+
+				const auto entityIt = sceneState->entityLookup.find(sceneState->selectedEntityId.value());
+				if (entityIt == sceneState->entityLookup.end()) return;
+
+				const cp::ecs::Entity entity = entityIt->second;
+				const cp::GizmoInteractContext ctx {
+					.camera = renderer->GetResolvedCamera(),
+					.viewport = *viewportExtent,
+					.activeTool = *activeGizmoTool,
+					.space = *activeGizmoSpace
+				};
+
+				*activeGizmoContrib = nullptr;
+				for (GizmoContributionBinding& gizmoBinding : *gizmoContributionBindings)
+				{
+					if (!gizmoBinding.contribution->IsApplicable(scene->GetWorld(), entity)) continue;
+
+					if (gizmoBinding.contribution->OnMousePress(_event.x, _event.y, ctx, scene->GetWorld(), entity))
+					{
+						*activeGizmoContrib = gizmoBinding.contribution.get();
+						break;
+					}
+				}
+			});
+
+			viewportView->SetMouseMoveHandler([this, sceneState, viewportExtent, activeGizmoTool, activeGizmoSpace, activeGizmoContrib, refreshInspectorView](
+				const int _x, const int _y)
+			{
+				if (!*activeGizmoContrib) return;
+				if (!renderer) return;
+				if (!sceneState->selectedEntityId.has_value()) return;
+
+				const auto entityIt = sceneState->entityLookup.find(sceneState->selectedEntityId.value());
+				if (entityIt == sceneState->entityLookup.end()) return;
+
+				const cp::ecs::Entity entity = entityIt->second;
+				const cp::GizmoInteractContext ctx {
+					.camera = renderer->GetResolvedCamera(),
+					.viewport = *viewportExtent,
+					.activeTool = *activeGizmoTool,
+					.space = *activeGizmoSpace
+				};
+				(*activeGizmoContrib)->OnMouseMove(_x, _y, ctx, scene->GetWorld(), entity);
+				refreshInspectorView();
+			});
+
+			viewportView->SetMouseReleaseHandler([activeGizmoContrib](const cp::editorui::ViewportMouseEvent& _event)
+			{
+				if (_event.button != cp::editorui::MouseButton::Left) return;
+				if (*activeGizmoContrib)
+				{
+					(*activeGizmoContrib)->OnMouseRelease(_event.x, _event.y);
+					*activeGizmoContrib = nullptr;
+				}
 			});
 
 			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Viewport", cp::Message::Create("Renderer attached to viewport surface")));

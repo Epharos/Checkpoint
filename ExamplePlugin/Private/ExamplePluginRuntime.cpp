@@ -3,6 +3,7 @@
 #include <Common/Plugin/PluginRegistryNames.hpp>
 #include <memory>
 
+#include "RenderPasses/DebugDrawPass.hpp"
 #include "RenderPasses/OpaqueMaterialPass.hpp"
 #include "RenderPasses/NegativePFX.hpp"
 #include "RenderPasses/SkyboxPass.hpp"
@@ -30,8 +31,12 @@ namespace
 			renderPassRegistry.RegisterType<cp::SkyboxPass>(
 				std::string(cp::SkyboxPassTypeName)
 			);
+		const bool debugDrawRegistered =
+			renderPassRegistry.RegisterType<cp::DebugDrawPass>(
+				std::string(cp::DebugDrawPassTypeName)
+			);
 
-		return opaqueRegistered && negativeRegistered && skyboxRegistered;
+		return opaqueRegistered && negativeRegistered && skyboxRegistered && debugDrawRegistered;
 	}
 
 	bool RegisterSystems(cp::Registry<cp::ecs::ISystem> &ecsSystemRegistry)
@@ -128,6 +133,7 @@ void ShutdownExamplePluginRuntime(cp::PluginRuntimeContext& _context)
 			renderPassRegistry->Unregister(OpaqueMaterialPassTypeName);
 			renderPassRegistry->Unregister(cp::NegativePostFXTypeName);
 			renderPassRegistry->Unregister(cp::SkyboxPassTypeName);
+			renderPassRegistry->Unregister(cp::DebugDrawPassTypeName);
 		}
 
 		if (cp::Registry<cp::ecs::ISystem>* ecsSystemRegistry =

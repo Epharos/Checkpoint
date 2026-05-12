@@ -14,6 +14,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QPalette>
+#include <QMouseEvent>
 #include <QResizeEvent>
 #include <QStringList>
 #include <QTableWidget>
