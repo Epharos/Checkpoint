@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <variant>
 
 #include "../Data/Enums.hpp"
 

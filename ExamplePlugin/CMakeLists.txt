@@ -15,7 +15,6 @@ add_library(ExamplePlugin SHARED
     "Private/Components/Spawner.cpp"
     "Private/Components/RigidBody.hpp"
     "Private/Components/RigidBody.cpp"
-    "Private/RenderPasses/DebugDrawPass.hpp"
     "Private/RenderPasses/OpaqueMaterialPass.hpp"
     "Private/RenderPasses/NegativePFX.hpp"
     "Private/RenderPasses/NegativePostFXAuthoring.hpp"
@@ -24,7 +23,6 @@ add_library(ExamplePlugin SHARED
     "Private/Systems/SpinSystem.hpp"
     "Private/Systems/SpinSystemAuthoring.hpp"
     "Private/Gizmo/TransformGizmoContribution.hpp"
-    "Private/Shaders/DebugLine.slang"
     "Private/ExamplePluginPCH.hpp"
 )
 

@@ -11,6 +11,7 @@
 
 #include <Resources/AssetRegistry.hpp>
 
+#include <Rendering/BuiltinRenderPasses.hpp>
 #include <Rendering/Renderer.hpp>
 #include <Rendering/Scene/FrameGraphConfig.hpp>
 
@@ -150,9 +151,13 @@ namespace cp
 
     void StandaloneApplication::InitRegistry()
     {
-        registryManager.GetOrCreate<IRenderPass>(std::string(cp::RenderPassRegistryName));
+        auto& renderPassRegistry = registryManager.GetOrCreate<IRenderPass>(std::string(cp::RenderPassRegistryName));
         registryManager.GetOrCreate<ecs::ISystem>(std::string(cp::EcsSystemRegistryName));
         registryManager.GetOrCreate<ecs::IComponentRegistrar>(std::string(cp::EcsComponentRegistryName));
+
+#if defined(CP_DEVELOPMENT_BUILD)
+        rendering::RegisterBuiltinRenderPasses(renderPassRegistry);
+#endif
     }
 
     void StandaloneApplication::InitPlugins(int argc, char** argv)

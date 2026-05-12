@@ -12,6 +12,7 @@
 #include <Common/Plugin/IViewportController.hpp>
 #include <Common/Plugin/IKeybindRegistrar.hpp>
 
+#include <Rendering/BuiltinRenderPasses.hpp>
 #include <Rendering/Camera.hpp>
 
 #include <ECS/ECS.hpp>
@@ -460,7 +461,8 @@ namespace cp::editor
 	void EditorWorkspace::BuildDefaultLayout(const WorkspaceConfig& _config)
 	{
 		registryManager = std::make_unique<cp::RegistryManager>();
-		registryManager->GetOrCreate<cp::IRenderPass>(std::string(cp::RenderPassRegistryName));
+		auto& renderPassRegistry = registryManager->GetOrCreate<cp::IRenderPass>(std::string(cp::RenderPassRegistryName));
+		cp::rendering::RegisterBuiltinRenderPasses(renderPassRegistry);
 		registryManager->GetOrCreate<cp::ecs::ISystem>(std::string(cp::EcsSystemRegistryName));
 		registryManager->GetOrCreate<cp::ecs::IComponentRegistrar>(std::string(cp::EcsComponentRegistryName));
 		registryManager->GetOrCreate<cp::IComponentAuthoring>(std::string(cp::EcsComponentAuthoringRegistryName));

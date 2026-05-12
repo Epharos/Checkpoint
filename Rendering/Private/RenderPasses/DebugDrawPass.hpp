@@ -3,7 +3,6 @@
 #include <array>
 #include <cstddef>
 #include <cstring>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -181,7 +180,7 @@ namespace cp
         {
             data.finalRendering = _builder.UseTexture("FinalRendering", {
                 .layout = TextureLayout::ColorAttachment,
-                .stage  = PipelineStage::ColorAttachment,
+                .stage = PipelineStage::ColorAttachment,
                 .access = Access::ColorAttachmentWrite
             }, ResourceUsage::ReadWrite);
 
