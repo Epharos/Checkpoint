@@ -10,10 +10,9 @@ namespace cp::editorqt
 		explicit QtViewportSurface(QWidget* _parent = nullptr)
 			: QWidget(_parent)
 		{
-			setAutoFillBackground(true);
-			QPalette palette = this->palette();
-			palette.setColor(QPalette::Window, QColor(22, 22, 26));
-			setPalette(palette);
+			setAttribute(Qt::WA_NativeWindow);
+			setAttribute(Qt::WA_NoSystemBackground);
+			setAttribute(Qt::WA_OpaquePaintEvent);
 			setMouseTracking(true);
 			setFocusPolicy(Qt::StrongFocus);
 		}
@@ -24,7 +23,11 @@ namespace cp::editorqt
 		std::function<void(int, int)> mouseMoveHandler;
 		std::function<void(std::string_view)> keyPressHandler;
 
+		[[nodiscard]] QPaintEngine* paintEngine() const override { return nullptr; }
+
 	protected:
+		void paintEvent(QPaintEvent*) override {}
+
 		void resizeEvent(QResizeEvent* _event) override
 		{
 			QWidget::resizeEvent(_event);

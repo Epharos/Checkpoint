@@ -123,11 +123,11 @@ namespace cp
 			return;
 		}
 
-		if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
+		if (result == vk::Result::eErrorOutOfDateKHR)
 		{
 			Recreate();
 		}
-		else if (result != vk::Result::eSuccess)
+		else if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
 		{
 			throw std::runtime_error("Failed to present swapchain image");
 		}
@@ -169,6 +169,11 @@ namespace cp
 
 	void Swapchain::Resize(Extent2D<int> newExtent)
 	{
+		if (newExtent.x() == info.extent.x() && newExtent.y() == info.extent.y())
+		{
+			return;
+		}
+
 		info.extent = newExtent;
 		Recreate();
 	}
@@ -177,40 +182,50 @@ namespace cp
 	{
 		CP_EXPECT_MSG(imageAvailableTimelineSemaphore, "No Image Available Timeline semaphore setup");
 
-		uint32_t result;
+		constexpr int maxAttempts = 2;
 
-		try
+		for (int attempt = 0; attempt < maxAttempts; ++attempt)
 		{
-			result = device.GetHandle().acquireNextImageKHR(
-				swapchain,
-				std::numeric_limits<uint32_t>::max(),
-				imageAvailableBinarySemaphore[acquireSemaphoreIndex])
-			.value;
+			if (swapchain == VK_NULL_HANDLE)
+				return static_cast<uint32_t>(-1);
 
-			reinterpret_cast<Queue&>(device.GetQueue(QueueType::Graphics, 0)).SubmitBinaryToTimeline(
-				imageAvailableBinarySemaphore[acquireSemaphoreIndex],
-				reinterpret_cast<TimelineSemaphore&>(*imageAvailableTimelineSemaphore).GetHandle(),
-				++lastImageAvailableSignalValue
-			);
+			uint32_t result;
 
-			acquireSemaphoreIndex = (acquireSemaphoreIndex + 1) % info.imageCount;
+			try
+			{
+				result = device.GetHandle().acquireNextImageKHR(
+					swapchain,
+					std::numeric_limits<uint32_t>::max(),
+					imageAvailableBinarySemaphore[acquireSemaphoreIndex])
+				.value;
+
+				reinterpret_cast<Queue&>(device.GetQueue(QueueType::Graphics, 0)).SubmitBinaryToTimeline(
+					imageAvailableBinarySemaphore[acquireSemaphoreIndex],
+					reinterpret_cast<TimelineSemaphore&>(*imageAvailableTimelineSemaphore).GetHandle(),
+					++lastImageAvailableSignalValue
+				);
+
+				acquireSemaphoreIndex = (acquireSemaphoreIndex + 1) % info.imageCount;
+			}
+			catch (vk::OutOfDateKHRError&)
+			{
+				Recreate();
+				continue;
+			}
+			catch (vk::SurfaceLostKHRError&)
+			{
+				Cleanup();
+				return static_cast<uint32_t>(-1);
+			}
+
+			imageIndex = result;
+
+			CP_ENSURE_MSG(imageIndex < info.imageCount, "Image index is more than the image count the swapchain should have");
+
+			return result;
 		}
-		catch (vk::OutOfDateKHRError&)
-		{
-			Recreate();
-			return static_cast<uint32_t>(-1);
-		}
-		catch (vk::SurfaceLostKHRError&)
-		{
-			Cleanup();
-			return static_cast<uint32_t>(-1);
-		}
 
-		imageIndex = result;
-
-		CP_ENSURE_MSG(imageIndex < info.imageCount, "Image index is more than the image count the swapchain should have");
-
-		return result;
+		return static_cast<uint32_t>(-1);
 	}
 
 	void Swapchain::Initialize()
