@@ -503,6 +503,7 @@ namespace cp::editor
 		const auto openProjectAction = RegisterAction(actions, { "file.openProject", "Open Project" });
 		const auto loadSceneAction = RegisterAction(actions, { "file.loadScene", "Load Scene" });
 		const auto saveSceneAction = RegisterAction(actions, { "file.saveScene", "Save Scene" });
+		const auto saveSceneAsAction = RegisterAction(actions, { "file.saveSceneAs", "Save Scene As" });
 		const auto undoAction = RegisterAction(actions, { "edit.undo", "Undo", "", "", cp::editorui::Shortcut{ "Ctrl+Z" } });
 		const auto redoAction = RegisterAction(actions, { "edit.redo", "Redo", "", "", cp::editorui::Shortcut{ "Ctrl+Y" } });
 		const auto buildAction = RegisterAction(actions, { "project.build", "Build", "Compile the project." });
@@ -523,6 +524,16 @@ namespace cp::editor
 			.handler = [saveSceneAction] { saveSceneAction->Trigger(); }
 		});
 		saveSceneAction->SetShortcut("Ctrl+S");
+
+		keybindRegistry->RegisterAction({
+			.actionId = "file.saveSceneAs",
+			.displayName = "Save Scene As",
+			.category = "File",
+			.defaultChord = "Ctrl+Shift+S",
+			.scope = std::string(KeybindScopeGlobal),
+			.handler = [saveSceneAsAction] { saveSceneAsAction->Trigger(); }
+		});
+		saveSceneAsAction->SetShortcut("Ctrl+Shift+S");
 
 		keybindRegistry->RegisterAction({
 			.actionId = "edit.undo",
@@ -547,6 +558,7 @@ namespace cp::editor
 		fileMenu->AddAction(openProjectAction);
 		fileMenu->AddAction(loadSceneAction);
 		fileMenu->AddAction(saveSceneAction);
+		fileMenu->AddAction(saveSceneAsAction);
 
 		const auto editMenu = menuBar->AddMenu("edit", "Edit");
 		editMenu->AddAction(undoAction);
@@ -565,9 +577,15 @@ namespace cp::editor
 		hierarchyView = backend->CreateSceneHierarchyView("sceneHierarchy");
 		hierarchyPanel->SetContent(hierarchyView);
 
+		const std::filesystem::path assetsRootPath = _config.projectRootPath / "Assets";
+		{
+			std::error_code ec;
+			std::filesystem::create_directories(assetsRootPath, ec);
+		}
+
 		const auto assetsPanel = dockHost->CreatePanel({ "assets", "Assets" });
 		assetView = backend->CreateAssetExplorerView("assetExplorer");
-		assetView->SetProjectRoot(_config.projectRootPath);
+		assetView->SetProjectRoot(assetsRootPath);
 		assetsPanel->SetContent(assetView);
 
 		const auto consolePanel = dockHost->CreatePanel({ "console", "Console" });
@@ -974,10 +992,10 @@ namespace cp::editor
 			redoAction->SetEnabled(commandStack->CanRedo());
 		});
 
-		openProjectAction->SetTriggeredHandler([this, _config]()
+		openProjectAction->SetTriggeredHandler([this, _config, assetsRootPath]()
 		{
-			assetView->SetProjectRoot(_config.projectRootPath);
-			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Assets", cp::Message::Create("Project root set to '{}'", _config.projectRootPath.string())));
+			assetView->SetProjectRoot(assetsRootPath);
+			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Assets", cp::Message::Create("Assets root set to '{}'", assetsRootPath.string())));
 		});
 		buildAction->SetTriggeredHandler([this]()
 		{
@@ -1057,10 +1075,7 @@ namespace cp::editor
 			OnRuntimeStopped();
 		});
 
-		const auto activeScenePath = std::make_shared<std::filesystem::path>(
-			!_config.projectRootPath.empty()
-				? _config.projectRootPath / "Scene.scene"
-				: std::filesystem::current_path() / "Scene.scene");
+		const auto activeScenePath = std::make_shared<std::optional<std::filesystem::path>>(std::nullopt);
 
 		const auto refreshHierarchyView = [this, sceneState]()
 		{
@@ -1457,7 +1472,9 @@ namespace cp::editor
 			return menu;
 		});
 
-		const auto loadScene = [this, sceneState, activeScenePath, refreshHierarchyView, refreshInspectorView, refreshViewportToolbar, refreshSceneConfigView, refreshWindowTitle](const std::filesystem::path& _scenePath) -> bool
+		// Deserializes a scene from disk and refreshes all views.
+		// Does NOT update activeScenePath or scene name.
+		const auto restoreScene = [this, sceneState, refreshHierarchyView, refreshInspectorView, refreshViewportToolbar, refreshSceneConfigView, refreshWindowTitle](const std::filesystem::path& _scenePath) -> bool
 		{
 			const std::vector<uint8_t> sceneBytes = LoadBinaryFile(_scenePath);
 			if (sceneBytes.empty())
@@ -1472,7 +1489,6 @@ namespace cp::editor
 				logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "Scene", cp::Message::Create("Failed to deserialize scene '{}'", _scenePath.string())));
 				return false;
 			}
-			scene->SetName(_scenePath.stem().string());
 
 			if (renderer)
 			{
@@ -1486,9 +1502,8 @@ namespace cp::editor
 				scene->InitializeSystems(*sysReg);
 			}
 
-			const std::vector<std::string> loadedPluginNames = pluginHost != nullptr
-				                                               ? pluginHost->GetLoadedPluginNames()
-				                                               : std::vector<std::string>{};
+			const std::vector<std::string> loadedPluginNames =
+				pluginHost != nullptr ? pluginHost->GetLoadedPluginNames() : std::vector<std::string>{};
 			for (const std::string& requiredPlugin : scene->GetWorld().GetRequiredPlugins())
 			{
 				const bool isLoaded = std::find(loadedPluginNames.begin(), loadedPluginNames.end(), requiredPlugin) != loadedPluginNames.end();
@@ -1522,19 +1537,32 @@ namespace cp::editor
 				                               ? std::optional<cp::editorui::EntityId>{}
 				                               : std::optional<cp::editorui::EntityId>{ sceneState->hierarchyNodes.front().entityId };
 			sceneState->contextEntityId.reset();
-			*activeScenePath = _scenePath;
 			refreshHierarchyView();
 			refreshInspectorView();
 			refreshViewportToolbar();
 			refreshSceneConfigView();
 			refreshWindowTitle();
+			return true;
+		};
+
+		// Loads a scene as the new active scene: restores content, updates scene name and active path.
+		const auto loadScene = [this, activeScenePath, restoreScene, refreshWindowTitle](const std::filesystem::path& _scenePath) -> bool
+		{
+			if (!restoreScene(_scenePath))
+			{
+				return false;
+			}
+
+			scene->SetName(_scenePath.stem().string());
+			*activeScenePath = _scenePath;
+			refreshWindowTitle();
 			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Scene", cp::Message::Create("Loaded scene '{}'", _scenePath.string())));
 			return true;
 		};
 
-		loadSceneDelegate = loadScene;
+		loadSceneDelegate = restoreScene;
 
-		const auto saveScene = [this, activeScenePath]() -> bool
+		const auto serializeAndSave = [this](const std::filesystem::path& _path) -> bool
 		{
 			if (renderer)
 			{
@@ -1549,14 +1577,49 @@ namespace cp::editor
 				return false;
 			}
 
-			if (!SaveBinaryFile(*activeScenePath, serializer.bytes))
+			if (!SaveBinaryFile(_path, serializer.bytes))
 			{
-				logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "Scene", cp::Message::Create("Failed to save scene '{}'", activeScenePath->string())));
+				logger->Log(CP_LOG_EVENT(cp::ILogger::Warning, "Scene", cp::Message::Create("Failed to save scene '{}'", _path.string())));
 				return false;
 			}
 
-			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Scene", cp::Message::Create("Saved scene '{}'", activeScenePath->string())));
+			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Scene", cp::Message::Create("Saved scene '{}'", _path.string())));
 			return true;
+		};
+
+		const auto saveSceneAs = [this, activeScenePath, serializeAndSave, refreshWindowTitle, _config]() -> bool
+		{
+			const std::filesystem::path dialogDir = activeScenePath->has_value()
+				? activeScenePath->value().parent_path()
+				: _config.projectRootPath;
+			const std::string defaultName = activeScenePath->has_value()
+				? activeScenePath->value().filename().string()
+				: (scene->GetName() + ".scene");
+
+			const auto fileDialog = backend->CreateFileDialog("saveSceneDialog");
+			fileDialog->SetMode(cp::editorui::IFileDialog::Mode::SaveFile);
+			fileDialog->SetTitle("Save Scene As");
+			fileDialog->SetDirectory(dialogDir);
+			fileDialog->SetDefaultFileName(defaultName);
+			fileDialog->SetFilter("Scene Files (*.scene);;All Files (*)");
+
+			if (!fileDialog->Execute())
+			{
+				logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Scene", cp::Message::Create("Scene save cancelled")));
+				return false;
+			}
+
+			if (const auto selectedPath = fileDialog->GetSelectedPath())
+			{
+				if (serializeAndSave(selectedPath.value()))
+				{
+					*activeScenePath = selectedPath.value();
+					scene->SetName(selectedPath.value().stem().string());
+					refreshWindowTitle();
+					return true;
+				}
+			}
+			return false;
 		};
 
 		const auto createEntity = [this, sceneState, refreshHierarchyView, refreshInspectorView, refreshViewportToolbar]()
@@ -1688,12 +1751,14 @@ namespace cp::editor
 			});
 		}
 
-		loadSceneAction->SetTriggeredHandler([this, activeScenePath, loadScene]()
+		loadSceneAction->SetTriggeredHandler([this, activeScenePath, loadScene, _config]()
 		{
 			const auto fileDialog = backend->CreateFileDialog("loadSceneDialog");
 			fileDialog->SetMode(cp::editorui::IFileDialog::Mode::OpenFile);
 			fileDialog->SetTitle("Load Scene");
-			fileDialog->SetDirectory(activeScenePath->parent_path());
+			fileDialog->SetDirectory(activeScenePath->has_value()
+				? activeScenePath->value().parent_path()
+				: _config.projectRootPath);
 			fileDialog->SetFilter("Scene Files (*.scene);;All Files (*)");
 
 			if (fileDialog->Execute())
@@ -1708,26 +1773,21 @@ namespace cp::editor
 			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "ECS", cp::Message::Create("Scene load cancelled")));
 		});
 
-		saveSceneAction->SetTriggeredHandler([this, activeScenePath, saveScene]()
+		saveSceneAction->SetTriggeredHandler([activeScenePath, serializeAndSave, saveSceneAs]()
 		{
-			const auto fileDialog = backend->CreateFileDialog("saveSceneDialog");
-			fileDialog->SetMode(cp::editorui::IFileDialog::Mode::SaveFile);
-			fileDialog->SetTitle("Save Scene");
-			fileDialog->SetDirectory(activeScenePath->parent_path());
-			fileDialog->SetDefaultFileName(activeScenePath->filename().string());
-			fileDialog->SetFilter("Scene Files (*.scene);;All Files (*)");
-
-			if (fileDialog->Execute())
+			if (activeScenePath->has_value())
 			{
-				if (const auto selectedPath = fileDialog->GetSelectedPath())
-				{
-					*activeScenePath = selectedPath.value();
-					saveScene();
-					return;
-				}
+				serializeAndSave(activeScenePath->value());
 			}
+			else
+			{
+				saveSceneAs();
+			}
+		});
 
-			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "ECS", cp::Message::Create("Scene save cancelled")));
+		saveSceneAsAction->SetTriggeredHandler([saveSceneAs]()
+		{
+			saveSceneAs();
 		});
 
 		createEntity();
