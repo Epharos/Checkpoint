@@ -281,6 +281,10 @@ namespace cp::editor
 			bool backward = false;
 			bool left = false;
 			bool right = false;
+			bool up = false;
+			bool down = false;
+
+			bool boost = false;
 		};
 
 		struct EditorSceneState
@@ -1938,10 +1942,13 @@ namespace cp::editor
 			viewportView->SetFrameHandler([this, sceneState, gizmoContributionBindings, viewportExtent, activeGizmoTool, activeGizmoSpace, movementKeys]()
 			{
 				constexpr float CameraSpeed = 0.1f;
-				if (movementKeys->forward) viewportController->MoveForward( CameraSpeed);
-				if (movementKeys->backward) viewportController->MoveForward(-CameraSpeed);
-				if (movementKeys->left) viewportController->Pan(-CameraSpeed, 0.f);
-				if (movementKeys->right) viewportController->Pan( CameraSpeed, 0.f);
+				const float actualCameraSpeed = CameraSpeed * (movementKeys->boost ? 2.2f : 1.f);
+				if (movementKeys->forward) viewportController->MoveForward(actualCameraSpeed);
+				if (movementKeys->backward) viewportController->MoveForward(-actualCameraSpeed);
+				if (movementKeys->left) viewportController->Pan(-actualCameraSpeed, 0.f);
+				if (movementKeys->right) viewportController->Pan(actualCameraSpeed, 0.f);
+				if (movementKeys->up) viewportController->Pan(0.f, actualCameraSpeed);
+				if (movementKeys->down) viewportController->Pan(0.f, -actualCameraSpeed);
 
 				{
 					std::vector<cp::editorui::ConsoleEntry> pending;
@@ -2142,56 +2149,98 @@ namespace cp::editor
 				}
 			});
 
-			viewportView->SetKeyPressHandler([this, movementKeys](const std::string_view _chord)
+			auto BaseKey = [](const std::string_view _chord) -> std::string_view
 			{
-				// Should I make it rebindable keys ? Probably (for WASD, arrows, ...)
-				if (_chord == "Z")
+				const auto pos = _chord.rfind('+');
+				return pos == std::string_view::npos ? _chord : _chord.substr(pos + 1);
+			};
+
+			viewportView->SetKeyPressHandler([this, movementKeys, BaseKey](const std::string_view _chord)
+			{
+				if (_chord.find("Shift") != std::string_view::npos)
 				{
-					movementKeys->forward = true;
-					return;
+					movementKeys->boost = true;
 				}
 
-				if (_chord == "S")
+				const bool hasCtrlOrAlt =
+					_chord.find("Ctrl") != std::string_view::npos
+				    || _chord.find("Alt")  != std::string_view::npos;
+				if (!hasCtrlOrAlt)
 				{
-					movementKeys->backward = true;
-					return;
-				}
+					const std::string_view base = BaseKey(_chord);
 
-				if (_chord == "Q")
-				{
-					movementKeys->left = true;
-					return;
-				}
-
-				if (_chord == "D")
-				{
-					movementKeys->right = true;
-					return;
+					// Should I make movement keys rebindable ? Probably (for WASD, arrows, ...)
+					if (base == "Z")
+					{
+						movementKeys->forward = true;
+						return;
+					}
+					if (base == "S")
+					{
+						movementKeys->backward = true;
+						return;
+					}
+					if (base == "Q")
+					{
+						movementKeys->left = true;
+						return;
+					}
+					if (base == "D")
+					{
+						movementKeys->right = true;
+						return;
+					}
+					if (base == "A")
+					{
+						movementKeys->up = true;
+						return;
+					}
+					if (base == "E")
+					{
+						movementKeys->down = true;
+						return;
+					}
 				}
 
 				[[maybe_unused]] bool flag = keybindRegistry->DispatchKeyPress(_chord, KeybindScopeViewport);
 			});
 
-			viewportView->SetKeyReleaseHandler([movementKeys](const std::string_view _chord)
+			viewportView->SetKeyReleaseHandler([movementKeys, BaseKey](const std::string_view _chord)
 			{
-				if (_chord == "Z")
+				if (_chord.find("Shift") != std::string_view::npos)
+				{
+					movementKeys->boost = false;
+				}
+
+				const std::string_view base = BaseKey(_chord);
+				if (base == "Z")
 				{
 					movementKeys->forward = false;
 				}
 
-				if (_chord == "S")
+				if (base == "S")
 				{
 					movementKeys->backward = false;
 				}
 
-				if (_chord == "Q")
+				if (base == "Q")
 				{
 					movementKeys->left = false;
 				}
 
-				if (_chord == "D")
+				if (base == "D")
 				{
 					movementKeys->right = false;
+				}
+
+				if (base == "A")
+				{
+					movementKeys->up = false;
+				}
+
+				if (base == "E")
+				{
+					movementKeys->down = false;
 				}
 
 			});
