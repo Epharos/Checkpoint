@@ -2019,10 +2019,10 @@ namespace cp::editor
 
 				if (_event.button == cp::editorui::MouseButton::Left && _event.modifiers.alt)
 				{
-					auto* viewportController = dynamic_cast<ViewportController*>(viewportController.get());
+					auto* vc = dynamic_cast<ViewportController*>(viewportController.get());
 					float tx, ty, tz;
 
-					if (viewportController->orbitTargetProvider && viewportController->orbitTargetProvider(tx, ty, tz))
+					if (vc->orbitTargetProvider && vc->orbitTargetProvider(tx, ty, tz))
 					{
 						cameraNav->mode = CameraNavState::Mode::Orbiting;
 						cameraNav->orbitX = tx;
