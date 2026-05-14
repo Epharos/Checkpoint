@@ -112,6 +112,24 @@ bool RegisterExamplePluginEditor(cp::PluginEditorContext& _context)
 				const cp::Transform& t = world->GetComponent<cp::Transform>(*entity);
 				viewportCtrl->FocusOn(t.x, t.y, t.z, 5.f);
 			});
+
+		_context.viewportController->SetOrbitTargetProvider(
+			[editorState = _context.editorState](float& _x, float& _y, float& _z) -> bool
+			{
+				const cp::ecs::Entity* entity = editorState->GetSelectedEntity();
+				if (entity == nullptr) return false;
+
+				cp::ecs::World* world = editorState->GetWorld();
+				if (world == nullptr) return false;
+
+				if (!world->HasComponent<cp::Transform>(*entity)) return false;
+
+				const cp::Transform& t = world->GetComponent<cp::Transform>(*entity);
+				_x = t.x;
+				_y = t.y;
+				_z = t.z;
+				return true;
+			});
 	}
 
 	return true;
@@ -163,5 +181,10 @@ void ShutdownExamplePluginEditor(cp::PluginEditorContext& _context)
 	if (_context.keybindRegistrar)
 	{
 		_context.keybindRegistrar->Unregister("viewport.focus_selected");
+	}
+
+	if (_context.viewportController)
+	{
+		_context.viewportController->SetOrbitTargetProvider(nullptr);
 	}
 }

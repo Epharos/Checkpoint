@@ -22,6 +22,7 @@ namespace cp::editorqt
 		std::function<void(const cp::editorui::ViewportMouseEvent&)> mouseReleaseHandler;
 		std::function<void(int, int)> mouseMoveHandler;
 		std::function<void(std::string_view)> keyPressHandler;
+		std::function<void(std::string_view)> keyReleaseHandler;
 
 		[[nodiscard]] QPaintEngine* paintEngine() const override { return nullptr; }
 
@@ -67,11 +68,22 @@ namespace cp::editorqt
 		void keyPressEvent(QKeyEvent* _event) override
 		{
 			QWidget::keyPressEvent(_event);
-			if (keyPressHandler)
+			if (!_event->isAutoRepeat() && keyPressHandler)
 			{
 				const QString keys = QKeySequence(_event->key() | _event->modifiers())
 					.toString(QKeySequence::PortableText);
 				keyPressHandler(keys.toStdString());
+			}
+		}
+
+		void keyReleaseEvent(QKeyEvent* _event) override
+		{
+			QWidget::keyReleaseEvent(_event);
+			if (!_event->isAutoRepeat() && keyReleaseHandler)
+			{
+				const QString keys = QKeySequence(_event->key() | _event->modifiers())
+					.toString(QKeySequence::PortableText);
+				keyReleaseHandler(keys.toStdString());
 			}
 		}
 
@@ -83,7 +95,18 @@ namespace cp::editorqt
 				button = cp::editorui::MouseButton::Right;
 			else if (_event->button() == Qt::MiddleButton)
 				button = cp::editorui::MouseButton::Middle;
-			return { _event->pos().x(), _event->pos().y(), button };
+
+			const Qt::KeyboardModifiers mods = _event->modifiers();
+			return {
+				_event->pos().x(),
+				_event->pos().y(),
+				button,
+				{
+					.alt = (mods & Qt::AltModifier) != 0,
+					.ctrl = (mods & Qt::ControlModifier) != 0,
+					.shift = (mods & Qt::ShiftModifier) != 0
+				}
+			};
 		}
 	};
 
@@ -163,6 +186,11 @@ namespace cp::editorqt
 		void SetKeyPressHandler(KeyPressHandler _handler) override
 		{
 			surface->keyPressHandler = std::move(_handler);
+		}
+
+		void SetKeyReleaseHandler(KeyReleaseHandler _handler) override
+		{
+			surface->keyReleaseHandler = std::move(_handler);
 		}
 
 		[[nodiscard]] QWidget* GetQWidget() const override

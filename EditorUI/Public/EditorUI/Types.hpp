@@ -52,11 +52,19 @@ namespace cp::editorui
 		Middle
 	};
 
+	struct ViewportMouseModifiers
+	{
+		bool alt = false;
+		bool ctrl = false;
+		bool shift = false;
+	};
+
 	struct ViewportMouseEvent
 	{
 		int x = 0;
 		int y = 0;
 		MouseButton button = MouseButton::Left;
+		ViewportMouseModifiers modifiers;
 	};
 
 	enum class ThemeColorRole : std::uint8_t

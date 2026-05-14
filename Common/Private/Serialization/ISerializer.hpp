@@ -45,12 +45,12 @@ namespace cp
 
         template<typename T>
         requires std::is_trivially_copyable_v<T>
-        [[nodiscard]] bool ReadPod(T& _value)
+        bool ReadPod(T& _value)
         {
             return Read(std::as_writable_bytes(std::span<T>(&_value, 1)));
         }
 
-        [[nodiscard]] bool ReadString(std::string& _value)
+        bool ReadString(std::string& _value)
         {
             uint32_t size = 0;
             if (!ReadPod(size))

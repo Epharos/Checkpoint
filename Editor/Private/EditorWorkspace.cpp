@@ -267,6 +267,22 @@ namespace cp::editor
 			std::unique_ptr<cp::IGizmoContribution> contribution;
 		};
 
+		struct CameraNavState
+		{
+			enum class Mode { None, Panning, Rotating, Orbiting };
+			Mode mode = Mode::None;
+			int lastX = 0, lastY = 0;
+			float orbitX = 0.f, orbitY = 0.f, orbitZ = 0.f;
+		};
+
+		struct MovementKeys
+		{
+			bool forward  = false;
+			bool backward = false;
+			bool left = false;
+			bool right = false;
+		};
+
 		struct EditorSceneState
 		{
 			std::vector<cp::editorui::SceneHierarchyNode> hierarchyNodes;
@@ -387,6 +403,8 @@ namespace cp::editor
 			viewportView->SetMousePressHandler(nullptr);
 			viewportView->SetMouseMoveHandler(nullptr);
 			viewportView->SetMouseReleaseHandler(nullptr);
+			viewportView->SetKeyPressHandler(nullptr);
+			viewportView->SetKeyReleaseHandler(nullptr);
 		}
 
 		if (renderer != nullptr)
@@ -467,7 +485,8 @@ namespace cp::editor
 		registryManager->GetOrCreate<cp::ecs::IComponentRegistrar>(std::string(cp::EcsComponentRegistryName));
 		registryManager->GetOrCreate<cp::IComponentAuthoring>(std::string(cp::EcsComponentAuthoringRegistryName));
 		registryManager->GetOrCreate<cp::ISystemAuthoring>(std::string(cp::EcsSystemAuthoringRegistryName));
-		registryManager->GetOrCreate<cp::IRenderPassAuthoring>(std::string(cp::RenderPassAuthoringRegistryName));
+		auto& renderPassAuthoringRegistry = registryManager->GetOrCreate<cp::IRenderPassAuthoring>(std::string(cp::RenderPassAuthoringRegistryName));
+		cp::rendering::RegisterBuiltinRenderPassesAuthoring(renderPassAuthoringRegistry);
 		registryManager->GetOrCreate<cp::IViewportToolbarContribution>(std::string(cp::ViewportToolbarContributionRegistryName));
 		registryManager->GetOrCreate<cp::IGizmoContribution>(std::string(cp::GizmoContributionRegistryName));
 
@@ -648,24 +667,73 @@ namespace cp::editor
 		struct ViewportController final : cp::IViewportController
 		{
 			cp::Renderer* renderer = nullptr;
+			std::function<bool(float&, float&, float&)> orbitTargetProvider;
+
+			static glm::vec3 Forward(float _pitchDeg, float _yawDeg)
+			{
+				const float p = glm::radians(_pitchDeg);
+				const float y = glm::radians(_yawDeg);
+				return { -std::sin(y) * std::cos(p), std::sin(p), -std::cos(y) * std::cos(p) };
+			}
+
+			static glm::vec3 Right(float _yawDeg)
+			{
+				const float y = glm::radians(_yawDeg);
+				return { std::cos(y), 0.f, -std::sin(y) };
+			}
 
 			void FocusOn(const float _x, const float _y, const float _z, const float _distance) override
 			{
 				if (!renderer) return;
-				cp::EditorCamera cam = renderer->GetEditorCamera();
+				cp::EditorCamera& cam = renderer->GetEditorCamera();
+				cam.position = glm::vec3(_x, _y, _z) - Forward(cam.pitch, cam.yaw) * _distance;
+			}
 
-				const float pitch = cam.pitch;
-				const float yaw = cam.yaw;
+			void Pan(const float _rightDelta, const float _upDelta) override
+			{
+				if (!renderer) return;
+				cp::EditorCamera& cam = renderer->GetEditorCamera();
+				const glm::vec3 r = Right(cam.yaw);
+				const glm::vec3 f = Forward(cam.pitch, cam.yaw);
+				const glm::vec3 u = glm::normalize(glm::cross(r, f));
+				cam.position += r * _rightDelta + u * _upDelta;
+			}
 
-				const float cosPitch = std::cos(pitch);
-				const glm::vec3 forward = {
-					std::sin(yaw) * cosPitch,
-					std::sin(pitch),
-				   -std::cos(yaw) * cosPitch
-				};
+			void Rotate(const float _pitchDelta, const float _yawDelta) override
+			{
+				if (!renderer) return;
+				cp::EditorCamera& cam = renderer->GetEditorCamera();
+				cam.pitch = glm::clamp(cam.pitch + _pitchDelta, -89.f, 89.f);
+				cam.yaw  += _yawDelta;
+			}
 
-				cam.position = glm::vec3(_x, _y, _z) - forward * _distance;
-				renderer->SetEditorCamera(cam);
+			void MoveForward(const float _delta) override
+			{
+				if (!renderer) return;
+				cp::EditorCamera& cam = renderer->GetEditorCamera();
+				cam.position += Forward(cam.pitch, cam.yaw) * _delta;
+			}
+
+			void OrbitAround(
+				const float _tx,
+				const float _ty,
+				const float _tz,
+			    const float _pitchDelta,
+			    const float _yawDelta
+			) override
+			{
+				if (!renderer) return;
+				cp::EditorCamera& cam = renderer->GetEditorCamera();
+				const glm::vec3 target(_tx, _ty, _tz);
+				const float distance = glm::length(cam.position - target);
+				cam.pitch = glm::clamp(cam.pitch + _pitchDelta, -89.f, 89.f);
+				cam.yaw  += _yawDelta;
+				cam.position = target - Forward(cam.pitch, cam.yaw) * distance;
+			}
+
+			void SetOrbitTargetProvider(std::function<bool(float&, float&, float&)> _provider) override
+			{
+				orbitTargetProvider = std::move(_provider);
 			}
 		};
 
@@ -1852,6 +1920,9 @@ namespace cp::editor
 			cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
 			static_cast<ViewportController*>(viewportController.get())->renderer = renderer.get();
 
+			const auto cameraNav = std::make_shared<CameraNavState>();
+			const auto movementKeys = std::make_shared<MovementKeys>();
+
 			viewportView->SetResizeHandler([this, viewportExtent](const int _width, const int _height)
 			{
 				if (_width <= 0 || _height <= 0 || !renderer)
@@ -1864,8 +1935,14 @@ namespace cp::editor
 					static_cast<uint32_t>(_width),
 					static_cast<uint32_t>(_height));
 			});
-			viewportView->SetFrameHandler([this, sceneState, gizmoContributionBindings, viewportExtent, activeGizmoTool, activeGizmoSpace]()
+			viewportView->SetFrameHandler([this, sceneState, gizmoContributionBindings, viewportExtent, activeGizmoTool, activeGizmoSpace, movementKeys]()
 			{
+				constexpr float CameraSpeed = 0.1f;
+				if (movementKeys->forward) viewportController->MoveForward( CameraSpeed);
+				if (movementKeys->backward) viewportController->MoveForward(-CameraSpeed);
+				if (movementKeys->left) viewportController->Pan(-CameraSpeed, 0.f);
+				if (movementKeys->right) viewportController->Pan( CameraSpeed, 0.f);
+
 				{
 					std::vector<cp::editorui::ConsoleEntry> pending;
 					{
@@ -1922,9 +1999,40 @@ namespace cp::editor
 
 			const auto activeGizmoContrib = std::make_shared<cp::IGizmoContribution*>(nullptr);
 
-			viewportView->SetMousePressHandler([this, sceneState, gizmoContributionBindings, viewportExtent, activeGizmoTool, activeGizmoSpace, activeGizmoContrib](
+			viewportView->SetMousePressHandler([this, sceneState, gizmoContributionBindings, viewportExtent, activeGizmoTool, activeGizmoSpace, activeGizmoContrib, cameraNav](
 				const cp::editorui::ViewportMouseEvent& _event)
 			{
+				cameraNav->lastX = _event.x;
+				cameraNav->lastY = _event.y;
+
+				if (_event.button == cp::editorui::MouseButton::Middle)
+				{
+					cameraNav->mode = CameraNavState::Mode::Panning;
+					return;
+				}
+
+				if (_event.button == cp::editorui::MouseButton::Right)
+				{
+					cameraNav->mode = CameraNavState::Mode::Rotating;
+					return;
+				}
+
+				if (_event.button == cp::editorui::MouseButton::Left && _event.modifiers.alt)
+				{
+					auto* viewportController = dynamic_cast<ViewportController*>(viewportController.get());
+					float tx, ty, tz;
+
+					if (viewportController->orbitTargetProvider && viewportController->orbitTargetProvider(tx, ty, tz))
+					{
+						cameraNav->mode = CameraNavState::Mode::Orbiting;
+						cameraNav->orbitX = tx;
+						cameraNav->orbitY = ty;
+						cameraNav->orbitZ = tz;
+					}
+
+					return;
+				}
+
 				if (_event.button != cp::editorui::MouseButton::Left) return;
 				if (!renderer) return;
 				if (!renderer->GetResolvedCamera().isValid) return;
@@ -1954,9 +2062,39 @@ namespace cp::editor
 				}
 			});
 
-			viewportView->SetMouseMoveHandler([this, sceneState, viewportExtent, activeGizmoTool, activeGizmoSpace, activeGizmoContrib, refreshInspectorView](
+			constexpr float PanSensitivity = 0.02f;
+			constexpr float RotateSensitivity = 0.3f;
+
+			viewportView->SetMouseMoveHandler([this, sceneState, viewportExtent, activeGizmoTool, activeGizmoSpace, activeGizmoContrib, cameraNav, refreshInspectorView](
 				const int _x, const int _y)
 			{
+				const int dx = _x - cameraNav->lastX;
+				const int dy = _y - cameraNav->lastY;
+				cameraNav->lastX = _x;
+				cameraNav->lastY = _y;
+
+				if (cameraNav->mode == CameraNavState::Mode::Panning)
+				{
+					viewportController->Pan(-dx * PanSensitivity, dy * PanSensitivity);
+					return;
+				}
+
+				if (cameraNav->mode == CameraNavState::Mode::Rotating)
+				{
+					viewportController->Rotate(-dy * RotateSensitivity, -dx * RotateSensitivity);
+					return;
+				}
+
+				if (cameraNav->mode == CameraNavState::Mode::Orbiting)
+				{
+					viewportController->OrbitAround(
+						cameraNav->orbitX, cameraNav->orbitY, cameraNav->orbitZ,
+						-dy * RotateSensitivity, -dx * RotateSensitivity
+					);
+
+					return;
+				}
+
 				if (!*activeGizmoContrib) return;
 				if (!renderer) return;
 				if (!sceneState->selectedEntityId.has_value()) return;
@@ -1975,8 +2113,27 @@ namespace cp::editor
 				refreshInspectorView();
 			});
 
-			viewportView->SetMouseReleaseHandler([activeGizmoContrib](const cp::editorui::ViewportMouseEvent& _event)
+			viewportView->SetMouseReleaseHandler([activeGizmoContrib, cameraNav](const cp::editorui::ViewportMouseEvent& _event)
 			{
+				if (cameraNav->mode == CameraNavState::Mode::Panning
+					&& _event.button == cp::editorui::MouseButton::Middle)
+				{
+					cameraNav->mode = CameraNavState::Mode::None;
+					return;
+				}
+				if (cameraNav->mode == CameraNavState::Mode::Rotating
+					&& _event.button == cp::editorui::MouseButton::Right)
+				{
+					cameraNav->mode = CameraNavState::Mode::None;
+					return;
+				}
+				if (cameraNav->mode == CameraNavState::Mode::Orbiting
+					&& _event.button == cp::editorui::MouseButton::Left)
+				{
+					cameraNav->mode = CameraNavState::Mode::None;
+					return;
+				}
+
 				if (_event.button != cp::editorui::MouseButton::Left) return;
 				if (*activeGizmoContrib)
 				{
@@ -1985,9 +2142,58 @@ namespace cp::editor
 				}
 			});
 
-			viewportView->SetKeyPressHandler([this](const std::string_view _chord)
+			viewportView->SetKeyPressHandler([this, movementKeys](const std::string_view _chord)
 			{
+				// Should I make it rebindable keys ? Probably (for WASD, arrows, ...)
+				if (_chord == "Z")
+				{
+					movementKeys->forward = true;
+					return;
+				}
+
+				if (_chord == "S")
+				{
+					movementKeys->backward = true;
+					return;
+				}
+
+				if (_chord == "Q")
+				{
+					movementKeys->left = true;
+					return;
+				}
+
+				if (_chord == "D")
+				{
+					movementKeys->right = true;
+					return;
+				}
+
 				[[maybe_unused]] bool flag = keybindRegistry->DispatchKeyPress(_chord, KeybindScopeViewport);
+			});
+
+			viewportView->SetKeyReleaseHandler([movementKeys](const std::string_view _chord)
+			{
+				if (_chord == "Z")
+				{
+					movementKeys->forward = false;
+				}
+
+				if (_chord == "S")
+				{
+					movementKeys->backward = false;
+				}
+
+				if (_chord == "Q")
+				{
+					movementKeys->left = false;
+				}
+
+				if (_chord == "D")
+				{
+					movementKeys->right = false;
+				}
+
 			});
 
 			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Viewport", cp::Message::Create("Renderer attached to viewport surface")));

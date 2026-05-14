@@ -193,7 +193,7 @@ namespace cp
                 .mipLevels = 1,
                 .arrayLayers = 1,
                 .format = Format::D32_FLOAT,
-                .usage = TextureUsage::DepthStencilAttachment,
+                .usage = TextureUsage::DepthStencilAttachment | TextureUsage::Sampled,
                 .aspect = TextureAspect::Depth,
             };
             data.depthBuffer = _builder.CreateTexture("DepthBuffer", depthBufferInfo);

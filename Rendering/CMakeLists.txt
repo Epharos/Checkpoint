@@ -7,6 +7,9 @@ add_library(Rendering STATIC
 
         Private/BuiltinRenderPasses.cpp
         Private/RenderPasses/DebugDrawPass.hpp
+        Private/RenderPasses/EditorGridPass.hpp
+        Private/RenderPasses/EditorGridPassAuthoring.hpp
+        Private/Shaders/EditorGrid.slang
 
         Private/FrameGraph/Renderpass.cpp
         Private/FrameGraph/Renderpass.hpp

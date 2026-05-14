@@ -167,7 +167,7 @@ namespace cp
 
             auto* texture = static_cast<Texture*>(depthAttachmentInfo.texture);
             CP_EXPECT_MSG(
-                texture->GetTextureInfo().usage == TextureUsage::DepthStencilAttachment,
+                (texture->GetTextureInfo().usage & TextureUsage::DepthStencilAttachment) == TextureUsage::DepthStencilAttachment,
                 "Depth attachment does not have a DepthStencilAttachment usage"
             );
 

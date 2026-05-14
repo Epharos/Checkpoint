@@ -103,7 +103,8 @@ namespace cp::editorui
 		using MousePressHandler = std::function<void(const ViewportMouseEvent&)>;
 		using MouseReleaseHandler = std::function<void(const ViewportMouseEvent&)>;
 		using MouseMoveHandler = std::function<void(int x, int y)>;
-		using KeyPressHandler = std::function<void(std::string_view chord)>;
+		using KeyPressHandler   = std::function<void(std::string_view chord)>;
+		using KeyReleaseHandler = std::function<void(std::string_view chord)>;
 
 		virtual void SetActiveTool(ViewportTool _tool) = 0;
 		virtual ViewportTool GetActiveTool() const = 0;
@@ -115,6 +116,7 @@ namespace cp::editorui
 		virtual void SetMouseReleaseHandler(MouseReleaseHandler _handler) = 0;
 		virtual void SetMouseMoveHandler(MouseMoveHandler _handler) = 0;
 		virtual void SetKeyPressHandler(KeyPressHandler _handler) = 0;
+		virtual void SetKeyReleaseHandler(KeyReleaseHandler _handler) = 0;
 	};
 
 	class ISceneConfigView : public IWidget
