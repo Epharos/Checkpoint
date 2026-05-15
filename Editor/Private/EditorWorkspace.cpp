@@ -881,6 +881,10 @@ namespace cp::editor
 					[this](const std::string& _reloadedName, bool _success, const std::string& _output)
 					{
 						RefreshPluginManagerView();
+						if (_success)
+						{
+							RefreshSceneConfigView();
+						}
 					},
 					[this](const std::string& pluginName, std::string_view line)
 					{
@@ -1356,34 +1360,7 @@ namespace cp::editor
 			}
 		};
 
-		const auto refreshSceneConfigView = [this]()
-		{
-			std::vector<cp::editorui::ISceneConfigView::RegistryEntry> passEntries;
-			const auto& activePasses = scene->GetActivePassNames();
-			if (const auto* passReg = registryManager->Find<cp::IRenderPass>(cp::RenderPassRegistryName))
-			{
-				for (const auto& name : passReg->Names())
-				{
-					const bool enabled = std::find(activePasses.begin(), activePasses.end(), name) != activePasses.end();
-					passEntries.push_back({ name, "", enabled });
-				}
-			}
-			sceneConfigView->SetRenderPassEntries(std::move(passEntries));
-
-			std::vector<cp::editorui::ISceneConfigView::RegistryEntry> systemEntries;
-			const auto& enabledSystems = scene->GetEnabledSystemGuids();
-			if (const auto* sysReg = registryManager->Find<cp::ecs::ISystem>(cp::EcsSystemRegistryName))
-			{
-				for (const auto& registryKey : sysReg->Names())
-				{
-					const bool enabled = std::find(enabledSystems.begin(), enabledSystems.end(), registryKey) != enabledSystems.end();
-					auto instance = sysReg->Create(registryKey);
-					std::string displayName = instance ? std::string(instance->Name()) : registryKey;
-					systemEntries.push_back({ std::move(displayName), registryKey, enabled });
-				}
-			}
-			sceneConfigView->SetSystemEntries(std::move(systemEntries));
-		};
+		const auto refreshSceneConfigView = [this]() { RefreshSceneConfigView(); };
 
 		auto toInspectorSections = [](const std::vector<cp::AuthoringSectionDescriptor>& _authored)
 		{
@@ -2402,5 +2379,41 @@ namespace cp::editor
 		}
 
 		pluginManagerView->SetPlugins(std::move(entries));
+	}
+
+	void EditorWorkspace::RefreshSceneConfigView() const
+	{
+		if (!sceneConfigView || !registryManager || !scene)
+			return;
+
+		std::vector<cp::editorui::ISceneConfigView::RegistryEntry> passEntries;
+		const auto& activePasses = scene->GetActivePassNames();
+
+		if (const auto* passReg = registryManager->Find<cp::IRenderPass>(cp::RenderPassRegistryName))
+		{
+			for (const auto& name : passReg->Names())
+			{
+				const bool enabled = std::find(activePasses.begin(), activePasses.end(), name) != activePasses.end();
+				passEntries.push_back({ name, "", enabled });
+			}
+		}
+
+		sceneConfigView->SetRenderPassEntries(std::move(passEntries));
+
+		std::vector<cp::editorui::ISceneConfigView::RegistryEntry> systemEntries;
+		const auto& enabledSystems = scene->GetEnabledSystemGuids();
+
+		if (const auto* sysReg = registryManager->Find<cp::ecs::ISystem>(cp::EcsSystemRegistryName))
+		{
+			for (const auto& registryKey : sysReg->Names())
+			{
+				const bool enabled = std::find(enabledSystems.begin(), enabledSystems.end(), registryKey) != enabledSystems.end();
+				auto instance = sysReg->Create(registryKey);
+				std::string displayName = instance ? std::string(instance->Name()) : registryKey;
+				systemEntries.push_back({ std::move(displayName), registryKey, enabled });
+			}
+		}
+
+		sceneConfigView->SetSystemEntries(std::move(systemEntries));
 	}
 }

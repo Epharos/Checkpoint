@@ -55,6 +55,7 @@ namespace cp::editor
 		void AppendConsoleEntry(cp::editorui::ConsoleEntry _entry);
 		void OnRuntimeStopped();
 		void RefreshPluginManagerView();
+		void RefreshSceneConfigView() const;
 
 		std::shared_ptr<cp::editorui::IEditorUIBackend> backend;
 		std::shared_ptr<cp::editorui::IApplicationWindow> window;
