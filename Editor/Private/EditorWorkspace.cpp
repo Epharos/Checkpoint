@@ -535,6 +535,7 @@ namespace cp::editor
 		stopAction = RegisterAction(actions, { "project.stop", "Stop", "Stop runtime." });
 		stopAction->SetEnabled(false);
 		const auto createEntityAction = RegisterAction(actions, { "hierarchy.createEntity", "Create Entity" });
+		const auto deleteEntityAction = RegisterAction(actions, { "hierarchy.deleteEntity", "Delete Entity" });
 		const auto editorSettingsAction = RegisterAction(actions, { "editor.settings", "Settings" });
 
 		keybindRegistry = std::make_unique<KeybindRegistry>();
@@ -1316,6 +1317,7 @@ namespace cp::editor
 							cp::editorui::InspectorSection inspectorSection;
 							inspectorSection.id = authoredSection.id;
 							inspectorSection.title = authoredSection.title;
+							inspectorSection.removable = true;
 							sceneState->sectionToAuthoring[authoredSection.id] = authoringIndex;
 
 							for (const cp::AuthoringFieldDescriptor& authoredField : authoredSection.fields)
@@ -1596,7 +1598,7 @@ namespace cp::editor
 		{
 			const auto menu = backend->CreateContextMenu("inspector.addComponent");
 			const std::optional<cp::ecs::Entity> selectedEntity = selectedEntityResolver();
-			
+
 			if (selectedEntity.has_value() && !componentAuthoringBindings->empty())
 			{
 				for (ComponentAuthoringBinding& binding : *componentAuthoringBindings)
@@ -1606,8 +1608,19 @@ namespace cp::editor
 					menu->AddAction(binding.addAction);
 				}
 			}
-			
+
 			return menu;
+		});
+
+		inspectorView->SetRemoveComponentHandler([sceneState, componentAuthoringBindings](const std::string_view _sectionId)
+		{
+			const auto it = sceneState->sectionToAuthoring.find(std::string(_sectionId));
+			if (it == sceneState->sectionToAuthoring.end())
+			{
+				return;
+			}
+
+			componentAuthoringBindings->at(it->second).removeAction->Trigger();
 		});
 
 		// Deserializes a scene from disk and refreshes all views.
@@ -1805,7 +1818,7 @@ namespace cp::editor
 			refreshViewportToolbar();
 		});
 
-		hierarchyView->SetContextMenuHandler([this, sceneState, createEntityAction](const cp::editorui::EntityId _entityId)
+		hierarchyView->SetContextMenuHandler([this, sceneState, createEntityAction, deleteEntityAction](const cp::editorui::EntityId _entityId)
 		{
 			sceneState->contextEntityId = _entityId;
 			sceneState->selectedEntityId = _entityId;
@@ -1813,12 +1826,43 @@ namespace cp::editor
 
 			const auto menu = backend->CreateContextMenu("hierarchy.context");
 			menu->AddAction(createEntityAction);
+			menu->AddSeparator();
+			menu->AddAction(deleteEntityAction);
 			return menu;
 		});
 
 		createEntityAction->SetTriggeredHandler([createEntity]()
 		{
 			createEntity();
+		});
+
+		deleteEntityAction->SetTriggeredHandler([this, sceneState, selectedEntityResolver, refreshHierarchyView, refreshInspectorView, refreshViewportToolbar]()
+		{
+			const std::optional<cp::ecs::Entity> selectedEntity = selectedEntityResolver();
+			if (!selectedEntity.has_value())
+			{
+				return;
+			}
+
+			if (scene->GetWorld().DestroyEntity(selectedEntity.value()))
+			{
+				logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "ECS", cp::Message::Create("Destroyed entity {}", selectedEntity->index)));
+			}
+
+			const cp::editorui::EntityId entityId = ToEditorEntityId(selectedEntity.value());
+			sceneState->hierarchyNodes.erase(
+				std::ranges::remove_if(
+					sceneState->hierarchyNodes,
+					[entityId](const cp::editorui::SceneHierarchyNode& node) { return node.entityId == entityId; }).begin(),
+				sceneState->hierarchyNodes.end()
+			);
+			sceneState->entityLookup.erase(entityId);
+
+			sceneState->selectedEntityId.reset();
+			sceneState->contextEntityId.reset();
+			refreshHierarchyView();
+			refreshInspectorView();
+			refreshViewportToolbar();
 		});
 
 		for (ComponentAuthoringBinding& binding : *componentAuthoringBindings)

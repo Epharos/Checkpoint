@@ -6,6 +6,7 @@
 
 #include <QCheckBox>
 #include <QDoubleSpinBox>
+#include <QMenu>
 #include <QSignalBlocker>
 #include <QSpinBox>
 #include <QPushButton>
@@ -29,6 +30,40 @@ namespace cp::editorqt
 			tree->setColumnCount(2);
 			tree->setHeaderLabels(QStringList{ "Property", "Value" });
 			tree->header()->setStretchLastSection(true);
+			tree->setContextMenuPolicy(Qt::CustomContextMenu);
+
+			QObject::connect(tree.get(), &QWidget::customContextMenuRequested, [this](const QPoint& _position)
+			{
+				if (!removeComponentHandler)
+				{
+					return;
+				}
+
+				const QTreeWidgetItem* item = tree->itemAt(_position);
+				if (item == nullptr || item->parent() != nullptr)
+				{
+					return;
+				}
+
+				if (!item->data(0, Qt::UserRole + 1).toBool())
+				{
+					return;
+				}
+
+				const std::string sectionId = ToStdString(item->data(0, Qt::UserRole).toString());
+				QMenu contextMenu(tree.get());
+
+				const QAction* removeAction = contextMenu.addAction("Remove Component");
+				QObject::connect(removeAction, &QAction::triggered, [this, sectionId]()
+				{
+					if (removeComponentHandler)
+					{
+						removeComponentHandler(sectionId);
+					}
+				});
+
+				contextMenu.exec(tree->viewport()->mapToGlobal(_position));
+			});
 
 			auto* layout = new QVBoxLayout(mainWidget.get());
 			layout->setContentsMargins(0, 0, 0, 0);
@@ -64,6 +99,8 @@ namespace cp::editorqt
 			{
 				auto* sectionItem = new QTreeWidgetItem();
 				sectionItem->setText(0, ToQString(section.title));
+				sectionItem->setData(0, Qt::UserRole, ToQString(section.id));
+				sectionItem->setData(0, Qt::UserRole + 1, section.removable);
 				tree->addTopLevelItem(sectionItem);
 
 				for (const cp::editorui::InspectorField& field : section.fields)
@@ -86,6 +123,11 @@ namespace cp::editorqt
 		void SetAddComponentMenuHandler(AddComponentMenuHandler _handler) override
 		{
 			addComponentMenuHandler = std::move(_handler);
+		}
+
+		void SetRemoveComponentHandler(RemoveComponentHandler _handler) override
+		{
+			removeComponentHandler = std::move(_handler);
 		}
 
 		void Clear() override
@@ -308,6 +350,7 @@ namespace cp::editorqt
 		std::unique_ptr<QPushButton> addComponentButton;
 		FieldEditedHandler fieldEditedHandler;
 		AddComponentMenuHandler addComponentMenuHandler;
+		RemoveComponentHandler removeComponentHandler;
 		bool applyingSections = false;
 	};
 }

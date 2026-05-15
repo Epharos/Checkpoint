@@ -162,6 +162,7 @@ namespace cp::editorui
 		std::string id;
 		std::string title;
 		std::vector<InspectorField> fields;
+		bool removable = false;
 	};
 
 	struct ViewportCreateInfo

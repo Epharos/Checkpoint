@@ -42,23 +42,6 @@ namespace
         size_t cursor = 0;
     };
 
-    void WriteValue(cp::ISerializer& s, bool v) { s.WritePod(v); }
-    void WriteValue(cp::ISerializer& s, int64_t v) { s.WritePod(v); }
-    void WriteValue(cp::ISerializer& s, double v) { s.WritePod(v); }
-    void WriteValue(cp::ISerializer& s, const std::string& v) { s.WriteString(v); }
-    void WriteValue(cp::ISerializer& s, const cp::AuthoringVec3& v)
-    {
-        s.WritePod(v.x);
-        s.WritePod(v.y);
-        s.WritePod(v.z);
-    }
-
-    void WriteAuthoringValue(cp::ISerializer& s, const cp::AuthoringValue& val)
-    {
-        s.WritePod(static_cast<uint8_t>(val.index()));
-        std::visit([&s](const auto& v) { WriteValue(s, v); }, val);
-    }
-
     bool ReadValue(cp::IDeserializer& d, bool& v) { return d.ReadPod(v); }
     bool ReadValue(cp::IDeserializer& d, int64_t& v) { return d.ReadPod(v); }
     bool ReadValue(cp::IDeserializer& d, double& v) { return d.ReadPod(v); }
@@ -85,71 +68,6 @@ namespace
         }
 
         return false;
-    }
-
-    bool ReadAuthoringValue(cp::IDeserializer& d, cp::AuthoringValue& val)
-    {
-        uint8_t tag = 0;
-        if (!d.ReadPod(tag)) return false;
-        return ReadVariantByIndex<cp::AuthoringValue>(d, val, tag);
-    }
-
-    void WriteAuthoringParams(cp::ISerializer& s, const cp::AuthoringParams& params)
-    {
-        s.WritePod(static_cast<uint32_t>(params.size()));
-
-        for (const auto& [fieldId, value] : params)
-        {
-            s.WriteString(fieldId);
-            WriteAuthoringValue(s, value);
-        }
-    }
-
-    bool ReadAuthoringParams(cp::IDeserializer& d, cp::AuthoringParams& params)
-    {
-        uint32_t count = 0;
-        if (!d.ReadPod(count)) return false;
-        params.clear();
-
-        for (uint32_t i = 0; i < count; ++i)
-        {
-            std::string fieldId;
-            cp::AuthoringValue value;
-            if (!d.ReadString(fieldId)) return false;
-            if (!ReadAuthoringValue(d, value)) return false;
-            params.emplace(std::move(fieldId), std::move(value));
-        }
-
-        return true;
-    }
-
-    void WriteParamsMap(cp::ISerializer& s,
-        const std::unordered_map<std::string, cp::AuthoringParams>& map)
-    {
-        s.WritePod(static_cast<uint32_t>(map.size()));
-
-        for (const auto& [key, params] : map)
-        {
-            s.WriteString(key);
-            WriteAuthoringParams(s, params);
-        }
-    }
-
-    bool ReadParamsMap(cp::IDeserializer& d,
-        std::unordered_map<std::string, cp::AuthoringParams>& map)
-    {
-        uint32_t count = 0;
-        if (!d.ReadPod(count)) return false;
-        map.clear();
-        for (uint32_t i = 0; i < count; ++i)
-        {
-            std::string key;
-            cp::AuthoringParams params;
-            if (!d.ReadString(key)) return false;
-            if (!ReadAuthoringParams(d, params)) return false;
-            map.emplace(std::move(key), std::move(params));
-        }
-        return true;
     }
 }
 

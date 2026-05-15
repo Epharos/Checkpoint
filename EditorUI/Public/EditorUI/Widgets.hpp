@@ -88,10 +88,12 @@ namespace cp::editorui
 	public:
 		using FieldEditedHandler = std::function<void(std::string_view, std::string_view, const InspectorField::Value&)>;
 		using AddComponentMenuHandler = std::function<std::shared_ptr<IContextMenu>()>;
+		using RemoveComponentHandler = std::function<void(std::string_view sectionId)>;
 
 		virtual void SetSections(std::vector<InspectorSection> _sections) = 0;
 		virtual void SetFieldEditedHandler(FieldEditedHandler _handler) = 0;
 		virtual void SetAddComponentMenuHandler(AddComponentMenuHandler _handler) = 0;
+		virtual void SetRemoveComponentHandler(RemoveComponentHandler _handler) = 0;
 		virtual void Clear() = 0;
 	};
 
@@ -103,7 +105,7 @@ namespace cp::editorui
 		using MousePressHandler = std::function<void(const ViewportMouseEvent&)>;
 		using MouseReleaseHandler = std::function<void(const ViewportMouseEvent&)>;
 		using MouseMoveHandler = std::function<void(int x, int y)>;
-		using KeyPressHandler   = std::function<void(std::string_view chord)>;
+		using KeyPressHandler = std::function<void(std::string_view chord)>;
 		using KeyReleaseHandler = std::function<void(std::string_view chord)>;
 
 		virtual void SetActiveTool(ViewportTool _tool) = 0;
