@@ -61,6 +61,7 @@ namespace cp::editorqt
 		{
 			entries = std::move(_entries);
 			ApplyFilters();
+			table->scrollToItem(table->item(table->rowCount() - 1, 0));
 		}
 
 		void SetSearchText(std::string _searchText) override

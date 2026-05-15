@@ -15,6 +15,7 @@
 #include "QtTheme.hpp"
 #include "QtViewportWidget.hpp"
 #include "QtSettingsWindow.hpp"
+#include "QtPluginManagerView.hpp"
 
 namespace cp::editorqt
 {
@@ -108,6 +109,11 @@ namespace cp::editorqt
 			}
 
 			return std::make_shared<QtSettingsWindow>(parent);
+		}
+
+		std::shared_ptr<cp::editorui::IPluginManagerView> CreatePluginManagerView(std::string _id) override
+		{
+			return std::make_shared<QtPluginManagerView>(std::move(_id));
 		}
 
 	private:

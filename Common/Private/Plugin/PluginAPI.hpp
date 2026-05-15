@@ -6,7 +6,7 @@
 #include "../Log/ILogger.hpp"
 #include "../Core/Registry.hpp"
 
-#include "../../Public/Common/Core/Macros.hpp"
+#include "../Core/Macros.hpp"
 #include "../../Public/Common/Plugin/IEditorStateProvider.hpp"
 #include "../../Public/Common/Plugin/IViewportController.hpp"
 #include "../../Public/Common/Plugin/IKeybindRegistrar.hpp"

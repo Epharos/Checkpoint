@@ -26,6 +26,7 @@ namespace cp
 namespace cp::editor
 {
 	class KeybindRegistry;
+	class UserPluginManager;
 }
 
 namespace cp::runtime
@@ -53,6 +54,7 @@ namespace cp::editor
 	private:
 		void AppendConsoleEntry(cp::editorui::ConsoleEntry _entry);
 		void OnRuntimeStopped();
+		void RefreshPluginManagerView();
 
 		std::shared_ptr<cp::editorui::IEditorUIBackend> backend;
 		std::shared_ptr<cp::editorui::IApplicationWindow> window;
@@ -65,6 +67,7 @@ namespace cp::editor
 		std::shared_ptr<cp::editorui::IInspectorView> inspectorView;
 		std::shared_ptr<cp::editorui::ISceneConfigView> sceneConfigView;
 		std::shared_ptr<cp::editorui::IViewportWidget> viewportView;
+		std::shared_ptr<cp::editorui::IPluginManagerView> pluginManagerView;
 
 		std::vector<cp::editorui::ConsoleEntry> consoleEntries;
 		std::vector<cp::editorui::ConsoleEntry> pendingConsoleEntries;
@@ -92,5 +95,7 @@ namespace cp::editor
 		std::unique_ptr<cp::IEditorStateProvider> editorStateProvider;
 		std::unique_ptr<cp::IViewportController> viewportController;
 		std::unique_ptr<cp::IKeybindRegistrar> keybindRegistrar;
+
+		std::unique_ptr<cp::editor::UserPluginManager> userPluginManager;
 	};
 }

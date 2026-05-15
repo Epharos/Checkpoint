@@ -1,6 +1,7 @@
 #include "../Public/Editor/EditorWorkspace.hpp"
 
 #include "KeybindRegistry.hpp"
+#include "UserPluginManager.hpp"
 
 #include <Common/Plugin/ComponentAuthoring.hpp>
 #include <Common/Plugin/RenderPassAuthoring.hpp>
@@ -616,6 +617,10 @@ namespace cp::editor
 		consoleView->SetMinLevelFilter(cp::editorui::LogLevel::Trace);
 		consolePanel->SetContent(consoleView);
 
+		const auto pluginManagerPanel = dockHost->CreatePanel({ "pluginManager", "Plugin Manager" });
+		pluginManagerView = backend->CreatePluginManagerView("pluginManager");
+		pluginManagerPanel->SetContent(pluginManagerView);
+
 		const auto inspectorPanel = dockHost->CreatePanel({ "inspector", "Inspector" });
 		inspectorView = backend->CreateInspectorView("inspector");
 		inspectorPanel->SetContent(inspectorView);
@@ -839,6 +844,83 @@ namespace cp::editor
 				"Plugins",
 				cp::Message::Create("Plugin directory not found: {}", pluginsDirectory.string())
 			));
+		}
+
+		{
+			cp::builder::BuildConfig buildConfig;
+
+			buildConfig.sdkDir = executableDirectory / "sdk";
+			buildConfig.cmakeExecutable = "cmake";
+			buildConfig.buildType = "Release";
+			buildConfig.cxxCompiler = CP_CMAKE_CXX_COMPILER;
+			buildConfig.cCompiler = CP_CMAKE_C_COMPILER;
+
+			const std::filesystem::path userPluginsDir = !_config.projectRootPath.empty()
+				? _config.projectRootPath / "UserPlugins"
+				: executableDirectory / "UserPlugins";
+
+			buildConfig.pluginSearchPaths = {
+				userPluginsDir,
+				std::filesystem::path(CP_ENGINE_SOURCE_DIR)
+			};
+
+			userPluginManager = std::make_unique<cp::editor::UserPluginManager>(*pluginHost, *logger, *scene);
+			userPluginManager->Initialize(userPluginsDir, buildConfig);
+			userPluginManager->ScanAndLoad();
+		}
+
+		if (pluginManagerView && userPluginManager)
+		{
+			pluginManagerView->SetRecompileHandler([this](std::string_view pluginName)
+			{
+				const std::string name(pluginName);
+				pluginManagerView->ClearBuildOutput();
+
+				userPluginManager->HotReload(
+					name,
+					[this](const std::string& _reloadedName, bool _success, const std::string& _output)
+					{
+						RefreshPluginManagerView();
+					},
+					[this](const std::string& pluginName, std::string_view line)
+					{
+						pluginManagerView->AppendBuildLine(pluginName, line);
+					}
+				);
+
+				RefreshPluginManagerView();
+			});
+
+			pluginManagerView->SetCreatePluginHandler([this](std::string_view pluginName)
+			{
+				const std::string name(pluginName);
+				if (userPluginManager->CreatePlugin(name))
+				{
+					logger->Log(CP_LOG_EVENT(
+						cp::ILogger::Info,
+						"UserPlugins",
+						cp::Message::Create("Created new plugin '{}'", name)
+					));
+
+					userPluginManager->ScanAndLoad();
+					RefreshPluginManagerView();
+				}
+				else
+				{
+					logger->Log(CP_LOG_EVENT(
+						cp::ILogger::Warning,
+						"UserPlugins",
+						cp::Message::Create("Could not create plugin '{}' (already exists?)", name)
+					));
+				}
+			});
+
+			pluginManagerView->SetOpenFolderHandler([this](std::string_view pluginName)
+			{
+				userPluginManager->OpenPluginFolder(std::string(pluginName));
+			});
+
+			RefreshPluginManagerView();
 		}
 
 		if (const cp::Registry<cp::ecs::IComponentRegistrar>* componentRegistry =
@@ -1969,6 +2051,12 @@ namespace cp::editor
 					OnRuntimeStopped();
 				}
 
+				if (userPluginManager)
+				{
+					userPluginManager->Tick();
+					RefreshPluginManagerView();
+				}
+
 				if (!renderer)
 				{
 					return;
@@ -2258,6 +2346,7 @@ namespace cp::editor
 		dockHost->DockPanel(sceneConfigPanel, { cp::editorui::DockArea::Right, "inspector", true });
 		dockHost->DockPanel(viewportPanel, { cp::editorui::DockArea::Center });
 		dockHost->DockPanel(consolePanel, { cp::editorui::DockArea::Bottom });
+		dockHost->DockPanel(pluginManagerPanel, { cp::editorui::DockArea::Bottom, "console", true });
 
 		window->Show();
 	}
@@ -2283,5 +2372,35 @@ namespace cp::editor
 
 		runtimeBackupPath.clear();
 		logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Run", cp::Message::Create("Runtime stopped, scene restored")));
+	}
+
+	void EditorWorkspace::RefreshPluginManagerView()
+	{
+		if (!pluginManagerView || !userPluginManager)
+			return;
+
+		if (!userPluginManager->ConsumeStateDirty())
+			return;
+
+		const auto& infos = userPluginManager->GetPlugins();
+		std::vector<cp::editorui::IPluginManagerView::PluginEntry> entries;
+		entries.reserve(infos.size());
+
+		for (const auto& info : infos)
+		{
+			cp::editorui::IPluginManagerView::PluginEntry entry;
+			entry.name = info.descriptor.name;
+			entry.isBusy = (info.status == cp::editor::UserPluginStatus::Building);
+			switch (info.status)
+			{
+			case cp::editor::UserPluginStatus::Ready: entry.status = "Ready"; break;
+			case cp::editor::UserPluginStatus::Building: entry.status = "Building"; break;
+			case cp::editor::UserPluginStatus::Error: entry.status = "Error"; break;
+			default: entry.status = "Idle"; break;
+			}
+			entries.push_back(std::move(entry));
+		}
+
+		pluginManagerView->SetPlugins(std::move(entries));
 	}
 }

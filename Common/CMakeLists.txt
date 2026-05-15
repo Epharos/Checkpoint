@@ -33,6 +33,9 @@ add_library(Common STATIC
     "Private/Plugin/PluginAPI.hpp"
     "Private/Plugin/PluginHost.hpp"
     "Private/Plugin/ViewportToolbarContribution.hpp"
+    "Private/Plugin/PluginDependencyGraph.cpp"
+    "Public/Common/Plugin/PluginDependencyGraph.hpp"
+    "Public/Common/Plugin/UserPluginDescriptor.hpp"
 
     "Public/Common/Core/ProjectContext.hpp"
 

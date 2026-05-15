@@ -24,7 +24,7 @@ namespace cp
 		}
 	};
 
-	inline thread_local ComponentRegistrationContext* componentRegistrationContext = nullptr;
+	inline ComponentRegistrationContext* componentRegistrationContext = nullptr;
 
 	inline void SetComponentRegistrationContext(ComponentRegistrationContext* context)
 	{

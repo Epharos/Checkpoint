@@ -153,6 +153,28 @@ namespace cp::editorui
 		virtual void ClearParamSections() = 0;
 	};
 
+	class IPluginManagerView : public IWidget
+	{
+	public:
+		struct PluginEntry
+		{
+			std::string name;
+			std::string status; // Idle, Building, Ready or Error
+			bool isBusy = false;
+		};
+
+		using RecompileHandler = std::function<void(std::string_view pluginName)>;
+		using CreatePluginHandler = std::function<void(std::string_view pluginName)>;
+		using OpenFolderHandler = std::function<void(std::string_view pluginName)>;
+
+		virtual void SetPlugins(std::vector<PluginEntry> entries) = 0;
+		virtual void AppendBuildLine(std::string_view pluginName, std::string_view line) = 0;
+		virtual void ClearBuildOutput() = 0;
+		virtual void SetRecompileHandler(RecompileHandler handler) = 0;
+		virtual void SetCreatePluginHandler(CreatePluginHandler handler) = 0;
+		virtual void SetOpenFolderHandler(OpenFolderHandler handler) = 0;
+	};
+
 	class IFileDialog : public IWidget
 	{
 	public:

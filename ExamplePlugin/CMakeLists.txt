@@ -29,6 +29,7 @@ add_library(ExamplePlugin SHARED
 target_include_directories(ExamplePlugin
     PUBLIC
         ${CMAKE_SOURCE_DIR}/Common/Public
+        ${CMAKE_CURRENT_SOURCE_DIR}/Public
 )
 
 target_precompile_headers(ExamplePlugin PRIVATE
