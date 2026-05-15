@@ -881,8 +881,15 @@ namespace cp::editor
 					[this](const std::string& _reloadedName, bool _success, const std::string& _output)
 					{
 						RefreshPluginManagerView();
+
 						if (_success)
 						{
+							if (const cp::Registry<cp::ecs::ISystem>* sysReg =
+								registryManager->Find<cp::ecs::ISystem>(cp::EcsSystemRegistryName))
+							{
+								scene->InitializeSystems(*sysReg);
+							}
+
 							RefreshSceneConfigView();
 						}
 					},

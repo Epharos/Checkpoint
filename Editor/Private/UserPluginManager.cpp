@@ -345,6 +345,8 @@ namespace cp::editor
 				));
 			};
 
+			scene.ShutdownSystems();
+
 			for (const auto& name : unloadOrder)
 			{
 				UnloadPlugin(name);
