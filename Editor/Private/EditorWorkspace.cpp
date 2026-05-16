@@ -804,7 +804,7 @@ namespace cp::editor
 		const std::filesystem::path executableDirectory = !_config.executablePath.empty()
 			                                                  ? _config.executablePath.parent_path()
 			                                                  : std::filesystem::current_path();
-		const std::filesystem::path pluginsDirectory = executableDirectory / "Plugins";
+		const std::filesystem::path pluginsDirectory = _config.projectRootPath / "Plugins";
 
 		if (std::filesystem::exists(pluginsDirectory) && std::filesystem::is_directory(pluginsDirectory))
 		{
