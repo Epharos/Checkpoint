@@ -160,7 +160,7 @@ namespace cp::editor
 			return false;
 		}
 
-		if (!pluginHost.LoadPlugin(versionedDll))
+		if (!pluginHost.LoadPlugin(versionedDll, info.pluginDir))
 		{
 			logger.Log(CP_LOG_EVENT(
 				cp::ILogger::Error,

@@ -21,7 +21,7 @@ namespace cp
 		PluginHost(PluginHost&& _other) noexcept;
 		PluginHost& operator=(PluginHost&& _other) noexcept;
 
-		bool LoadPlugin(const std::filesystem::path& _path);
+		bool LoadPlugin(const std::filesystem::path& _path, const std::filesystem::path& _pluginDir = {});
 		size_t LoadPluginsFromDirectory(const std::filesystem::path& _directory, bool _recursive = false);
 
 		bool UnloadPlugin(std::string_view _pluginName);

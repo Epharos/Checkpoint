@@ -261,7 +261,8 @@ namespace cp
 
         auto addConfiguredPass = [&](const std::string_view _passTypeName)
         {
-            CP_EXPECT_MSG(passRegistry->Contains(_passTypeName), "Requested render pass type is not registered");
+            if (!passRegistry->Contains(_passTypeName)) return;
+
             std::unique_ptr<IRenderPass> pass = passRegistry->Create(_passTypeName);
             CP_ASSERT_MSG(pass != nullptr, "Registry returned a null render pass instance");
 

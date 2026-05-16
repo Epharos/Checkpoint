@@ -156,7 +156,7 @@ namespace cp
 		return *this;
 	}
 
-	bool PluginHost::LoadPlugin(const std::filesystem::path& _path)
+	bool PluginHost::LoadPlugin(const std::filesystem::path& _path, const std::filesystem::path& _pluginDir)
 	{
 		lastError.clear();
 
@@ -222,6 +222,10 @@ namespace cp
 			[[maybe_unused]] bool flag = CloseLibrary(nativeHandle, closeError);
 			return false;
 		}
+
+		const std::filesystem::path resolvedPluginDir = _pluginDir.empty() ? _path.parent_path() : _pluginDir;
+		context.runtimeContext.pluginDir = resolvedPluginDir;
+		context.editorContext.pluginDir = resolvedPluginDir;
 
 		if (!descriptor->registerRuntime(context.runtimeContext))
 		{
@@ -296,9 +300,17 @@ namespace cp
 		}
 		else
 		{
-			for (const auto& entry : std::filesystem::directory_iterator(_directory))
+			for (const auto& subDirEntry : std::filesystem::directory_iterator(_directory))
 			{
-				loadIfPlugin(entry);
+				if (!subDirEntry.is_directory())
+				{
+					continue;
+				}
+
+				for (const auto& entry : std::filesystem::directory_iterator(subDirEntry.path()))
+				{
+					loadIfPlugin(entry);
+				}
 			}
 		}
 

@@ -13,6 +13,8 @@
 #include <Common/Data/Viewport.hpp>
 #include <Common/IO/FileHelper.hpp>
 
+#include "../ExamplePluginDir.hpp"
+
 #include <ECS/ECS.hpp>
 
 #include <RHI/Core.hpp>
@@ -94,7 +96,7 @@ namespace cp
             data.renderExtent = _context.renderExtent;
             data.rhi = &_context.rhi;
 
-            const auto shaderPath = FindFileInParentTree("Skybox.spv");
+            const auto shaderPath = FindFileFromDirectory("Skybox.spv", GetExamplePluginDir());
             CP_ASSERT_MSG(!shaderPath.empty(), "Could not find Skybox.spv");
             const std::vector<uint8_t> shaderBytecode = LoadBinaryFile(shaderPath);
 
@@ -377,7 +379,7 @@ namespace cp
                 return;
             }
 
-            const auto resolvedPath = FindFileInParentTree(cubemapBasePath);
+            const auto resolvedPath = FindFileFromDirectory(cubemapBasePath, GetExamplePluginDir());
             const std::filesystem::path basePath =
                 resolvedPath.empty() ? std::filesystem::path(cubemapBasePath) : resolvedPath;
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
 #include <string_view>
 
 #include "../Log/ILogger.hpp"
@@ -21,6 +22,7 @@ namespace cp
 		ILogger* mainLogger = nullptr;
 		RegistryManager* registryManager = nullptr;
 		AssetRegistry* assetRegistry = nullptr;
+		std::filesystem::path pluginDir;
 	};
 
 	struct PluginEditorContext
@@ -31,6 +33,7 @@ namespace cp
 		IEditorStateProvider* editorState = nullptr;
 		IViewportController* viewportController = nullptr;
 		IKeybindRegistrar* keybindRegistrar = nullptr;
+		std::filesystem::path pluginDir;
 	};
 
 	using PluginRegisterRuntimeFn = bool(*)(PluginRuntimeContext& _context);

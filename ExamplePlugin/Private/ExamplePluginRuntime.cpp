@@ -3,6 +3,7 @@
 #include <Common/Plugin/PluginRegistryNames.hpp>
 #include <memory>
 
+#include "ExamplePluginDir.hpp"
 #include "RenderPasses/OpaqueMaterialPass.hpp"
 #include "RenderPasses/NegativePFX.hpp"
 #include "RenderPasses/SkyboxPass.hpp"
@@ -90,6 +91,8 @@ bool RegisterExamplePluginRuntime(cp::PluginRuntimeContext& _context)
 	{
 		return false;
 	}
+
+	cp::SetExamplePluginDir(_context.pluginDir);
 
 	// Create and install the component registration context
 	static auto componentContext = std::make_unique<cp::ComponentRegistrationContext>(_context.assetRegistry);

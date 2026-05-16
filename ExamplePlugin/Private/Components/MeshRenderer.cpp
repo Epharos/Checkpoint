@@ -3,6 +3,7 @@
 #include <Common/IO/FileHelper.hpp>
 
 #include "ComponentRegistrationContext.hpp"
+#include "../ExamplePluginDir.hpp"
 
 namespace cp
 {
@@ -43,7 +44,7 @@ namespace cp
 				}
 
 				auto& meshManager = cp::GetComponentRegistrationContext().GetAssetRegistry().Get<Mesh>();
-				_value.meshId = meshManager.Load(FindFileInParentTree(meshAssetPath));
+				_value.meshId = meshManager.Load(FindFileFromDirectory(meshAssetPath, cp::GetExamplePluginDir()));
 				return _value.meshId.IsValid();
 			}
 		);
@@ -151,7 +152,7 @@ namespace cp
 			}
 
 			auto& meshManager = cp::GetComponentRegistrationContext().GetAssetRegistry().Get<Mesh>();
-			const auto meshPath = FindFileInParentTree(*stringValue);
+			const auto meshPath = FindFileFromDirectory(*stringValue, cp::GetExamplePluginDir());
 			if (!std::filesystem::exists(meshPath))
 			{
 				_outError = "Mesh file not found: " + *stringValue;

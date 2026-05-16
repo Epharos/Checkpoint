@@ -54,6 +54,23 @@ namespace cp
         return {};
     }
 
+    inline std::filesystem::path FindFileFromDirectory(
+        const std::string_view _fileName,
+        const std::filesystem::path& _baseDir
+    )
+    {
+        if (!_baseDir.empty())
+        {
+            const std::filesystem::path candidate = _baseDir / _fileName;
+            if (std::filesystem::exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return FindFileInParentTree(_fileName);
+    }
+
     inline std::filesystem::path GetRelativePath(
         const std::filesystem::path& _path,
         const std::filesystem::path& _currentPath = {}

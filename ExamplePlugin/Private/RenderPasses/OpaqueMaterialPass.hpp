@@ -14,6 +14,8 @@
 #include <Common/Data/Viewport.hpp>
 #include <Common/IO/FileHelper.hpp>
 
+#include "../ExamplePluginDir.hpp"
+
 #include <ECS/ECS.hpp>
 
 #include <RHI/Core.hpp>
@@ -88,8 +90,8 @@ namespace cp
             data.renderExtent = _context.renderExtent;
             data.rhi = &_context.rhi;
 
-            const auto shaderPath = FindFileInParentTree("Phong.spv");
-            CP_ASSERT_MSG(!shaderPath.empty(), "Could not find Phong.spv from current working directory hierarchy");
+            const auto shaderPath = FindFileFromDirectory("Phong.spv", GetExamplePluginDir());
+            CP_ASSERT_MSG(!shaderPath.empty(), "Could not find Phong.spv");
             const std::vector<uint8_t> shaderBytecode = LoadBinaryFile(shaderPath);
 
             const ShaderModuleInfo shaderModuleInfo
