@@ -8,10 +8,10 @@
 
 #include <Runtime/Scene/Scene.hpp>
 
-// Temporarily include VulkanRHI, GLFWWindow
+#include <Platform/PlatformAPI.hpp>
 
+// Temporarily include VulkanRHI
 #include <VulkanRHI.hpp>
-#include <GLFWWindow.hpp>
 
 // ----
 
@@ -19,6 +19,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <string_view>
 
 namespace cp
 {
@@ -40,7 +41,8 @@ namespace cp
     private:
         void InitLoggers();
         void InitRegistry();
-        void InitPlugins(int argc, char** argv);
+        void InitPlugins(const std::filesystem::path& _executableDir);
+        void InitPlatform(const std::filesystem::path& _executableDir, std::string_view _platformName);
         void InitJobSystem();
         void InitRenderingHardwareInterface();
         void InitAssetRegistry();
@@ -59,7 +61,12 @@ namespace cp
         ecs::CommandBuffer ecsCommandBuffer;
 
         std::unique_ptr<RenderingHardwareInterface> rhi;
-        std::unique_ptr<GLFWWindow> window;
+
+        IWindow* window = nullptr;
+        void* platformLibHandle = nullptr;
+        PlatformCreateWindowFn platformCreateWindow = nullptr;
+        PlatformDestroyWindowFn platformDestroyWindow = nullptr;
+
         std::unique_ptr<IShaderProvider> shaderProvider;
         std::unique_ptr<Renderer> renderer;
 

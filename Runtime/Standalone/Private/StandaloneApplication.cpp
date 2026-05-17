@@ -20,7 +20,12 @@
 #include "PrecompiledShaderProvider.hpp"
 
 #include <filesystem>
+#include <string_view>
 #include <thread>
+
+#if defined(CP_PLATFORM_WINDOWS)
+#include <Windows.h>
+#endif
 
 namespace
 {
@@ -34,14 +39,40 @@ namespace cp
 
     bool StandaloneApplication::Init(int argc, char** argv)
     {
-        if (argc > 1 && argv[1] != nullptr)
-            scenePath = std::filesystem::absolute(argv[1]);
-        else
+        std::string_view platformName = "GLFW";
+
+        for (int i = 1; i < argc; ++i)
+        {
+            if (argv[i] == nullptr)
+            {
+                continue;
+            }
+
+            const std::string_view arg = argv[i];
+            if (arg.starts_with("--platform="))
+            {
+                platformName = arg.substr(std::string_view("--platform=").size());
+            }
+            else if (!arg.starts_with("--") && scenePath.empty())
+            {
+                scenePath = std::filesystem::absolute(argv[i]);
+            }
+        }
+
+        if (scenePath.empty())
+        {
             scenePath = std::filesystem::current_path() / "Scene.scene";
+        }
+
+        const std::filesystem::path executableDir =
+            (argc > 0 && argv[0] != nullptr)
+                ? std::filesystem::absolute(argv[0]).parent_path()
+                : std::filesystem::current_path();
 
         InitLoggers();
         InitRegistry();
-        InitPlugins(argc, argv);
+        InitPlugins(executableDir);
+        InitPlatform(executableDir, platformName);
         scene = std::make_unique<runtime::Scene>();
         RegisterPluginComponents();
         InitJobSystem();
@@ -98,7 +129,32 @@ namespace cp
             renderer->ResetFrameGraph();
             renderer.reset();
         }
-        window.reset();
+
+        if (window != nullptr)
+        {
+            if (platformDestroyWindow != nullptr)
+            {
+                platformDestroyWindow(window);
+            }
+
+            window = nullptr;
+            platformCreateWindow = nullptr;
+            platformDestroyWindow = nullptr;
+        }
+
+        if (platformLibHandle != nullptr)
+        {
+#if defined(CP_PLATFORM_WINDOWS)
+            FreeLibrary(static_cast<HMODULE>(platformLibHandle));
+#endif
+            platformLibHandle = nullptr;
+
+            if (compositeLogger != nullptr)
+            {
+                compositeLogger->Log(CP_LOG_EVENT(ILogger::Info, CleanupLabel, Message::Create("Platform unloaded")));
+            }
+        }
+
         rhi.reset();
 
         if (assetRegistryInitialized)
@@ -162,7 +218,7 @@ namespace cp
 #endif
     }
 
-    void StandaloneApplication::InitPlugins(int argc, char** argv)
+    void StandaloneApplication::InitPlugins(const std::filesystem::path& _executableDir)
     {
         PluginHostContext pluginHostContext
         {
@@ -181,11 +237,7 @@ namespace cp
 
         pluginHost = std::make_unique<PluginHost>(pluginHostContext);
 
-        const std::filesystem::path executableDirectory =
-            (argc > 0 && argv[0] != nullptr)
-                ? std::filesystem::absolute(argv[0]).parent_path()
-                : std::filesystem::current_path();
-        const std::filesystem::path pluginsDirectory = executableDirectory / "Plugins";
+        const std::filesystem::path pluginsDirectory = _executableDir / "Plugins";
 
         if (std::filesystem::exists(pluginsDirectory) && std::filesystem::is_directory(pluginsDirectory))
         {
@@ -229,6 +281,86 @@ namespace cp
         }
     }
 
+    void StandaloneApplication::InitPlatform(const std::filesystem::path& _executableDir, std::string_view _platformName)
+    {
+        const std::filesystem::path platformsDir = _executableDir / "Platforms";
+        const std::filesystem::path dllPath = platformsDir / ("Platform_" + std::string(_platformName) + ".dll");
+
+        if (!std::filesystem::exists(dllPath))
+        {
+            compositeLogger->Log(CP_LOG_EVENT(
+                ILogger::Error,
+                InitLabel,
+                Message::Create("Platform DLL not found: {}", dllPath.string())
+            ));
+
+            return;
+        }
+
+#if defined(CP_PLATFORM_WINDOWS)
+        platformLibHandle = LoadLibraryW(dllPath.wstring().c_str());
+#endif
+
+        if (platformLibHandle == nullptr)
+        {
+            compositeLogger->Log(CP_LOG_EVENT(
+                ILogger::Error,
+                InitLabel,
+                Message::Create("Failed to load platform DLL: {}", dllPath.string())
+            ));
+
+            return;
+        }
+
+#if defined(CP_PLATFORM_WINDOWS)
+        const auto getDescriptor = reinterpret_cast<PlatformEntryFn>(
+            GetProcAddress(static_cast<HMODULE>(platformLibHandle), PlatformEntryPointName.data())
+        );
+#endif
+
+        if (getDescriptor == nullptr)
+        {
+            compositeLogger->Log(CP_LOG_EVENT(
+                ILogger::Error,
+                InitLabel,
+                Message::Create("Platform DLL missing entry point '{}': {}", PlatformEntryPointName, dllPath.string())
+            ));
+
+#if defined(CP_PLATFORM_WINDOWS)
+            FreeLibrary(static_cast<HMODULE>(platformLibHandle));
+#endif
+
+            platformLibHandle = nullptr;
+            return;
+        }
+
+        const PlatformDescriptor* descriptor = getDescriptor();
+        if (descriptor == nullptr || descriptor->apiVersion != PlatformApiVersion)
+        {
+            compositeLogger->Log(CP_LOG_EVENT(
+                ILogger::Error,
+                InitLabel,
+                Message::Create("Platform DLL API version mismatch: {}", dllPath.string())
+            ));
+
+#if defined(CP_PLATFORM_WINDOWS)
+            FreeLibrary(static_cast<HMODULE>(platformLibHandle));
+#endif
+
+            platformLibHandle = nullptr;
+            return;
+        }
+
+        platformCreateWindow = descriptor->createWindow;
+        platformDestroyWindow = descriptor->destroyWindow;
+
+        compositeLogger->Log(CP_LOG_EVENT(
+            ILogger::Info,
+            InitLabel,
+            Message::Create("Platform '{}' loaded from {}", descriptor->name, dllPath.string())
+        ));
+    }
+
     void StandaloneApplication::InitJobSystem()
     {
         JobSystem::Initialize(std::thread::hardware_concurrency() / 2);
@@ -265,14 +397,25 @@ namespace cp
 
     void StandaloneApplication::InitWindow()
     {
+        if (platformCreateWindow == nullptr)
+        {
+            compositeLogger->Log(CP_LOG_EVENT(
+                ILogger::Error,
+                InitLabel,
+                Message::Create("Cannot create window: no platform loaded")
+            ));
+
+            return;
+        }
+
         WindowInfo windowInfo
         {
-            .title = "Test Window",
+            .title = "Checkpoint Runtime (Standalone)",
             .extent = Extent2D{ 800, 600 },
             .resizable = true
         };
 
-        window = std::make_unique<GLFWWindow>(windowInfo);
+        window = platformCreateWindow(windowInfo);
     }
 
     void StandaloneApplication::InitRenderer()
