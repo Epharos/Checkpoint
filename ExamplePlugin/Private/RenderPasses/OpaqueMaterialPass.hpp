@@ -30,6 +30,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <Rendering/Camera.hpp>
+#include <Rendering/IShaderProvider.hpp>
 
 #include "../Components/Components.hpp"
 
@@ -90,17 +91,25 @@ namespace cp
             data.renderExtent = _context.renderExtent;
             data.rhi = &_context.rhi;
 
-            const auto shaderPath = FindFileFromDirectory("Phong.spv", GetExamplePluginDir());
-            CP_ASSERT_MSG(!shaderPath.empty(), "Could not find Phong.spv");
-            const std::vector<uint8_t> shaderBytecode = LoadBinaryFile(shaderPath);
+            if (!_context.shaderProvider)
+            {
+                return;
+            }
+
+            const ShaderProviderResult shader = _context.shaderProvider->GetShader(FindFileFromDirectory("Shaders/Phong.slang", GetExamplePluginDir()));
+
+            if (!shader.success || shader.binary.empty())
+            {
+                return;
+            }
 
             const ShaderModuleInfo shaderModuleInfo
             {
                 .stages = ShaderStage::Vertex | ShaderStage::Fragment,
                 .bytecode = ShaderBytecode{
-                    .format = ShaderBinaryFormat::SpirV,
-                    .data = shaderBytecode.data(),
-                    .sizeBytes = shaderBytecode.size()
+                    .format = shader.format,
+                    .data = shader.binary.data(),
+                    .sizeBytes = shader.binary.size()
                 }
             };
             data.shaderModule = _context.rhi.GetDevice().CreateShaderModule(shaderModuleInfo);

@@ -1,6 +1,7 @@
 add_executable(Runtime_Standalone
     "Private/StandaloneApplication.cpp"
     "Private/StandaloneRuntime.cpp"
+    "Private/PrecompiledShaderProvider.hpp"
 )
 
 target_include_directories(Runtime_Standalone

@@ -40,6 +40,8 @@ namespace cp
 		std::shared_ptr<IBuffer> CreateBuffer(const BufferInfo &_info) override;
 		std::shared_ptr<ISampler> CreateSampler(const SamplerInfo& _info) override;
 
+		[[nodiscard]] ShaderBinaryFormat GetShaderBinaryFormat() const override { return ShaderBinaryFormat::SpirV; }
+
 	private:	
 		std::unique_ptr<Instance> instance = nullptr;
 		std::unique_ptr<PhysicalDevice> physicalDevice = nullptr;

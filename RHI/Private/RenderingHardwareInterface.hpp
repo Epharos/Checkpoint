@@ -1,6 +1,7 @@
 #pragma once
 
 #include <../../Common/Public/Common/Core/Log.hpp>
+#include "Rendering/IShaderModule.hpp"
 
 namespace cp
 {
@@ -51,6 +52,9 @@ namespace cp
 		[[nodiscard]] virtual const IPhysicalDevice& GetPhysicalDevice() const = 0;
 		[[nodiscard]] virtual IDevice& GetDevice() = 0;
 		[[nodiscard]] virtual const IDevice& GetDevice() const = 0;
+
+		/** @brief Returns the binary shader format produced by this RHI backend. */
+		[[nodiscard]] virtual ShaderBinaryFormat GetShaderBinaryFormat() const = 0;
 
 		static constexpr const char* RHI_Label = "RHI";
 

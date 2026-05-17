@@ -30,6 +30,8 @@
 
 #include <VulkanRHI.hpp>
 
+#include "ShaderCacheProvider.hpp"
+
 #include <filesystem>
 
 namespace cp::editor
@@ -2021,6 +2023,21 @@ namespace cp::editor
 			cp::AssetRegistry::Instance().Initialize(*rhi);
 			assetRegistryInitialized = true;
 
+			const std::filesystem::path projectRoot = _config.projectRootPath;
+			const std::filesystem::path cacheDir = projectRoot.empty()
+				? (std::filesystem::current_path() / "ShaderCache" / "Vulkan")
+				: (projectRoot / "ShaderCache" / "Vulkan");
+
+			const std::vector<std::filesystem::path> shaderSearchPaths = {
+				std::filesystem::path(CP_ENGINE_SOURCE_DIR) / "Rendering" / "Private" / "Shaders",
+			};
+
+			shaderProvider = std::make_unique<cp::editor::ShaderCacheProvider>(
+				cacheDir,
+				cp::ShaderTarget::Vulkan_SPIRV,
+				shaderSearchPaths
+			);
+
 			cp::RendererInfo rendererInfo;
 			rendererInfo.frameCount = 3;
 			rendererInfo.extent = cp::Extent2D<int>(windowConfig.width, windowConfig.height);
@@ -2029,6 +2046,7 @@ namespace cp::editor
 			rendererInfo.registryManager = registryManager.get();
 			rendererInfo.ecsWorld = &scene->GetWorld();
 			rendererInfo.environment = cp::RendererEnvironment::Editor;
+			rendererInfo.shaderProvider = shaderProvider.get();
 
 			renderer = std::make_unique<cp::Renderer>(rendererInfo, *rhi);
 			cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());

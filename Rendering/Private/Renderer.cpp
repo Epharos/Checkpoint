@@ -257,6 +257,7 @@ namespace cp
             .rhi = renderingHardwareInterface,
             .assetRegistry = AssetRegistry::Instance(),
             .renderExtent = renderExtent,
+            .shaderProvider = rendererInfo.shaderProvider,
         };
 
         auto addConfiguredPass = [&](const std::string_view _passTypeName)

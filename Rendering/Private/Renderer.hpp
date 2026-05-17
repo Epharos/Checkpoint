@@ -27,6 +27,7 @@ namespace cp
 
     enum class QueueType : uint8_t;
     enum class Format : uint32_t;
+    class IShaderProvider;
     class RenderingHardwareInterface;
     class ICommandAllocator;
     class ICommandBuffer;
@@ -57,6 +58,9 @@ namespace cp
         RegistryManager* registryManager = nullptr;
         ecs::World* ecsWorld = nullptr;
         RendererEnvironment environment = RendererEnvironment::Runtime;
+
+        /** @brief Provider supplying compiled shader binaries to render passes. */
+        IShaderProvider* shaderProvider = nullptr;
     };
 
     class Renderer

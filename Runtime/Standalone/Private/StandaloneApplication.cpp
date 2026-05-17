@@ -17,6 +17,8 @@
 
 #include <Runtime/Scene/SceneSerializer.hpp>
 
+#include "PrecompiledShaderProvider.hpp"
+
 #include <filesystem>
 #include <thread>
 
@@ -275,6 +277,8 @@ namespace cp
 
     void StandaloneApplication::InitRenderer()
     {
+        shaderProvider = std::make_unique<PrecompiledShaderProvider>();
+
         RendererInfo renderInfo
         {
             .frameCount = 3,
@@ -282,7 +286,8 @@ namespace cp
             .imageFormat = Format::R8G8B8A8_UNORM,
             .nativeWindowHandle = window->GetNativeWindowHandle(),
             .registryManager = &registryManager,
-            .ecsWorld = scene != nullptr ? &scene->GetWorld() : nullptr
+            .ecsWorld = scene != nullptr ? &scene->GetWorld() : nullptr,
+            .shaderProvider = shaderProvider.get()
         };
 
         renderer = std::make_unique<Renderer>(renderInfo, *rhi);

@@ -9,7 +9,6 @@
 
 #include <Common/Data/Rectangle.hpp>
 #include <Common/Data/Viewport.hpp>
-#include <Common/IO/FileHelper.hpp>
 
 #include <RHI/Core.hpp>
 #include <RHI/Data.hpp>
@@ -21,6 +20,7 @@
 #include <Rendering/FrameGraph/FrameGraph.hpp>
 #include <Rendering/FrameGraph/FrameGraphBuilder.hpp>
 #include <Rendering/FrameGraph/Renderpass.hpp>
+#include <Rendering/IShaderProvider.hpp>
 
 #include <glm/glm.hpp>
 
@@ -71,14 +71,13 @@ namespace cp
             data.renderExtent = _context.renderExtent;
             data.rhi = &_context.rhi;
 
-            const auto shaderPath = FindFileInParentTree("DebugLine.spv");
-            if (shaderPath.empty())
+            if (!_context.shaderProvider)
             {
                 return;
             }
 
-            const std::vector<uint8_t> shaderBytecode = LoadBinaryFile(shaderPath);
-            if (shaderBytecode.empty())
+            const ShaderProviderResult shader = _context.shaderProvider->GetShader("DebugLine.slang");
+            if (!shader.success || shader.binary.empty())
             {
                 return;
             }
@@ -87,9 +86,9 @@ namespace cp
             {
                 .stages = ShaderStage::Vertex | ShaderStage::Fragment,
                 .bytecode = ShaderBytecode {
-                    .format = ShaderBinaryFormat::SpirV,
-                    .data = shaderBytecode.data(),
-                    .sizeBytes = shaderBytecode.size()
+                    .format = shader.format,
+                    .data = shader.binary.data(),
+                    .sizeBytes = shader.binary.size()
                 }
             };
 

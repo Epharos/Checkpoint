@@ -341,7 +341,8 @@ namespace cp
 		pipelineCreateInfo.setStage(shaderStage);
 		pipelineCreateInfo.setLayout(layout.GetHandle());
 
-		pipeline = device.GetHandle().createComputePipeline(VK_NULL_HANDLE, pipelineCreateInfo).value;
+		const auto result = device.GetHandle().createComputePipeline(VK_NULL_HANDLE, pipelineCreateInfo);
+		pipeline = result.value;
 		CP_ENSURE_MSG(pipeline != VK_NULL_HANDLE, "Compute pipeline was not initialized");
 	}
 

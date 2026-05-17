@@ -15,6 +15,7 @@ namespace cp
     class FrameGraphBuilder;
     class FrameGraph;
     class ICommandBuffer;
+    class IShaderProvider;
     class RenderingHardwareInterface;
     struct FrameContext;
 
@@ -23,6 +24,9 @@ namespace cp
         RenderingHardwareInterface& rhi;
         AssetRegistry& assetRegistry;
         Extent2D<uint32_t> renderExtent;
+
+        /** @brief Provider for compiled shader binaries. Null when no provider is configured. */
+        IShaderProvider* shaderProvider = nullptr;
     };
 
     struct IConfigurableRenderPass

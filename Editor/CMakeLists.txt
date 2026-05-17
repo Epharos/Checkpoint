@@ -5,6 +5,7 @@ add_executable(Editor
     "Private/KeybindRegistry.hpp"
     "Private/KeybindRegistry.cpp"
     "Private/EditorPCH.hpp"
+    "Private/ShaderCacheProvider.hpp"
     "Private/UserPluginManager.hpp"
     "Private/UserPluginManager.cpp"
 )
@@ -37,8 +38,32 @@ target_link_libraries(Editor
         EditorUI
         EditorUI_EditorQt
         Builder
+        ShaderCompiler
         nlohmann_json::nlohmann_json
 )
+
+add_custom_command(TARGET Editor POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<TARGET_FILE:slang>"
+        "$<TARGET_FILE_DIR:Editor>/slang.dll"
+    COMMENT "Copying slang.dll to Editor output"
+    VERBATIM
+)
+
+if(WIN32)
+    find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${Qt6_DIR}/../../../bin")
+    if(WINDEPLOYQT_EXECUTABLE)
+        add_custom_command(TARGET Editor POST_BUILD
+            COMMAND "${WINDEPLOYQT_EXECUTABLE}"
+                --no-translations
+                --no-system-d3d-compiler
+                --no-compiler-runtime
+                "$<TARGET_FILE:Editor>"
+            COMMENT "Deploying Qt DLLs"
+            VERBATIM
+        )
+    endif()
+endif()
 
 # ---------------------------------------------------------------------------
 # SDK export — runs after every Editor build.

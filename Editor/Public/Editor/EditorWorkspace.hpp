@@ -17,6 +17,7 @@
 namespace cp
 {
 	class ILogger;
+	class IShaderProvider;
 	class PluginHost;
 	class RenderingHardwareInterface;
 	class Renderer;
@@ -80,6 +81,7 @@ namespace cp::editor
 		std::unique_ptr<cp::RegistryManager> registryManager;
 		std::unique_ptr<cp::runtime::Scene> scene;
 		std::unique_ptr<cp::RenderingHardwareInterface> rhi;
+		std::unique_ptr<cp::IShaderProvider> shaderProvider;
 		std::unique_ptr<cp::Renderer> renderer;
 		bool assetRegistryInitialized = false;
 

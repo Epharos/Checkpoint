@@ -13,6 +13,7 @@
 #include <RHI/Rendering.hpp>
 
 #include <Rendering/FrameGraph/FrameGraph.hpp>
+#include <Rendering/IShaderProvider.hpp>
 
 namespace cp
 {
@@ -55,17 +56,25 @@ namespace cp
         {
             data.renderExtent = _context.renderExtent;
 
-            const auto shaderPath = FindFileFromDirectory("NegativePFX.spv", GetExamplePluginDir());
-            CP_ASSERT_MSG(!shaderPath.empty(), "Could not find NegativePFX.spv");
-            const std::vector<uint8_t> shaderBytecode = LoadBinaryFile(shaderPath);
+            if (!_context.shaderProvider)
+            {
+                return;
+            }
+
+            const ShaderProviderResult shader = _context.shaderProvider->GetShader(FindFileFromDirectory("Shaders/NegativePFX.slang", GetExamplePluginDir()));
+
+            if (!shader.success || shader.binary.empty())
+            {
+                return;
+            }
 
             const ShaderModuleInfo shaderModuleInfo
             {
                 .stages = ShaderStage::Compute,
                 .bytecode = ShaderBytecode {
-                    .format = ShaderBinaryFormat::SpirV,
-                    .data = shaderBytecode.data(),
-                    .sizeBytes = shaderBytecode.size()
+                    .format = shader.format,
+                    .data = shader.binary.data(),
+                    .sizeBytes = shader.binary.size()
                 }
             };
             data.shaderModule = _context.rhi.GetDevice().CreateShaderModule(shaderModuleInfo);

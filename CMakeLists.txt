@@ -33,11 +33,6 @@ include(FetchContent)
 set(STB_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/stb)
 set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS 1 CACHE INTERNAL "No dev warnings")
 
-set(SLANG_ENABLE_DXC OFF CACHE BOOL "" FORCE)
-set(SLANG_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
-set(SLANG_ENABLE_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(SLANG_USE_PREBUILT OFF CACHE BOOL "" FORCE)
-
 find_package(Vulkan REQUIRED)
 find_package(Qt6 6.9 COMPONENTS Widgets Gui Core Svg REQUIRED)
 
@@ -50,15 +45,19 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(glfw)
 
 FetchContent_Declare(
-    slang
-    GIT_REPOSITORY https://github.com/shader-slang/slang.git
-    GIT_TAG v2025.18.1
-    EXCLUDE_FROM_ALL
+    slang_prebuilt
+    URL https://github.com/shader-slang/slang/releases/download/v2025.18.1/slang-2025.18.1-windows-x86_64.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    SOURCE_SUBDIR "no-cmake-here"
 )
+FetchContent_MakeAvailable(slang_prebuilt)
 
-set(SLANG_ENABLE_SPIRV_TOOLS_MIMALLOC OFF) #12 hours ...
-
-FetchContent_MakeAvailable(slang)
+add_library(slang SHARED IMPORTED GLOBAL)
+set_target_properties(slang PROPERTIES
+    IMPORTED_LOCATION "${slang_prebuilt_SOURCE_DIR}/bin/slang.dll"
+    IMPORTED_IMPLIB  "${slang_prebuilt_SOURCE_DIR}/lib/slang.lib"
+    INTERFACE_INCLUDE_DIRECTORIES "${slang_prebuilt_SOURCE_DIR}/include"
+)
 
 FetchContent_Declare(
     glm
@@ -104,6 +103,7 @@ add_subdirectory(Runtime/Editor) # Editor Runtime module : in-editor play mode
 add_subdirectory(Launcher) # Editor launcher module : Starts the editor with a selected project
 add_subdirectory(EditorUI) # Editor UI abstraction layer and backends
 add_subdirectory(Editor) # Editor module : orchestrates editor tools and UI composition
+add_subdirectory(ShaderCompiler) # Shader compiler : turns slang files into spirv, hlsl (dxil), ...
 add_subdirectory(ExamplePlugin) # Example Plugin : used to test features
 
 function(copy_to_build TARGET)

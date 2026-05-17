@@ -5,8 +5,6 @@
 #include <memory>
 #include <vector>
 
-#include <Common/IO/FileHelper.hpp>
-
 #include <RHI/Core.hpp>
 #include <RHI/Data.hpp>
 #include <RHI/Rendering.hpp>
@@ -15,6 +13,7 @@
 #include <Rendering/FrameGraph/FrameGraph.hpp>
 #include <Rendering/FrameGraph/FrameGraphBuilder.hpp>
 #include <Rendering/FrameGraph/Renderpass.hpp>
+#include <Rendering/IShaderProvider.hpp>
 
 #include <glm/glm.hpp>
 
@@ -141,14 +140,13 @@ namespace cp
         {
             data.renderExtent = _ctx.renderExtent;
 
-            const auto shaderPath = FindFileInParentTree("EditorGrid.spv");
-            if (shaderPath.empty())
+            if (!_ctx.shaderProvider)
             {
                 return;
             }
 
-            const std::vector<uint8_t> bytecode = LoadBinaryFile(shaderPath);
-            if (bytecode.empty())
+            const ShaderProviderResult shader = _ctx.shaderProvider->GetShader("EditorGrid.slang");
+            if (!shader.success || shader.binary.empty())
             {
                 return;
             }
@@ -156,9 +154,9 @@ namespace cp
             data.shaderModule = _ctx.rhi.GetDevice().CreateShaderModule({
                 .stages = ShaderStage::Compute,
                 .bytecode = {
-                    .format = ShaderBinaryFormat::SpirV,
-                    .data = bytecode.data(),
-                    .sizeBytes = bytecode.size()
+                    .format = shader.format,
+                    .data = shader.binary.data(),
+                    .sizeBytes = shader.binary.size()
                 }
             });
 

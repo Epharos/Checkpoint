@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -22,10 +23,10 @@
 #include <RHI/Rendering.hpp>
 #include <RHI/RenderingHardwareInterface.hpp>
 
-#include <Rendering/Camera.hpp>
 #include <Rendering/FrameGraph/FrameGraph.hpp>
 #include <Rendering/FrameGraph/FrameGraphBuilder.hpp>
 #include <Rendering/FrameGraph/Renderpass.hpp>
+#include <Rendering/IShaderProvider.hpp>
 
 #include <Resources/CubemapLoader.hpp>
 
@@ -96,22 +97,30 @@ namespace cp
             data.renderExtent = _context.renderExtent;
             data.rhi = &_context.rhi;
 
-            const auto shaderPath = FindFileFromDirectory("Skybox.spv", GetExamplePluginDir());
-            CP_ASSERT_MSG(!shaderPath.empty(), "Could not find Skybox.spv");
-            const std::vector<uint8_t> shaderBytecode = LoadBinaryFile(shaderPath);
+            if (!_context.shaderProvider)
+            {
+                return;
+            }
+
+            const ShaderProviderResult shader = _context.shaderProvider->GetShader(FindFileFromDirectory("Shaders/Skybox.slang", GetExamplePluginDir()));
+
+            if (!shader.success || shader.binary.empty())
+            {
+                return;
+            }
 
             const ShaderModuleInfo shaderModuleInfo {
                 .stages = ShaderStage::Vertex | ShaderStage::Fragment,
                 .bytecode = ShaderBytecode{
-                    .format = ShaderBinaryFormat::SpirV,
-                    .data = shaderBytecode.data(),
-                    .sizeBytes = shaderBytecode.size()
+                    .format = shader.format,
+                    .data = shader.binary.data(),
+                    .sizeBytes = shader.binary.size()
                 }
             };
 
             data.shaderModule = _context.rhi.GetDevice().CreateShaderModule(shaderModuleInfo);
 
-            const SamplerInfo samplerInfo {
+            constexpr SamplerInfo samplerInfo {
                 .minFilter = Filter::Linear,
                 .magFilter = Filter::Linear,
                 .mipmapMode = MipmapMode::Linear,
@@ -161,7 +170,7 @@ namespace cp
                 .layout = data.pipelineLayout,
                 .shaderModule = data.shaderModule,
                 .stageMains = {
-                    { ShaderStage::Vertex,   "VSMain" },
+                    { ShaderStage::Vertex, "VSMain" },
                     { ShaderStage::Fragment, "FSMain" },
                 },
                 .vertexInput = VertexInputState {},
@@ -368,6 +377,8 @@ namespace cp
 
         void ReloadCubemapIfNeeded()
         {
+            std::cout << "Hello !" << std::endl;
+
             if (!cubemapDirty || data.rhi == nullptr)
                 return;
 
@@ -380,6 +391,9 @@ namespace cp
             }
 
             const auto resolvedPath = FindFileFromDirectory(cubemapBasePath, GetExamplePluginDir());
+
+            std::cout << resolvedPath << std::endl;
+
             const std::filesystem::path basePath =
                 resolvedPath.empty() ? std::filesystem::path(cubemapBasePath) : resolvedPath;
 

@@ -3,6 +3,7 @@
 #include <Common/Core/Log.hpp>
 #include <Common/Plugin/PluginHost.hpp>
 
+#include <Rendering/IShaderProvider.hpp>
 #include <Rendering/Renderer.hpp>
 
 #include <Runtime/Scene/Scene.hpp>
@@ -59,6 +60,7 @@ namespace cp
 
         std::unique_ptr<RenderingHardwareInterface> rhi;
         std::unique_ptr<GLFWWindow> window;
+        std::unique_ptr<IShaderProvider> shaderProvider;
         std::unique_ptr<Renderer> renderer;
 
         std::filesystem::path scenePath;
