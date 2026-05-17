@@ -102,7 +102,9 @@ namespace cp
                 return;
             }
 
-            const ShaderProviderResult shader = _context.shaderProvider->GetShader(FindFileFromDirectory("Shaders/Skybox.slang", GetExamplePluginDir()));
+            const ShaderProviderResult shader = _context.shaderProvider->GetShader(
+                "Skybox", GetExamplePluginDir() / "Shaders"
+            );
 
             if (!shader.success || shader.binary.empty())
             {
@@ -377,10 +379,10 @@ namespace cp
 
         void ReloadCubemapIfNeeded()
         {
-            std::cout << "Hello !" << std::endl;
-
             if (!cubemapDirty || data.rhi == nullptr)
+            {
                 return;
+            }
 
             cubemapDirty = false;
 
@@ -392,21 +394,23 @@ namespace cp
 
             const auto resolvedPath = FindFileFromDirectory(cubemapBasePath, GetExamplePluginDir());
 
-            std::cout << resolvedPath << std::endl;
-
             const std::filesystem::path basePath =
                 resolvedPath.empty() ? std::filesystem::path(cubemapBasePath) : resolvedPath;
 
             data.cubemapTexture = LoadCubemapTexture(basePath, *data.rhi);
 
             if (data.cubemapTexture)
+            {
                 BindDescriptors();
+            }
         }
 
         void BindDescriptors()
         {
             if (!data.descriptorSet || !data.uboBuffer)
+            {
                 return;
+            }
 
             data.descriptorSet->UpdateBuffers({
                 DescriptorBufferBinding {
@@ -442,7 +446,9 @@ namespace cp
             }
 
             if (!textureBindings.empty())
+            {
                 data.descriptorSet->UpdateTextures(textureBindings);
+            }
         }
 
         static glm::mat4 BuildViewMatrix(const Transform& _t)

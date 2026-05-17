@@ -1,9 +1,8 @@
 #pragma once
 
+#include <iostream>
 #include <memory>
 #include <vector>
-
-#include <Common/IO/FileHelper.hpp>
 
 #include "../ExamplePluginDir.hpp"
 
@@ -61,7 +60,9 @@ namespace cp
                 return;
             }
 
-            const ShaderProviderResult shader = _context.shaderProvider->GetShader(FindFileFromDirectory("Shaders/NegativePFX.slang", GetExamplePluginDir()));
+            const ShaderProviderResult shader = _context.shaderProvider->GetShader(
+                "NegativePFX", GetExamplePluginDir() / "Shaders"
+            );
 
             if (!shader.success || shader.binary.empty())
             {

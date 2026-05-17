@@ -76,7 +76,7 @@ namespace cp
                 return;
             }
 
-            const ShaderProviderResult shader = _context.shaderProvider->GetShader("DebugLine.slang");
+            const ShaderProviderResult shader = _context.shaderProvider->GetShader("DebugLine");
             if (!shader.success || shader.binary.empty())
             {
                 return;

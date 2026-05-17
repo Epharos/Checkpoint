@@ -11,6 +11,7 @@ namespace cp
 {
     class RenderingHardwareInterface;
     class RegistryManager;
+    class IShaderProvider;
 }
 
 namespace cp::runtime
@@ -24,7 +25,8 @@ namespace cp::runtime
             RenderingHardwareInterface& _rhi,
             std::shared_ptr<ILogger> _logger,
             std::unique_ptr<Scene> _scene,
-            RegistryManager& _registryManager
+            RegistryManager& _registryManager,
+            IShaderProvider* _shaderProvider = nullptr
         );
         ~RuntimeEditorApplication();
 
@@ -47,6 +49,7 @@ namespace cp::runtime
         std::shared_ptr<ILogger> logger;
         std::unique_ptr<Scene> scene;
         RegistryManager& registryManager;
+        IShaderProvider* shaderProvider = nullptr;
 
         std::atomic<bool> running{ false };
         std::atomic<bool> stopRequested{ false };

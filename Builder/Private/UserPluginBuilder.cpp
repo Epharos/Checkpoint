@@ -253,6 +253,7 @@ set_target_properties(@NAME@ PROPERTIES
 					GitDependency d;
 					d.repo = entry.value("repo", "");
 					d.tag = entry.value("tag", "");
+					d.linkTarget = entry.value("linkTarget", "");
 					if (!d.repo.empty())
 					{
 						desc.githubDeps.push_back(std::move(d));
@@ -294,6 +295,12 @@ set_target_properties(@NAME@ PROPERTIES
 				nlohmann::json entry;
 				entry["repo"] = dep.repo;
 				entry["tag"] = dep.tag;
+
+				if (!dep.linkTarget.empty())
+				{
+					entry["linkTarget"] = dep.linkTarget;
+				}
+
 				githubJson.push_back(entry);
 			}
 			j["githubDeps"] = githubJson;
@@ -410,6 +417,8 @@ set_target_properties(@NAME@ PROPERTIES
 				? gh.repo.substr(gh.repo.find('/') + 1)
 				: gh.repo;
 
+			const std::string linkTarget = gh.linkTarget.empty() ? repoName : gh.linkTarget;
+
 			githubDeps += "include(FetchContent)\n";
 			githubDeps += "FetchContent_Declare(\n";
 			githubDeps += "    " + repoName + "\n";
@@ -418,6 +427,8 @@ set_target_properties(@NAME@ PROPERTIES
 			githubDeps += "    EXCLUDE_FROM_ALL\n";
 			githubDeps += ")\n";
 			githubDeps += "FetchContent_MakeAvailable(" + repoName + ")\n\n";
+
+			githubLinkLibs += "        " + linkTarget + "\n";
 		}
 
 		std::string cmake(CMakeTemplate);

@@ -1221,7 +1221,7 @@ namespace cp::editor
 			}
 
 			runtimeApp = std::make_unique<cp::runtime::RuntimeEditorApplication>(
-				*rhi, logger, std::move(runtimeScene), *registryManager
+				*rhi, logger, std::move(runtimeScene), *registryManager, shaderProvider.get()
 			);
 			runtimeApp->SetOnStoppedCallback([this]()
 			{

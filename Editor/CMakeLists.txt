@@ -89,7 +89,6 @@ set(_cp_sdk_libs
     Rendering
     Resources
     RHI_Core
-    RHI_Vulkan
     Runtime
 )
 
@@ -133,3 +132,25 @@ foreach(_lib ${_cp_sdk_libs})
         )
     endif()
 endforeach()
+
+add_custom_command(TARGET Editor POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+        "$<TARGET_FILE_DIR:Editor>/sdk/RHI_Core/Public"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/RHI/Public"
+        "$<TARGET_FILE_DIR:Editor>/sdk/RHI_Core/Public"
+    COMMENT "SDK: exporting RHI_Core public headers"
+    VERBATIM
+)
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/RHI/Private")
+    add_custom_command(TARGET Editor POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            "$<TARGET_FILE_DIR:Editor>/sdk/RHI_Core/Private"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/RHI/Private"
+            "$<TARGET_FILE_DIR:Editor>/sdk/RHI_Core/Private"
+        COMMENT "SDK: exporting RHI_Core private headers"
+        VERBATIM
+    )
+endif()

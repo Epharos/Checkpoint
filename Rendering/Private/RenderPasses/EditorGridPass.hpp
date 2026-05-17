@@ -145,7 +145,7 @@ namespace cp
                 return;
             }
 
-            const ShaderProviderResult shader = _ctx.shaderProvider->GetShader("EditorGrid.slang");
+            const ShaderProviderResult shader = _ctx.shaderProvider->GetShader("EditorGrid");
             if (!shader.success || shader.binary.empty())
             {
                 return;

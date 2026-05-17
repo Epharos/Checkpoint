@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstring>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -12,10 +13,6 @@
 
 #include <Common/Data/Rectangle.hpp>
 #include <Common/Data/Viewport.hpp>
-#include <Common/IO/FileHelper.hpp>
-
-#include "../ExamplePluginDir.hpp"
-
 #include <ECS/ECS.hpp>
 
 #include <RHI/Core.hpp>
@@ -96,7 +93,9 @@ namespace cp
                 return;
             }
 
-            const ShaderProviderResult shader = _context.shaderProvider->GetShader(FindFileFromDirectory("Shaders/Phong.slang", GetExamplePluginDir()));
+            const ShaderProviderResult shader = _context.shaderProvider->GetShader(
+                "Phong", GetExamplePluginDir() / "Shaders"
+            );
 
             if (!shader.success || shader.binary.empty())
             {

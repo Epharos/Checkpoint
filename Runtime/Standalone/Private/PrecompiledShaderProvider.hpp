@@ -29,17 +29,30 @@ namespace cp
             cp::ShaderBinaryFormat _format = cp::ShaderBinaryFormat::SpirV
         ) : shaderDir(std::move(_shaderDir)), format(_format) {}
 
-        [[nodiscard]] cp::ShaderProviderResult GetShader(const std::filesystem::path& _shaderName) override
+        [[nodiscard]] cp::ShaderProviderResult GetShader(
+            const std::filesystem::path& _shaderName,
+            const std::filesystem::path& _directory = {}
+        ) override
         {
             const std::string ext = (format == cp::ShaderBinaryFormat::SpirV) ? ".spv" : ".dxil";
             const std::string binaryName = _shaderName.stem().string() + ext;
 
             std::filesystem::path resolved;
 
-            if (!shaderDir.empty())
+            // Caller-supplied directory
+            if (!_directory.empty())
+            {
+                const std::filesystem::path candidate = _directory / binaryName;
+                if (std::filesystem::exists(candidate))
+                {
+                    resolved = candidate;
+                }
+            }
+
+            // Configured shader directory
+            if (resolved.empty() && !shaderDir.empty())
             {
                 const std::filesystem::path candidate = shaderDir / binaryName;
-
                 if (std::filesystem::exists(candidate))
                 {
                     resolved = candidate;

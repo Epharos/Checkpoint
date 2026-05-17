@@ -54,6 +54,7 @@ if(TARGET Runtime_Standalone)
         COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:Runtime_Standalone>/Plugins"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:ExamplePlugin>" "$<TARGET_FILE_DIR:Runtime_Standalone>/Plugins/ExamplePlugin/$<TARGET_FILE_NAME:ExamplePlugin>"
         COMMENT "Copying ExamplePlugin to Runtime_Standalone/Plugins"
+        VERBATIM
     )
 endif()
 
@@ -61,8 +62,9 @@ if(TARGET Editor)
     add_dependencies(Editor ExamplePlugin)
 
     add_custom_command(TARGET ExamplePlugin POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:Editor>/Plugins"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:ExamplePlugin>" "$<TARGET_FILE_DIR:Editor>/Plugins/ExamplePlugin/$<TARGET_FILE_NAME:ExamplePlugin>"
-            COMMENT "Copying ExamplePlugin to Editor/Plugins"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:Editor>/Plugins"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:ExamplePlugin>" "$<TARGET_FILE_DIR:Editor>/Plugins/ExamplePlugin/$<TARGET_FILE_NAME:ExamplePlugin>"
+        COMMENT "Copying ExamplePlugin to Editor/Plugins"
+        VERBATIM
     )
 endif()

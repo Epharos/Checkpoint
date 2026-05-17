@@ -37,9 +37,12 @@ namespace cp::editor
             , searchPaths(std::move(_searchPaths))
         {}
 
-        [[nodiscard]] cp::ShaderProviderResult GetShader(const std::filesystem::path& _shaderName) override
+        [[nodiscard]] cp::ShaderProviderResult GetShader(
+            const std::filesystem::path& _shaderName,
+            const std::filesystem::path& _directory = {}
+        ) override
         {
-            const std::filesystem::path sourcePath = FindSource(_shaderName);
+            const std::filesystem::path sourcePath = FindSource(_shaderName, _directory);
 
             if (sourcePath.empty())
             {
@@ -60,20 +63,36 @@ namespace cp::editor
         }
 
     private:
-        [[nodiscard]] std::filesystem::path FindSource(const std::filesystem::path& _name) const
+        [[nodiscard]] std::filesystem::path FindSource(
+            const std::filesystem::path& _name,
+            const std::filesystem::path& _directory = {}
+        ) const
         {
-            if (_name.is_absolute() && std::filesystem::exists(_name))
+            // Ensure the name carries a .slang extension regardless of what was passed
+            std::filesystem::path realName = _name;
+            if (realName.extension() != ".slang")
+                realName.replace_extension(".slang");
+
+            // Absolute path — use directly if it exists
+            if (realName.is_absolute() && std::filesystem::exists(realName))
+                return realName;
+
+            const std::filesystem::path filename = realName.filename();
+
+            // Caller-supplied directory takes priority
+            if (!_directory.empty())
             {
-                return _name;
+                const std::filesystem::path candidate = _directory / filename;
+                if (std::filesystem::exists(candidate))
+                    return candidate;
             }
 
+            // Fall back to the provider's own search paths
             for (const auto& dir : searchPaths)
             {
-                const std::filesystem::path candidate = dir / _name;
+                const std::filesystem::path candidate = dir / filename;
                 if (std::filesystem::exists(candidate))
-                {
                     return candidate;
-                }
             }
 
             return {};

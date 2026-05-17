@@ -15,6 +15,7 @@ namespace cp
 	{
 		std::string repo;
 		std::string tag;
+		std::string linkTarget;
 	};
 
 	struct UserPluginDescriptor

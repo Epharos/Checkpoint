@@ -9,6 +9,7 @@
 #include <RHI/Data.hpp>
 #include <RHI/RenderingHardwareInterface.hpp>
 
+#include <Rendering/IShaderProvider.hpp>
 #include <Rendering/Renderer.hpp>
 #include <Rendering/Scene/FrameGraphConfig.hpp>
 
@@ -146,12 +147,14 @@ namespace cp::runtime
         RenderingHardwareInterface& _rhi,
         std::shared_ptr<ILogger> _logger,
         std::unique_ptr<Scene> _scene,
-        RegistryManager& _registryManager
+        RegistryManager& _registryManager,
+        IShaderProvider* _shaderProvider
     )
         : rhi(_rhi)
         , logger(std::move(_logger))
         , scene(std::move(_scene))
         , registryManager(_registryManager)
+        , shaderProvider(_shaderProvider)
     {
     }
 
@@ -216,6 +219,7 @@ namespace cp::runtime
         rendererInfo.nativeWindowHandle = window.GetNativeHandle();
         rendererInfo.registryManager = &registryManager;
         rendererInfo.ecsWorld = &scene->GetWorld();
+        rendererInfo.shaderProvider = shaderProvider;
 
         auto renderer = std::make_unique<cp::Renderer>(rendererInfo, rhi);
         renderer->SetPendingPassBlobs(scene->GetPassBlobs());
