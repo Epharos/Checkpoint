@@ -10,6 +10,7 @@
 #include <Common/Serialization/ISerializer.hpp>
 
 #include <algorithm>
+#include <any>
 #include <cstddef>
 #include <cstdint>
 #include <concepts>
@@ -34,6 +35,10 @@ namespace cp::ecs
     concept StorableComponent = MutableComponent<Component>
         && std::is_copy_constructible_v<Component>
         && std::is_move_constructible_v<Component>;
+
+    template<typename T>
+    concept StorableResource = !std::is_reference_v<T>
+        && std::is_copy_constructible_v<T>;
 
     /**
      * Central ECS world.
@@ -122,6 +127,44 @@ namespace cp::ecs
         [[nodiscard]] const std::vector<TypeGuid>& GetStartupSystems() const;
         [[nodiscard]] std::vector<Entity> GetAliveEntities() const;
 
+        /**
+         * @brief Stores (or replaces) a typed resource in the world.
+         * Resources are global per-world values, not tied to any entity.
+         */
+        template<StorableResource T>
+        void SetResource(T _value);
+
+        /**
+         * @brief Returns a pointer to the resource of type T, or nullptr if absent.
+         */
+        template<StorableResource T>
+        [[nodiscard]] T* TryGetResource();
+
+        template<StorableResource T>
+        [[nodiscard]] const T* TryGetResource() const;
+
+        /**
+         * @brief Returns a reference to the resource of type T.
+         * Asserts if the resource is not present.
+         */
+        template<StorableResource T>
+        [[nodiscard]] T& GetResource();
+
+        template<StorableResource T>
+        [[nodiscard]] const T& GetResource() const;
+
+        /**
+         * @brief Returns true if a resource of type T is present.
+         */
+        template<StorableResource T>
+        [[nodiscard]] bool HasResource() const;
+
+        /**
+         * @brief Removes the resource of type T. Returns true if it existed.
+         */
+        template<StorableResource T>
+        bool RemoveResource();
+
         [[nodiscard]] bool SerializeBinary(ISerializer& _serializer) const;
         [[nodiscard]] bool DeserializeBinary(IDeserializer& _deserializer);
 
@@ -177,6 +220,8 @@ namespace cp::ecs
 
         std::vector<std::string> requiredPlugins;
         std::vector<TypeGuid> startupSystems;
+
+        std::unordered_map<std::type_index, std::any> resources;
     };
 
     template<MutableComponent Component, typename... Args>
@@ -402,5 +447,54 @@ namespace cp::ecs
         const ComponentTypeId componentId = RegisterComponentType(info);
         componentTypeByTypeIndex[typeIndex] = componentId;
         return componentId;
+    }
+
+    template<StorableResource T>
+    void World::SetResource(T _value)
+    {
+        resources[typeid(T)] = std::move(_value);
+    }
+
+    template<StorableResource T>
+    T* World::TryGetResource()
+    {
+        const auto it = resources.find(typeid(T));
+        if (it == resources.end())
+        {
+            return nullptr;
+        }
+        return std::any_cast<T>(&it->second);
+    }
+
+    template<StorableResource T>
+    const T* World::TryGetResource() const
+    {
+        return const_cast<World*>(this)->TryGetResource<T>();
+    }
+
+    template<StorableResource T>
+    T& World::GetResource()
+    {
+        T* resource = TryGetResource<T>();
+        CP_ASSERT_MSG(resource != nullptr, "Requested resource is not present in the world.");
+        return *resource;
+    }
+
+    template<StorableResource T>
+    const T& World::GetResource() const
+    {
+        return const_cast<World*>(this)->GetResource<T>();
+    }
+
+    template<StorableResource T>
+    bool World::HasResource() const
+    {
+        return resources.contains(typeid(T));
+    }
+
+    template<StorableResource T>
+    bool World::RemoveResource()
+    {
+        return resources.erase(typeid(T)) > 0;
     }
 }

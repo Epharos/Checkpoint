@@ -128,6 +128,7 @@ namespace cp::ecs
         archetypeBySignature.clear();
         requiredPlugins.clear();
         startupSystems.clear();
+        resources.clear();
 
         [[maybe_unused]] Archetype& init = GetOrCreateArchetype({});
     }
