@@ -93,6 +93,7 @@ add_subdirectory(RHI/Vulkan) # Vulkan RHI backend
 add_subdirectory(RHI/DirectX12) # DirectX12 RHI backend
 add_subdirectory(Platform) # Platform abstraction layer : Windowing, Input, Etc.
 add_subdirectory(Platform/GLFW) # GLFW implementation of the platform layer
+add_subdirectory(Platform/Native) # Native (Win32) implementation of the platform layer
 add_subdirectory(Resources) # Asset management : Loading, Caching, Etc.
 add_subdirectory(Rendering)  # Rendering module : Framegraph, Materials, Etc.
 add_subdirectory(ECS) # Entity Component System

@@ -3,6 +3,7 @@
 #include <string_view>
 #include <string>
 #include <cstdint>
+#include <functional>
 
 #include <../../Common/Public/Common/Data/Extent.hpp>
 
@@ -48,5 +49,13 @@ namespace cp
 		virtual bool IsVSyncActive() const = 0;
 
 		virtual void CleanUp() const = 0;
+
+		void SetResizeCallback(std::function<void(Extent2D<int>)> _callback);
+
+	protected:
+		void InvokeResizeCallback(Extent2D<int> _newExtent) const;
+
+	private:
+		std::function<void(Extent2D<int>)> resizeCallback;
 	};
 }

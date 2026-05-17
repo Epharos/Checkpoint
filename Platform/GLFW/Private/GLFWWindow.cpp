@@ -19,6 +19,19 @@ namespace cp
 		window = glfwCreateWindow(_info.extent.x(), _info.extent.y(), _info.title.c_str(), nullptr, nullptr);
 
 		glfwSetWindowUserPointer(window, this);
+
+		glfwSetFramebufferSizeCallback(window, [](GLFWwindow* _win, int _width, int _height)
+		{
+			if (_width > 0 && _height > 0)
+			{
+				auto* self = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(_win));
+
+				if (self != nullptr)
+				{
+					self->InvokeResizeCallback(Extent2D<int>{ _width, _height });
+				}
+			}
+		});
 	}
 
 	GLFWWindow::~GLFWWindow()

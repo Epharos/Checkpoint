@@ -82,6 +82,14 @@ namespace cp
         InitWindow();
         InitRenderer();
 
+        if (window != nullptr && renderer != nullptr)
+        {
+            window->SetResizeCallback([this](Extent2D<int> _newExtent)
+            {
+                renderer->Resize(_newExtent);
+            });
+        }
+
         initialized = true;
         return true;
     }

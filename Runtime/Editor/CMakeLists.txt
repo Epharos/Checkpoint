@@ -15,4 +15,5 @@ target_link_libraries(Runtime_Editor
         Runtime
         Rendering
         RHI_Core
+        Platform_Native
 )

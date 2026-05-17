@@ -15,130 +15,16 @@
 
 #include <Runtime/Scene/Scene.hpp>
 
+#include <Platform/PlatformAPI.hpp>
+
 #include <atomic>
 #include <vector>
 
-#define WIN32_LEAN_AND_MEAN
-#ifndef NOMINMAX
-    #define NOMINMAX
-#endif
-#include <Windows.h>
+extern "C" const cp::PlatformDescriptor* CP_GetPlatformDescriptor();
 
 namespace
 {
     constexpr auto RuntimeLabel = "Runtime";
-    constexpr wchar_t RuntimeWindowClassName[] = L"CheckpointRuntimeEditorWindow";
-    constexpr int DefaultWindowWidth = 1280;
-    constexpr int DefaultWindowHeight = 720;
-
-    LRESULT CALLBACK RuntimeWindowProc(HWND _hwnd, UINT _msg, WPARAM _wp, LPARAM _lp)
-    {
-        if (_msg == WM_DESTROY)
-        {
-            PostQuitMessage(0);
-            return 0;
-        }
-        return DefWindowProcW(_hwnd, _msg, _wp, _lp);
-    }
-
-    class RuntimeWindow
-    {
-    public:
-        RuntimeWindow()
-        {
-            const HINSTANCE hInstance = GetModuleHandleW(nullptr);
-
-            WNDCLASSEXW wc = {};
-            wc.cbSize = sizeof(WNDCLASSEXW);
-            wc.style = CS_HREDRAW | CS_VREDRAW;
-            wc.lpfnWndProc = RuntimeWindowProc;
-            wc.hInstance = hInstance;
-            wc.hCursor = LoadCursorW(nullptr, reinterpret_cast<LPCWSTR>(IDC_ARROW));
-            wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
-            wc.lpszClassName = RuntimeWindowClassName;
-
-            classAtom = RegisterClassExW(&wc);
-            if (classAtom == 0 && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
-            {
-                return;
-            }
-
-            RECT rect = { 0, 0, DefaultWindowWidth, DefaultWindowHeight };
-            AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
-
-            hwnd = CreateWindowExW(
-                0,
-                RuntimeWindowClassName,
-                L"Checkpoint Runtime",
-                WS_OVERLAPPEDWINDOW,
-                CW_USEDEFAULT, CW_USEDEFAULT,
-                rect.right - rect.left,
-                rect.bottom - rect.top,
-                nullptr, nullptr, hInstance, nullptr
-            );
-
-            if (hwnd != nullptr)
-            {
-                ShowWindow(hwnd, SW_SHOW);
-                UpdateWindow(hwnd);
-            }
-        }
-
-        ~RuntimeWindow()
-        {
-            if (hwnd != nullptr)
-            {
-                DestroyWindow(hwnd);
-                hwnd = nullptr;
-            }
-            if (classAtom != 0)
-            {
-                UnregisterClassW(RuntimeWindowClassName, GetModuleHandleW(nullptr));
-                classAtom = 0;
-            }
-        }
-
-        RuntimeWindow(const RuntimeWindow&) = delete;
-        RuntimeWindow& operator=(const RuntimeWindow&) = delete;
-        RuntimeWindow(RuntimeWindow&&) = delete;
-        RuntimeWindow& operator=(RuntimeWindow&&) = delete;
-
-        [[nodiscard]] bool IsValid() const { return hwnd != nullptr; }
-        [[nodiscard]] void* GetNativeHandle() const { return hwnd; }
-
-        [[nodiscard]] cp::Extent2D<int> GetExtent() const
-        {
-            RECT rect;
-            if (GetClientRect(hwnd, &rect))
-            {
-                return cp::Extent2D<int>{
-                    static_cast<int>(rect.right - rect.left),
-                    static_cast<int>(rect.bottom - rect.top)
-                };
-            }
-
-            return cp::Extent2D<int>{ DefaultWindowWidth, DefaultWindowHeight };
-        }
-
-        bool PollAndShouldContinue()
-        {
-            MSG msg;
-            while (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE))
-            {
-                if (msg.message == WM_QUIT)
-                {
-                    return false;
-                }
-                TranslateMessage(&msg);
-                DispatchMessageW(&msg);
-            }
-            return hwnd != nullptr && IsWindow(hwnd);
-        }
-
-    private:
-        HWND hwnd = nullptr;
-        ATOM classAtom = 0;
-    };
 }
 
 namespace cp::runtime
@@ -196,9 +82,29 @@ namespace cp::runtime
 
     void RuntimeEditorApplication::RunLoop()
     {
-        RuntimeWindow window;
+        const PlatformDescriptor* platformDesc = CP_GetPlatformDescriptor();
+        if (platformDesc == nullptr || platformDesc->createWindow == nullptr)
+        {
+            if (logger)
+            {
+                logger->Log(CP_LOG_EVENT(ILogger::Error, RuntimeLabel,
+                    Message::Create("Native platform descriptor is unavailable")));
+            }
 
-        if (!window.IsValid())
+            running.store(false);
+            if (onStoppedCallback) onStoppedCallback();
+            return;
+        }
+
+        std::unique_ptr<IWindow, PlatformDestroyWindowFn> window(
+            platformDesc->createWindow(WindowInfo{
+                .title = "Checkpoint Runtime",
+                .extent = Extent2D<int>{ 1280, 720 }
+            }),
+            platformDesc->destroyWindow
+        );
+
+        if (window == nullptr || window->GetNativeWindowHandle() == nullptr)
         {
             if (logger)
             {
@@ -210,13 +116,11 @@ namespace cp::runtime
             return;
         }
 
-        const cp::Extent2D<int> extent = window.GetExtent();
-
         cp::RendererInfo rendererInfo;
         rendererInfo.frameCount = 3;
-        rendererInfo.extent = extent;
+        rendererInfo.extent = window->GetExtent();
         rendererInfo.imageFormat = cp::Format::R8G8B8A8_UNORM;
-        rendererInfo.nativeWindowHandle = window.GetNativeHandle();
+        rendererInfo.nativeWindowHandle = window->GetNativeWindowHandle();
         rendererInfo.registryManager = &registryManager;
         rendererInfo.ecsWorld = &scene->GetWorld();
         rendererInfo.shaderProvider = shaderProvider;
@@ -224,6 +128,11 @@ namespace cp::runtime
         auto renderer = std::make_unique<cp::Renderer>(rendererInfo, rhi);
         renderer->SetPendingPassBlobs(scene->GetPassBlobs());
         cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
+
+        window->SetResizeCallback([&renderer](cp::Extent2D<int> _newExtent)
+        {
+            renderer->Resize(_newExtent);
+        });
 
         size_t systemCount = 0;
         if (const Registry<ecs::ISystem>* sysReg = registryManager.Find<ecs::ISystem>(EcsSystemRegistryName))
@@ -250,9 +159,11 @@ namespace cp::runtime
         Clock deltaTimeClock;
         ecs::CommandBuffer commandBuffer;
 
-        while (!stopRequested.load() && window.PollAndShouldContinue())
+        while (!stopRequested.load() && !window->ShouldClose())
         {
-            const float deltaTime = static_cast<float>(deltaTimeClock.Restart());
+            window->PollEvents();
+
+            const auto deltaTime = static_cast<float>(deltaTimeClock.Restart());
 
             for (const std::unique_ptr<ecs::ISystem>& system : scene->GetActiveSystems())
             {
