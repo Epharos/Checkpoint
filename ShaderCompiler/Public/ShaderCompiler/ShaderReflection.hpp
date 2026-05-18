@@ -42,6 +42,7 @@ namespace cp
         uint32_t stride = 0; // element stride (0 when not an array)
 
         std::vector<FieldReflection> fields; // nested fields for Struct and AOS
+        std::vector<std::string> annotations; // user-defined Slang attributes, e.g. "MaterialParam", "Color"
     };
 
     enum class BindingKind : uint8_t
@@ -90,6 +91,8 @@ namespace cp
 
         // Inner fields
         std::vector<FieldReflection> fields;
+
+        std::vector<std::string> annotations; // user-defined Slang attributes, e.g. "MaterialParam"
     };
 
     struct ShaderReflection

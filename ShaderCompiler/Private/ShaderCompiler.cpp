@@ -114,6 +114,29 @@ namespace cp
 
     static void FillTypeInfo(FieldReflection& field, slang::TypeLayoutReflection* typeLayout);
 
+    static void ExtractUserAttributes(std::vector<std::string>& outAnnotations, slang::VariableReflection* var)
+    {
+        if (!var)
+        {
+            return;
+        }
+
+        const unsigned int attrCount = var->getUserAttributeCount();
+        outAnnotations.reserve(attrCount);
+
+        for (unsigned int j = 0; j < attrCount; j++)
+        {
+            slang::UserAttribute* attr = var->getUserAttributeByIndex(j);
+            if (attr)
+            {
+                if (const char* attrName = attr->getName())
+                {
+                    outAnnotations.push_back(attrName);
+                }
+            }
+        }
+    }
+
     static FieldReflection ExtractField(slang::VariableLayoutReflection* varLayout)
     {
         FieldReflection field;
@@ -127,6 +150,7 @@ namespace cp
         field.offset = static_cast<uint32_t>(varLayout->getOffset(SLANG_PARAMETER_CATEGORY_UNIFORM));
         field.size = static_cast<uint32_t>(typeLayout->getSize(SLANG_PARAMETER_CATEGORY_UNIFORM));
 
+        ExtractUserAttributes(field.annotations, varLayout->getVariable());
         FillTypeInfo(field, typeLayout);
         return field;
     }
@@ -350,6 +374,8 @@ namespace cp
             binding.binding = param->getBindingIndex();
             binding.set = param->getBindingSpace();
             binding.kind = DetermineBindingKind(typeLayout, param->getCategory());
+
+            ExtractUserAttributes(binding.annotations, param->getVariable());
 
             slang::TypeLayoutReflection* elementTypeLayout = typeLayout->getElementTypeLayout();
 
