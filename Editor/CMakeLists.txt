@@ -90,6 +90,7 @@ set(_cp_sdk_libs
     Resources
     RHI_Core
     Runtime
+    Platform
 )
 
 foreach(_lib ${_cp_sdk_libs})

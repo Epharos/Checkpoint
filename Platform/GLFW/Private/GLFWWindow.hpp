@@ -5,12 +5,21 @@
 
 #include <../../../Common/Public/Common/Data/Extent.hpp>
 
+#include <cstdint>
+#include <unordered_set>
+
 namespace cp
 {
 	class GLFWWindow : public IWindow
 	{
 	private:
 		GLFWwindow* window = nullptr;
+
+		mutable std::unordered_set<Key> pressedKeys;
+		mutable glm::vec2 mousePosition { 0.f, 0.f };
+		mutable glm::vec2 mouseScroll { 0.f, 0.f };
+		mutable uint32_t mouseButtons = 0;
+
 	public:
 		GLFWWindow(const WindowInfo& _info);
 		~GLFWWindow();
@@ -39,5 +48,6 @@ namespace cp
 		bool IsVSyncActive() const override;
 
 		void CleanUp() const override;
+		void FillRawInputState(RawInputState& _state) const override;
 	};
 }

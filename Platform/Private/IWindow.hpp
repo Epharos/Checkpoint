@@ -5,7 +5,8 @@
 #include <cstdint>
 #include <functional>
 
-#include <../../Common/Public/Common/Data/Extent.hpp>
+#include <Common/Data/Extent.hpp>
+#include "Platform/Input/RawInputState.hpp"
 
 namespace cp
 {
@@ -49,6 +50,14 @@ namespace cp
 		virtual bool IsVSyncActive() const = 0;
 
 		virtual void CleanUp() const = 0;
+
+		/**
+		 * @brief Copies the accumulated input snapshot into _state and resets per-frame
+		 * accumulators (scroll delta). Call once per frame after PollEvents().
+		 *
+		 * @param _state RawInputState being filled by the function.
+		 */
+		virtual void FillRawInputState(RawInputState& _state) const = 0;
 
 		void SetResizeCallback(std::function<void(Extent2D<int>)> _callback);
 

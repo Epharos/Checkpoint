@@ -6,6 +6,9 @@
 
 #include <ECS/ECS.hpp>
 
+#include <Platform/Input/InputState.hpp>
+#include <Platform/Input/RawInputState.hpp>
+
 #include <RHI/Data.hpp>
 #include <RHI/RenderingHardwareInterface.hpp>
 
@@ -156,12 +159,18 @@ namespace cp::runtime
                     systemCount, scene->GetActivePassNames().size())));
         }
 
+        scene->GetWorld().SetResource(InputState{});
+
         Clock deltaTimeClock;
         ecs::CommandBuffer commandBuffer;
 
         while (!stopRequested.load() && !window->ShouldClose())
         {
             window->PollEvents();
+
+            RawInputState rawInput;
+            window->FillRawInputState(rawInput);
+            scene->GetWorld().GetResource<InputState>().Update(rawInput);
 
             const auto deltaTime = static_cast<float>(deltaTimeClock.Restart());
 

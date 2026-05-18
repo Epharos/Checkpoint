@@ -1,13 +1,15 @@
 add_library(Platform STATIC
 	"Private/IWindow.cpp"
+	"Private/InputState.cpp"
 )
 
-target_include_directories(Platform 
+target_include_directories(Platform
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}/Public
 )
 
-target_link_libraries(Platform 
+target_link_libraries(Platform
 	PUBLIC
 		Common
+		glm::glm
 )

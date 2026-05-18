@@ -5,6 +5,9 @@
 #include <Common/Plugin/PluginRegistryNames.hpp>
 #include <Common/Util/Clock.hpp>
 
+#include <Platform/Input/InputState.hpp>
+#include <Platform/Input/RawInputState.hpp>
+
 #include <RHI/Core.hpp>
 #include <RHI/Data.hpp>
 #include <RHI/RenderingHardwareInterface.hpp>
@@ -90,6 +93,11 @@ namespace cp
             });
         }
 
+        if (scene != nullptr)
+        {
+            scene->GetWorld().SetResource(InputState{});
+        }
+
         initialized = true;
         return true;
     }
@@ -106,6 +114,10 @@ namespace cp
         while (!window->ShouldClose())
         {
             window->PollEvents();
+
+            RawInputState rawInput;
+            window->FillRawInputState(rawInput);
+            scene->GetWorld().GetResource<InputState>().Update(rawInput);
 
             const float deltaTime = static_cast<float>(deltaTimeClock.Restart());
             for (const std::unique_ptr<ecs::ISystem>& system : scene->GetActiveSystems())

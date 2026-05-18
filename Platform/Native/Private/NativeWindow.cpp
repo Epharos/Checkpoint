@@ -1,5 +1,7 @@
 #include "NativeWindow.hpp"
 
+#include <windowsx.h>
+
 namespace
 {
 	constexpr wchar_t NativeWindowClassName[] = L"CheckpointNativeWindow";
@@ -15,6 +17,63 @@ namespace
 		std::wstring result(size, 0);
 		MultiByteToWideChar(CP_UTF8, 0, _str.data(), static_cast<int>(_str.size()), result.data(), size);
 		return result;
+	}
+
+	cp::Key VkToKey(const UINT _vk)
+	{
+		if (_vk >= 'A' && _vk <= 'Z') return static_cast<cp::Key>(static_cast<uint16_t>(cp::Key::A) + (_vk - 'A'));
+		if (_vk >= '0' && _vk <= '9') return static_cast<cp::Key>(static_cast<uint16_t>(cp::Key::D0) + (_vk - '0'));
+		if (_vk >= VK_F1 && _vk <= VK_F12) return static_cast<cp::Key>(static_cast<uint16_t>(cp::Key::F1) + (_vk - VK_F1));
+		if (_vk >= VK_NUMPAD0 && _vk <= VK_NUMPAD9) return static_cast<cp::Key>(static_cast<uint16_t>(cp::Key::Numpad0) + (_vk - VK_NUMPAD0));
+
+		switch (_vk)
+		{
+		case VK_SPACE: return cp::Key::Space;
+		case VK_RETURN: return cp::Key::Enter;
+		case VK_ESCAPE: return cp::Key::Escape;
+		case VK_TAB: return cp::Key::Tab;
+		case VK_BACK: return cp::Key::Backspace;
+		case VK_DELETE: return cp::Key::Delete;
+		case VK_INSERT: return cp::Key::Insert;
+		case VK_HOME: return cp::Key::Home;
+		case VK_END: return cp::Key::End;
+		case VK_PRIOR: return cp::Key::PageUp;
+		case VK_NEXT: return cp::Key::PageDown;
+		case VK_LEFT: return cp::Key::Left;
+		case VK_RIGHT: return cp::Key::Right;
+		case VK_UP: return cp::Key::Up;
+		case VK_DOWN: return cp::Key::Down;
+		case VK_LSHIFT: return cp::Key::LeftShift;
+		case VK_RSHIFT: return cp::Key::RightShift;
+		case VK_LCONTROL: return cp::Key::LeftCtrl;
+		case VK_RCONTROL: return cp::Key::RightCtrl;
+		case VK_LMENU: return cp::Key::LeftAlt;
+		case VK_RMENU: return cp::Key::RightAlt;
+		case VK_LWIN: return cp::Key::LeftSuper;
+		case VK_RWIN: return cp::Key::RightSuper;
+		case VK_ADD: return cp::Key::NumpadAdd;
+		case VK_SUBTRACT: return cp::Key::NumpadSubtract;
+		case VK_MULTIPLY: return cp::Key::NumpadMultiply;
+		case VK_DIVIDE: return cp::Key::NumpadDivide;
+		case VK_DECIMAL: return cp::Key::NumpadDecimal;
+		case VK_OEM_MINUS: return cp::Key::Minus;
+		case VK_OEM_PLUS: return cp::Key::Equal;
+		case VK_OEM_4: return cp::Key::LeftBracket;
+		case VK_OEM_6: return cp::Key::RightBracket;
+		case VK_OEM_5: return cp::Key::Backslash;
+		case VK_OEM_1: return cp::Key::Semicolon;
+		case VK_OEM_7: return cp::Key::Apostrophe;
+		case VK_OEM_3: return cp::Key::GraveAccent;
+		case VK_OEM_COMMA: return cp::Key::Comma;
+		case VK_OEM_PERIOD: return cp::Key::Period;
+		case VK_OEM_2: return cp::Key::Slash;
+		case VK_CAPITAL: return cp::Key::CapsLock;
+		case VK_NUMLOCK: return cp::Key::NumLock;
+		case VK_SCROLL: return cp::Key::ScrollLock;
+		case VK_SNAPSHOT: return cp::Key::PrintScreen;
+		case VK_PAUSE: return cp::Key::Pause;
+		default: return cp::Key::Unknown;
+		}
 	}
 }
 
@@ -37,7 +96,6 @@ namespace cp
 			{
 				self->closeRequested = true;
 			}
-
 			return 0;
 
 		case WM_SIZE:
@@ -50,6 +108,95 @@ namespace cp
 				{
 					self->InvokeResizeCallback(Extent2D<int>{ width, height });
 				}
+			}
+			return DefWindowProcW(_hwnd, _msg, _wp, _lp);
+
+		case WM_KEYDOWN:
+		case WM_SYSKEYDOWN:
+			if (self != nullptr)
+			{
+				const Key key = VkToKey(static_cast<UINT>(_wp));
+				if (key != Key::Unknown)
+				{
+					self->pressedKeys.insert(key);
+				}
+			}
+
+			return DefWindowProcW(_hwnd, _msg, _wp, _lp);
+
+		case WM_KEYUP:
+		case WM_SYSKEYUP:
+			if (self != nullptr)
+			{
+				const Key key = VkToKey(static_cast<UINT>(_wp));
+				if (key != Key::Unknown)
+				{
+					self->pressedKeys.erase(key);
+				}
+			}
+
+			return DefWindowProcW(_hwnd, _msg, _wp, _lp);
+
+		// ---- mouse movement / scroll ----------------------------------------
+		case WM_MOUSEMOVE:
+			if (self != nullptr)
+			{
+				self->mousePosition = {
+					static_cast<float>(GET_X_LPARAM(_lp)),
+					static_cast<float>(GET_Y_LPARAM(_lp))
+				};
+			}
+
+			return DefWindowProcW(_hwnd, _msg, _wp, _lp);
+
+		case WM_MOUSEWHEEL:
+			if (self != nullptr)
+			{
+				self->mouseScroll.y += static_cast<float>(GET_WHEEL_DELTA_WPARAM(_wp)) / static_cast<float>(WHEEL_DELTA);
+			}
+
+			return DefWindowProcW(_hwnd, _msg, _wp, _lp);
+
+		case WM_MOUSEHWHEEL:
+			if (self != nullptr)
+			{
+				self->mouseScroll.x += static_cast<float>(GET_WHEEL_DELTA_WPARAM(_wp)) / static_cast<float>(WHEEL_DELTA);
+			}
+
+			return DefWindowProcW(_hwnd, _msg, _wp, _lp);
+
+		case WM_LBUTTONDOWN: if (self) self->mouseButtons |=  (1u << 0); return 0;
+		case WM_LBUTTONUP: if (self) self->mouseButtons &= ~(1u << 0); return 0;
+		case WM_RBUTTONDOWN: if (self) self->mouseButtons |=  (1u << 1); return 0;
+		case WM_RBUTTONUP: if (self) self->mouseButtons &= ~(1u << 1); return 0;
+		case WM_MBUTTONDOWN: if (self) self->mouseButtons |=  (1u << 2); return 0;
+		case WM_MBUTTONUP: if (self) self->mouseButtons &= ~(1u << 2); return 0;
+
+		case WM_XBUTTONDOWN:
+			if (self)
+			{
+				const WORD xBtn = GET_XBUTTON_WPARAM(_wp);
+				if (xBtn == XBUTTON1) self->mouseButtons |= (1u << 3);
+				else self->mouseButtons |= (1u << 4);
+			}
+
+			return TRUE;
+
+		case WM_XBUTTONUP:
+			if (self)
+			{
+				const WORD xBtn = GET_XBUTTON_WPARAM(_wp);
+				if (xBtn == XBUTTON1) self->mouseButtons &= ~(1u << 3);
+				else self->mouseButtons &= ~(1u << 4);
+			}
+
+			return TRUE;
+
+		case WM_KILLFOCUS:
+			if (self != nullptr)
+			{
+				self->pressedKeys.clear();
+				self->mouseButtons = 0;
 			}
 
 			return DefWindowProcW(_hwnd, _msg, _wp, _lp);
@@ -284,5 +431,15 @@ namespace cp
 	bool NativeWindow::IsVSyncActive() const
 	{
 		return vsyncActive;
+	}
+
+	void NativeWindow::FillRawInputState(RawInputState& _state) const
+	{
+		_state.heldKeys.assign(pressedKeys.begin(), pressedKeys.end());
+		_state.mousePosition = mousePosition;
+		_state.mouseButtons = mouseButtons;
+		_state.mouseScroll = mouseScroll;
+
+		mouseScroll = { 0.f, 0.f };
 	}
 }
