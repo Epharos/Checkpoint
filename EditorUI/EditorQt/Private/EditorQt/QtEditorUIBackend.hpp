@@ -30,6 +30,9 @@ namespace cp::editorqt
 				static std::vector<char*> argv = { nullptr };
 				ownedApplication = std::make_unique<QApplication>(argc, argv.data());
 			}
+
+			LoadApplicationFont();
+			LoadApplicationIcon();
 		}
 
 		std::shared_ptr<cp::editorui::IApplicationWindow> CreateApplicationWindow(
@@ -117,6 +120,46 @@ namespace cp::editorqt
 		}
 
 	private:
+		void LoadApplicationFont()
+		{
+			const QString fontDir = QApplication::applicationDirPath() + "/Editor_Resources/CaskaydiaMonoNF";
+			const int regularId = QFontDatabase::addApplicationFont(fontDir + "/CaskaydiaMonoNerdFont-Regular.ttf");
+
+			if (regularId == -1)
+			{
+				return;
+			}
+
+			for (const QString& variant : {
+				"Bold", "BoldItalic", "Italic",
+				"Light", "LightItalic",
+				"SemiBold", "SemiBoldItalic",
+				"SemiLight", "SemiLightItalic",
+				"ExtraLight", "ExtraLightItalic"
+			})
+			{
+				QFontDatabase::addApplicationFont(fontDir + "/CaskaydiaMonoNerdFont-" + variant + ".ttf");
+			}
+
+			const QStringList families = QFontDatabase::applicationFontFamilies(regularId);
+
+			if (!families.isEmpty())
+			{
+				QApplication::setFont(QFont(families.first(), 10));
+			}
+		}
+
+		void LoadApplicationIcon()
+		{
+			const QString iconPath = QApplication::applicationDirPath() + "/Editor_Resources/logo_bg.png";
+			const QIcon icon(iconPath);
+
+			if (!icon.isNull())
+			{
+				QApplication::setWindowIcon(icon);
+			}
+		}
+
 		std::unique_ptr<QApplication> ownedApplication;
 	};
 }

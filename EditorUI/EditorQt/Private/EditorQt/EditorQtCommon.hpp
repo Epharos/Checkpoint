@@ -4,6 +4,10 @@
 #include <QApplication>
 #include <QColor>
 #include <QComboBox>
+#include <QDir>
+#include <QFont>
+#include <QFontDatabase>
+#include <QIcon>
 #include <QDateTime>
 #include <QDockWidget>
 #include <QHBoxLayout>

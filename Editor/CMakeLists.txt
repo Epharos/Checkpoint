@@ -50,6 +50,14 @@ add_custom_command(TARGET Editor POST_BUILD
     VERBATIM
 )
 
+add_custom_command(TARGET Editor POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/TO_INCLUDE_IN_BUILD/Editor_Resources"
+        "$<TARGET_FILE_DIR:Editor>/Editor_Resources"
+    COMMENT "Copying Editor_Resources to output directory"
+    VERBATIM
+)
+
 if(WIN32)
     find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${Qt6_DIR}/../../../bin")
     if(WINDEPLOYQT_EXECUTABLE)
