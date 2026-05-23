@@ -6,6 +6,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 #include <EditorUI/EditorUI.hpp>
@@ -13,6 +14,8 @@
 #include <Common/Plugin/IEditorStateProvider.hpp>
 #include <Common/Plugin/IViewportController.hpp>
 #include <Common/Plugin/IKeybindRegistrar.hpp>
+#include <Common/Plugin/AssetAuthoringRegistrar.hpp>
+#include <Common/Plugin/AssetContextMenuRegistrar.hpp>
 
 namespace cp
 {
@@ -22,6 +25,7 @@ namespace cp
 	class RenderingHardwareInterface;
 	class Renderer;
 	class RegistryManager;
+	class ShaderCompiler;
 }
 
 namespace cp::editor
@@ -98,6 +102,11 @@ namespace cp::editor
 		std::unique_ptr<cp::IEditorStateProvider> editorStateProvider;
 		std::unique_ptr<cp::IViewportController> viewportController;
 		std::unique_ptr<cp::IKeybindRegistrar> keybindRegistrar;
+		std::unique_ptr<cp::ShaderCompiler> reflectionCompiler;
+		std::unordered_map<std::string, std::shared_ptr<cp::IAssetAuthoring>> assetAuthoringMap;
+		std::unique_ptr<cp::IAssetAuthoringRegistrar> assetAuthoringRegistrar;
+		std::unordered_map<std::string, std::shared_ptr<cp::IAssetContextMenuContributor>> assetContextMenuMap;
+		std::unique_ptr<cp::IAssetContextMenuRegistrar> assetContextMenuRegistrar;
 
 		std::unique_ptr<cp::editor::UserPluginManager> userPluginManager;
 	};

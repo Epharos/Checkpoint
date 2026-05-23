@@ -31,6 +31,7 @@
 #include <VulkanRHI.hpp>
 
 #include "ShaderCacheProvider.hpp"
+#include <ShaderCompiler/ShaderCompiler.hpp>
 
 #include <filesystem>
 
@@ -87,29 +88,33 @@ namespace cp::editor
 
 		cp::editorui::InspectorField::Value ToEditorInspectorValue(const cp::AuthoringValue& _value)
 		{
-			if (const bool* boolValue = std::get_if<bool>(&_value))
+			if (const bool* v = std::get_if<bool>(&_value))
 			{
-				return *boolValue;
+				return *v;
 			}
-			if (const int64_t* intValue = std::get_if<int64_t>(&_value))
+			if (const int64_t* v = std::get_if<int64_t>(&_value))
 			{
-				return *intValue;
+				return *v;
 			}
-			if (const double* floatValue = std::get_if<double>(&_value))
+			if (const double* v = std::get_if<double>(&_value))
 			{
-				return *floatValue;
+				return *v;
 			}
-			if (const std::string* stringValue = std::get_if<std::string>(&_value))
+			if (const std::string* v = std::get_if<std::string>(&_value))
 			{
-				return *stringValue;
+				return *v;
 			}
-			if (const cp::AuthoringVec3* vec3Value = std::get_if<cp::AuthoringVec3>(&_value))
+			if (const cp::AuthoringVec2* v = std::get_if<cp::AuthoringVec2>(&_value))
 			{
-				return cp::editorui::InspectorField::Vec3{
-					.x = vec3Value->x,
-					.y = vec3Value->y,
-					.z = vec3Value->z
-				};
+				return cp::editorui::InspectorField::Vec2{ .x = v->x, .y = v->y };
+			}
+			if (const cp::AuthoringVec3* v = std::get_if<cp::AuthoringVec3>(&_value))
+			{
+				return cp::editorui::InspectorField::Vec3{ .x = v->x, .y = v->y, .z = v->z };
+			}
+			if (const cp::AuthoringVec4* v = std::get_if<cp::AuthoringVec4>(&_value))
+			{
+				return cp::editorui::InspectorField::Vec4{ .x = v->x, .y = v->y, .z = v->z, .w = v->w };
 			}
 
 			return std::string{};
@@ -119,49 +124,123 @@ namespace cp::editor
 		{
 			switch (_type)
 			{
-			case cp::AuthoringValueType::Bool:
-				return cp::editorui::InspectorField::ValueType::Bool;
-			case cp::AuthoringValueType::Int:
-				return cp::editorui::InspectorField::ValueType::Int;
-			case cp::AuthoringValueType::Float:
-				return cp::editorui::InspectorField::ValueType::Float;
-			case cp::AuthoringValueType::Vec3:
-				return cp::editorui::InspectorField::ValueType::Vec3;
+			case cp::AuthoringValueType::Bool: return cp::editorui::InspectorField::ValueType::Bool;
+			case cp::AuthoringValueType::Int: return cp::editorui::InspectorField::ValueType::Int;
+			case cp::AuthoringValueType::Float: return cp::editorui::InspectorField::ValueType::Float;
+			case cp::AuthoringValueType::Vec2: return cp::editorui::InspectorField::ValueType::Vec2;
+			case cp::AuthoringValueType::Vec3: return cp::editorui::InspectorField::ValueType::Vec3;
+			case cp::AuthoringValueType::Vec4: return cp::editorui::InspectorField::ValueType::Vec4;
 			case cp::AuthoringValueType::String:
-			default:
-				return cp::editorui::InspectorField::ValueType::String;
+			default: return cp::editorui::InspectorField::ValueType::String;
 			}
 		}
 
 		cp::AuthoringValue ToAuthoringValue(const cp::editorui::InspectorField::Value& _value)
 		{
-			if (const bool* boolValue = std::get_if<bool>(&_value))
+			if (const bool* v = std::get_if<bool>(&_value))
 			{
-				return *boolValue;
+				return *v;
 			}
-			if (const int64_t* intValue = std::get_if<int64_t>(&_value))
+			if (const int64_t* v = std::get_if<int64_t>(&_value))
 			{
-				return *intValue;
+				return *v;
 			}
-			if (const double* floatValue = std::get_if<double>(&_value))
+			if (const double* v = std::get_if<double>(&_value))
 			{
-				return *floatValue;
+				return *v;
 			}
-			if (const std::string* stringValue = std::get_if<std::string>(&_value))
+			if (const std::string* v = std::get_if<std::string>(&_value))
 			{
-				return *stringValue;
+				return *v;
 			}
-			if (const cp::editorui::InspectorField::Vec3* vec3Value = std::get_if<cp::editorui::InspectorField::Vec3>(&_value))
+			if (const cp::editorui::InspectorField::Vec2* v = std::get_if<cp::editorui::InspectorField::Vec2>(&_value))
 			{
-				return cp::AuthoringVec3{
-					.x = vec3Value->x,
-					.y = vec3Value->y,
-					.z = vec3Value->z
-				};
+				return cp::AuthoringVec2{ .x = v->x, .y = v->y };
+			}
+			if (const cp::editorui::InspectorField::Vec3* v = std::get_if<cp::editorui::InspectorField::Vec3>(&_value))
+			{
+				return cp::AuthoringVec3{ .x = v->x, .y = v->y, .z = v->z };
+			}
+			if (const cp::editorui::InspectorField::Vec4* v = std::get_if<cp::editorui::InspectorField::Vec4>(&_value))
+			{
+				return cp::AuthoringVec4{ .x = v->x, .y = v->y, .z = v->z, .w = v->w };
 			}
 
 			return std::string{};
 		}
+
+		std::vector<cp::editorui::InspectorSection> ToInspectorSections(
+			const std::vector<cp::AuthoringSectionDescriptor>& _authored)
+		{
+			std::vector<cp::editorui::InspectorSection> result;
+			result.reserve(_authored.size());
+
+			for (const auto& s : _authored)
+			{
+				cp::editorui::InspectorSection section;
+				section.id = s.id;
+				section.title = s.title;
+
+				for (const auto& f : s.fields)
+				{
+					cp::editorui::InspectorField field;
+					field.id = f.id;
+					field.label = f.label;
+					field.valueType = ToEditorInspectorValueType(f.valueType);
+					field.inputType = static_cast<cp::editorui::InspectorField::InputType>(f.inputType);
+					field.value = ToEditorInspectorValue(f.value);
+					field.readOnly = f.readOnly;
+					field.fileExtensions = f.fileExtensions;
+					section.fields.push_back(std::move(field));
+				}
+
+				result.push_back(std::move(section));
+			}
+
+			return result;
+		}
+
+		struct AssetAuthoringRegistrar final : public cp::IAssetAuthoringRegistrar
+		{
+			std::unordered_map<std::string, std::shared_ptr<cp::IAssetAuthoring>>& map;
+
+			explicit AssetAuthoringRegistrar(
+				std::unordered_map<std::string, std::shared_ptr<cp::IAssetAuthoring>>& _map)
+				: map(_map)
+			{
+			}
+
+			void Register(std::shared_ptr<cp::IAssetAuthoring> authoring) override
+			{
+				map[std::string(authoring->FileExtension())] = std::move(authoring);
+			}
+
+			void Unregister(std::string_view extension) override
+			{
+				map.erase(std::string(extension));
+			}
+		};
+
+		struct AssetContextMenuRegistrar final : public cp::IAssetContextMenuRegistrar
+		{
+			std::unordered_map<std::string, std::shared_ptr<cp::IAssetContextMenuContributor>>& map;
+
+			explicit AssetContextMenuRegistrar(
+				std::unordered_map<std::string, std::shared_ptr<cp::IAssetContextMenuContributor>>& _map)
+				: map(_map)
+			{
+			}
+
+			void Register(std::shared_ptr<cp::IAssetContextMenuContributor> contributor) override
+			{
+				map[std::string(contributor->FileExtension())] = std::move(contributor);
+			}
+
+			void Unregister(std::string_view extension) override
+			{
+				map.erase(std::string(extension));
+			}
+		};
 
 		std::string ToText(const cp::Message& _message)
 		{
@@ -414,12 +493,12 @@ namespace cp::editor
 			viewportView->SetKeyReleaseHandler(nullptr);
 		}
 
-		if (renderer != nullptr)
+		if (scene != nullptr)
 		{
-			renderer->ResetFrameGraph();
+			scene->GetWorld().ClearComponentTypes();
+			scene->Clear();
+			scene.reset();
 		}
-		renderer.reset();
-		rhi.reset();
 
 		if (assetRegistryInitialized)
 		{
@@ -427,11 +506,12 @@ namespace cp::editor
 			assetRegistryInitialized = false;
 		}
 
-		if (scene != nullptr)
+		if (renderer != nullptr)
 		{
-			scene->GetWorld().ClearComponentTypes();
-			scene->Clear();
+			renderer->ResetFrameGraph();
 		}
+		renderer.reset();
+		rhi.reset();
 
 		if (sceneConfigView != nullptr)
 		{
@@ -439,17 +519,18 @@ namespace cp::editor
 			sceneConfigView->SetParamFieldEditedHandler(nullptr);
 			sceneConfigView->SetApplyHandler(nullptr);
 		}
+
 		if (inspectorView != nullptr)
 		{
 			inspectorView->SetFieldEditedHandler(nullptr);
 			inspectorView->SetAddComponentMenuHandler(nullptr);
 		}
+
 		if (hierarchyView != nullptr)
 		{
 			hierarchyView->SetEntityActivatedHandler(nullptr);
 			hierarchyView->SetContextMenuHandler(nullptr);
 		}
-
 
 		loadSceneDelegate = nullptr;
 
@@ -613,6 +694,85 @@ namespace cp::editor
 		const auto assetsPanel = dockHost->CreatePanel({ "assets", "Assets" });
 		assetView = backend->CreateAssetExplorerView("assetExplorer");
 		assetView->SetProjectRoot(assetsRootPath);
+		assetView->SetAssetSelectedHandler([this](const std::filesystem::path& _path)
+		{
+			if (_path.empty() || !std::filesystem::is_regular_file(_path))
+			{
+				return;
+			}
+
+			std::string ext = _path.extension().string();
+			if (!ext.empty() && ext.front() == '.')
+			{
+				ext = ext.substr(1);
+			}
+
+			const auto it = assetAuthoringMap.find(ext);
+			if (it == assetAuthoringMap.end())
+			{
+				return;
+			}
+
+			cp::IAssetAuthoring* authoring = it->second.get();
+			inspectorView->SetSections(ToInspectorSections(authoring->BuildSections(_path)));
+			inspectorView->SetAddComponentMenuHandler(nullptr);
+			inspectorView->SetRemoveComponentHandler(nullptr);
+			inspectorView->SetFieldEditedHandler([this, authoring, path = _path](
+				std::string_view _sectionId,
+				std::string_view _fieldId,
+				const cp::editorui::InspectorField::Value& _value
+			)
+			{
+				std::string error;
+				const bool applied = authoring->ApplyValue(path, _sectionId, _fieldId, ToAuthoringValue(_value), error);
+				if (!applied)
+				{
+					if (logger)
+					{
+						logger->Log(CP_LOG_EVENT(
+							cp::ILogger::Error, "AssetAuthoring",
+							cp::Message::Create("ApplyValue failed for '{}': {}", path.filename().string(), error)));
+					}
+
+					return;
+				}
+
+				inspectorView->SetSections(ToInspectorSections(authoring->BuildSections(path)));
+			});
+		});
+		assetView->SetContextMenuHandler([this](const std::filesystem::path& _path)
+			-> std::shared_ptr<cp::editorui::IContextMenu>
+		{
+			std::string ext = _path.extension().string();
+			if (!ext.empty() && ext.front() == '.')
+			{
+				ext = ext.substr(1);
+			}
+
+			const auto it = assetContextMenuMap.find(ext);
+			if (it == assetContextMenuMap.end())
+			{
+				return nullptr;
+			}
+
+			const std::vector<cp::AssetContextMenuAction> actions = it->second->GetActions(_path);
+			if (actions.empty())
+			{
+				return nullptr;
+			}
+
+			auto menu = backend->CreateContextMenu("assetContextMenu");
+			for (const cp::AssetContextMenuAction& action : actions)
+			{
+				menu->AddAction(action.label, [this, callback = action.callback]()
+				{
+					callback();
+					assetView->Refresh();
+				});
+			}
+
+			return menu;
+		});
 		assetsPanel->SetContent(assetView);
 
 		const auto consolePanel = dockHost->CreatePanel({ "console", "Console" });
@@ -784,6 +944,10 @@ namespace cp::editor
 		keybindReg->registry = keybindRegistry.get();
 		keybindRegistrar.reset(keybindReg);
 
+		reflectionCompiler = std::make_unique<cp::ShaderCompiler>();
+		assetAuthoringRegistrar = std::make_unique<AssetAuthoringRegistrar>(assetAuthoringMap);
+		assetContextMenuRegistrar = std::make_unique<AssetContextMenuRegistrar>(assetContextMenuMap);
+
 		cp::PluginHostContext pluginHostContext
 		{
 			.loadProfile = cp::PluginHostLoadProfile::RuntimeThenEditor,
@@ -798,7 +962,10 @@ namespace cp::editor
 				.assetRegistry = &cp::AssetRegistry::Instance(),
 				.editorState = editorStateProvider.get(),
 				.viewportController = viewportController.get(),
-				.keybindRegistrar = keybindRegistrar.get()
+				.keybindRegistrar = keybindRegistrar.get(),
+				.assetAuthoringRegistrar = assetAuthoringRegistrar.get(),
+				.assetContextMenuRegistrar = assetContextMenuRegistrar.get(),
+				.shaderCompiler = reflectionCompiler.get()
 			}
 		};
 		pluginHost = std::make_unique<cp::PluginHost>(pluginHostContext);
@@ -1251,7 +1418,31 @@ namespace cp::editor
 			hierarchyView->SetSelectedEntity(sceneState->selectedEntityId);
 		};
 
-		const auto refreshInspectorView = [this, sceneState, _config, componentAuthoringBindings]()
+		const auto selectedEntityResolver = [sceneState]() -> std::optional<cp::ecs::Entity>
+		{
+			const std::optional<cp::editorui::EntityId> targetId =
+				sceneState->contextEntityId.has_value()
+					? sceneState->contextEntityId
+					: sceneState->selectedEntityId;
+
+			if (!targetId.has_value())
+			{
+				return std::nullopt;
+			}
+
+			const auto it = sceneState->entityLookup.find(targetId.value());
+			if (it == sceneState->entityLookup.end())
+			{
+				return std::nullopt;
+			}
+
+			return it->second;
+		};
+
+		auto refreshInspectorViewFn = std::make_shared<std::function<void()>>();
+
+		*refreshInspectorViewFn = [this, sceneState, _config, componentAuthoringBindings,
+		                           selectedEntityResolver, refreshInspectorViewFn]()
 		{
 			std::vector<cp::editorui::InspectorSection> sections;
 			sceneState->sectionToAuthoring.clear();
@@ -1330,7 +1521,8 @@ namespace cp::editor
 									.valueType = ToEditorInspectorValueType(authoredField.valueType),
 									.inputType = static_cast<cp::editorui::InspectorField::InputType>(authoredField.inputType),
 									.value = ToEditorInspectorValue(authoredField.value),
-									.readOnly = authoredField.readOnly
+									.readOnly = authoredField.readOnly,
+									.fileExtensions = authoredField.fileExtensions
 								});
 							}
 
@@ -1341,6 +1533,98 @@ namespace cp::editor
 			}
 
 			inspectorView->SetSections(std::move(sections));
+
+			auto refreshPtr = refreshInspectorViewFn;
+			inspectorView->SetFieldEditedHandler([this, sceneState, selectedEntityResolver,
+			                                      componentAuthoringBindings, refreshPtr](
+				const std::string_view _sectionId,
+				const std::string_view _fieldId,
+				const cp::editorui::InspectorField::Value& _value
+			)
+			{
+				const std::optional<cp::ecs::Entity> selectedEntity = selectedEntityResolver();
+				if (!selectedEntity.has_value())
+				{
+					return;
+				}
+
+				const auto authoringIt = sceneState->sectionToAuthoring.find(std::string(_sectionId));
+				if (authoringIt == sceneState->sectionToAuthoring.end())
+				{
+					return;
+				}
+
+				const size_t authoringIndex = authoringIt->second;
+				if (authoringIndex >= componentAuthoringBindings->size())
+				{
+					return;
+				}
+
+				ComponentAuthoringBinding& binding = componentAuthoringBindings->at(authoringIndex);
+				std::string error;
+				if (!binding.authoring->ApplyValue(
+						scene->GetWorld(),
+						selectedEntity.value(),
+					    _fieldId,
+					    ToAuthoringValue(_value),
+					    error
+					)
+				)
+				{
+					logger->Log(CP_LOG_EVENT(
+						cp::ILogger::Warning,
+						"Inspector",
+						cp::Message::Create("Failed to apply {}.{}: {}", _sectionId, _fieldId, error)));
+				}
+
+				if (refreshPtr && *refreshPtr)
+				{
+					(*refreshPtr)();
+				}
+			});
+
+			inspectorView->SetAddComponentMenuHandler([this, sceneState, selectedEntityResolver,
+			                                           componentAuthoringBindings]()
+				-> std::shared_ptr<cp::editorui::IContextMenu>
+			{
+				const auto menu = backend->CreateContextMenu("inspector.addComponent");
+				const std::optional<cp::ecs::Entity> selectedEntity = selectedEntityResolver();
+
+				if (selectedEntity.has_value() && !componentAuthoringBindings->empty())
+				{
+					for (ComponentAuthoringBinding& binding : *componentAuthoringBindings)
+					{
+						const bool hasComponent =
+							binding.authoring->HasComponent(scene->GetWorld(), selectedEntity.value());
+
+						binding.addAction->SetEnabled(!hasComponent);
+						menu->AddAction(binding.addAction);
+					}
+				}
+
+				return menu;
+			});
+
+			inspectorView->SetRemoveComponentHandler([sceneState, componentAuthoringBindings](
+				const std::string_view _sectionId
+			)
+			{
+				const auto it = sceneState->sectionToAuthoring.find(std::string(_sectionId));
+				if (it == sceneState->sectionToAuthoring.end())
+				{
+					return;
+				}
+
+				componentAuthoringBindings->at(it->second).removeAction->Trigger();
+			});
+		};
+
+		const auto refreshInspectorView = [refreshInspectorViewFn]()
+		{
+			if (refreshInspectorViewFn && *refreshInspectorViewFn)
+			{
+				(*refreshInspectorViewFn)();
+			}
 		};
 
 
@@ -1373,31 +1657,9 @@ namespace cp::editor
 
 		const auto refreshSceneConfigView = [this]() { RefreshSceneConfigView(); };
 
-		auto toInspectorSections = [](const std::vector<cp::AuthoringSectionDescriptor>& _authored)
+		const auto toInspectorSections = [](const std::vector<cp::AuthoringSectionDescriptor>& _authored)
 		{
-			std::vector<cp::editorui::InspectorSection> result;
-			result.reserve(_authored.size());
-			for (const auto& s : _authored)
-			{
-				cp::editorui::InspectorSection section;
-				section.id = s.id;
-				section.title = s.title;
-				for (const auto& f : s.fields)
-				{
-					cp::editorui::InspectorField field;
-					field.id = f.id;
-					field.label = f.label;
-					field.valueType = ToEditorInspectorValueType(f.valueType);
-					field.inputType = (f.inputType == cp::AuthoringInputType::FilePath)
-						? cp::editorui::InspectorField::InputType::FilePath
-						: cp::editorui::InspectorField::InputType::Default;
-					field.value = ToEditorInspectorValue(f.value);
-					field.readOnly = f.readOnly;
-					section.fields.push_back(std::move(field));
-				}
-				result.push_back(std::move(section));
-			}
-			return result;
+			return ToInspectorSections(_authored);
 		};
 
 		sceneConfigView->SetSelectionChangedHandler([this, systemAuthoringBindings, passAuthoringBindings, toInspectorSections](
@@ -1538,63 +1800,6 @@ namespace cp::editor
 		});
 
 		refreshSceneConfigView();
-
-		const auto selectedEntityResolver = [sceneState]() -> std::optional<cp::ecs::Entity>
-		{
-			const std::optional<cp::editorui::EntityId> targetId =
-				sceneState->contextEntityId.has_value()
-					? sceneState->contextEntityId
-					: sceneState->selectedEntityId;
-
-			if (!targetId.has_value())
-			{
-				return std::nullopt;
-			}
-
-			const auto it = sceneState->entityLookup.find(targetId.value());
-			if (it == sceneState->entityLookup.end())
-			{
-				return std::nullopt;
-			}
-			return it->second;
-		};
-
-		inspectorView->SetFieldEditedHandler([this, sceneState, selectedEntityResolver, componentAuthoringBindings, refreshInspectorView](
-			const std::string_view _sectionId,
-			const std::string_view _fieldId,
-			const cp::editorui::InspectorField::Value& _value)
-		{
-			const std::optional<cp::ecs::Entity> selectedEntity = selectedEntityResolver();
-			if (!selectedEntity.has_value())
-			{
-				return;
-			}
-
-			const auto authoringIt = sceneState->sectionToAuthoring.find(std::string(_sectionId));
-			if (authoringIt == sceneState->sectionToAuthoring.end())
-			{
-				return;
-			}
-
-			const size_t authoringIndex = authoringIt->second;
-			if (authoringIndex >= componentAuthoringBindings->size())
-			{
-				return;
-			}
-
-			ComponentAuthoringBinding& binding = componentAuthoringBindings->at(authoringIndex);
-			std::string error;
-			if (!binding.authoring->ApplyValue(scene->GetWorld(), selectedEntity.value(), _fieldId, ToAuthoringValue(_value), error))
-			{
-				logger->Log(CP_LOG_EVENT(
-					cp::ILogger::Warning,
-					"Inspector",
-					cp::Message::Create("Failed to apply {}.{}: {}", _sectionId, _fieldId, error)
-				));
-			}
-
-			refreshInspectorView();
-		});
 
 		inspectorView->SetAddComponentMenuHandler([this, sceneState, selectedEntityResolver, componentAuthoringBindings]() -> std::shared_ptr<cp::editorui::IContextMenu>
 		{

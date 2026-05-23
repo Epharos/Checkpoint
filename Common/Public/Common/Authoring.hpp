@@ -10,17 +10,26 @@ namespace cp
 {
 	enum class AuthoringInputType : uint8_t
 	{
-		Default,
-		FilePath
+		Default = 0,
+		FilePath = 1,
+		Color = 2,
 	};
 
 	enum class AuthoringValueType : uint8_t
 	{
-		Bool,
-		Int,
-		Float,
-		String,
-		Vec3
+		Bool = 0,
+		Int = 1,
+		Float = 2,
+		String = 3,
+		Vec3 = 4,
+		Vec2 = 5,
+		Vec4 = 6,
+	};
+
+	struct AuthoringVec2
+	{
+		double x = 0.0;
+		double y = 0.0;
 	};
 
 	struct AuthoringVec3
@@ -30,7 +39,15 @@ namespace cp
 		double z = 0.0;
 	};
 
-	using AuthoringValue = std::variant<bool, int64_t, double, std::string, AuthoringVec3>;
+	struct AuthoringVec4
+	{
+		double x = 0.0;
+		double y = 0.0;
+		double z = 0.0;
+		double w = 0.0;
+	};
+
+	using AuthoringValue = std::variant<bool, int64_t, double, std::string, AuthoringVec2, AuthoringVec3, AuthoringVec4>;
 
 	using AuthoringParams = std::unordered_map<std::string, AuthoringValue>;
 
@@ -42,6 +59,8 @@ namespace cp
 		AuthoringInputType inputType = AuthoringInputType::Default;
 		AuthoringValue value = std::string{};
 		bool readOnly = false;
+
+		std::vector<std::string> fileExtensions;
 	};
 
 	struct AuthoringSectionDescriptor

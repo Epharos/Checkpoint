@@ -19,9 +19,9 @@ namespace cp::editorqt
 		explicit QtFileDropWidget(QWidget* _parent = nullptr)
 			: QWidget(_parent),
 			  layout(new QHBoxLayout(this)),
-			  label(new QLabel("Drop mesh file here...")),
+			  label(new QLabel("Drop file here...")),
 			  clearButton(new QPushButton("Clear")),
-			  placeholderText("Drop mesh file here...")
+			  placeholderText("Drop file here...")
 		{
 			setAcceptDrops(true);
 			setStyleSheet("border: 2px dashed #888; border-radius: 4px; background-color: #f5f5f5; color: #21242c;");
@@ -207,7 +207,7 @@ namespace cp::editorqt
 		std::unique_ptr<QHBoxLayout> layout;
 		std::unique_ptr<QLabel> label;
 		std::unique_ptr<QPushButton> clearButton;
-		std::vector<std::string> acceptedExtensions{".fbx", ".obj", ".gltf", ".glb", ".blend"};
+		std::vector<std::string> acceptedExtensions;
 		std::filesystem::path currentFilePath;
 		std::string placeholderText;
 		FileDropCallback onFileDropped;

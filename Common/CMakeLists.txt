@@ -42,9 +42,14 @@ add_library(Common STATIC
     "Public/Common/Plugin/IEditorStateProvider.hpp"
     "Public/Common/Plugin/IViewportController.hpp"
     "Public/Common/Plugin/IKeybindRegistrar.hpp"
+    "Public/Common/Plugin/AssetAuthoring.hpp"
+    "Public/Common/Plugin/AssetAuthoringRegistrar.hpp"
+    "Public/Common/Plugin/AssetContextMenu.hpp"
+    "Public/Common/Plugin/AssetContextMenuRegistrar.hpp"
 
     "Public/Common/Serialization/ISerializer.hpp"
     "Public/Common/Scene/SceneDescription.hpp"
+    "Public/Common/ShaderReflection.hpp"
 )
 
 target_include_directories(Common PUBLIC

@@ -59,6 +59,7 @@ namespace cp::editor
                 .diagnostics = compiled.diagnostics,
                 .binary = compiled.binary,
                 .format = format,
+                .reflection = compiled.reflection,
             };
         }
 

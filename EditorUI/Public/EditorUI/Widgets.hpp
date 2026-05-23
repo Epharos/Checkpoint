@@ -34,6 +34,7 @@ namespace cp::editorui
 		virtual ~IContextMenu() = default;
 
 		virtual void AddAction(std::shared_ptr<IAction> _action) = 0;
+		virtual void AddAction(std::string _label, std::function<void()> _callback) = 0;
 		virtual void AddSeparator() = 0;
 	};
 
@@ -70,8 +71,10 @@ namespace cp::editorui
 		virtual void SetProjectRoot(std::filesystem::path _root) = 0;
 		virtual void SetEntries(std::vector<AssetEntry> _entries) = 0;
 		virtual std::optional<std::filesystem::path> GetSelectedPath() const = 0;
+		virtual void SetAssetSelectedHandler(AssetHandler _handler) = 0;
 		virtual void SetAssetOpenedHandler(AssetHandler _handler) = 0;
 		virtual void SetContextMenuHandler(AssetContextMenuHandler _handler) = 0;
+		virtual void Refresh() = 0;
 	};
 
 	class IConsoleView : public IWidget

@@ -133,28 +133,50 @@ namespace cp::editorui
 		std::string label;
 		enum class ValueType : std::uint8_t
 		{
-			Bool,
-			Int,
-			Float,
-			String,
-			Vec3
+			Bool = 0,
+			Int = 1,
+			Float = 2,
+			String = 3,
+			Vec3 = 4,
+			Vec2 = 5,
+			Vec4 = 6,
 		};
+
 		enum class InputType : std::uint8_t
 		{
-			Default,
-			FilePath
+			Default = 0,
+			FilePath = 1,
+			Color = 2,
 		};
+
+		struct Vec2
+		{
+			double x = 0.0;
+			double y = 0.0;
+		};
+
 		struct Vec3
 		{
 			double x = 0.0;
 			double y = 0.0;
 			double z = 0.0;
 		};
-		using Value = std::variant<bool, std::int64_t, double, std::string, Vec3>;
+
+		struct Vec4
+		{
+			double x = 0.0;
+			double y = 0.0;
+			double z = 0.0;
+			double w = 0.0;
+		};
+
+		using Value = std::variant<bool, std::int64_t, double, std::string, Vec2, Vec3, Vec4>;
 		ValueType valueType = ValueType::String;
 		InputType inputType = InputType::Default;
 		Value value = std::string{};
 		bool readOnly = true;
+
+		std::vector<std::string> fileExtensions;
 	};
 
 	struct InspectorSection

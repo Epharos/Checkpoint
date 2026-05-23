@@ -5,7 +5,10 @@
 #include "QtFileDropWidget.hpp"
 
 #include <QCheckBox>
+#include <QColor>
+#include <QColorDialog>
 #include <QDoubleSpinBox>
+#include <QHBoxLayout>
 #include <QMenu>
 #include <QSignalBlocker>
 #include <QSpinBox>
@@ -170,8 +173,20 @@ namespace cp::editorqt
 			case cp::editorui::InspectorField::ValueType::Float:
 				AttachFloatEditor(_item, _sectionId, _field);
 				break;
+			case cp::editorui::InspectorField::ValueType::Vec2:
+				AttachVec2Editor(_item, _sectionId, _field);
+				break;
 			case cp::editorui::InspectorField::ValueType::Vec3:
-				AttachVec3Editor(_item, _sectionId, _field);
+				if (_field.inputType == cp::editorui::InspectorField::InputType::Color)
+					AttachColorEditor(_item, _sectionId, _field);
+				else
+					AttachVec3Editor(_item, _sectionId, _field);
+				break;
+			case cp::editorui::InspectorField::ValueType::Vec4:
+				if (_field.inputType == cp::editorui::InspectorField::InputType::Color)
+					AttachColorEditor(_item, _sectionId, _field);
+				else
+					AttachVec4Editor(_item, _sectionId, _field);
 				break;
 			case cp::editorui::InspectorField::ValueType::String:
 			default:
@@ -254,6 +269,26 @@ namespace cp::editorqt
 			if (_field.inputType == cp::editorui::InspectorField::InputType::FilePath && !_field.readOnly)
 			{
 				auto* dropWidget = new cp::editorqt::QtFileDropWidget(tree.get());
+
+				if (!_field.fileExtensions.empty())
+				{
+					dropWidget->SetFileExtensions(_field.fileExtensions);
+
+					// Auto-generate a placeholder from the extension list, e.g. "Drop .matinst file here..."
+					std::string placeholder = "Drop ";
+					for (size_t i = 0; i < _field.fileExtensions.size(); ++i)
+					{
+						if (i > 0)
+						{
+							placeholder += " / ";
+						}
+						placeholder += ".";
+						placeholder += _field.fileExtensions[i];
+					}
+					placeholder += " file here...";
+					dropWidget->SetPlaceholderText(placeholder);
+				}
+
 				if (const std::string* value = std::get_if<std::string>(&_field.value))
 				{
 					dropWidget->SetFilePath(std::filesystem::path(*value));
@@ -325,6 +360,168 @@ namespace cp::editorqt
 			QObject::connect(xSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), tree.get(), [emitVec](double) { emitVec(); });
 			QObject::connect(ySpin, qOverload<double>(&QDoubleSpinBox::valueChanged), tree.get(), [emitVec](double) { emitVec(); });
 			QObject::connect(zSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), tree.get(), [emitVec](double) { emitVec(); });
+		}
+
+		void AttachVec2Editor(
+			QTreeWidgetItem& _item,
+			const std::string& _sectionId,
+			const cp::editorui::InspectorField& _field
+		)
+		{
+			auto* container = new QWidget(tree.get());
+			auto* layout = new QHBoxLayout(container);
+			layout->setContentsMargins(0, 0, 0, 0);
+			layout->setSpacing(4);
+
+			auto* xSpin = new QDoubleSpinBox(container);
+			auto* ySpin = new QDoubleSpinBox(container);
+			for (QDoubleSpinBox* spin : {xSpin, ySpin})
+			{
+				spin->setRange(-1000000.0, 1000000.0);
+				spin->setDecimals(4);
+				spin->setSingleStep(0.01);
+				spin->setEnabled(!_field.readOnly);
+				layout->addWidget(spin);
+			}
+
+			if (const cp::editorui::InspectorField::Vec2* vec = std::get_if<cp::editorui::InspectorField::Vec2>(&_field.value))
+			{
+				const QSignalBlocker xBlocker(xSpin);
+				const QSignalBlocker yBlocker(ySpin);
+				xSpin->setValue(vec->x);
+				ySpin->setValue(vec->y);
+			}
+
+			tree->setItemWidget(&_item, 1, container);
+			auto emitVec = [this, xSpin, ySpin, sectionId = _sectionId, fieldId = _field.id]()
+			{
+				EmitFieldEdited(sectionId, fieldId, cp::editorui::InspectorField::Vec2{
+					.x = xSpin->value(),
+					.y = ySpin->value()
+				});
+			};
+			QObject::connect(xSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), tree.get(), [emitVec](double) { emitVec(); });
+			QObject::connect(ySpin, qOverload<double>(&QDoubleSpinBox::valueChanged), tree.get(), [emitVec](double) { emitVec(); });
+		}
+
+		void AttachVec4Editor(
+			QTreeWidgetItem& _item,
+			const std::string& _sectionId,
+			const cp::editorui::InspectorField& _field
+		)
+		{
+			auto* container = new QWidget(tree.get());
+			auto* layout = new QHBoxLayout(container);
+			layout->setContentsMargins(0, 0, 0, 0);
+			layout->setSpacing(4);
+
+			auto* xSpin = new QDoubleSpinBox(container);
+			auto* ySpin = new QDoubleSpinBox(container);
+			auto* zSpin = new QDoubleSpinBox(container);
+			auto* wSpin = new QDoubleSpinBox(container);
+			for (QDoubleSpinBox* spin : {xSpin, ySpin, zSpin, wSpin})
+			{
+				spin->setRange(-1000000.0, 1000000.0);
+				spin->setDecimals(4);
+				spin->setSingleStep(0.01);
+				spin->setEnabled(!_field.readOnly);
+				layout->addWidget(spin);
+			}
+
+			if (const cp::editorui::InspectorField::Vec4* vec = std::get_if<cp::editorui::InspectorField::Vec4>(&_field.value))
+			{
+				const QSignalBlocker xBlocker(xSpin);
+				const QSignalBlocker yBlocker(ySpin);
+				const QSignalBlocker zBlocker(zSpin);
+				const QSignalBlocker wBlocker(wSpin);
+				xSpin->setValue(vec->x);
+				ySpin->setValue(vec->y);
+				zSpin->setValue(vec->z);
+				wSpin->setValue(vec->w);
+			}
+
+			tree->setItemWidget(&_item, 1, container);
+			auto emitVec = [this, xSpin, ySpin, zSpin, wSpin, sectionId = _sectionId, fieldId = _field.id]()
+			{
+				EmitFieldEdited(sectionId, fieldId, cp::editorui::InspectorField::Vec4{
+					.x = xSpin->value(),
+					.y = ySpin->value(),
+					.z = zSpin->value(),
+					.w = wSpin->value()
+				});
+			};
+			QObject::connect(xSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), tree.get(), [emitVec](double) { emitVec(); });
+			QObject::connect(ySpin, qOverload<double>(&QDoubleSpinBox::valueChanged), tree.get(), [emitVec](double) { emitVec(); });
+			QObject::connect(zSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), tree.get(), [emitVec](double) { emitVec(); });
+			QObject::connect(wSpin, qOverload<double>(&QDoubleSpinBox::valueChanged), tree.get(), [emitVec](double) { emitVec(); });
+		}
+
+		// Emits either a Vec3 (RGB) or Vec4 (RGBA) depending on the field's valueType
+		void AttachColorEditor(
+			QTreeWidgetItem& _item,
+			const std::string& _sectionId,
+			const cp::editorui::InspectorField& _field
+		)
+		{
+			const bool hasAlpha = (_field.valueType == cp::editorui::InspectorField::ValueType::Vec4);
+
+			QColor initial = Qt::white;
+			if (const cp::editorui::InspectorField::Vec3* v = std::get_if<cp::editorui::InspectorField::Vec3>(&_field.value))
+			{
+				initial.setRgbF(v->x, v->y, v->z);
+			}
+			else if (const cp::editorui::InspectorField::Vec4* v = std::get_if<cp::editorui::InspectorField::Vec4>(&_field.value))
+			{
+				initial.setRgbF(v->x, v->y, v->z, v->w);
+			}
+
+			auto* button = new QPushButton(tree.get());
+			button->setEnabled(!_field.readOnly);
+
+			// QPalette is ignored by modern Qt styles — use stylesheet to paint the swatch.
+			// currentColor is shared between applyColor and the click handler so the dialog
+			// always opens with the correct current value.
+			auto currentColor = std::make_shared<QColor>(initial);
+
+			auto applyColor = [button, currentColor](const QColor& _color)
+			{
+				*currentColor = _color;
+				button->setStyleSheet(
+					QString("background-color: %1; border: 1px solid #555;").arg(_color.name(QColor::HexArgb)));
+			};
+			applyColor(initial);
+
+			tree->setItemWidget(&_item, 1, button);
+			QObject::connect(button, &QPushButton::clicked, tree.get(),
+				[this, currentColor, hasAlpha, applyColor, sectionId = _sectionId, fieldId = _field.id]()
+			{
+				QColorDialog::ColorDialogOptions opts = hasAlpha ? QColorDialog::ShowAlphaChannel : QColorDialog::ColorDialogOptions{};
+				const QColor picked = QColorDialog::getColor(*currentColor, tree.get(), "Pick Color", opts);
+				if (!picked.isValid())
+				{
+					return;
+				}
+
+				applyColor(picked);
+
+				if (hasAlpha)
+				{
+					EmitFieldEdited(sectionId, fieldId, cp::editorui::InspectorField::Vec4{
+						.x = picked.redF(),
+						.y = picked.greenF(),
+						.z = picked.blueF(),
+						.w = picked.alphaF()
+					});
+				}
+				else
+				{
+					EmitFieldEdited(sectionId, fieldId, cp::editorui::InspectorField::Vec3{
+						.x = picked.redF(),
+						.y = picked.greenF(),
+						.z = picked.blueF()
+					});
+				}
+			});
 		}
 
 		void ShowAddComponentMenu(const QPoint& _position)

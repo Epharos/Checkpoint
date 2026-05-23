@@ -566,6 +566,50 @@ namespace cp
             return result;
         }
 
+        CompileResult ReflectOnly(
+            std::string_view source,
+            std::string_view moduleName,
+            std::string_view virtualPath,
+            const char* searchPath
+        )
+        {
+            CompileResult result;
+
+            const auto session = CreateSession(ShaderTarget::Vulkan_SPIRV, searchPath, false, result.diagnostics);
+            if (!session) return result;
+
+            slang::IModule* slangModule = LoadModule(session, source, moduleName, virtualPath, result.diagnostics);
+            if (!slangModule) return result;
+
+            Slang::ComPtr<slang::IBlob> diagBlob;
+
+            slang::IComponentType* components[] = { slangModule };
+            Slang::ComPtr<slang::IComponentType> program;
+            if (SLANG_FAILED(session->createCompositeComponentType(components, 1, program.writeRef(), diagBlob.writeRef())))
+            {
+                AppendDiagnostics(result.diagnostics, diagBlob);
+                return result;
+            }
+
+            Slang::ComPtr<slang::IComponentType> linkedProgram;
+            if (SLANG_FAILED(program->link(linkedProgram.writeRef(), diagBlob.writeRef())))
+            {
+                AppendDiagnostics(result.diagnostics, diagBlob);
+                return result;
+            }
+
+            slang::ProgramLayout* layout = linkedProgram->getLayout(0, diagBlob.writeRef());
+            AppendDiagnostics(result.diagnostics, diagBlob);
+
+            if (layout)
+            {
+                result.reflection = ExtractReflection(layout);
+                result.success = true;
+            }
+
+            return result;
+        }
+
         CompileResult CompileAll(
             std::string_view source,
             std::string_view moduleName,
@@ -698,6 +742,23 @@ namespace cp
             _filePath.stem().string(),
             _filePath.filename().string(),
             _target,
+            searchPath.c_str()
+        );
+    }
+
+    CompileResult ShaderCompiler::ReflectFile(
+        const std::filesystem::path& _filePath
+    ) const
+    {
+        CompileResult err;
+        std::string source = ReadFile(_filePath, err.diagnostics);
+        if (!err.diagnostics.empty()) return err;
+
+        const std::string searchPath = _filePath.parent_path().string();
+        return impl->ReflectOnly(
+            source,
+            _filePath.stem().string(),
+            _filePath.filename().string(),
             searchPath.c_str()
         );
     }

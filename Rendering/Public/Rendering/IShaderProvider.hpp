@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <RHI/Rendering.hpp>
+#include <Common/ShaderReflection.hpp>
 
 namespace cp
 {
@@ -21,6 +22,8 @@ namespace cp
         std::vector<uint8_t> binary;
 
         ShaderBinaryFormat format = ShaderBinaryFormat::SpirV;
+
+        ShaderReflection reflection;
     };
 
     /**

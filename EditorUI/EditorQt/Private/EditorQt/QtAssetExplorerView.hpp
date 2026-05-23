@@ -3,6 +3,8 @@
 #include "EditorQtCommon.hpp"
 #include "QtContextMenu.hpp"
 
+#include <unordered_set>
+
 namespace cp::editorqt
 {
 	class QtAssetExplorerView final : public cp::editorui::IAssetExplorerView, public IQtWidgetAccess, private QtWidgetBase
@@ -15,6 +17,22 @@ namespace cp::editorqt
 			tree->setObjectName(ToQString(GetId()));
 			tree->setHeaderLabel("Assets");
 			tree->setContextMenuPolicy(Qt::CustomContextMenu);
+
+			QObject::connect(tree.get(), &QTreeWidget::itemSelectionChanged, [this]()
+			{
+				if (!assetSelectedHandler)
+				{
+					return;
+				}
+
+				const QList<QTreeWidgetItem*> selected = tree->selectedItems();
+				if (selected.isEmpty())
+				{
+					return;
+				}
+
+				assetSelectedHandler(std::filesystem::path(selected.first()->data(0, Qt::UserRole).toString().toStdString()));
+			});
 
 			QObject::connect(tree.get(), &QTreeWidget::itemDoubleClicked, [this](QTreeWidgetItem* _item, int)
 			{
@@ -79,6 +97,11 @@ namespace cp::editorqt
 			return std::filesystem::path(selected.first()->data(0, Qt::UserRole).toString().toStdString());
 		}
 
+		void SetAssetSelectedHandler(AssetHandler _handler) override
+		{
+			assetSelectedHandler = std::move(_handler);
+		}
+
 		void SetAssetOpenedHandler(AssetHandler _handler) override
 		{
 			assetOpenedHandler = std::move(_handler);
@@ -89,12 +112,82 @@ namespace cp::editorqt
 			contextMenuHandler = std::move(_handler);
 		}
 
+		void Refresh() override
+		{
+			std::unordered_set<std::string> expandedPaths;
+			std::optional<std::string> selectedPath;
+			SaveTreeState(tree->invisibleRootItem(), expandedPaths, selectedPath);
+
+			RefreshEntriesFromDisk();
+			RebuildTree();
+
+			RestoreTreeState(tree->invisibleRootItem(), expandedPaths, selectedPath);
+		}
+
 		[[nodiscard]] QWidget* GetQWidget() const override
 		{
 			return tree.get();
 		}
 
 	private:
+		static void SaveTreeState(
+			QTreeWidgetItem* item,
+			std::unordered_set<std::string>& expandedPaths,
+			std::optional<std::string>& selectedPath
+		)
+		{
+			if (!item)
+			{
+				return;
+			}
+
+			const std::string path = item->data(0, Qt::UserRole).toString().toStdString();
+
+			if (item->isExpanded() && !path.empty())
+			{
+				expandedPaths.insert(path);
+			}
+
+			if (item->isSelected() && !path.empty())
+			{
+				selectedPath = path;
+			}
+
+			for (int i = 0; i < item->childCount(); ++i)
+			{
+				SaveTreeState(item->child(i), expandedPaths, selectedPath);
+			}
+		}
+
+		static void RestoreTreeState(
+			QTreeWidgetItem* item,
+			const std::unordered_set<std::string>& expandedPaths,
+			const std::optional<std::string>& selectedPath
+		)
+		{
+			if (!item)
+			{
+				return;
+			}
+
+			const std::string path = item->data(0, Qt::UserRole).toString().toStdString();
+
+			if (!path.empty() && expandedPaths.count(path))
+			{
+				item->setExpanded(true);
+			}
+
+			if (selectedPath && path == *selectedPath)
+			{
+				item->setSelected(true);
+			}
+
+			for (int i = 0; i < item->childCount(); ++i)
+			{
+				RestoreTreeState(item->child(i), expandedPaths, selectedPath);
+			}
+		}
+
 		void RefreshEntriesFromDisk()
 		{
 			entries.clear();
@@ -166,6 +259,7 @@ namespace cp::editorqt
 		std::unique_ptr<QTreeWidget> tree;
 		std::filesystem::path projectRoot;
 		std::vector<cp::editorui::AssetEntry> entries;
+		AssetHandler assetSelectedHandler;
 		AssetHandler assetOpenedHandler;
 		AssetContextMenuHandler contextMenuHandler;
 	};

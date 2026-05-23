@@ -20,6 +20,7 @@ namespace cp
 		constexpr unsigned int flags =
 			aiProcess_Triangulate |
 			aiProcess_JoinIdenticalVertices |
+			aiProcess_FlipUVs |
 			aiProcess_ImproveCacheLocality |
 			aiProcess_GenSmoothNormals |
 			aiProcess_CalcTangentSpace |

@@ -11,6 +11,8 @@
 #include "../../Public/Common/Plugin/IEditorStateProvider.hpp"
 #include "../../Public/Common/Plugin/IViewportController.hpp"
 #include "../../Public/Common/Plugin/IKeybindRegistrar.hpp"
+#include "../../Public/Common/Plugin/AssetAuthoringRegistrar.hpp"
+#include "../../Public/Common/Plugin/AssetContextMenuRegistrar.hpp"
 
 namespace cp
 {
@@ -33,6 +35,9 @@ namespace cp
 		IEditorStateProvider* editorState = nullptr;
 		IViewportController* viewportController = nullptr;
 		IKeybindRegistrar* keybindRegistrar = nullptr;
+		IAssetAuthoringRegistrar* assetAuthoringRegistrar = nullptr;
+		IAssetContextMenuRegistrar* assetContextMenuRegistrar = nullptr;
+		class ShaderCompiler* shaderCompiler = nullptr;
 		std::filesystem::path pluginDir;
 	};
 

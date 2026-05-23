@@ -39,7 +39,7 @@ namespace cp
             const std::filesystem::path candidatePath = currentPath / fileNamePath;
             if (std::filesystem::exists(candidatePath))
             {
-                return candidatePath;
+                return std::filesystem::weakly_canonical(candidatePath);
             }
 
             const std::filesystem::path parentPath = currentPath.parent_path();
@@ -64,11 +64,28 @@ namespace cp
             const std::filesystem::path candidate = _baseDir / _fileName;
             if (std::filesystem::exists(candidate))
             {
-                return candidate;
+                return std::filesystem::weakly_canonical(candidate);
             }
         }
 
         return FindFileInParentTree(_fileName);
+    }
+
+    inline std::filesystem::path ResolveAssetPath(const std::string_view _path)
+    {
+        if (_path.empty())
+        {
+            return {};
+        }
+
+        const std::filesystem::path p(_path);
+
+        if (p.is_absolute())
+        {
+            return std::filesystem::exists(p) ? std::filesystem::weakly_canonical(p) : p;
+        }
+
+        return FindFileInParentTree(_path);
     }
 
     inline std::filesystem::path GetRelativePath(

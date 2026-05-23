@@ -118,6 +118,21 @@ namespace cp
             ShaderTarget _target
         ) const;
 
+        /**
+         * @brief Extract shader reflection from a .slang file without generating any binary.
+         *
+         * Parses and type-checks the file, computes the resource layout, then returns.
+         * No SPIR-V / DXIL code is produced, making this significantly faster than
+         * a full compilation and safe to call even on shaders that have no entry points.
+         *
+         * @param _filePath Absolute or relative path to the .slang source file.
+         * @return CompileResult with @c success == true and @c reflection populated on success.
+         *         @c binary is always empty.
+         */
+        [[nodiscard]] CompileResult ReflectFile(
+            const std::filesystem::path& _filePath
+        ) const;
+
     private:
         struct Impl;
         std::unique_ptr<Impl> impl;

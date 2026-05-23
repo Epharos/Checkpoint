@@ -20,6 +20,13 @@ namespace cp::editorqt
 			}
 		}
 
+		void AddAction(std::string _label, std::function<void()> _callback) override
+		{
+			QAction* action = new QAction(ToQString(_label), menu.get());
+			QObject::connect(action, &QAction::triggered, [callback = std::move(_callback)]() { callback(); });
+			menu->addAction(action);
+		}
+
 		void AddSeparator() override
 		{
 			menu->addSeparator();
