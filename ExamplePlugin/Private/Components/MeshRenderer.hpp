@@ -4,12 +4,14 @@
 #include <Resources/Mesh.hpp>
 #include <Resources/AssetHandle.hpp>
 #include <Common/Plugin/ComponentAuthoring.hpp>
+#include "../Assets/MaterialInstance.hpp"
 
 namespace cp
 {
 	struct MeshRenderer
 	{
 		AssetHandle<Mesh> meshId {};
+		AssetHandle<MaterialInstance> materialInstance {};
 		bool visible = true;
 	};
 

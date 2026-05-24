@@ -5,7 +5,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstring>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -13,6 +12,7 @@
 
 #include <Common/Data/Rectangle.hpp>
 #include <Common/Data/Viewport.hpp>
+#include <Common/ShaderReflection.hpp>
 #include <ECS/ECS.hpp>
 
 #include <RHI/Core.hpp>
@@ -29,7 +29,10 @@
 #include <Rendering/Camera.hpp>
 #include <Rendering/IShaderProvider.hpp>
 
+#include "../Assets/Material.hpp"
+#include "../Assets/MaterialInstance.hpp"
 #include "../Components/Components.hpp"
+#include "../ExamplePluginDir.hpp"
 
 namespace cp
 {
@@ -50,6 +53,7 @@ namespace cp
             float position[3]{};
             float normal[3]{};
             float color[3]{};
+            float uv[2]{};
         };
 
         struct MeshGpuResources
@@ -63,13 +67,16 @@ namespace cp
         Extent2D<uint32_t> renderExtent{};
         std::shared_ptr<ecs::World> ecsWorld;
         RenderingHardwareInterface* rhi = nullptr;
+        IShaderProvider* shaderProvider = nullptr;
 
+        // Default pipeline for meshes without a material instance (2 bindings: camera + instances).
         std::shared_ptr<IShaderModule> shaderModule;
         std::shared_ptr<IDescriptorSetLayout> descriptorSetLayout;
         std::shared_ptr<IPipelineLayout> pipelineLayout;
         std::shared_ptr<IPipeline> pipeline;
 
         std::unordered_map<std::string, MeshGpuResources> meshCache;
+
         std::array<std::vector<std::shared_ptr<IBuffer>>, 3> transientFrameBuffers{};
         std::array<std::vector<std::shared_ptr<IDescriptorSet>>, 3> transientFrameDescriptorSets{};
         size_t transientFrameIndex = 0;
@@ -87,6 +94,7 @@ namespace cp
         {
             data.renderExtent = _context.renderExtent;
             data.rhi = &_context.rhi;
+            data.shaderProvider = _context.shaderProvider;
 
             if (!_context.shaderProvider)
             {
@@ -94,16 +102,14 @@ namespace cp
             }
 
             const ShaderProviderResult shader = _context.shaderProvider->GetShader(
-                "Phong", GetExamplePluginDir() / "Shaders"
-            );
+                "Phong", GetExamplePluginDir() / "Shaders");
 
             if (!shader.success || shader.binary.empty())
             {
                 return;
             }
 
-            const ShaderModuleInfo shaderModuleInfo
-            {
+            const ShaderModuleInfo shaderModuleInfo {
                 .stages = ShaderStage::Vertex | ShaderStage::Fragment,
                 .bytecode = ShaderBytecode{
                     .format = shader.format,
@@ -113,8 +119,7 @@ namespace cp
             };
             data.shaderModule = _context.rhi.GetDevice().CreateShaderModule(shaderModuleInfo);
 
-            const DescriptorSetLayoutInfo descriptorSetLayoutInfo
-            {
+            const DescriptorSetLayoutInfo descriptorSetLayoutInfo {
                 .bindings = {
                     DescriptorBinding{
                         .binding = 0,
@@ -137,43 +142,14 @@ namespace cp
             };
             data.pipelineLayout = _context.rhi.GetDevice().CreatePipelineLayout(pipelineLayoutInfo);
 
-            const GraphicsPipelineInfo graphicsPipelineInfo
-            {
+            const GraphicsPipelineInfo graphicsPipelineInfo {
                 .layout = data.pipelineLayout,
                 .shaderModule = data.shaderModule,
                 .stageMains = {
                     { ShaderStage::Vertex, "VSMain" },
                     { ShaderStage::Fragment, "FSMain" },
                 },
-                .vertexInput = VertexInputState{
-                    .bindings = {
-                        VertexBindingInfo{
-                            .binding = 0,
-                            .strideBytes = static_cast<uint32_t>(sizeof(OpaqueMaterialPassData::PhongVertex)),
-                            .inputRate = VertexInputRate::PerVertex
-                        }
-                    },
-                    .attributes = {
-                        VertexAttributeInfo{
-                            .location = 0,
-                            .binding = 0,
-                            .format = VertexFormat::R32G32B32_FLOAT,
-                            .offsetBytes = static_cast<uint32_t>(offsetof(OpaqueMaterialPassData::PhongVertex, position))
-                        },
-                        VertexAttributeInfo{
-                            .location = 1,
-                            .binding = 0,
-                            .format = VertexFormat::R32G32B32_FLOAT,
-                            .offsetBytes = static_cast<uint32_t>(offsetof(OpaqueMaterialPassData::PhongVertex, normal))
-                        },
-                        VertexAttributeInfo{
-                            .location = 2,
-                            .binding = 0,
-                            .format = VertexFormat::R32G32B32_FLOAT,
-                            .offsetBytes = static_cast<uint32_t>(offsetof(OpaqueMaterialPassData::PhongVertex, color))
-                        }
-                    }
-                },
+                .vertexInput = GetPhongVertexInput(),
                 .topology = PrimitiveTopology::TriangleList,
                 .rasterization = RasterizationState{},
                 .depthStencil = DepthStencilState{},
@@ -244,8 +220,7 @@ namespace cp
                 .storeOp = StoreOp::Store,
                 .clearValue = Color(ColorRGBA8(10, 10, 10, 255))
             };
-
-            const DepthStencilAttachmentInfo depthAttachment {
+            const DepthStencilAttachmentInfo depthAttachment{
                 .texture = depthBuffer,
                 .depthLoadOp = LoadOp::Clear,
                 .depthStoreOp = StoreOp::Store,
@@ -253,7 +228,6 @@ namespace cp
                 .stencilStoreOp = StoreOp::Store,
                 .clearValue = ClearDepthStencil(1.0f, 0)
             };
-
             const RenderingInfo renderingInfo{
                 .extent = data.renderExtent,
                 .layers = 1,
@@ -262,8 +236,7 @@ namespace cp
             };
 
             cmd.SetViewport(Viewport{
-                0.f,
-                0.f,
+                0.f, 0.f,
                 static_cast<float>(data.renderExtent.x()),
                 static_cast<float>(data.renderExtent.y())
             });
@@ -273,21 +246,22 @@ namespace cp
             });
             cmd.BeginRendering(renderingInfo);
 
-            if (!data.ecsWorld || !data.pipeline || !data.descriptorSetLayout || data.rhi == nullptr)
+            if (!data.ecsWorld || data.rhi == nullptr)
             {
                 cmd.EndRendering();
                 return;
             }
 
             data.transientFrameIndex = (data.transientFrameIndex + 1) % data.transientFrameBuffers.size();
-            std::vector<std::shared_ptr<IBuffer>>& transientBuffers = data.transientFrameBuffers[data.transientFrameIndex];
-            std::vector<std::shared_ptr<IDescriptorSet>>& transientDescriptorSets = data.transientFrameDescriptorSets[data.transientFrameIndex];
+            auto& transientBuffers = data.transientFrameBuffers[data.transientFrameIndex];
+            auto& transientDescriptorSets = data.transientFrameDescriptorSets[data.transientFrameIndex];
             transientBuffers.clear();
             transientDescriptorSets.clear();
 
             struct Batch
             {
                 AssetHandle<Mesh> mesh;
+                AssetHandle<MaterialInstance> materialInstance;
                 std::vector<OpaqueMaterialPassData::InstanceDataGpu> instances;
             };
 
@@ -295,27 +269,34 @@ namespace cp
             data.ecsWorld->RunSystem(
                 ecs::ReadAccess<MeshRenderer, Transform>{},
                 ecs::WriteAccess<>{},
-                [&batches](const MeshRenderer& _meshRenderer, const Transform& _transform)
+                [&batches](const MeshRenderer& _mr, const Transform& _t)
                 {
-                    if (!_meshRenderer.visible || !_meshRenderer.meshId.IsValid())
+                    if (!_mr.visible || !_mr.meshId.IsValid())
                     {
                         return;
                     }
 
-                    const std::string meshPath(_meshRenderer.meshId.GetAssetID());
+                    const std::string meshPath(_mr.meshId.GetAssetID());
                     if (meshPath.empty())
                     {
                         return;
                     }
 
-                    auto& batch = batches[meshPath];
-                    if (!batch.mesh.IsValid())
+                    std::string matInstPath;
+                    if (_mr.materialInstance.IsValid())
                     {
-                        batch.mesh = _meshRenderer.meshId;
+                        matInstPath = _mr.materialInstance.GetAssetID();
                     }
 
-                    batch.instances.push_back(OpaqueMaterialPassData::InstanceDataGpu{
-                        .model = BuildModelMatrix(_transform)
+                    const std::string batchKey = meshPath + "|" + matInstPath;
+                    auto& batch = batches[batchKey];
+                    if (!batch.mesh.IsValid())
+                    {
+                        batch.mesh = _mr.meshId;
+                        batch.materialInstance = _mr.materialInstance;
+                    }
+                    batch.instances.push_back(OpaqueMaterialPassData::InstanceDataGpu {
+                        .model = BuildModelMatrix(_t)
                     });
                 }
             );
@@ -333,73 +314,193 @@ namespace cp
                 return;
             }
 
-            const std::shared_ptr<IBuffer> cameraBuffer = CreateCpuVisibleBuffer(
-                sizeof(OpaqueMaterialPassData::CameraDataGpu),
-                BufferUsage::Uniform
-            );
+            const std::shared_ptr<IBuffer> cameraBuffer =
+                CreateCpuVisibleBuffer(sizeof(OpaqueMaterialPassData::CameraDataGpu), BufferUsage::Uniform);
             const OpaqueMaterialPassData::CameraDataGpu cameraGpuData {
                 .viewProjection = cameraData.viewProjection
             };
-            if (!cameraBuffer || !UploadBytes(*cameraBuffer, &cameraGpuData, sizeof(OpaqueMaterialPassData::CameraDataGpu)))
+
+            if (!cameraBuffer || !UploadBytes(*cameraBuffer, &cameraGpuData, sizeof(cameraGpuData)))
             {
                 cmd.EndRendering();
                 return;
             }
             transientBuffers.push_back(cameraBuffer);
 
-            cmd.BindPipeline(*data.pipeline);
-
-            for (auto& [meshPath, batch] : batches)
+            for (auto& [batchKey, batch] : batches)
             {
                 if (batch.instances.empty() || !batch.mesh.IsValid())
                 {
                     continue;
                 }
 
-                OpaqueMaterialPassData::MeshGpuResources* meshGpu = GetOrCreateMeshGpuResources(meshPath, batch.mesh);
-                if (meshGpu == nullptr || !meshGpu->vertexBuffer || meshGpu->vertexCount == 0)
+                IPipeline* activePipeline = data.pipeline.get();
+                IDescriptorSetLayout* activeLayout = data.descriptorSetLayout.get();
+                const MaterialInstance* activeMat = nullptr;
+                const ShaderReflection* activeReflect = nullptr;
+
+                if (batch.materialInstance.IsValid() && data.shaderProvider)
+                {
+                    MaterialInstance* inst = batch.materialInstance.Get();
+                    if (inst && inst->material.IsValid())
+                    {
+                        Material* mat = inst->material.Get();
+                        if (mat)
+                        {
+                            if (!mat->IsCompiled())
+                            {
+                                const MaterialCompileContext compileCtx {
+                                    .rhi = *data.rhi,
+                                    .shaderProvider = *data.shaderProvider,
+                                    .searchRoot = GetExamplePluginDir(),
+                                    .vertexInput = GetPhongVertexInput(),
+                                    .colorAttachmentFormats = { Format::R8G8B8A8_UNORM },
+                                    .depthStencilFormat = Format::D32_FLOAT
+                                };
+
+                                mat->Compile(compileCtx);
+                            }
+
+                            if (mat->IsCompiled())
+                            {
+                                if (inst->gpuDirty)
+                                {
+                                    inst->RebuildGpuBuffers(*data.rhi, mat->reflection);
+                                }
+
+                                activePipeline = mat->pipeline.get();
+                                activeLayout = mat->descriptorSetLayout.get();
+                                activeMat = inst;
+                                activeReflect = &mat->reflection;
+                            }
+                        }
+                    }
+                }
+
+                if (!activePipeline || !activeLayout)
+                {
+                    continue;
+                }
+
+                const std::string meshPath = std::string(batch.mesh.GetAssetID());
+                auto* meshGpu = GetOrCreateMeshGpuResources(meshPath, batch.mesh);
+                if (!meshGpu || !meshGpu->vertexBuffer || meshGpu->vertexCount == 0)
                 {
                     continue;
                 }
 
                 const size_t instanceBytes = batch.instances.size() * sizeof(OpaqueMaterialPassData::InstanceDataGpu);
-                const std::shared_ptr<IBuffer> instanceBuffer = CreateCpuVisibleBuffer(instanceBytes, BufferUsage::Storage);
+                const auto instanceBuffer = CreateCpuVisibleBuffer(instanceBytes, BufferUsage::Storage);
+
                 if (!instanceBuffer || !UploadBytes(*instanceBuffer, batch.instances.data(), instanceBytes))
                 {
                     continue;
                 }
+
                 transientBuffers.push_back(instanceBuffer);
 
-                const std::shared_ptr<IDescriptorSet> descriptorSet = data.rhi->GetDevice().CreateDescriptorSet(*data.descriptorSetLayout);
+                const auto descriptorSet = data.rhi->GetDevice().CreateDescriptorSet(*activeLayout);
                 if (!descriptorSet)
                 {
                     continue;
                 }
 
-                descriptorSet->UpdateBuffers({
-                    DescriptorBufferBinding{
-                        .binding = 0,
-                        .buffer = cameraBuffer.get(),
-                        .offsetBytes = 0,
-                        .rangeBytes = sizeof(OpaqueMaterialPassData::CameraDataGpu)
-                    },
-                    DescriptorBufferBinding{
-                        .binding = 1,
-                        .buffer = instanceBuffer.get(),
-                        .offsetBytes = 0,
-                        .rangeBytes = instanceBytes
-                    }
+                std::vector<DescriptorBufferBinding> bufferBindings;
+
+                bufferBindings.push_back(DescriptorBufferBinding {
+                    .binding = 0,
+                    .buffer = cameraBuffer.get(),
+                    .offsetBytes = 0,
+                    .rangeBytes = sizeof(OpaqueMaterialPassData::CameraDataGpu)
                 });
 
+                bufferBindings.push_back(DescriptorBufferBinding {
+                    .binding = 1,
+                    .buffer = instanceBuffer.get(),
+                    .offsetBytes = 0,
+                    .rangeBytes = instanceBytes
+                });
+
+                if (activeMat)
+                {
+                    for (const GpuParamBuffer& gpuBuf : activeMat->gpuParamBuffers)
+                    {
+                        if (!gpuBuf.buffer)
+                        {
+                            continue;
+                        }
+
+                        bufferBindings.push_back(DescriptorBufferBinding {
+                            .binding = gpuBuf.binding,
+                            .buffer = gpuBuf.buffer.get(),
+                            .offsetBytes = 0,
+                            .rangeBytes = gpuBuf.sizeBytes
+                        });
+                    }
+                }
+
+                std::vector<DescriptorTextureBinding> textureBindings;
+                if (activeMat && activeReflect)
+                {
+                    for (const BindingReflection& b : activeReflect->bindings)
+                    {
+                        if (b.binding <= 1)
+                        {
+                            continue;
+                        }
+
+                        const bool isTexture =
+                            b.kind == BindingKind::Texture1D ||
+                            b.kind == BindingKind::Texture1DArray ||
+                            b.kind == BindingKind::Texture2D ||
+                            b.kind == BindingKind::Texture2DArray ||
+                            b.kind == BindingKind::Texture2DMS ||
+                            b.kind == BindingKind::Texture2DMSArray ||
+                            b.kind == BindingKind::Texture3D ||
+                            b.kind == BindingKind::TextureCube ||
+                            b.kind == BindingKind::TextureCubeArray;
+
+                        if (!isTexture)
+                        {
+                            continue;
+                        }
+
+                        const auto it = activeMat->parameters.find(b.name);
+                        if (it == activeMat->parameters.end())
+                        {
+                            continue;
+                        }
+
+                        const auto* handle = std::get_if<AssetHandle<ITexture>>(&it->second);
+                        if (!handle || !handle->IsValid())
+                        {
+                            continue;
+                        }
+
+                        textureBindings.push_back(DescriptorTextureBinding {
+                            .binding = b.binding,
+                            .texture = handle->Get(),
+                            .layout = TextureLayout::ShaderReadOnly,
+                            .sampler = nullptr
+                        });
+                    }
+                }
+
+                descriptorSet->UpdateBuffers(bufferBindings);
+
+                if (!textureBindings.empty())
+                {
+                    descriptorSet->UpdateTextures(textureBindings);
+                }
                 transientDescriptorSets.push_back(descriptorSet);
 
+                cmd.BindPipeline(*activePipeline);
                 cmd.BindDescriptorSet(0, *descriptorSet);
                 cmd.BindVertexBuffer(0, *meshGpu->vertexBuffer);
                 cmd.Draw(
                     meshGpu->vertexCount,
                     static_cast<uint32_t>(batch.instances.size()),
-                    0,
-                    0
+                    0, 0
                 );
             }
 
@@ -422,13 +523,46 @@ namespace cp
         }
 
     private:
-        /**
-         * @brief Resolve camera data for this frame.
-         *
-         * In Editor mode the pre-computed data from the context is used directly.
-         * In Runtime / DevelopmentBuild modes the first enabled primary Camera
-         * entity is searched in the ECS world.
-         */
+        static VertexInputState GetPhongVertexInput()
+        {
+            using V = OpaqueMaterialPassData::PhongVertex;
+            return VertexInputState {
+                .bindings = {
+                    VertexBindingInfo {
+                        .binding = 0,
+                        .strideBytes = static_cast<uint32_t>(sizeof(V)),
+                        .inputRate = VertexInputRate::PerVertex
+                    }
+                },
+                .attributes = {
+                    VertexAttributeInfo {
+                        .location = 0,
+                        .binding = 0,
+                        .format = VertexFormat::R32G32B32_FLOAT,
+                        .offsetBytes = static_cast<uint32_t>(offsetof(V, position))
+                    },
+                    VertexAttributeInfo {
+                        .location = 1,
+                        .binding = 0,
+                        .format = VertexFormat::R32G32B32_FLOAT,
+                        .offsetBytes = static_cast<uint32_t>(offsetof(V, normal))
+                    },
+                    VertexAttributeInfo {
+                        .location = 2,
+                        .binding = 0,
+                        .format = VertexFormat::R32G32B32_FLOAT,
+                        .offsetBytes = static_cast<uint32_t>(offsetof(V, color))
+                    },
+                    VertexAttributeInfo {
+                        .location = 3,
+                        .binding = 0,
+                        .format = VertexFormat::R32G32_FLOAT,
+                        .offsetBytes = static_cast<uint32_t>(offsetof(V, uv))
+                    }
+                }
+            };
+        }
+
         [[nodiscard]] cp::ResolvedCameraData ResolveCamera(
             const cp::RenderPassExecutionContext& _context
         ) const
@@ -439,8 +573,8 @@ namespace cp
             if (!data.ecsWorld)
                 return {};
 
-            Camera camComponent {};
-            Transform camTransform {};
+            Camera camComponent{};
+            Transform camTransform{};
             bool found = false;
 
             data.ecsWorld->RunSystem(
@@ -466,11 +600,8 @@ namespace cp
             cp::ResolvedCameraData result;
             result.view = BuildViewMatrix(camTransform);
             result.projection = BuildPerspectiveMatrix(
-                camComponent.fovYDegrees,
-                aspect,
-                camComponent.nearPlane,
-                camComponent.farPlane
-            );
+                camComponent.fovYDegrees, aspect,
+                camComponent.nearPlane,   camComponent.farPlane);
             result.viewProjection = result.projection * result.view;
             result.worldPosition = { camTransform.x, camTransform.y, camTransform.z };
             result.nearPlane = camComponent.nearPlane;
@@ -483,164 +614,146 @@ namespace cp
         static glm::mat4 BuildModelMatrix(const Transform& _transform)
         {
             glm::mat4 model(1.0f);
-            model = glm::translate(model, glm::vec3(_transform.x, _transform.y, _transform.z));
-            model = glm::rotate(model, glm::radians(_transform.roll), glm::vec3(0.0f, 0.0f, 1.0f));
-            model = glm::rotate(model, glm::radians(_transform.yaw), glm::vec3(0.0f, 1.0f, 0.0f));
-            model = glm::rotate(model, glm::radians(_transform.pitch), glm::vec3(1.0f, 0.0f, 0.0f));
-            model = glm::scale(model, glm::vec3(_transform.scaleX, _transform.scaleY, _transform.scaleZ));
+            model = glm::translate(model, { _transform.x, _transform.y, _transform.z });
+            model = glm::rotate(model, glm::radians(_transform.roll),  { 0.f, 0.f, 1.f });
+            model = glm::rotate(model, glm::radians(_transform.yaw),   { 0.f, 1.f, 0.f });
+            model = glm::rotate(model, glm::radians(_transform.pitch), { 1.f, 0.f, 0.f });
+            model = glm::scale(model, { _transform.scaleX, _transform.scaleY, _transform.scaleZ });
             return model;
         }
 
         static glm::mat4 BuildViewMatrix(const Transform& _transform)
         {
-            glm::mat4 cameraWorld(1.0f);
-            cameraWorld = glm::translate(cameraWorld, glm::vec3(_transform.x, _transform.y, _transform.z));
-            cameraWorld = glm::rotate(cameraWorld, glm::radians(_transform.roll), glm::vec3(0.0f, 0.0f, 1.0f));
-            cameraWorld = glm::rotate(cameraWorld, glm::radians(_transform.yaw), glm::vec3(0.0f, 1.0f, 0.0f));
-            cameraWorld = glm::rotate(cameraWorld, glm::radians(_transform.pitch), glm::vec3(1.0f, 0.0f, 0.0f));
-            return glm::inverse(cameraWorld);
+            glm::mat4 world(1.0f);
+            world = glm::translate(world, { _transform.x, _transform.y, _transform.z });
+            world = glm::rotate(world, glm::radians(_transform.roll),  { 0.f, 0.f, 1.f });
+            world = glm::rotate(world, glm::radians(_transform.yaw),   { 0.f, 1.f, 0.f });
+            world = glm::rotate(world, glm::radians(_transform.pitch), { 1.f, 0.f, 0.f });
+            return glm::inverse(world);
         }
 
-        static glm::mat4 BuildPerspectiveMatrix(
-            float _fovYDegrees,
-            float _aspectRatio,
-            float _nearPlane,
-            float _farPlane)
+        static glm::mat4 BuildPerspectiveMatrix(float _fovY, float _aspect, float _nearP, float _farP)
         {
-            const float clampedAspect = _aspectRatio > 1e-6f ? _aspectRatio : 1.0f;
-            const float clampedNear = std::max(0.001f, _nearPlane);
-            const float clampedFar = std::max(clampedNear + 0.001f, _farPlane);
-            const float clampedFov = std::max(1.0f, _fovYDegrees);
+            const float aspect = _aspect > 1e-6f ? _aspect : 1.0f;
+            const float near = std::max(0.001f,  _nearP);
+            const float far = std::max(near + 0.001f, _farP);
+            const float fov = std::max(1.0f,    _fovY);
 
-            glm::mat4 projection = glm::perspective(
-                glm::radians(clampedFov),
-                clampedAspect,
-                clampedNear,
-                clampedFar
-            );
+            glm::mat4 projection = glm::perspective(glm::radians(fov), aspect, near, far);
             projection[1][1] *= -1.0f;
             return projection;
         }
 
-        static float Clamp01(const float _value)
-        {
-            if (_value < 0.f)
-            {
-                return 0.f;
-            }
-            if (_value > 1.f)
-            {
-                return 1.f;
-            }
-            return _value;
-        }
+        static float Clamp01(float v) { return v < 0.f ? 0.f : v > 1.f ? 1.f : v; }
 
         static OpaqueMaterialPassData::PhongVertex ConvertVertex(const MeshVertex& _vertex)
         {
-            OpaqueMaterialPassData::PhongVertex result{};
-            result.position[0] = _vertex.position[0];
-            result.position[1] = _vertex.position[1];
-            result.position[2] = _vertex.position[2];
+            OpaqueMaterialPassData::PhongVertex out{};
+            out.position[0] = _vertex.position[0];
+            out.position[1] = _vertex.position[1];
+            out.position[2] = _vertex.position[2];
 
-            result.normal[0] = _vertex.normal[0];
-            result.normal[1] = _vertex.normal[1];
-            result.normal[2] = _vertex.normal[2];
+            out.normal[0] = _vertex.normal[0];
+            out.normal[1] = _vertex.normal[1];
+            out.normal[2] = _vertex.normal[2];
 
-            result.color[0] = Clamp01(std::fabs(_vertex.normal[0]));
-            result.color[1] = Clamp01(std::fabs(_vertex.normal[1]));
-            result.color[2] = Clamp01(std::fabs(_vertex.normal[2]));
-            return result;
+            out.color[0]    = Clamp01(std::fabs(_vertex.normal[0]));
+            out.color[1]    = Clamp01(std::fabs(_vertex.normal[1]));
+            out.color[2]    = Clamp01(std::fabs(_vertex.normal[2]));
+
+            out.uv[0] = _vertex.texCoord[0];
+            out.uv[1] = _vertex.texCoord[1];
+
+            return out;
         }
 
-        static std::vector<OpaqueMaterialPassData::PhongVertex> BuildDrawVertices(const Mesh& _mesh)
+        static std::vector<OpaqueMaterialPassData::PhongVertex> BuildDrawVertices(const Mesh& mesh)
         {
-            std::vector<OpaqueMaterialPassData::PhongVertex> vertices;
-            const std::vector<MeshVertex>& sourceVertices = _mesh.GetVertices();
-            const std::vector<uint32_t>& sourceIndices = _mesh.GetIndices();
+            const auto& src = mesh.GetVertices();
+            const auto& indices = mesh.GetIndices();
 
-            vertices.reserve(sourceIndices.size());
-            for (const uint32_t index : sourceIndices)
+            std::vector<OpaqueMaterialPassData::PhongVertex> vertex;
+            vertex.reserve(indices.size());
+
+            for (uint32_t idx : indices)
             {
-                if (index >= sourceVertices.size())
+                if (idx < src.size())
                 {
-                    continue;
+                    vertex.push_back(ConvertVertex(src[idx]));
                 }
-                vertices.push_back(ConvertVertex(sourceVertices[index]));
             }
 
-            return vertices;
+            return vertex;
         }
 
-        std::shared_ptr<IBuffer> CreateCpuVisibleBuffer(const size_t _sizeBytes, const BufferUsage _usage) const
+        std::shared_ptr<IBuffer> CreateCpuVisibleBuffer(size_t sizeBytes, BufferUsage usage) const
         {
-            if (_sizeBytes == 0)
+            if (sizeBytes == 0)
             {
                 return nullptr;
             }
 
-            const BufferInfo bufferInfo{
-                .sizeBytes = _sizeBytes,
-                .usage = _usage,
+            return data.rhi->CreateBuffer(BufferInfo {
+                .sizeBytes = sizeBytes,
+                .usage = usage,
                 .cpuVisible = true
-            };
-            return data.rhi->CreateBuffer(bufferInfo);
+            });
         }
 
-        static bool UploadBytes(IBuffer& _buffer, const void* _srcData, const size_t _sizeBytes)
+        static bool UploadBytes(IBuffer& buf, const void* src, size_t size)
         {
-            if (_srcData == nullptr || _sizeBytes == 0)
+            if (!src || size == 0)
             {
                 return false;
             }
 
-            void* mapped = _buffer.Map();
-            if (mapped == nullptr)
+            if (void* mapped = buf.Map())
             {
                 return false;
             }
 
-            std::memcpy(mapped, _srcData, _sizeBytes);
-            _buffer.Unmap();
-            return true;
+            return false;
         }
+
 
         OpaqueMaterialPassData::MeshGpuResources* GetOrCreateMeshGpuResources(
-            const std::string& _meshPath,
-            const AssetHandle<Mesh>& _meshHandle)
+            const std::string& meshPath,
+            const AssetHandle<Mesh>& meshHandle
+        )
         {
-            auto it = data.meshCache.find(_meshPath);
+            const auto it = data.meshCache.find(meshPath);
             if (it != data.meshCache.end())
             {
                 return &it->second;
             }
 
-            const Mesh* mesh = _meshHandle.Get();
-            if (mesh == nullptr)
+            const Mesh* mesh = meshHandle.Get();
+            if (!mesh)
             {
                 return nullptr;
             }
 
-            std::vector<OpaqueMaterialPassData::PhongVertex> drawVertices = BuildDrawVertices(*mesh);
-            if (drawVertices.empty())
+            auto drawVertex = BuildDrawVertices(*mesh);
+            if (drawVertex.empty())
             {
                 return nullptr;
             }
 
-            const size_t vertexBytes = drawVertices.size() * sizeof(OpaqueMaterialPassData::PhongVertex);
-            std::shared_ptr<IBuffer> vertexBuffer = CreateCpuVisibleBuffer(vertexBytes, BufferUsage::Vertex);
-            if (!vertexBuffer || !UploadBytes(*vertexBuffer, drawVertices.data(), vertexBytes))
+            const size_t vertexBytes = drawVertex.size() * sizeof(OpaqueMaterialPassData::PhongVertex);
+            auto vb = CreateCpuVisibleBuffer(vertexBytes, BufferUsage::Vertex);
+            if (!vb || !UploadBytes(*vb, drawVertex.data(), vertexBytes))
             {
                 return nullptr;
             }
 
-            auto [insertedIt, _] = data.meshCache.insert_or_assign(
-                _meshPath,
-                OpaqueMaterialPassData::MeshGpuResources{
-                    .vertexBuffer = std::move(vertexBuffer),
-                    .vertexCount = static_cast<uint32_t>(drawVertices.size())
-                }
-            );
-            return &insertedIt->second;
+            auto [ins, _] = data.meshCache.insert_or_assign(
+                meshPath,
+                OpaqueMaterialPassData::MeshGpuResources {
+                    .vertexBuffer = std::move(vb),
+                    .vertexCount = static_cast<uint32_t>(drawVertex.size())
+                });
+
+            return &ins->second;
         }
     };
 }

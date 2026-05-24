@@ -2,6 +2,22 @@ add_library(ExamplePlugin SHARED
     "Private/ExamplePlugin.cpp"
     "Private/ExamplePluginRuntime.cpp"
     "Private/ExamplePluginEditor.cpp"
+    "Private/Assets/Material.hpp"
+    "Private/Assets/MaterialLoader.cpp"
+    "Private/Assets/MaterialGpu.cpp"
+    "Private/Assets/MaterialInstance.hpp"
+    "Private/Assets/MaterialInstanceLoader.cpp"
+    "Private/Assets/MaterialInstanceGpu.cpp"
+    "Private/Assets/MaterialSaver.hpp"
+    "Private/Assets/MaterialSaver.cpp"
+    "Private/Assets/MaterialAuthoring.hpp"
+    "Private/Assets/MaterialAuthoring.cpp"
+    "Private/Assets/MaterialInstanceSaver.hpp"
+    "Private/Assets/MaterialInstanceSaver.cpp"
+    "Private/Assets/MaterialInstanceAuthoring.hpp"
+    "Private/Assets/MaterialInstanceAuthoring.cpp"
+    "Private/Assets/SlangContextMenuContributor.hpp"
+    "Private/Assets/MaterialContextMenuContributor.hpp"
     "Private/Components/Components.hpp"
     "Private/Components/ComponentRegistrationContext.hpp"
     "Private/Components/Transform.hpp"
@@ -24,6 +40,7 @@ add_library(ExamplePlugin SHARED
     "Private/Systems/SpinSystemAuthoring.hpp"
     "Private/Gizmo/TransformGizmoContribution.hpp"
     "Private/ExamplePluginPCH.hpp"
+    "Private/ExamplePluginAssetRegistry.hpp"
 )
 
 target_include_directories(ExamplePlugin
@@ -45,6 +62,7 @@ target_link_libraries(ExamplePlugin
         Resources
     PRIVATE
         glm::glm
+        ShaderCompiler
 )
 
 if(TARGET Runtime_Standalone)

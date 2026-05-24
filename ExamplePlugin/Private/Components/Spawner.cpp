@@ -3,7 +3,6 @@
 #include <Common/IO/FileHelper.hpp>
 
 #include "ComponentRegistrationContext.hpp"
-#include "../ExamplePluginDir.hpp"
 
 namespace cp
 {
@@ -45,7 +44,7 @@ namespace cp
                 }
 
                 auto& meshManager = cp::GetComponentRegistrationContext().GetAssetRegistry().Get<Mesh>();
-                _value.mesh = meshManager.Load(FindFileFromDirectory(meshAssetPath, cp::GetExamplePluginDir()));
+                _value.mesh = meshManager.Load(ResolveAssetPath(meshAssetPath));
                 return _value.mesh.IsValid();
             }
         );
@@ -118,7 +117,8 @@ namespace cp
                         .value = spawner.mesh.IsValid()
                             ? GetRelativePath(spawner.mesh.GetAssetID()).string()
                             : std::string{},
-                        .readOnly = false
+                        .readOnly = false,
+                        .fileExtensions = { "fbx", "obj", "gltf" }
                     }
                 }
             }
@@ -157,7 +157,7 @@ namespace cp
             }
 
             auto& meshManager = cp::GetComponentRegistrationContext().GetAssetRegistry().Get<Mesh>();
-            const auto meshPath = FindFileFromDirectory(*stringValue, cp::GetExamplePluginDir());
+            const auto meshPath = ResolveAssetPath(*stringValue);
             if (!std::filesystem::exists(meshPath))
             {
                 _outError = "Mesh file not found: " + *stringValue;

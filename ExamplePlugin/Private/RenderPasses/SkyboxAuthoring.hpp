@@ -27,7 +27,8 @@ namespace cp
                     .label = "Cubemap base path",
                     .valueType = AuthoringValueType::String,
                     .inputType = AuthoringInputType::FilePath,
-                    .value = currentPath
+                    .value = currentPath,
+                    .fileExtensions = { "png", "jpg", "jpeg" }
                 }}
             }};
         }

@@ -4,6 +4,12 @@
 #include <Common/Plugin/RenderPassAuthoring.hpp>
 #include <Common/Plugin/ViewportToolbarContribution.hpp>
 
+#include "Assets/MaterialAuthoring.hpp"
+#include "Assets/MaterialInstanceAuthoring.hpp"
+#include "Assets/SlangContextMenuContributor.hpp"
+#include "Assets/MaterialContextMenuContributor.hpp"
+#include <ShaderCompiler/ShaderCompiler.hpp>
+
 #include <Rendering/GizmoContribution.hpp>
 
 #include "Components/Components.hpp"
@@ -88,6 +94,31 @@ bool RegisterExamplePluginEditor(cp::PluginEditorContext& _context)
 		return false;
 	}
 
+	if (_context.assetAuthoringRegistrar && _context.shaderCompiler && _context.assetRegistry)
+	{
+		_context.assetAuthoringRegistrar->Register(
+			std::make_shared<cp::MaterialAuthoring>(
+				*_context.shaderCompiler,
+				*_context.assetRegistry));
+
+		_context.assetAuthoringRegistrar->Register(
+			std::make_shared<cp::MaterialInstanceAuthoring>(
+				*_context.shaderCompiler,
+				*_context.assetRegistry));
+	}
+
+	if (_context.assetContextMenuRegistrar)
+	{
+		_context.assetContextMenuRegistrar->Register(
+			std::make_shared<cp::SlangContextMenuContributor>());
+
+		if (_context.assetRegistry)
+		{
+			_context.assetContextMenuRegistrar->Register(
+				std::make_shared<cp::MaterialContextMenuContributor>(*_context.assetRegistry));
+		}
+	}
+
 	if (_context.keybindRegistrar && _context.editorState && _context.viewportController)
 	{
 		_context.keybindRegistrar->Register(
@@ -137,6 +168,18 @@ bool RegisterExamplePluginEditor(cp::PluginEditorContext& _context)
 
 void ShutdownExamplePluginEditor(cp::PluginEditorContext& _context)
 {
+	if (_context.assetAuthoringRegistrar)
+	{
+		_context.assetAuthoringRegistrar->Unregister("material");
+		_context.assetAuthoringRegistrar->Unregister("matinst");
+	}
+
+	if (_context.assetContextMenuRegistrar)
+	{
+		_context.assetContextMenuRegistrar->Unregister("slang");
+		_context.assetContextMenuRegistrar->Unregister("material");
+	}
+
 	if (_context.registryManager == nullptr)
 	{
 		return;

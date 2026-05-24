@@ -3,7 +3,6 @@
 #include <Common/IO/FileHelper.hpp>
 
 #include "ComponentRegistrationContext.hpp"
-#include "../ExamplePluginDir.hpp"
 
 namespace cp
 {
@@ -21,12 +20,13 @@ namespace cp
 	{
 		_world.RegisterComponentSerialization<MeshRenderer>(
 			MeshRendererGuid,
-			1,
+			2,
 			std::string(Name()),
 			[](const MeshRenderer& _value, cp::ISerializer& _serializer)
 			{
 				_serializer.WriteString(GetRelativePath(_value.meshId.GetAssetID()).string());
 				_serializer.WritePod(_value.visible);
+				_serializer.WriteString(GetRelativePath(_value.materialInstance.GetAssetID()).string());
 			},
 			[](MeshRenderer& _value, cp::IDeserializer& _deserializer)
 			{
@@ -37,15 +37,24 @@ namespace cp
 					return false;
 				}
 
-				if (meshAssetPath.empty())
+				if (!meshAssetPath.empty())
 				{
-					_value.meshId = AssetHandle<Mesh>{};
-					return true;
+					auto& meshManager = cp::GetComponentRegistrationContext().GetAssetRegistry().Get<Mesh>();
+					_value.meshId = meshManager.Load(ResolveAssetPath(meshAssetPath));
 				}
 
-				auto& meshManager = cp::GetComponentRegistrationContext().GetAssetRegistry().Get<Mesh>();
-				_value.meshId = meshManager.Load(FindFileFromDirectory(meshAssetPath, cp::GetExamplePluginDir()));
-				return _value.meshId.IsValid();
+				std::string materialInstancePath;
+				if (_deserializer.ReadString(materialInstancePath) && !materialInstancePath.empty())
+				{
+					const auto resolved = ResolveAssetPath(materialInstancePath);
+					if (!resolved.empty())
+					{
+						auto& matInstManager = cp::GetComponentRegistrationContext().GetAssetRegistry().Get<MaterialInstance>();
+						_value.materialInstance = matInstManager.Load(resolved);
+					}
+				}
+
+				return true;
 			}
 		);
 	}
@@ -113,7 +122,19 @@ namespace cp
 						.value = renderer.meshId.IsValid()
 							? GetRelativePath(renderer.meshId.GetAssetID()).string()
 							: std::string{},
-						.readOnly = false
+						.readOnly = false,
+						.fileExtensions = { "fbx", "obj", "gltf" }
+					},
+					cp::AuthoringFieldDescriptor{
+						.id = "materialInstancePath",
+						.label = "Material Instance",
+						.valueType = cp::AuthoringValueType::String,
+						.inputType = cp::AuthoringInputType::FilePath,
+						.value = renderer.materialInstance.IsValid()
+							? GetRelativePath(renderer.materialInstance.GetAssetID()).string()
+							: std::string{},
+						.readOnly = false,
+						.fileExtensions = { "matinst" }
 					}
 				}
 			}
@@ -144,7 +165,7 @@ namespace cp
 			}
 
 			auto& renderer = _world.GetComponent<MeshRenderer>(_entity);
-			
+
 			if (stringValue->empty())
 			{
 				renderer.meshId = AssetHandle<Mesh>{};
@@ -152,7 +173,7 @@ namespace cp
 			}
 
 			auto& meshManager = cp::GetComponentRegistrationContext().GetAssetRegistry().Get<Mesh>();
-			const auto meshPath = FindFileFromDirectory(*stringValue, cp::GetExamplePluginDir());
+			const auto meshPath = ResolveAssetPath(*stringValue);
 			if (!std::filesystem::exists(meshPath))
 			{
 				_outError = "Mesh file not found: " + *stringValue;
@@ -163,6 +184,41 @@ namespace cp
 			if (!renderer.meshId.IsValid())
 			{
 				_outError = "Failed to load mesh: " + *stringValue;
+				return false;
+			}
+
+			return true;
+		}
+
+		if (_fieldId == "materialInstancePath")
+		{
+			const std::string* stringValue = std::get_if<std::string>(&_value);
+			if (stringValue == nullptr)
+			{
+				_outError = "Material instance path expects a string value.";
+				return false;
+			}
+
+			auto& renderer = _world.GetComponent<MeshRenderer>(_entity);
+
+			if (stringValue->empty())
+			{
+				renderer.materialInstance = AssetHandle<MaterialInstance>{};
+				return true;
+			}
+
+			const auto matInstPath = ResolveAssetPath(*stringValue);
+			if (!std::filesystem::exists(matInstPath))
+			{
+				_outError = "Material instance file not found: " + *stringValue;
+				return false;
+			}
+
+			auto& matInstManager = cp::GetComponentRegistrationContext().GetAssetRegistry().Get<MaterialInstance>();
+			renderer.materialInstance = matInstManager.Load(matInstPath);
+			if (!renderer.materialInstance.IsValid())
+			{
+				_outError = "Failed to load material instance: " + *stringValue;
 				return false;
 			}
 
