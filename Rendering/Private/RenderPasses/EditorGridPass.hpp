@@ -223,13 +223,13 @@ namespace cp
 
         void Setup(FrameGraphBuilder& _builder) override
         {
-            data.finalRendering = _builder.UseTexture("FinalRendering", {
+            data.finalRendering = _builder.UseTexture("ColorOutput", {
                 .layout = TextureLayout::General,
                 .stage = PipelineStage::ComputeShader,
                 .access = Access::ShaderRead | Access::ShaderWrite
             }, ResourceUsage::ReadWrite);
 
-            data.depthBuffer = _builder.UseTexture("DepthBuffer", {
+            data.depthBuffer = _builder.UseTexture("MainDepth", {
                 .layout = TextureLayout::ShaderReadOnly,
                 .stage = PipelineStage::ComputeShader,
                 .access = Access::ShaderRead

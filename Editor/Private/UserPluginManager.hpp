@@ -47,6 +47,11 @@ namespace cp::editor
 	using HotReloadCallback = std::function<void(const std::string& pluginName, bool success, const std::string& buildOutput)>;
 	using BuildLineCallback = std::function<void(const std::string& pluginName, std::string_view line)>;
 
+	/**
+	 * @brief Called synchronously on the main thread (inside Tick) just before unloading plugin DLLs.
+	 */
+	using RendererResetCallback = std::function<void()>;
+
 	class UserPluginManager
 	{
 	public:
@@ -73,6 +78,12 @@ namespace cp::editor
 		bool CreatePlugin(const std::string& name) const;
 
 		void Tick();
+
+		/**
+		 * @brief Register a callback invoked on the main thread (inside Tick) before DLL unload.
+		 * Most likely: [this]() { if (renderer) renderer->ResetFrameGraph(); }
+		 */
+		void SetRendererResetCallback(RendererResetCallback cb) { rendererResetCallback = std::move(cb); }
 
 		[[nodiscard]] const std::vector<UserPluginInfo>& GetPlugins() const { return plugins; }
 		[[nodiscard]] const cp::PluginDependencyGraph& GetDependencyGraph() const { return dependencyGraph; }
@@ -120,8 +131,13 @@ namespace cp::editor
 			std::string pluginName;
 			bool success;
 			std::string output;
+			std::vector<std::string> unloadOrder;
+			std::vector<std::string> reloadOrder;
+			std::filesystem::path   tempScenePath;
 		};
 
 		std::vector<PendingCompletion> pendingCompletions;
+
+		RendererResetCallback rendererResetCallback;
 	};
 }

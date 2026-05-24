@@ -125,6 +125,8 @@ project(@NAME@)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+@SDK_INCLUDE@
+
 @GITHUB_DEPS@
 
 file(GLOB_RECURSE SOURCES
@@ -147,7 +149,7 @@ target_include_directories(@NAME@
 
 target_link_libraries(@NAME@
     PRIVATE
-@ENGINE_LIBS@
+@ENGINE_TARGETS@
 @LOCAL_LIBS@
 @PLUGIN_DEP_LIBS@
 @GITHUB_LINK_LIBS@
@@ -357,22 +359,22 @@ set_target_properties(@NAME@ PROPERTIES
 		const std::filesystem::path& pluginDir
 	) const
 	{
+		std::string sdkInclude;
 		std::string extraIncludes;
-		std::string engineLibLines;
+		std::string engineTargetLines;
 		std::string localLibLines;
 		std::string pluginDepLibLines;
 		std::string githubDeps;
 		std::string githubLinkLibs;
 
-		for (const auto& libName : desc.engineLibs)
+		if (!config.sdkDir.empty())
 		{
-			if (!config.sdkDir.empty())
-			{
-				const std::filesystem::path pubDir = config.sdkDir / libName / "Public";
-				extraIncludes += "        \"" + ForwardSlashes(pubDir) + "\"\n";
+			const std::filesystem::path sdkCmake = config.sdkDir / "EngineSDK.cmake";
+			sdkInclude = "include(\"" + ForwardSlashes(sdkCmake) + "\")";
 
-				const std::filesystem::path libPath = config.sdkDir / "lib" / (libName + ".lib");
-				engineLibLines += "        \"" + ForwardSlashes(libPath) + "\"\n";
+			for (const auto& libName : desc.engineLibs)
+			{
+				engineTargetLines += "        cp::" + libName + "\n";
 			}
 		}
 
@@ -434,8 +436,9 @@ set_target_properties(@NAME@ PROPERTIES
 		std::string cmake(CMakeTemplate);
 		Replace(cmake, "@NAME@", desc.name);
 		Replace(cmake, "@PLUGIN_DIR@", ForwardSlashes(pluginDir));
+		Replace(cmake, "@SDK_INCLUDE@", sdkInclude);
 		Replace(cmake, "@EXTRA_INCLUDES@", extraIncludes);
-		Replace(cmake, "@ENGINE_LIBS@", engineLibLines);
+		Replace(cmake, "@ENGINE_TARGETS@", engineTargetLines);
 		Replace(cmake, "@LOCAL_LIBS@", localLibLines);
 		Replace(cmake, "@PLUGIN_DEP_LIBS@", pluginDepLibLines);
 		Replace(cmake, "@GITHUB_DEPS@", githubDeps);

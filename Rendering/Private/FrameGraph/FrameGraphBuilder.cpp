@@ -161,7 +161,6 @@ namespace cp
     {
         CP_EXPECT_MSG(_handle != nullptr, "Cannot set texture final state on null handle");
         CP_EXPECT_MSG(_handle->IsTexture(), "Handle is not a texture");
-        CP_EXPECT_MSG(currentSetupPass != nullptr, "SetTextureFinalState must be called during pass Setup()");
 
         FramegraphResource* resource = GetResourceByName(std::string(_handle->GetName()));
         CP_ASSERT_MSG(resource != nullptr, "Texture resource not found for final state");

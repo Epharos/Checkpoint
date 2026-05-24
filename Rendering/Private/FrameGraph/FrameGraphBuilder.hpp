@@ -247,11 +247,23 @@ namespace cp
          * @brief Get a resource handle by name without declaring usage.
          * @param _name Resource name
          * @return Handle to the resource, or nullptr if not found
-         * 
+         *
          * Useful when you need the handle but will declare usage later,
          * or when looking up resources from other passes.
          */
         FramegraphResourceHandle* GetResourceHandle(const std::string& _name);
+
+        /**
+         * @brief Get the framegraph-owned ColorOutput texture handle.
+         * Available after the FrameGraph has run its DeclareBuiltinResourcesPhase.
+         */
+        FramegraphResourceHandle* GetColorOutput() { return GetResourceHandle("ColorOutput"); }
+
+        /**
+         * @brief Get the framegraph-owned MainDepth texture handle.
+         * Available after the FrameGraph has run its DeclareBuiltinResourcesPhase.
+         */
+        FramegraphResourceHandle* GetMainDepth() { return GetResourceHandle("MainDepth"); }
 
         /**
          * @brief Mark the pass currently declaring resources.

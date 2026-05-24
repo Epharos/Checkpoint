@@ -19,6 +19,75 @@ namespace cp
         using UsageByResource = std::unordered_map<FramegraphResource*, UsageByPass>;
         using PassIndexMap = std::unordered_map<IRenderPass*, size_t>;
 
+        constexpr std::string_view CLEAR_BUILTIN_PASS_NAME = "FrameGraph.ClearBuiltins";
+
+        struct ClearBuiltinsData
+        {
+            FramegraphResourceHandle* colorOutput = nullptr;
+            FramegraphResourceHandle* mainDepth = nullptr;
+        };
+
+        class ClearBuiltinsPass final : public RenderPass<ClearBuiltinsData>
+        {
+        public:
+            ClearBuiltinsPass() { name = std::string(CLEAR_BUILTIN_PASS_NAME); }
+
+            void DeclareResources(FrameGraphBuilder& _b) override
+            {
+                data.colorOutput = _b.GetColorOutput();
+                data.mainDepth = _b.GetMainDepth();
+            }
+
+            void Setup(FrameGraphBuilder& _b) override
+            {
+                _b.UseTexture(data.colorOutput, {
+                    .layout = TextureLayout::ColorAttachment,
+                    .stage  = PipelineStage::ColorAttachment,
+                    .access = Access::ColorAttachmentWrite,
+                }, ResourceUsage::WriteOnly);
+
+                _b.UseTexture(data.mainDepth, {
+                    .layout = TextureLayout::DepthStencilAttachment,
+                    .stage  = PipelineStage::EarlyDepth | PipelineStage::LateDepth,
+                    .access = Access::DepthStencilWrite,
+                }, ResourceUsage::WriteOnly);
+            }
+
+            void Execute(RenderPassExecutionContext& _ctx) override
+            {
+                ITexture* colorTex = data.colorOutput ? data.colorOutput->GetTexture() : nullptr;
+                ITexture* depthTex = data.mainDepth ? data.mainDepth->GetTexture() : nullptr;
+
+                if (!colorTex || !depthTex)
+                {
+                    return;
+                }
+
+                const auto& ext = colorTex->GetTextureInfo().extent;
+
+                ICommandBuffer& cmd = _ctx;
+                cmd.BeginRendering({
+                    .extent = Extent2D { ext.x(), ext.y() },
+                    .layers = 1,
+                    .colorAttachments = { ColorAttachmentInfo {
+                        .texture = colorTex,
+                        .loadOp = LoadOp::Clear,
+                        .storeOp = StoreOp::Store,
+                        .clearValue = Color(ColorRGBA8(0, 0, 0, 255))
+                    }},
+                    .depthStencilAttachment = DepthStencilAttachmentInfo {
+                        .texture = depthTex,
+                        .depthLoadOp = LoadOp::Clear,
+                        .depthStoreOp = StoreOp::Store,
+                        .stencilLoadOp = LoadOp::DontCare,
+                        .stencilStoreOp = StoreOp::DontCare,
+                        .clearValue = ClearDepthStencil(1.0f, 0)
+                    }
+                });
+                cmd.EndRendering();
+            }
+        };
+
         /**
          * @brief Builds the initial execution index for each registered pass.
          * @param _passes Passes in frame-graph registration order.
@@ -207,20 +276,29 @@ namespace cp
         return true;
     }
 
-    void FrameGraph::Compile(RenderingHardwareInterface& _rhi)
+    void FrameGraph::Compile(RenderingHardwareInterface& _rhi, Extent2D<uint32_t> _renderExtent)
     {
         CP_EXPECT_MSG(!isCompiled, "FrameGraph already compiled. Call Reset() first.");
         CP_EXPECT_MSG(!passes.empty(), "Cannot compile empty framegraph. Add passes first.");
 
+        // Ensure the built-in clear pass is at position 0.
+        if (passes.front()->GetName() != CLEAR_BUILTIN_PASS_NAME)
+        {
+            passes.insert(passes.begin(), std::make_unique<ClearBuiltinsPass>());
+        }
+
         barrierManager.Clear();
 
-        // Phase 1: DeclareDependencies - Passes register explicit execution ordering
+        // Phase 1: DeclareDependencies: Passes register explicit execution ordering
         DeclarePassDependenciesPhase();
 
-        // Phase 2: DeclareResources - All passes register their created/imported resources
+        // Phase 2a: Create the built-in ColorOutput and MainDepth resources before any pass does
+        DeclareBuiltinResourcesPhase(_renderExtent);
+
+        // Phase 2b: DeclareResources: All passes register their created/imported resources
         DeclareResourcesPhase();
 
-        // Phase 3: Setup - Passes declare how they use the now-existing resources
+        // Phase 3: Setup: Passes declare how they use the now-existing resources
         SetupPhase();
 
         // Build dependency graph from explicit + inferred resource dependencies
@@ -232,10 +310,10 @@ namespace cp
         GenerateResourceDependencies();
         BuildExecutionOrder();
 
-        // Phase 2: PreCompile - Runtime adjustments
+        // Phase 4: PreCompile - Runtime adjustments
         PreCompilePhase();
 
-        // Phase 3: Allocation - Create GPU resources for transient resources
+        // Phase 5: Allocation - Create GPU resources for transient resources
         AllocationPhase(_rhi);
 
         // Build per-pass barriers from declared resource synchronization
@@ -247,11 +325,8 @@ namespace cp
             builder.GetBufferFinalStates()
         );
 
-        // Phase 4: PostCompile - Passes can finalize setup
+        // Phase 6: PostCompile - Passes can finalize setup
         PostCompilePhase();
-
-        // Cache the final rendering resource
-        FindFinalRenderingResource();
 
         isCompiled = true;
         
@@ -279,7 +354,6 @@ namespace cp
         builder.Clear();
         barrierManager.Clear();
         dependencyManager.Clear();
-        finalRenderingResource = nullptr;
         isCompiled = false;
     }
 
@@ -301,7 +375,6 @@ namespace cp
         builder.Clear();
         executionOrder.clear();
         barrierManager.Clear();
-        finalRenderingResource = nullptr;
         isCompiled = false;
     }
 
@@ -354,14 +427,24 @@ namespace cp
         }
     }
 
-    ITexture* FrameGraph::GetFinalRendering() const
+    ITexture* FrameGraph::GetColorOutput() const
     {
-        if (!isCompiled || !finalRenderingResource)
+        if (!isCompiled || !colorOutputHandle)
         {
             return nullptr;
         }
 
-        return finalRenderingResource->GetTexture();
+        return colorOutputHandle->GetTexture();
+    }
+
+    ITexture* FrameGraph::GetMainDepth() const
+    {
+        if (!isCompiled || !mainDepthHandle)
+        {
+            return nullptr;
+        }
+
+        return mainDepthHandle->GetTexture();
     }
 
     FramegraphResource* FrameGraph::GetResource(const std::string& _name)
@@ -509,16 +592,35 @@ namespace cp
         }
     }
 
-    void FrameGraph::FindFinalRenderingResource()
+    void FrameGraph::DeclareBuiltinResourcesPhase(Extent2D<uint32_t> _renderExtent)
     {
-        // Try to find a resource named "FinalRendering"
-        finalRenderingResource = builder.GetResourceByName("FinalRendering");
+        const Extent3D<uint32_t> extent{ _renderExtent.x(), _renderExtent.y(), 1 };
 
-        // Warning if not found (optional, can be removed if not always needed)
-        if (!finalRenderingResource)
-        {
-            // Note: This is not an error, some framegraphs might not produce a final rendering
-            // (e.g., compute-only framegraphs)
-        }
+        colorOutputHandle = builder.CreateTexture(COLOR_OUTPUT_RESOURCE_NAME, {
+            .type = TextureType::Texture2D,
+            .extent = extent,
+            .mipLevels = 1,
+            .arrayLayers = 1,
+            .format = Format::R8G8B8A8_UNORM,
+            .usage = TextureUsage::ColorAttachment | TextureUsage::Storage | TextureUsage::TransferSrc,
+            .aspect = TextureAspect::Color,
+        });
+
+        // The Renderer will blit ColorOutput to the swapchain after execution
+        builder.SetTextureFinalState(colorOutputHandle, {
+            .layout = TextureLayout::TransferSrc,
+            .stage  = PipelineStage::Transfer,
+            .access = Access::TransferRead,
+        });
+
+        mainDepthHandle = builder.CreateTexture(MAIN_DEPTH_RESOURCE_NAME, {
+            .type = TextureType::Texture2D,
+            .extent = extent,
+            .mipLevels = 1,
+            .arrayLayers = 1,
+            .format = Format::D32_FLOAT,
+            .usage = TextureUsage::DepthStencilAttachment | TextureUsage::Sampled,
+            .aspect = TextureAspect::Depth,
+        });
     }
 }

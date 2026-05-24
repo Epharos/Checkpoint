@@ -162,7 +162,7 @@ namespace cp
 
         void RebuildFrameGraph();
         void BuildFrameGraph();
-        void BlitFinalRenderingToSwapchain(const FrameContext& _context) const;
+        void BlitColorOutputToSwapchain(const FrameContext& _context) const;
 
         /**
         * @brief Resolve camera data for the current frame based on the active environment.

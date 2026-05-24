@@ -162,27 +162,8 @@ namespace cp
 
         void DeclareResources(FrameGraphBuilder& _builder) override
         {
-            const TextureInfo finalInfo{
-                .type = TextureType::Texture2D,
-                .extent = Extent3D<uint32_t>{ data.renderExtent.x(), data.renderExtent.y(), 1 },
-                .mipLevels = 1,
-                .arrayLayers = 1,
-                .format = Format::R8G8B8A8_UNORM,
-                .usage = TextureUsage::ColorAttachment | TextureUsage::Storage | TextureUsage::TransferSrc,
-                .aspect = TextureAspect::Color,
-            };
-            data.finalRendering = _builder.CreateTexture("FinalRendering", finalInfo);
-
-            const TextureInfo depthBufferInfo{
-                .type = TextureType::Texture2D,
-                .extent = Extent3D<uint32_t>{ data.renderExtent.x(), data.renderExtent.y(), 1 },
-                .mipLevels = 1,
-                .arrayLayers = 1,
-                .format = Format::D32_FLOAT,
-                .usage = TextureUsage::DepthStencilAttachment | TextureUsage::Sampled,
-                .aspect = TextureAspect::Depth,
-            };
-            data.depthBuffer = _builder.CreateTexture("DepthBuffer", depthBufferInfo);
+            data.finalRendering = _builder.GetColorOutput();
+            data.depthBuffer = _builder.GetMainDepth();
         }
 
         void Setup(FrameGraphBuilder& _builder) override
@@ -192,12 +173,6 @@ namespace cp
                 .stage = PipelineStage::ColorAttachment,
                 .access = Access::ColorAttachmentWrite
             }, ResourceUsage::WriteOnly);
-
-            _builder.SetTextureFinalState(data.finalRendering, {
-                .layout = TextureLayout::TransferSrc,
-                .stage = PipelineStage::Transfer,
-                .access = Access::TransferRead
-            });
 
             _builder.UseTexture(data.depthBuffer, {
                 .layout = TextureLayout::DepthStencilAttachment,

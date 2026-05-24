@@ -333,9 +333,10 @@ namespace cp::editor
 		std::string combinedOutput;
 		bool allSucceeded = false;
 
+		const std::filesystem::path tempScene = userPluginsDir / ".hotreload_scene_backup.tmp";
+
 		try
 		{
-			const std::filesystem::path tempScene = userPluginsDir / ".hotreload_scene_backup.tmp";
 			if (!cp::runtime::SceneSerializer::SaveSceneToFile(scene, tempScene, &logger))
 			{
 				logger.Log(CP_LOG_EVENT(
@@ -343,14 +344,9 @@ namespace cp::editor
 					"UserPlugins",
 					cp::Message::Create("Cannot save scene backup '{}'", tempScene.string())
 				));
-			};
+			}
 
 			scene.ShutdownSystems();
-
-			for (const auto& name : unloadOrder)
-			{
-				UnloadPlugin(name);
-			}
 
 			allSucceeded = true;
 
@@ -394,34 +390,6 @@ namespace cp::editor
 					break;
 				}
 			}
-
-			if (allSucceeded)
-			{
-				for (const auto& name : reloadOrder)
-				{
-					const auto it = std::ranges::find_if(plugins,
-						[&](const UserPluginInfo& p) { return p.descriptor.name == name; });
-
-					if (it != plugins.end())
-					{
-						LoadPlugin(*it);
-					}
-				}
-			}
-
-			if (std::filesystem::exists(tempScene))
-			{
-				if (!cp::runtime::SceneSerializer::LoadSceneFromFile(scene, tempScene, &logger))
-				{
-					logger.Log(CP_LOG_EVENT(
-						ILogger::Error,
-						"UserPlugins",
-						cp::Message::Create("Cannot load scene backup '{}'", tempScene.string())
-					));
-				}
-
-				std::filesystem::remove(tempScene);
-			}
 		}
 		catch (const std::exception& e)
 		{
@@ -454,7 +422,10 @@ namespace cp::editor
 				onComplete,
 				reloadOrder.empty() ? std::string{} : reloadOrder.front(),
 				allSucceeded,
-				combinedOutput
+				combinedOutput,
+				unloadOrder,
+				allSucceeded ? reloadOrder : std::vector<std::string>{},
+				tempScene
 			});
 		}
 	}
@@ -476,6 +447,44 @@ namespace cp::editor
 
 		for (auto& completion : toDispatch)
 		{
+			if (rendererResetCallback)
+			{
+				rendererResetCallback();
+			}
+
+			for (const auto& name : completion.unloadOrder)
+			{
+				UnloadPlugin(name);
+			}
+
+			for (const auto& name : completion.reloadOrder)
+			{
+				const auto it = std::ranges::find_if(plugins,
+					[&](const UserPluginInfo& p) { return p.descriptor.name == name; });
+
+				if (it != plugins.end())
+				{
+					LoadPlugin(*it);
+				}
+			}
+
+			if (!completion.tempScenePath.empty())
+			{
+				if (std::filesystem::exists(completion.tempScenePath))
+				{
+					if (!cp::runtime::SceneSerializer::LoadSceneFromFile(scene, completion.tempScenePath, &logger))
+					{
+						logger.Log(CP_LOG_EVENT(
+							ILogger::Error,
+							"UserPlugins",
+							cp::Message::Create("Cannot restore scene backup '{}'", completion.tempScenePath.string())
+						));
+					}
+
+					std::filesystem::remove(completion.tempScenePath);
+				}
+			}
+
 			if (completion.callback)
 			{
 				completion.callback(completion.pluginName, completion.success, completion.output);

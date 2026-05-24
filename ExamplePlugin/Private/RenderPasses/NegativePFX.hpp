@@ -122,7 +122,7 @@ namespace cp
                 .access = Access::ShaderRead | Access::ShaderWrite
             };
 
-            data.finalRendering = _builder.UseTexture("FinalRendering", synchronization, ResourceUsage::ReadWrite);
+            data.finalRendering = _builder.UseTexture("ColorOutput", synchronization, ResourceUsage::ReadWrite);
         }
 
         void Execute(RenderPassExecutionContext &_context) override

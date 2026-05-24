@@ -210,13 +210,13 @@ namespace cp
 
         void Setup(FrameGraphBuilder& _builder) override
         {
-            data.finalRendering = _builder.UseTexture("FinalRendering", {
+            data.finalRendering = _builder.UseTexture("ColorOutput", {
                 .layout = TextureLayout::ColorAttachment,
                 .stage = PipelineStage::ColorAttachment,
                 .access = Access::ColorAttachmentWrite
             }, ResourceUsage::ReadWrite);
 
-            data.depthBuffer = _builder.UseTexture("DepthBuffer", {
+            data.depthBuffer = _builder.UseTexture("MainDepth", {
                 .layout = TextureLayout::DepthStencilReadOnly,
                 .stage = PipelineStage::EarlyDepth,
                 .access = Access::DepthStencilRead

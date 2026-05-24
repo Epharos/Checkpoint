@@ -534,6 +534,11 @@ namespace cp::editor
 
 		loadSceneDelegate = nullptr;
 
+		if (pluginManagerView != nullptr)
+		{
+			pluginManagerView->SetRecompileHandler(nullptr);
+		}
+
 		if (pluginHost != nullptr)
 		{
 			pluginHost->UnloadAll();
@@ -1036,24 +1041,57 @@ namespace cp::editor
 
 			userPluginManager = std::make_unique<cp::editor::UserPluginManager>(*pluginHost, *logger, *scene);
 			userPluginManager->Initialize(userPluginsDir, buildConfig);
+			userPluginManager->SetRendererResetCallback([this]()
+			{
+				if (renderer)
+				{
+					renderer->ResetFrameGraph();
+				}
+			});
 			userPluginManager->ScanAndLoad();
 		}
 
+		const auto gizmoContributionBindings = std::make_shared<std::vector<GizmoContributionBinding>>();
+		const auto refreshGizmoBindings = [this, gizmoContributionBindings]()
+		{
+			gizmoContributionBindings->clear();
+			if (const cp::Registry<cp::IGizmoContribution>* gizmoRegistry =
+				registryManager->Find<cp::IGizmoContribution>(cp::GizmoContributionRegistryName))
+			{
+				for (const std::string& key : gizmoRegistry->Names())
+				{
+					GizmoContributionBinding binding;
+					binding.registryKey = key;
+					binding.contribution = gizmoRegistry->Create(key);
+					gizmoContributionBindings->push_back(std::move(binding));
+				}
+			}
+		};
+		refreshGizmoBindings();
+
 		if (pluginManagerView && userPluginManager)
 		{
-			pluginManagerView->SetRecompileHandler([this](std::string_view pluginName)
+			pluginManagerView->SetRecompileHandler([this, refreshGizmoBindings](std::string_view pluginName)
 			{
 				const std::string name(pluginName);
 				pluginManagerView->ClearBuildOutput();
 
 				userPluginManager->HotReload(
 					name,
-					[this](const std::string& _reloadedName, bool _success, const std::string& _output)
+					[this, refreshGizmoBindings](const std::string& _reloadedName, bool _success, const std::string& _output)
 					{
 						RefreshPluginManagerView();
 
 						if (_success)
 						{
+							if (renderer)
+							{
+								renderer->SetPendingPassBlobs(scene->GetPassBlobs());
+								cp::rendering::ApplyFrameGraphConfigToRenderer(
+									*renderer, scene->GetActivePassNames()
+								);
+							}
+
 							if (const cp::Registry<cp::ecs::ISystem>* sysReg =
 								registryManager->Find<cp::ecs::ISystem>(cp::EcsSystemRegistryName))
 							{
@@ -1061,6 +1099,8 @@ namespace cp::editor
 							}
 
 							RefreshSceneConfigView();
+
+							refreshGizmoBindings();
 						}
 					},
 					[this](const std::string& pluginName, std::string_view line)
@@ -1193,18 +1233,6 @@ namespace cp::editor
 			}
 		}
 
-		const auto gizmoContributionBindings = std::make_shared<std::vector<GizmoContributionBinding>>();
-		if (const cp::Registry<cp::IGizmoContribution>* gizmoRegistry =
-			registryManager->Find<cp::IGizmoContribution>(cp::GizmoContributionRegistryName))
-		{
-			for (const std::string& key : gizmoRegistry->Names())
-			{
-				GizmoContributionBinding binding;
-				binding.registryKey = key;
-				binding.contribution = gizmoRegistry->Create(key);
-				gizmoContributionBindings->push_back(std::move(binding));
-			}
-		}
 
 		keybindsConfigPath = executableDirectory / "keybinds.json";
 		keybindRegistry->LoadFromFile(keybindsConfigPath);

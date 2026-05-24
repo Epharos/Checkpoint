@@ -4,13 +4,14 @@
 
 #include <Common/Data/Extent.hpp>
 
+#include <ECS/Entity.hpp>
+
 #include "Camera.hpp"
 #include "DebugDraw.hpp"
 
 namespace cp::ecs
 {
     class World;
-    struct Entity;
 }
 
 namespace cp

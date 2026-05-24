@@ -229,7 +229,7 @@ namespace cp
             return;
 
         frameGraph.Execute(context, resolvedCamera, rendererInfo.environment);
-        BlitFinalRenderingToSwapchain(context);
+        BlitColorOutputToSwapchain(context);
     }
 
     void Renderer::BuildFrameGraph()
@@ -289,12 +289,12 @@ namespace cp
         }
     }
 
-    void Renderer::BlitFinalRenderingToSwapchain(const FrameContext& _context) const
+    void Renderer::BlitColorOutputToSwapchain(const FrameContext& _context) const
     {
-        ITexture* finalRendering = frameGraph.GetFinalRendering();
+        ITexture* finalRendering = frameGraph.GetColorOutput();
         if (!finalRendering)
         {
-            return;  // No final rendering produced
+            return;
         }
 
         ITexture& swapchainImage = swapchain->GetSwapchainImage(_context.swapchainImageIndex);
@@ -493,7 +493,11 @@ namespace cp
 
         frameGraph.Reset();
         BuildFrameGraph();
-        frameGraph.Compile(renderingHardwareInterface);
+        const Extent2D<uint32_t> renderExtent{
+            static_cast<uint32_t>(rendererInfo.extent.x()),
+            static_cast<uint32_t>(rendererInfo.extent.y())
+        };
+        frameGraph.Compile(renderingHardwareInterface, renderExtent);
 
         pendingPassBlobs.clear();
     }

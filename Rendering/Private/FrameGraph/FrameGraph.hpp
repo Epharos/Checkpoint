@@ -19,37 +19,39 @@ namespace cp
     class FramegraphResource;
     class FramegraphResourceHandle;
 
-    inline constinit auto SWAPCHAIN_IMAGE_PASS_FINAL_TEXTURE = "SwapchainOutput";
+    inline constinit auto COLOR_OUTPUT_RESOURCE_NAME = "ColorOutput";
+    inline constinit auto MAIN_DEPTH_RESOURCE_NAME = "MainDepth";
 
     /**
      * @brief Main framegraph orchestrator.
-     * 
+     *
      * Manages render passes and their resources through a compile-execute-reset cycle:
-     * 
+     *
      * 1. CONSTRUCTION: Add passes via AddPass() and equivalents
      * 2. COMPILATION: Compile() sets up resources and allocates GPU memory
      * 3. EXECUTION: Execute() runs all passes (called every frame)
      * 4. RESET: Reset() frees resources and returns to uncompiled state
-     * 
-     * The framegraph produces a SWAPCHAIN_IMAGE_PASS_FINAL_TEXTURE texture that should be
-     * blitted to the swapchain image after execution.
-     * 
+     *
+     * The framegraph owns two built-in textures available to all passes:
+     * - ColorOutput (R8G8B8A8_UNORM): the final color result, blitted to the swapchain after Execute()
+     * - MainDepth (D32_FLOAT): the main scene depth, shareable across passes
+     *
      * Example usage:
      * @code
      * // Setup (once)
      * FrameGraph frameGraph;
      * frameGraph.AddPass(std::make_unique<GeometryPass>());
      * frameGraph.AddPass(std::make_unique<PostProcessPass>());
-     * frameGraph.Compile(rhi);
-     * 
+     * frameGraph.Compile(rhi, renderExtent);
+     *
      * // Per frame
      * frameGraph.Execute(frameContext);
-     * BlitToSwapchain(frameGraph.GetFinalRendering(), swapchainImage);
-     * 
+     * BlitToSwapchain(frameGraph.GetColorOutput(), swapchainImage);
+     *
      * // On resize
      * frameGraph.Reset();
      * // Re-add passes with new dimensions
-     * frameGraph.Compile(rhi);
+     * frameGraph.Compile(rhi, newExtent);
      * @endcode
      */
     class FrameGraph
@@ -139,8 +141,9 @@ namespace cp
          * Can only be called once (call Reset() first to recompile).
          *
          * @param _rhi The rendering hardware interface for resource allocation
+         * @param _renderExtent Current rendering extent
          */
-        void Compile(RenderingHardwareInterface& _rhi);
+        void Compile(RenderingHardwareInterface& _rhi, Extent2D<uint32_t> _renderExtent);
 
         /**
          * @brief Reset the framegraph to uncompiled state.
@@ -184,12 +187,18 @@ namespace cp
         ) const;
 
         /**
-         * @brief Get the final rendering texture produced by the framegraph.
-         * @return Pointer to the final rendering texture, or nullptr if not compiled
-         * 
+         * @brief Get the ColorOutput texture produced by the framegraph.
+         * @return Pointer to the color output texture, or nullptr if not compiled
+         *
          * This texture should be blitted to the swapchain image after Execute().
          */
-        [[nodiscard]] ITexture* GetFinalRendering() const;
+        [[nodiscard]] ITexture* GetColorOutput() const;
+
+        /**
+         * @brief Get the MainDepth texture produced by the framegraph.
+         * @return Pointer to the main depth texture, or nullptr if not compiled
+         */
+        [[nodiscard]] ITexture* GetMainDepth() const;
 
         /**
          * @brief Get a resource by name.
@@ -281,7 +290,13 @@ namespace cp
         void DeclarePassDependenciesPhase();
 
         /**
-         * @brief Phase 2: Call DeclareResources() on all passes so every resource is registered.
+         * @brief Phase 2a: Create the built-in ColorOutput and MainDepth resources.
+         * Called before passes get to declare their own resources.
+         */
+        void DeclareBuiltinResourcesPhase(Extent2D<uint32_t> _renderExtent);
+
+        /**
+         * @brief Phase 2b: Call DeclareResources() on all passes so every resource is registered.
          */
         void DeclareResourcesPhase();
 
@@ -315,10 +330,6 @@ namespace cp
          */
         void PostCompilePhase();
 
-        /**
-         * @brief Find the "FinalRendering" resource in the builder.
-         */
-        void FindFinalRenderingResource();
 
     private:
         std::vector<std::unique_ptr<IRenderPass>> passes;
@@ -330,7 +341,7 @@ namespace cp
         
         bool isCompiled = false;
 
-        // Cached pointer to the final rendering resource
-        FramegraphResource* finalRenderingResource = nullptr;
+        FramegraphResourceHandle* colorOutputHandle = nullptr;
+        FramegraphResourceHandle* mainDepthHandle = nullptr;
     };
 }
