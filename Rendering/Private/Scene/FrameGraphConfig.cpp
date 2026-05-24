@@ -1,5 +1,8 @@
 #include <Rendering/Scene/FrameGraphConfig.hpp>
 
+#include <cstdint>
+#include <unordered_map>
+
 #include <Common/Serialization/ISerializer.hpp>
 #include <Rendering/Renderer.hpp>
 
@@ -40,7 +43,8 @@ namespace cp::rendering
 
     bool ApplyFrameGraphConfigToRenderer(
         cp::Renderer& _renderer,
-        const std::vector<std::string>& _activePassNames
+        const std::vector<std::string>& _activePassNames,
+        const std::unordered_map<std::string, int32_t>& _passExecutionOrders
     )
     {
         _renderer.ResetFrameGraph();
@@ -48,6 +52,7 @@ namespace cp::rendering
         for (const auto& passName : _activePassNames)
             _renderer.AddFrameGraphPass(passName);
 
+        _renderer.SetPendingPassOrders(_passExecutionOrders);
         _renderer.RecompileFrameGraph();
         return true;
     }

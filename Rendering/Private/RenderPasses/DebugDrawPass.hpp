@@ -169,12 +169,6 @@ namespace cp
             data.cameraUboBuffer = _context.rhi.CreateBuffer(uboInfo);
         }
 
-        void DeclareDependencies(FrameGraph& _framegraph) override
-        {
-            _framegraph.AddPassDependencyIfPresent(GetName(), "SkyboxPass");
-            _framegraph.AddPassDependencyIfPresent(GetName(), "OpaqueMaterialPass");
-        }
-
         void Setup(FrameGraphBuilder& _builder) override
         {
             data.finalRendering = _builder.UseTexture("ColorOutput", {

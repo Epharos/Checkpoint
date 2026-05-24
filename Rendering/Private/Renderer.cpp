@@ -145,6 +145,11 @@ namespace cp
         pendingPassBlobs = std::move(_blobs);
     }
 
+    void Renderer::SetPendingPassOrders(std::unordered_map<std::string, int32_t> _orders)
+    {
+        pendingPassOrders = std::move(_orders);
+    }
+
     std::unordered_map<std::string, std::vector<std::byte>> Renderer::SnapshotPassBlobs() const
     {
         std::unordered_map<std::string, std::vector<std::byte>> result;
@@ -203,6 +208,7 @@ namespace cp
         activePassByTypeName.clear();
         frameGraph.Reset();
         frameGraphPassTypeNames.clear();
+        pendingPassOrders.clear();
     }
 
     void Renderer::BeginFrame()
@@ -286,6 +292,11 @@ namespace cp
         for (const std::string& passTypeName : frameGraphPassTypeNames)
         {
             addConfiguredPass(passTypeName);
+        }
+
+        for (const auto& [name, order] : pendingPassOrders)
+        {
+            frameGraph.SetPassExecutionOrder(name, order);
         }
     }
 

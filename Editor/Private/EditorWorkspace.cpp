@@ -33,7 +33,9 @@
 #include "ShaderCacheProvider.hpp"
 #include <ShaderCompiler/ShaderCompiler.hpp>
 
+#include <cstdint>
 #include <filesystem>
+#include <unordered_map>
 
 namespace cp::editor
 {
@@ -1088,7 +1090,9 @@ namespace cp::editor
 							{
 								renderer->SetPendingPassBlobs(scene->GetPassBlobs());
 								cp::rendering::ApplyFrameGraphConfigToRenderer(
-									*renderer, scene->GetActivePassNames()
+									*renderer,
+									scene->GetActivePassNames(),
+									scene->GetPassExecutionOrders()
 								);
 							}
 
@@ -1802,12 +1806,22 @@ namespace cp::editor
 
 		sceneConfigView->SetApplyHandler([this](
 			std::vector<std::string> _passNames,
-			std::vector<std::string> _systemNames)
+			std::vector<std::string> _systemNames,
+			std::vector<cp::editorui::ISceneConfigView::PassOrderEntry> _passOrders)
 		{
 			const auto passCount   = _passNames.size();
 			const auto systemCount = _systemNames.size();
 			scene->SetActivePassNames(std::move(_passNames));
 			scene->SetEnabledSystemGuids(std::move(_systemNames));
+
+			// Store execution orders in the scene for persistence
+			std::unordered_map<std::string, int32_t> orderMap;
+			for (const auto& entry : _passOrders)
+			{
+				orderMap[entry.key] = entry.order;
+			}
+
+			scene->SetPassExecutionOrders(std::move(orderMap));
 
 			if (const cp::Registry<cp::ecs::ISystem>* sysReg =
 				registryManager->Find<cp::ecs::ISystem>(cp::EcsSystemRegistryName))
@@ -1821,7 +1835,11 @@ namespace cp::editor
 					scene->SetPassBlob(typeName, blob);
 
 				renderer->SetPendingPassBlobs(scene->GetPassBlobs());
-				cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
+				cp::rendering::ApplyFrameGraphConfigToRenderer(
+					*renderer,
+					scene->GetActivePassNames(),
+					scene->GetPassExecutionOrders()
+				);
 			}
 			logger->Log(CP_LOG_EVENT(cp::ILogger::Info, "Scene",
 				cp::Message::Create("Applied scene config: {} pass(es), {} system(s)", passCount, systemCount)));
@@ -1879,7 +1897,11 @@ namespace cp::editor
 			if (renderer)
 			{
 				renderer->SetPendingPassBlobs(scene->GetPassBlobs());
-				cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
+				cp::rendering::ApplyFrameGraphConfigToRenderer(
+					*renderer,
+					scene->GetActivePassNames(),
+					scene->GetPassExecutionOrders()
+				);
 			}
 
 			if (const cp::Registry<cp::ecs::ISystem>* sysReg =
@@ -2282,7 +2304,11 @@ namespace cp::editor
 			rendererInfo.shaderProvider = shaderProvider.get();
 
 			renderer = std::make_unique<cp::Renderer>(rendererInfo, *rhi);
-			cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
+			cp::rendering::ApplyFrameGraphConfigToRenderer(
+				*renderer,
+				scene->GetActivePassNames(),
+				scene->GetPassExecutionOrders()
+			);
 			static_cast<ViewportController*>(viewportController.get())->renderer = renderer.get();
 
 			const auto cameraNav = std::make_shared<CameraNavState>();
@@ -2690,13 +2716,16 @@ namespace cp::editor
 
 		std::vector<cp::editorui::ISceneConfigView::RegistryEntry> passEntries;
 		const auto& activePasses = scene->GetActivePassNames();
+		const auto& passOrders = scene->GetPassExecutionOrders();
 
 		if (const auto* passReg = registryManager->Find<cp::IRenderPass>(cp::RenderPassRegistryName))
 		{
 			for (const auto& name : passReg->Names())
 			{
 				const bool enabled = std::find(activePasses.begin(), activePasses.end(), name) != activePasses.end();
-				passEntries.push_back({ name, "", enabled });
+				const auto orderIt = passOrders.find(name);
+				const int32_t order = (orderIt != passOrders.end()) ? orderIt->second : 0;
+				passEntries.push_back({ name, "", enabled, order });
 			}
 		}
 

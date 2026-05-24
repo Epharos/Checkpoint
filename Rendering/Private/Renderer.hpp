@@ -114,6 +114,17 @@ namespace cp
         void SetPendingPassBlobs(std::unordered_map<std::string, std::vector<std::byte>> _blobs);
 
         /**
+         * @brief Inject numeric pass execution orders to be applied on the next framegraph rebuild.
+         *
+         * Passes with a lower order value always execute before passes with a higher value.
+         * Equal (or absent) values let the framegraph determine order from resource dependencies.
+         * Orders persist across resize rebuilds; call ResetFrameGraph() to clear them.
+         *
+         * @param _orders Map of registry type-name to execution order integer.
+         */
+        void SetPendingPassOrders(std::unordered_map<std::string, int32_t> _orders);
+
+        /**
          * @brief Serialize the current state of all live pass instances.
          *
          * Useful just before saving a scene: the editor workspace calls this, stores the
@@ -190,6 +201,7 @@ namespace cp
         std::vector<std::string> frameGraphPassTypeNames;
 
         std::unordered_map<std::string, std::vector<std::byte>> pendingPassBlobs;
+        std::unordered_map<std::string, int32_t> pendingPassOrders;
         std::unordered_map<std::string, IRenderPass*> activePassByTypeName;
 
         FrameGraph frameGraph;

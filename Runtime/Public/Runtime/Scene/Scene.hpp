@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -41,6 +42,9 @@ namespace cp::runtime
 
         [[nodiscard]] const std::vector<std::string>& GetActivePassNames() const;
         void SetActivePassNames(std::vector<std::string> _passNames);
+
+        [[nodiscard]] const std::unordered_map<std::string, int32_t>& GetPassExecutionOrders() const;
+        void SetPassExecutionOrders(std::unordered_map<std::string, int32_t> _orders);
 
         [[nodiscard]] const std::vector<std::string>& GetEnabledSystemGuids() const;
         void SetEnabledSystemGuids(std::vector<std::string> _guids);

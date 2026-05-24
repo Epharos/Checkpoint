@@ -130,7 +130,11 @@ namespace cp::runtime
 
         auto renderer = std::make_unique<cp::Renderer>(rendererInfo, rhi);
         renderer->SetPendingPassBlobs(scene->GetPassBlobs());
-        cp::rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
+        cp::rendering::ApplyFrameGraphConfigToRenderer(
+            *renderer,
+            scene->GetActivePassNames(),
+            scene->GetPassExecutionOrders()
+        );
 
         window->SetResizeCallback([&renderer](cp::Extent2D<int> _newExtent)
         {

@@ -99,6 +99,16 @@ namespace cp::runtime
         description.activePassNames = std::move(_passNames);
     }
 
+    const std::unordered_map<std::string, int32_t>& Scene::GetPassExecutionOrders() const
+    {
+        return description.passExecutionOrders;
+    }
+
+    void Scene::SetPassExecutionOrders(std::unordered_map<std::string, int32_t> _orders)
+    {
+        description.passExecutionOrders = std::move(_orders);
+    }
+
     const std::vector<std::string>& Scene::GetEnabledSystemGuids() const
     {
         return description.systemsConfig.enabledSystemGuids;
@@ -153,6 +163,7 @@ namespace cp::runtime
         description.activePassNames.clear();
         description.systemsConfig.enabledSystemGuids.clear();
         description.passBlobs.clear();
+        description.passExecutionOrders.clear();
         frameGraphRef = nullptr;
         activeSystems.clear();
         pendingSystemBlobs.clear();
@@ -219,6 +230,13 @@ namespace cp::runtime
                 _serializer.Write(std::span<const std::byte>(blob.data(), blob.size()));
         }
 
+        _serializer.WritePod(static_cast<uint32_t>(description.passExecutionOrders.size()));
+        for (const auto& [typeName, order] : description.passExecutionOrders)
+        {
+            _serializer.WriteString(typeName);
+            _serializer.WritePod(order);
+        }
+
         return world->SerializeBinary(_serializer);
     }
 
@@ -273,6 +291,22 @@ namespace cp::runtime
                 return false;
             if (blobSize > 0)
                 description.passBlobs[std::move(typeName)] = std::move(blob);
+        }
+
+        description.passExecutionOrders.clear();
+        if (version >= 6)
+        {
+            uint32_t orderCount = 0;
+            if (!_deserializer.ReadPod(orderCount)) return false;
+
+            for (uint32_t i = 0; i < orderCount; ++i)
+            {
+                std::string typeName;
+                int32_t order = 0;
+                if (!_deserializer.ReadString(typeName)) return false;
+                if (!_deserializer.ReadPod(order)) return false;
+                description.passExecutionOrders[std::move(typeName)] = order;
+            }
         }
 
         world->Clear();

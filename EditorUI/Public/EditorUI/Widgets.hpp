@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
 #include <functional>
 #include <memory>
@@ -132,11 +133,19 @@ namespace cp::editorui
 			std::string name;
 			std::string key;
 			bool enabled = false;
+			int32_t order = 0;
+		};
+
+		struct PassOrderEntry
+		{
+			std::string key;
+			int32_t order = 0;
 		};
 
 		using ApplyHandler = std::function<void(
 			std::vector<std::string> _enabledPassNames,
-			std::vector<std::string> _enabledSystemNames
+			std::vector<std::string> _enabledSystemNames,
+			std::vector<PassOrderEntry> _passOrders
 		)>;
 
 		using SelectionChangedHandler = std::function<void(std::string_view _key, bool _isPass)>;

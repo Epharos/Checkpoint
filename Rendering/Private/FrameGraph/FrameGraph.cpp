@@ -8,6 +8,7 @@
 #include "FramegraphResource.hpp"
 
 #include <algorithm>
+#include <limits>
 #include <unordered_map>
 #include <vector>
 
@@ -246,6 +247,12 @@ namespace cp
         CP_ENSURE_MSG(!passes.empty(), "Pass was not added to the framegraph");
     }
 
+    void FrameGraph::SetPassExecutionOrder(const std::string_view _passName, const int32_t _order)
+    {
+        CP_EXPECT_MSG(!isCompiled, "Cannot set pass execution order after compilation. Call Reset() first.");
+        passExecutionOrders[std::string(_passName)] = _order;
+    }
+
     void FrameGraph::AddPassDependency(IRenderPass* _dependent, IRenderPass* _dependsOn)
     {
         CP_EXPECT_MSG(!isCompiled, "Cannot add dependencies after compilation. Call ClearResources() first.");
@@ -301,12 +308,13 @@ namespace cp
         // Phase 3: Setup: Passes declare how they use the now-existing resources
         SetupPhase();
 
-        // Build dependency graph from explicit + inferred resource dependencies
         dependencyManager.Clear();
         for (const auto& dep : explicitDependencies)
         {
             dependencyManager.AddDependency(dep.dependentPass, dep.dependsOn);
         }
+
+        GenerateOrderDependencies();
         GenerateResourceDependencies();
         BuildExecutionOrder();
 
@@ -354,6 +362,7 @@ namespace cp
         builder.Clear();
         barrierManager.Clear();
         dependencyManager.Clear();
+        passExecutionOrders.clear();
         isCompiled = false;
     }
 
@@ -494,6 +503,55 @@ namespace cp
     {
         AddDependenciesForAccesses(builder.GetTextureAccesses(), passes, dependencyManager);
         AddDependenciesForAccesses(builder.GetBufferAccesses(), passes, dependencyManager);
+    }
+
+    void FrameGraph::GenerateOrderDependencies()
+    {
+        if (passExecutionOrders.empty())
+        {
+            return;
+        }
+
+        auto getEffectiveOrder = [&](IRenderPass* _p) -> int32_t
+        {
+            // The built-in clear pass always runs first
+            if (_p->GetName() == CLEAR_BUILTIN_PASS_NAME)
+            {
+                return std::numeric_limits<int32_t>::min();
+            }
+
+            const auto it = passExecutionOrders.find(std::string(_p->GetName()));
+            return it != passExecutionOrders.end() ? it->second : 0;
+        };
+
+        for (size_t i = 0; i < passes.size(); ++i)
+        {
+            for (size_t j = i + 1; j < passes.size(); ++j)
+            {
+                const int32_t oi = getEffectiveOrder(passes[i].get());
+                const int32_t oj = getEffectiveOrder(passes[j].get());
+
+                if (oi == oj)
+                {
+                    continue;
+                }
+
+                IRenderPass* earlier = (oi < oj) ? passes[i].get() : passes[j].get();
+                IRenderPass* later = (oi < oj) ? passes[j].get() : passes[i].get();
+
+                if (dependencyManager.HasDependencyPath(earlier, later))
+                {
+                    CP_ASSERT_MSG(false,
+                        "Execution order conflict: numeric order contradicts an existing resource dependency between two passes");
+                    continue;
+                }
+
+                if (!dependencyManager.HasDependencyPath(later, earlier))
+                {
+                    dependencyManager.AddDependency(later, earlier);
+                }
+            }
+        }
     }
 
     void FrameGraph::BuildExecutionOrder()

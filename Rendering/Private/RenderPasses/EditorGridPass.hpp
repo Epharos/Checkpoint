@@ -216,11 +216,6 @@ namespace cp
             UploadParams();
         }
 
-        void DeclareDependencies(FrameGraph& _fg) override
-        {
-            _fg.AddPassDependencyIfPresent(GetName(), "DebugDrawPass");
-        }
-
         void Setup(FrameGraphBuilder& _builder) override
         {
             data.finalRendering = _builder.UseTexture("ColorOutput", {

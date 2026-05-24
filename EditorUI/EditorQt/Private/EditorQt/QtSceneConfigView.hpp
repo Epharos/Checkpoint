@@ -6,10 +6,12 @@
 #include <QDoubleSpinBox>
 #include <QGroupBox>
 #include <QHBoxLayout>
+#include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QPushButton>
 #include <QSignalBlocker>
+#include <QSpinBox>
 #include <QTreeWidget>
 
 #include <limits>
@@ -68,11 +70,34 @@ namespace cp::editorqt
 					return;
 
 				std::vector<std::string> enabledPasses;
+				std::vector<cp::editorui::ISceneConfigView::PassOrderEntry> passOrders;
 				for (int i = 0; i < passList->count(); ++i)
 				{
 					QListWidgetItem* item = passList->item(i);
-					if (item->checkState() == Qt::Checked)
-						enabledPasses.push_back(ToStdString(item->data(Qt::UserRole).toString()));
+					const QString key = item->data(Qt::UserRole).toString();
+
+					if (QWidget* w = passList->itemWidget(item))
+					{
+						const bool checked = w->findChild<QCheckBox*>() && w->findChild<QCheckBox*>()->isChecked();
+						const int32_t order = w->findChild<QSpinBox*>() ? static_cast<int32_t>(w->findChild<QSpinBox*>()->value()) : 0;
+
+						if (checked)
+						{
+							enabledPasses.push_back(ToStdString(key));
+						}
+
+						passOrders.push_back({ ToStdString(key), order });
+					}
+					else
+					{
+						// Fallback: item without custom widget (shouldn't happen)
+						if (item->checkState() == Qt::Checked)
+						{
+							enabledPasses.push_back(ToStdString(key));
+						}
+
+						passOrders.push_back({ ToStdString(key), 0 });
+					}
 				}
 
 				std::vector<std::string> enabledSystems;
@@ -83,7 +108,7 @@ namespace cp::editorqt
 						enabledSystems.push_back(ToStdString(item->data(Qt::UserRole).toString()));
 				}
 
-				applyHandler(std::move(enabledPasses), std::move(enabledSystems));
+				applyHandler(std::move(enabledPasses), std::move(enabledSystems), std::move(passOrders));
 			});
 
 			QObject::connect(passList, &QListWidget::currentItemChanged,
@@ -120,11 +145,37 @@ namespace cp::editorqt
 			passList->clear();
 			for (const auto& entry : _entries)
 			{
-				auto* item = new QListWidgetItem(ToQString(entry.name), passList);
-				item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-				item->setCheckState(entry.enabled ? Qt::Checked : Qt::Unchecked);
+				auto* item = new QListWidgetItem(passList);
 				const QString key = entry.key.empty() ? ToQString(entry.name) : ToQString(entry.key);
 				item->setData(Qt::UserRole, key);
+
+				// [checkbox with name] [Order: spinbox]
+				auto* container = new QWidget();
+				auto* hLayout = new QHBoxLayout(container);
+				hLayout->setContentsMargins(2, 1, 2, 1);
+				hLayout->setSpacing(6);
+
+				auto* checkBox = new QCheckBox(ToQString(entry.name), container);
+				checkBox->setChecked(entry.enabled);
+				hLayout->addWidget(checkBox, 1);
+
+				auto* orderLabel = new QLabel("Order:", container);
+				auto* spin = new QSpinBox(container);
+				spin->setRange(std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max());
+				spin->setValue(entry.order);
+				spin->setFixedWidth(75);
+				spin->setToolTip("Execution order: passes with a lower value always run before passes with a higher value");
+				hLayout->addWidget(orderLabel);
+				hLayout->addWidget(spin);
+
+				// When the checkbox or spin inside the widget is clicked, select the item
+				QObject::connect(checkBox, &QCheckBox::clicked, passList, [this, item]()
+				{
+					passList->setCurrentItem(item);
+				});
+
+				item->setSizeHint(container->sizeHint());
+				passList->setItemWidget(item, container);
 			}
 		}
 

@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 #include <string>
 #include <string_view>
@@ -69,10 +71,25 @@ namespace cp
         /**
          * @brief Add a render pass to the framegraph.
          * @param _pass The render pass to add (ownership is transferred)
-         * 
+         *
          * Must be called before Compile().
          */
         void AddPass(std::unique_ptr<IRenderPass> _pass);
+
+        /**
+         * @brief Assign a numeric execution order to a pass.
+         *
+         * Passes with a lower order value always execute before passes with a higher value.
+         * Passes with equal order (or no explicit order) are sorted by the framegraph based
+         * on resource dependencies alone.
+         *
+         * Must be called before Compile(). The order survives ClearResources() (resize) but
+         * is cleared by Reset().
+         *
+         * @param _passName Registry type-name of the pass (ex. "OpaqueMaterialPass")
+         * @param _order Relative execution position (lower = earlier)
+         */
+        void SetPassExecutionOrder(std::string_view _passName, int32_t _order);
 
         /**
          * @brief Add a typed render pass and return a pointer to it.
@@ -311,6 +328,15 @@ namespace cp
         void GenerateResourceDependencies();
 
         /**
+         * @brief Translate numeric execution orders into explicit dependencies.
+         *
+         * For each pair of passes with different numeric orders, adds a dependency from
+         * the later pass to the earlier one. Conflicts with existing resource hazard
+         * dependencies are caught via CP_ENSURE_MSG.
+         */
+        void GenerateOrderDependencies();
+
+        /**
          * @brief Build a topological execution order from all dependencies.
          */
         void BuildExecutionOrder();
@@ -338,7 +364,9 @@ namespace cp
         FrameGraphBuilder builder;
         BarrierManager barrierManager;
         PassDependencyManager dependencyManager;
-        
+
+        std::unordered_map<std::string, int32_t> passExecutionOrders;
+
         bool isCompiled = false;
 
         FramegraphResourceHandle* colorOutputHandle = nullptr;

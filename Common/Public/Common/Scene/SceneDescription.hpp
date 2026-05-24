@@ -24,7 +24,7 @@ namespace cp::scene
     struct SceneDescription
     {
         static constexpr uint32_t MAGIC = 0x53434E45; // "SCNE"
-        static constexpr uint32_t VERSION = 5;
+        static constexpr uint32_t VERSION = 6;
 
         std::string name;
         SceneGuid sceneGuid;
@@ -35,5 +35,7 @@ namespace cp::scene
         std::vector<std::string> activePassNames;
 
         std::unordered_map<std::string, std::vector<std::byte>> passBlobs;
+
+        std::unordered_map<std::string, int32_t> passExecutionOrders;
     };
 }

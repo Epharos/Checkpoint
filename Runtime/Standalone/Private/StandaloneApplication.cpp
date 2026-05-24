@@ -458,7 +458,11 @@ namespace cp
         if (scene != nullptr)
         {
             renderer->SetPendingPassBlobs(scene->GetPassBlobs());
-            rendering::ApplyFrameGraphConfigToRenderer(*renderer, scene->GetActivePassNames());
+            rendering::ApplyFrameGraphConfigToRenderer(
+                *renderer,
+                scene->GetActivePassNames(),
+                scene->GetPassExecutionOrders()
+            );
         }
     }
 
