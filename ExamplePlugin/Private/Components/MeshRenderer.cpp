@@ -31,8 +31,7 @@ namespace cp
 			[](MeshRenderer& _value, cp::IDeserializer& _deserializer)
 			{
 				std::string meshAssetPath;
-				if (!_deserializer.ReadString(meshAssetPath)
-					|| !_deserializer.ReadPod(_value.visible))
+				if (!_deserializer.ReadString(meshAssetPath) || !_deserializer.ReadPod(_value.visible))
 				{
 					return false;
 				}

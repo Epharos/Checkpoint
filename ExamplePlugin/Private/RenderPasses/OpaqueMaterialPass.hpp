@@ -137,7 +137,7 @@ namespace cp
             };
             data.descriptorSetLayout = _context.rhi.GetDevice().CreateDescriptorSetLayout(descriptorSetLayoutInfo);
 
-            const PipelineLayoutInfo pipelineLayoutInfo{
+            const PipelineLayoutInfo pipelineLayoutInfo {
                 .setLayouts = { data.descriptorSetLayout }
             };
             data.pipelineLayout = _context.rhi.GetDevice().CreatePipelineLayout(pipelineLayoutInfo);
@@ -325,6 +325,7 @@ namespace cp
                 cmd.EndRendering();
                 return;
             }
+
             transientBuffers.push_back(cameraBuffer);
 
             for (auto& [batchKey, batch] : batches)
@@ -512,10 +513,12 @@ namespace cp
             data.finalRendering = nullptr;
             data.ecsWorld.reset();
             data.meshCache.clear();
+
             for (auto& buffers : data.transientFrameBuffers)
             {
                 buffers.clear();
             }
+
             for (auto& descriptorSets : data.transientFrameDescriptorSets)
             {
                 descriptorSets.clear();
@@ -568,10 +571,14 @@ namespace cp
         ) const
         {
             if (_context.environment == cp::RendererEnvironment::Editor)
+            {
                 return _context.camera;
+            }
 
             if (!data.ecsWorld)
+            {
                 return {};
+            }
 
             Camera camComponent{};
             Transform camTransform{};
@@ -583,7 +590,10 @@ namespace cp
                 [&](const Camera& _cam, const Transform& _t)
                 {
                     if (found || !_cam.enabled || !_cam.isPrimary)
+                    {
                         return;
+                    }
+
                     camComponent = _cam;
                     camTransform = _t;
                     found = true;
@@ -591,7 +601,9 @@ namespace cp
             );
 
             if (!found)
+            {
                 return {};
+            }
 
             const float aspect =
                 static_cast<float>(data.renderExtent.x()) /
@@ -709,7 +721,9 @@ namespace cp
 
             if (void* mapped = buf.Map())
             {
-                return false;
+                std::memcpy(mapped, src, size);
+                buf.Unmap();
+                return true;
             }
 
             return false;
