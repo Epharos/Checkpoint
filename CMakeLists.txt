@@ -105,7 +105,6 @@ add_subdirectory(Launcher) # Editor launcher module : Starts the editor with a s
 add_subdirectory(EditorUI) # Editor UI abstraction layer and backends
 add_subdirectory(Editor) # Editor module : orchestrates editor tools and UI composition
 add_subdirectory(ShaderCompiler) # Shader compiler : turns slang files into spirv, hlsl (dxil), ...
-add_subdirectory(ExamplePlugin) # Example Plugin : used to test features
 
 function(copy_to_build TARGET)
     foreach(PATH IN LISTS ARGN)
