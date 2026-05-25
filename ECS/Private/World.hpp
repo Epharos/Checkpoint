@@ -106,7 +106,20 @@ namespace cp::ecs
             std::is_invocable_v<TFunc, Entity, const TRead&..., TWrite&...>
             || std::is_invocable_v<TFunc, const TRead&..., TWrite&...>
         )
-        void RunSystem(ReadAccess<TRead...>, WriteAccess<TWrite...>, TFunc&& _func);
+        void RunSystem(ReadAccess<TRead...> _read, WriteAccess<TWrite...> _write, TFunc&& _func)
+        {
+            RunSystem(_read, _write, ExcludeAccess<>{}, std::forward<TFunc>(_func));
+        }
+
+        /**
+         * Same as above, but skips entities whose archetype contains any component in TExclude.
+         */
+        template<typename... TRead, typename... TWrite, typename... TExclude, typename TFunc>
+        requires (
+            std::is_invocable_v<TFunc, Entity, const TRead&..., TWrite&...>
+            || std::is_invocable_v<TFunc, const TRead&..., TWrite&...>
+        )
+        void RunSystem(ReadAccess<TRead...>, WriteAccess<TWrite...>, ExcludeAccess<TExclude...>, TFunc&& _func);
 
         /**
          * Registers binary serialization callbacks for a component.
@@ -319,12 +332,12 @@ namespace cp::ecs
         return const_cast<World*>(this)->GetComponent<Component>(_entity);
     }
 
-    template<typename... Read, typename... Write, typename Func>
+    template<typename... Read, typename... Write, typename... Exclude, typename Func>
     requires (
         std::is_invocable_v<Func, Entity, const Read&..., Write&...>
         || std::is_invocable_v<Func, const Read&..., Write&...>
     )
-    void World::RunSystem(ReadAccess<Read...>, WriteAccess<Write...>, Func&& _func)
+    void World::RunSystem(ReadAccess<Read...>, WriteAccess<Write...>, ExcludeAccess<Exclude...>, Func&& _func)
     {
         std::vector<ComponentTypeId> requiredComponentIds;
         requiredComponentIds.reserve(sizeof...(Read) + sizeof...(Write));
@@ -335,12 +348,37 @@ namespace cp::ecs
         std::sort(requiredComponentIds.begin(), requiredComponentIds.end());
         requiredComponentIds.erase(std::unique(requiredComponentIds.begin(), requiredComponentIds.end()), requiredComponentIds.end());
 
+        std::vector<ComponentTypeId> excludedComponentIds;
+        if constexpr (sizeof...(Exclude) > 0)
+        {
+            excludedComponentIds.reserve(sizeof...(Exclude));
+            (excludedComponentIds.push_back(EnsureComponentType<Exclude>()), ...);
+        }
+
         for (const std::unique_ptr<Archetype>& archetypePtr : archetypes)
         {
             Archetype& archetype = *archetypePtr;
             if (!archetype.Contains(requiredComponentIds))
             {
                 continue;
+            }
+
+            if constexpr (sizeof...(Exclude) > 0)
+            {
+                bool hasExcluded = false;
+                for (const ComponentTypeId excludedId : excludedComponentIds)
+                {
+                    if (archetype.HasComponent(excludedId))
+                    {
+                        hasExcluded = true;
+                        break;
+                    }
+                }
+
+                if (hasExcluded)
+                {
+                    continue;
+                }
             }
 
             for (uint32_t chunkIndex = 0; chunkIndex < archetype.ChunkCount(); ++chunkIndex)

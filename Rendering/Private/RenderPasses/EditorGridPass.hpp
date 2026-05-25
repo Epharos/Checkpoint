@@ -234,11 +234,19 @@ namespace cp
         void Execute(RenderPassExecutionContext& _ctx) override
         {
             if (!enabled || _ctx.environment != RendererEnvironment::Editor)
+            {
                 return;
+            }
+
             if (!_ctx.camera.isValid)
+            {
                 return;
+            }
+
             if (!data.pipeline || !data.descriptorSet || !data.cameraUboBuffer)
+            {
                 return;
+            }
 
             const EditorGridPassData::CameraUbo camUbo {
                 .viewProjection = _ctx.camera.viewProjection,
@@ -262,9 +270,14 @@ namespace cp
         void OnPostCompile(FrameGraph&) override
         {
             if (!data.descriptorSet || !data.finalRendering || !data.depthBuffer)
+            {
                 return;
+            }
+
             if (!data.cameraUboBuffer || !data.gridParamsUboBuffer)
+            {
                 return;
+            }
 
             data.descriptorSet->UpdateTextures({
                 {
@@ -304,10 +317,12 @@ namespace cp
         bool enabled = true;
         EditorGridPassData::GridParamsUbo params {};
 
-        void UploadParams()
+        void UploadParams() const
         {
             if (!data.gridParamsUboBuffer)
+            {
                 return;
+            }
 
             if (void* mapped = data.gridParamsUboBuffer->Map())
             {

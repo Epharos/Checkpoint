@@ -5,6 +5,7 @@
 #include <Common/Serialization/ISerializer.hpp>
 
 #include <string_view>
+#include <vector>
 
 namespace cp::ecs
 {
@@ -22,6 +23,9 @@ namespace cp::ecs
 
         [[nodiscard]] virtual TypeGuid SystemGuid() const = 0;
         [[nodiscard]] virtual std::string_view Name() const = 0;
+
+        [[nodiscard]] virtual std::vector<TypeGuid> RunAfter() const { return {}; }
+        [[nodiscard]] virtual std::vector<TypeGuid> RunBefore() const { return {}; }
 
         /**
          * @brief Serialize the system's authored state to a binary stream.

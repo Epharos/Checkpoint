@@ -17,4 +17,12 @@ namespace cp::ecs
     struct WriteAccess
     {
     };
+
+    /**
+     * Declares components that must be absent from matched entities.
+     */
+    template<typename... Component>
+    struct ExcludeAccess
+    {
+    };
 }

@@ -41,7 +41,7 @@ namespace cp
             float r, g, b, a;
         };
 
-        FramegraphResourceHandle* finalRendering = nullptr;
+        FramegraphResourceHandle* colorOutput = nullptr;
 
         Extent2D<uint32_t> renderExtent {};
         RenderingHardwareInterface* rhi = nullptr;
@@ -171,7 +171,7 @@ namespace cp
 
         void Setup(FrameGraphBuilder& _builder) override
         {
-            data.finalRendering = _builder.UseTexture("ColorOutput", {
+            data.colorOutput = _builder.UseTexture("ColorOutput", {
                 .layout = TextureLayout::ColorAttachment,
                 .stage = PipelineStage::ColorAttachment,
                 .access = Access::ColorAttachmentWrite
@@ -183,16 +183,27 @@ namespace cp
         void Execute(RenderPassExecutionContext& _context) override
         {
             if (!data.pipeline || !data.cameraUboBuffer)
+            {
                 return;
+            }
+
             if (!data.debugDrawBuffer || data.debugDrawBuffer->IsEmpty())
+            {
                 return;
+            }
+
             if (!_context.camera.isValid)
+            {
                 return;
+            }
 
             ICommandBuffer& cmd = _context;
-            ITexture* colorTarget = data.finalRendering ? data.finalRendering->GetTexture() : nullptr;
+            ITexture* colorTarget = data.colorOutput ? data.colorOutput->GetTexture() : nullptr;
+
             if (!colorTarget)
+            {
                 return;
+            }
 
             // Upload camera UBO
             {
@@ -219,6 +230,7 @@ namespace cp
                     .usage = BufferUsage::Vertex,
                     .cpuVisible = true
                 };
+
                 vertexBuffer = data.rhi->CreateBuffer(vbInfo);
                 if (!vertexBuffer) return;
             }
@@ -239,6 +251,7 @@ namespace cp
 
             const std::shared_ptr<IDescriptorSet> descriptorSet =
                 data.rhi->GetDevice().CreateDescriptorSet(*data.descriptorSetLayout);
+
             if (!descriptorSet) return;
 
             descriptorSet->UpdateBuffers({
@@ -284,10 +297,13 @@ namespace cp
 
         void OnReset() override
         {
-            data.finalRendering = nullptr;
+            data.colorOutput = nullptr;
             data.debugDrawBuffer.reset();
+
             for (auto& buf : data.vertexBuffers)
+            {
                 buf.reset();
+            }
         }
 
     private:

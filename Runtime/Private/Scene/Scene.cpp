@@ -1,12 +1,17 @@
 #include <Runtime/Scene/Scene.hpp>
 
+#include <Common/Core/Assert.hpp>
 #include <Common/Core/Registry.hpp>
 #include <Common/Serialization/ISerializer.hpp>
 
 #include <ECS/System.hpp>
 #include <ECS/World.hpp>
 
+#include <algorithm>
 #include <cstring>
+#include <numeric>
+#include <queue>
+#include <unordered_map>
 
 #include "Common/Authoring.hpp"
 
@@ -68,6 +73,89 @@ namespace
         }
 
         return false;
+    }
+
+    std::vector<size_t> TopologicalSortSystems(const std::vector<std::unique_ptr<cp::ecs::ISystem>>& systems)
+    {
+        const size_t n = systems.size();
+
+        std::vector<size_t> identity(n);
+        std::iota(identity.begin(), identity.end(), 0);
+
+        std::unordered_map<cp::ecs::TypeGuid, size_t> guidToIndex;
+        for (size_t i = 0; i < n; ++i)
+        {
+            if (systems[i])
+            {
+                guidToIndex[systems[i]->SystemGuid()] = i;
+            }
+        }
+
+        std::vector<std::pair<size_t, size_t>> edgePairs;
+        for (size_t i = 0; i < n; ++i)
+        {
+            if (!systems[i]) continue;
+
+            for (const cp::ecs::TypeGuid dep : systems[i]->RunAfter())
+            {
+                const auto it = guidToIndex.find(dep);
+                if (it != guidToIndex.end())
+                {
+                    edgePairs.emplace_back(it->second, i);
+                }
+            }
+            for (const cp::ecs::TypeGuid dep : systems[i]->RunBefore())
+            {
+                const auto it = guidToIndex.find(dep);
+                if (it != guidToIndex.end())
+                {
+                    edgePairs.emplace_back(i, it->second);
+                }
+            }
+        }
+
+        std::sort(edgePairs.begin(), edgePairs.end());
+        edgePairs.erase(std::unique(edgePairs.begin(), edgePairs.end()), edgePairs.end());
+
+        std::vector<std::vector<size_t>> adj(n);
+        std::vector<size_t> inDegree(n, 0);
+        for (const auto& [from, to] : edgePairs)
+        {
+            adj[from].push_back(to);
+            ++inDegree[to];
+        }
+
+        std::queue<size_t> bfsQueue;
+        for (size_t i = 0; i < n; ++i)
+        {
+            if (inDegree[i] == 0)
+            {
+                bfsQueue.push(i);
+            }
+        }
+
+        std::vector<size_t> result;
+        result.reserve(n);
+        while (!bfsQueue.empty())
+        {
+            const size_t idx = bfsQueue.front(); bfsQueue.pop();
+            result.push_back(idx);
+            for (const size_t next : adj[idx])
+            {
+                if (--inDegree[next] == 0)
+                {
+                    bfsQueue.push(next);
+                }
+            }
+        }
+
+        CP_ASSERT_MSG(result.size() == n, "ECS system dependency cycle detected. Check RunAfter/RunBefore declarations.");
+        if (result.size() != n)
+        {
+            return identity;
+        }
+
+        return result;
     }
 }
 
@@ -353,6 +441,21 @@ namespace cp::runtime
             activeSystems.push_back(std::move(system));
             ++count;
         }
+
+        // Reorder systems (and guids) into execution order based on dependency
+        const std::vector<size_t> sortedOrder = TopologicalSortSystems(activeSystems);
+        const size_t systemCount = activeSystems.size();
+        std::vector<std::unique_ptr<cp::ecs::ISystem>> sortedSystems(systemCount);
+        std::vector<std::string> sortedGuids(systemCount);
+
+        for (size_t i = 0; i < systemCount; ++i)
+        {
+            sortedSystems[i] = std::move(activeSystems[sortedOrder[i]]);
+            sortedGuids[i] = description.systemsConfig.enabledSystemGuids[sortedOrder[i]];
+        }
+
+        activeSystems = std::move(sortedSystems);
+        description.systemsConfig.enabledSystemGuids = std::move(sortedGuids);
 
         pendingSystemBlobs.clear();
         return count;
