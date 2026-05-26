@@ -2269,7 +2269,11 @@ namespace cp::editor
 			cp::InstanceInfo instanceInfo;
 			instanceInfo.appName = "Checkpoint Editor";
 			instanceInfo.appVersion = CP_VERSION;
+#if defined(CP_DEVELOPMENT_BUILD)
+			instanceInfo.enableValidationLayers = true;
+#else
 			instanceInfo.enableValidationLayers = false;
+#endif
 
 			rhi->CreateInstance(instanceInfo);
 			rhi->CreatePhysicalDevice();

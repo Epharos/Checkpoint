@@ -148,7 +148,7 @@ namespace cp
 
         if (renderer != nullptr)
         {
-            renderer->ResetFrameGraph();
+            try { renderer->ResetFrameGraph(); } catch (...) {}
             renderer.reset();
         }
 
@@ -402,7 +402,11 @@ namespace cp
         {
             .appName = "TestApp",
             .appVersion = CP_MAKE_VERSION(0, 1, 0, 0),
+#if defined(CP_DEVELOPMENT_BUILD)
+            .enableValidationLayers = true
+#else
             .enableValidationLayers = false
+#endif
         };
 
         rhi->CreateInstance(instanceInfo);

@@ -73,7 +73,7 @@ namespace cp
 	{
 		if (device != VK_NULL_HANDLE)
 		{
-			device.waitIdle();
+			try { device.waitIdle(); } catch (vk::DeviceLostError const&) {}
 
 			CleanupCommandPools();
 

@@ -556,7 +556,7 @@ namespace cp
 
     void Renderer::Cleanup() const
     {
-        renderingHardwareInterface.GetDevice().WaitIdle();
+        try { renderingHardwareInterface.GetDevice().WaitIdle(); } catch (...) {}
 
         delete[] frameSignalValue;
     }

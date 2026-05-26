@@ -236,7 +236,7 @@ namespace cp
 
 	void Swapchain::Cleanup()
 	{
-		device.WaitIdle();
+		try { device.WaitIdle(); } catch (vk::DeviceLostError const&) {}
 
 		if (swapchain != VK_NULL_HANDLE)
 		{

@@ -191,7 +191,7 @@ namespace cp::runtime
         }
 
         scene->ShutdownSystems();
-        renderer->ResetFrameGraph();
+        try { renderer->ResetFrameGraph(); } catch (...) {}
         renderer.reset();
 
         if (logger)
