@@ -119,11 +119,13 @@ namespace cp
             window->FillRawInputState(rawInput);
             scene->GetWorld().GetResource<InputState>().Update(rawInput);
 
-            const float deltaTime = static_cast<float>(deltaTimeClock.Restart());
+            const auto deltaTime = static_cast<float>(deltaTimeClock.Restart());
             for (const std::unique_ptr<ecs::ISystem>& system : scene->GetActiveSystems())
             {
                 if (system)
+                {
                     system->Run(scene->GetWorld(), ecsCommandBuffer, deltaTime);
+                }
             }
 
             ecsCommandBuffer.Playback(scene->GetWorld());

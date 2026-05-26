@@ -50,6 +50,9 @@ add_library(Common STATIC
     "Public/Common/Serialization/ISerializer.hpp"
     "Public/Common/Scene/SceneDescription.hpp"
     "Public/Common/ShaderReflection.hpp"
+
+    "Public/Common/IO/ShaderReflectionSerializer.hpp"
+    "Private/IO/ShaderReflectionSerializer.cpp"
 )
 
 target_include_directories(Common PUBLIC
